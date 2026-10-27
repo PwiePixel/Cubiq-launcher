@@ -1,6 +1,7 @@
 package dev.pwiepixel.cubiqclient.core.menus;
 
 import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
+import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 /**
  * Welche Vanilla-Menüs im Redstone-Stil gezeichnet werden (Modul „Menü-Stil“). Jede Loader-Variante ordnet
@@ -67,9 +68,20 @@ public final class MenuStyle {
 		return m != null && m.menuStyle.isEnabled() && m.menuPauseButtons.get();
 	}
 
-	/** Bewegter Redstone-Hintergrund (Einstellung des Startbildschirms)? */
+	/**
+	 * Bewegung in Szenen, Einführung und unbestimmten Ladeanzeigen? Eigene Einstellung „Animierter Hintergrund“ des
+	 * Startbildschirms, dazu „Animationen“ des Launchers (siehe {@link #animated(boolean)}).
+	 */
 	public static boolean animated() {
 		CubiqModules m = modules;
-		return m == null || m.titleAnimated.get();
+		return animated(m == null || m.titleAnimated.get());
+	}
+
+	/**
+	 * Bewegung, wenn die eigene Einstellung {@code own} sie erlaubt – außer der Launcher steht auf „Reduziert“
+	 * ({@link Theme#launcherReducedMotion()}). Der Launcher ändert die eigene Einstellung nie, er beruhigt nur zusätzlich.
+	 */
+	public static boolean animated(boolean own) {
+		return own && !Theme.launcherReducedMotion();
 	}
 }

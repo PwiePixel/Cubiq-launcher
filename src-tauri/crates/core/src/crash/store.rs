@@ -370,7 +370,8 @@ impl Launcher {
         let settings = self.settings().await;
         let cubiq_enabled = self.cubiq.enabled().await;
         let (events, look) = (self.cubiq.active_events(), self.cubiq.look_events());
-        client_mod::sync(&self.http, &self.paths, dir.as_deref(), Some(&self.client_mod_updates), &instance, &settings.ui, cubiq_enabled, &events, &look).await?;
+        let system_reduced_motion = self.system_reduced_motion();
+        client_mod::sync(&self.http, &self.paths, dir.as_deref(), Some(&self.client_mod_updates), &instance, &settings.ui, system_reduced_motion, cubiq_enabled, &events, &look).await?;
         Ok(client_mod::installed_version(&self.paths, &instance.id).await)
     }
 }

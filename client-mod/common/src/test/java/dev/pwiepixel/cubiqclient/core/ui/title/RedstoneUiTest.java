@@ -233,8 +233,11 @@ class RedstoneUiTest {
 		assertEquals(held, t.angle(), 0.0001f, "beim Ziehen keine Eigendrehung");
 		t.release();
 		assertFalse(t.dragging());
-		// Standbild ohne Animation
+		// Standbild ohne Animation – von Anfang an, die Eigendrehung läuft nicht erst aus
 		Turntable still = new Turntable();
+		float s0 = still.angle();
+		still.tick(1f / 60f, false);
+		assertEquals(s0, still.angle(), 0.0001f);
 		still.tick(5f, false);
 		still.tick(5f, false);
 		float s = still.angle();

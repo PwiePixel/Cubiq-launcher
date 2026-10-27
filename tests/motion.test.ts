@@ -1,7 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { createMotion, isReducedMotion, motionModes, normalizeMotion, REDUCED_MOTION_QUERY } from '../app/utils/motion'
+import { nextTick } from 'vue'
+import { createMotion, isReducedMotion, motionModes, normalizeMotion, REDUCED_MOTION_QUERY, reportSystemMotion } from '../app/utils/motion'
 import { uiSettingsSchema } from '../app/utils/schemas'
 
 /** Abfrage „Bewegung reduzieren“ zum Umschalten. */
@@ -77,6 +78,44 @@ describe('Einstellung „Animationen“', () => {
 
     motion.dispose()
     expect(media.listeners.size).toBe(0)
+  })
+
+  it('meldet dem Kern „Bewegung reduzieren“ des Systems – sofort und bei jeder Änderung', async () => {
+    // Der Kern löst damit „Wie System“ für den Cubiq Client auf (launcher-theme.json → motion).
+    const media = fakeMedia(true)
+    const motion = createMotion({ media })
+    const sent: boolean[] = []
+    const stop = reportSystemMotion(motion, async (reduced) => {
+      sent.push(reduced)
+    })
+    expect(sent).toEqual([true])
+    // Die Einstellung selbst ändert nichts daran, was das System meldet.
+    motion.apply('full')
+    await nextTick()
+    expect(sent).toEqual([true])
+    media.change(false)
+    await nextTick()
+    expect(sent).toEqual([true, false])
+    stop()
+    media.change(true)
+    await nextTick()
+    expect(sent).toEqual([true, false])
+  })
+
+  it('verschluckt Fehler beim Melden (z. B. ohne Desktop-App)', async () => {
+    const media = fakeMedia(false)
+    const motion = createMotion({ media })
+    let calls = 0
+    const stop = reportSystemMotion(motion, async () => {
+      calls++
+      throw new Error('kein Backend')
+    })
+    media.change(true)
+    await nextTick()
+    // Abgelehnte Meldungen wären sonst „unhandled rejections“ und ließen den Testlauf scheitern.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(calls).toBe(2)
+    stop()
   })
 
   it('kommt ohne matchMedia und ohne Dokument aus', () => {

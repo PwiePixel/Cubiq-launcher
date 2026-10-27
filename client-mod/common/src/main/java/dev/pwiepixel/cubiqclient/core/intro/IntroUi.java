@@ -1,6 +1,7 @@
 package dev.pwiepixel.cubiqclient.core.intro;
 
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
+import dev.pwiepixel.cubiqclient.core.menus.MenuStyle;
 import dev.pwiepixel.cubiqclient.core.module.KeySetting;
 import dev.pwiepixel.cubiqclient.core.module.Module;
 import dev.pwiepixel.cubiqclient.core.module.ModulePacks;
@@ -64,6 +65,8 @@ public final class IntroUi extends UiScreen {
 	private final PacksPage packs;
 	private final List<KeyBind> allKeys;
 	private final List<KeyBind> cubiqKeys = new ArrayList<KeyBind>();
+	/** Ruhige Bewegung: eigener Schalter „Animierter Hintergrund“ aus oder „Reduziert“ im Launcher. */
+	private final boolean still;
 	private int step;
 	private float stepAnim;
 	private KeyBind capturing;
@@ -72,6 +75,12 @@ public final class IntroUi extends UiScreen {
 	public IntroUi(final MenuHost host) {
 		this.host = host;
 		this.modules = host.modules();
+		this.still = !MenuStyle.animated(modules.titleAnimated.get());
+		// Ruhig: sofort ganz da – ohne Einblenden und Hineingleiten.
+		if (still) {
+			open = 1f;
+			stepAnim = 1f;
+		}
 		I18n.refresh();
 		this.packs = new PacksPage(modules, new ModulePacks.Support() {
 			@Override
@@ -105,6 +114,11 @@ public final class IntroUi extends UiScreen {
 
 	public int step() {
 		return step;
+	}
+
+	/** Ohne Bewegung (kein Einblenden, kein Gleiten, keine pulsierende Lampe)? */
+	public boolean still() {
+		return still;
 	}
 
 	/** Springt zu einem Schritt (Selbsttest: Screenshot je Schritt). */
@@ -180,11 +194,11 @@ public final class IntroUi extends UiScreen {
 		Theme t = Theme.get();
 		Canvas c = FadeCanvas.of(raw, alpha());
 		c.fill(0, 0, width, height, t.scrim);
-		stepAnim = Anim.approach(stepAnim, 1f, dt, 0.06f);
+		stepAnim = still ? 1f : Anim.approach(stepAnim, 1f, dt, 0.06f);
 		int pw = Math.min(width - 16, Math.max(Math.min(420, width - 16), Math.min(640, Math.round(width * 0.8f))));
 		int ph = Math.min(height - 16, Math.max(Math.min(250, height - 16), Math.min(400, Math.round(height * 0.84f))));
 		int px = (width - pw) / 2;
-		int py = (height - ph) / 2 + Math.round((1 - Anim.easeOut(open)) * 14);
+		int py = (height - ph) / 2 + (still ? 0 : Math.round((1 - Anim.easeOut(open)) * 14));
 		c.push();
 		c.raise(300f);
 		Redstone.window(c, px, py, pw, ph);
@@ -250,7 +264,8 @@ public final class IntroUi extends UiScreen {
 				boolean powered = i <= step;
 				Redstone.dustH(c, x - spacing + lamp, x, sy + lamp / 2 - 1, powered ? t.dustOn : t.dustOff, powered ? 0.6f : 0f);
 			}
-			float lit = i < step ? 0.85f : (i == step ? 0.75f + 0.25f * (float) Math.sin(System.currentTimeMillis() / 300.0) : 0f);
+			float pulse = still ? 1f : 0.75f + 0.25f * (float) Math.sin(System.currentTimeMillis() / 300.0);
+			float lit = i < step ? 0.85f : (i == step ? pulse : 0f);
 			Redstone.lamp(c, x, sy, lamp, lamp, lit, 0f);
 		}
 	}

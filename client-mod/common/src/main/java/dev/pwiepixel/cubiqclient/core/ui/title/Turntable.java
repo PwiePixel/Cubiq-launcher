@@ -23,6 +23,8 @@ public final class Turntable {
 
 	private float angle = 20f;
 	private float velocity = AUTO_SPEED;
+	/** Schon ein Zeitschritt gelaufen? (Ohne Animation steht die Scheibe dann von Anfang an.) */
+	private boolean ticked;
 	private boolean dragging;
 	private double lastX;
 	private long lastDragNanos;
@@ -43,6 +45,11 @@ public final class Turntable {
 
 	/** Zeitschritt: Eigendrehung bzw. Nachlauf nach dem Ziehen. */
 	public void tick(float dt, boolean animated) {
+		if (!ticked) {
+			ticked = true;
+			// Ohne Animation von Anfang an still – die Eigendrehung läuft nicht erst aus.
+			if (!animated) velocity = 0f;
+		}
 		if (dragging) return;
 		float target = animated ? AUTO_SPEED : 0f;
 		// Schwung klingt in ~0,6 s auf die Eigendrehung ab.

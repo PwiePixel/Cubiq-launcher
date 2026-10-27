@@ -37,7 +37,23 @@ public final class Theme {
 		 * Launcher). {@link #event} bleibt davon unberührt (Funktionen).
 		 */
 		Boolean eventLook;
+		/**
+		 * Animationen im Launcher: {@code "reduced"} = Standbilder („Wie System“ löst der Launcher selbst auf);
+		 * fehlt (ältere Launcher) oder unbekannt = {@code "full"}.
+		 */
+		String motion;
 	}
+
+	/** Werte von {@code motion} in der Launcher-Datei. */
+	public static final String MOTION_FULL = "full";
+	public static final String MOTION_REDUCED = "reduced";
+
+	/**
+	 * Steht „Animationen“ im Launcher auf „Reduziert“? Nur ein zusätzliches Signal neben der eigenen Einstellung
+	 * „Animierter Hintergrund“ – die bleibt, wie der Spieler sie gesetzt hat (siehe
+	 * {@link dev.pwiepixel.cubiqclient.core.menus.MenuStyle#animated(boolean)}).
+	 */
+	private static volatile boolean launcherReducedMotion;
 
 	/** Design „Redstone“ (Standard), „Winternacht“ und „Fuchsbau“. */
 	public static final String REDSTONE = "redstone";
@@ -387,6 +403,7 @@ public final class Theme {
 				File parsed = new Gson().fromJson(reader, File.class);
 				if (parsed == null) return false;
 				set(of(parsed.theme, parsed.accent, parsed.accentColor, parsed.design));
+				motionFromLauncher(parsed.motion);
 				dev.pwiepixel.cubiqclient.core.halloween.Halloween.fromLauncher(parsed.event);
 				dev.pwiepixel.cubiqclient.core.halloween.Halloween.flickerFromLauncher(parsed.halloweenFlicker);
 				dev.pwiepixel.cubiqclient.core.halloween.Halloween.lookFromLauncher(parsed.eventLook);
@@ -396,6 +413,19 @@ public final class Theme {
 			// JsonParseException, IllegalStateException, ClassCastException … – das Thema bleibt Standard.
 			return false;
 		}
+	}
+
+	/**
+	 * Feld {@code motion} aus {@code launcher-theme.json}: {@value #MOTION_REDUCED} → reduzierte Bewegung, alles andere
+	 * (fehlt, ältere Launcher, unbekannt) → volle Bewegung.
+	 */
+	public static void motionFromLauncher(String motion) {
+		launcherReducedMotion = MOTION_REDUCED.equals(normalize(motion));
+	}
+
+	/** Will der Launcher reduzierte Bewegung? (Ohne Launcher-Datei: nein.) */
+	public static boolean launcherReducedMotion() {
+		return launcherReducedMotion;
 	}
 
 	/** Akzentfarbe aus dem Namen des Launchers, sonst aus dem Hex-Wert, sonst Cubiq-Grün. */

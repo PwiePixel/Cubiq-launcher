@@ -429,6 +429,7 @@ pub fn run() {
             push::push_remove_device,
             commands::settings::get_settings,
             commands::settings::update_settings,
+            commands::settings::set_system_reduced_motion,
             commands::instances::list_instances,
             commands::instances::get_instance,
             commands::instances::create_instance,

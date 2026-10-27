@@ -72,7 +72,7 @@ All features can be toggled in the Cubiq menu. Settings are stored in `config/cu
 | Partikel | Upper limit of particles at once, share of all particles (*Menge*), explosion particles, rain splashes and smoke off |
 | Welt-Details | Sky, stars, distance fog, rain/snow and texture animations (water, lava, fire …) off – each only where the version has a clean hook |
 | Clips & Aufnahme | **F9** saves the last seconds as a clip, **F10** starts/stops a recording (both changeable in the vanilla controls). The Cubiq Launcher records the game window – the mod only reports the key presses over a local link (see below). HUD element (movable): a subtle ring while the clip buffer runs (*Show buffer indicator*), "Clip saved (30 s)" for a few seconds – with a current Cubiq Launcher both (and the REC timer) appear in the launcher's overlay instead, so they never end up in a clip. Without the Cubiq Launcher (or with clips off there) the keys only show a hint |
-| Startbildschirm | Cubiq title screen: animated redstone circuit on deepslate, glowing pixel wordmark, buttons as redstone lamps (Einzelspieler/Mehrspieler/Einstellungen/Cubiq-Menü/Mods*/Beenden; keyboard: Tab/arrows + Enter, narrated where the version has a narrator); link "Klassischer Titelbildschirm"; setting *Animierter Hintergrund* switches to a still image; disable the module to always get the vanilla one. Servers are only reached through Mehrspieler |
+| Startbildschirm | Cubiq title screen: animated redstone circuit on deepslate, glowing pixel wordmark, buttons as redstone lamps (Einzelspieler/Mehrspieler/Einstellungen/Cubiq-Menü/Mods*/Beenden; keyboard: Tab/arrows + Enter, narrated where the version has a narrator); link "Klassischer Titelbildschirm"; setting *Animierter Hintergrund* switches to a still image (so does *Reduce animations* in the launcher, which leaves the setting itself alone – then the intro also appears without animation and loading screens stay still); disable the module to always get the vanilla one. Servers are only reached through Mehrspieler |
 
 *Mods only if ModMenu is installed. The Cubiq menu also has a **Resourcepacks** screen (search, filter all/enabled/available,
 toggle, priority ▲/▼, open folder; applied with one reload).
@@ -455,6 +455,9 @@ through them in game.
 
 The colours come from the launcher: before a start it writes `config/cubiqclient/launcher-theme.json` (theme and accent)
 into the instance, and the menu and the editor use that accent. Without the file the dark theme with Redstone red applies.
+The same file carries `"motion"` (`"full"` or `"reduced"`, the launcher's *Animations* setting with *Follow
+Windows/system* already resolved): `"reduced"` calms scenes, the intro and indeterminate progress like *Animierter
+Hintergrund* off, without changing that setting (`MenuStyle.animated()`); missing or unknown counts as `"full"`.
 
 ## Keys
 

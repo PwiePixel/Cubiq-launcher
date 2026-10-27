@@ -159,9 +159,11 @@ public final class Frost {
 	/**
 	 * Fortschritt als Eisbalken, der von links zufriert (Launcher: FrostProgress): Spur aus dunklem Eis mit Fugen,
 	 * Füllung eisblau mit heller Oberkante und wanderndem Glitzern, an der Gefrierkante ein Eiskristall.
-	 * {@code progress} &lt; 0 = unbekannt (ein Frostschimmer läuft durch).
+	 * {@code progress} &lt; 0 = unbekannt (ein Frostschimmer läuft durch). {@code animated} = false → ruhig: das Glitzern
+	 * steht, unbekannter Fortschritt liegt als gleichmäßiger, halb heller Schimmer auf dem ganzen Balken.
 	 */
-	public static void bar(Canvas c, int cx, int y, int maxWidth, float progress, float time) {
+	public static void bar(Canvas c, int cx, int y, int maxWidth, float progress, float time, boolean animated) {
+		if (!animated) time = 0f;
 		Theme t = Theme.get();
 		int w = Math.max(24, Math.min(maxWidth, 200));
 		int h = 6;
@@ -176,6 +178,10 @@ public final class Frost {
 		c.fill(x0, y + h - 1, x0 + w, y + h, 0x40000000);
 		int joint = ColorMath.withAlpha(a300, 0x24);
 		for (int jx = x0 + 13; jx < x0 + w; jx += 14) c.fill(jx, y, jx + 1, y + h, joint);
+		if (progress < 0 && !animated) {
+			c.fill(x0, y, x0 + w, y + h, ColorMath.withAlpha(a400, 0x70));
+			return;
+		}
 		if (progress < 0) {
 			// Unbekannter Fortschritt: ein Frostschimmer läuft durch.
 			int band = Math.max(12, w * 35 / 100);

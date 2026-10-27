@@ -2,6 +2,7 @@ package dev.pwiepixel.cubiqclient.core.ui.title;
 
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.intro.IntroGate;
+import dev.pwiepixel.cubiqclient.core.menus.MenuStyle;
 import dev.pwiepixel.cubiqclient.core.module.NewSince;
 import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
 import dev.pwiepixel.cubiqclient.core.skin.PlayerLook;
@@ -394,7 +395,8 @@ public final class TitleUi extends UiScreen {
 		introCheck();
 		offerCheck();
 		Theme t = Theme.get();
-		boolean animated = host.animated();
+		// Eigene Einstellung „Animierter Hintergrund“ – „Reduziert“ im Launcher beruhigt zusätzlich.
+		boolean animated = MenuStyle.animated(host.animated());
 		float time = animated ? (System.nanoTime() - EPOCH) / 1_000_000_000f : 1.35f;
 		boolean compact = height < 300;
 		lastHeight = height;

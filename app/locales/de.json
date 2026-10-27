@@ -2448,7 +2448,7 @@
       "eventLookTitle": "Event-Design anzeigen (z. B. Halloween)",
       "eventLookDescription": "Farben, Hintergründe, Ladebalken, Atmosphäre und Event-Symbol während eines Events. Aus = normales Aussehen. Kürbis-Suche, Süßes oder Saures und Belohnungen bleiben.",
       "motionTitle": "Animationen",
-      "motionDescription": "Animierter Hintergrund, Lauflichter, Seiten- und Dialog-Übergänge und Listen, die an ihren Platz gleiten. „Animationen reduzieren“ schaltet alles ab; „Wie Windows/System“ folgt der Animations-Einstellung von Windows bzw. des Desktops – auf optimierten oder Remote-PCs ist sie oft aus.",
+      "motionDescription": "Animierter Hintergrund, Lauflichter, Seiten- und Dialog-Übergänge und Listen, die an ihren Platz gleiten. „Animationen reduzieren“ schaltet alles ab; „Wie Windows/System“ folgt der Animations-Einstellung von Windows bzw. des Desktops – auf optimierten oder Remote-PCs ist sie oft aus. Der Cubiq Client folgt reduzierten Animationen ebenfalls – Startbildschirm und Ladebildschirme stehen dann still.",
       "motionModes": {
         "full": "Immer an",
         "system": "Wie Windows/System",

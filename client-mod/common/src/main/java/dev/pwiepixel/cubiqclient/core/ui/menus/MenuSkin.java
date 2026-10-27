@@ -103,6 +103,14 @@ public final class MenuSkin {
 		return seconds();
 	}
 
+	/**
+	 * Uhr der Hintergründe und Ladebilder: ohne Bewegung ({@link dev.pwiepixel.cubiqclient.core.menus.MenuStyle#animated()})
+	 * ein fester Zeitpunkt – das Bild steht.
+	 */
+	private static float sceneSeconds() {
+		return dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated() ? seconds() : 0f;
+	}
+
 	public static float averageMicros() {
 		return avgMicros;
 	}
@@ -124,7 +132,7 @@ public final class MenuSkin {
 	public static void background(Canvas c, int width, int height, boolean inWorld, int headerH, int footerTop) {
 		long start = System.nanoTime();
 		Theme t = Theme.get();
-		float time = seconds();
+		float time = sceneSeconds();
 		if (t.halloween) {
 			halloweenBackground(c, width, height, inWorld, headerH, footerTop, time);
 			measure(start);
@@ -598,7 +606,7 @@ public final class MenuSkin {
 			int avoidTop, int avoidBottom) {
 		long start = System.nanoTime();
 		Theme t = Theme.get();
-		float time = seconds();
+		float time = sceneSeconds();
 		dev.pwiepixel.cubiqclient.core.halloween.Jumpscares.LoadingView scare = null;
 		if (t.halloween) {
 			scare = dev.pwiepixel.cubiqclient.core.halloween.Jumpscares.get().loading(progress, System.currentTimeMillis());
@@ -648,24 +656,27 @@ public final class MenuSkin {
 
 	/**
 	 * Reihe Redstone-Lampen, mittig um {@code cx}. {@code progress} 0..1 = so viele leuchten; &lt; 0 = ein
-	 * Signal läuft durch die Reihe (Staub dazwischen leuchtet mit).
+	 * Signal läuft durch die Reihe (Staub dazwischen leuchtet mit). Ohne Bewegung
+	 * ({@link dev.pwiepixel.cubiqclient.core.menus.MenuStyle#animated()}) steht die Anzeige still – unbestimmt glimmen
+	 * dann alle Lampen gleich halb, wie der Ladebalken des Launchers bei reduzierter Bewegung.
 	 */
 	public static void lamps(Canvas c, int cx, int y, int maxWidth, float progress, float time) {
 		Theme t = Theme.get();
+		boolean animated = dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated();
 		if (t.halloween) {
 			// Halloween: „Mondlauf“ – der Mond nimmt mit dem Fortschritt zu.
 			int w = Math.max(40, maxWidth - 16);
-			MoonBar.draw(c, cx - w / 2, y - 1, w, progress, time, dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated());
+			MoonBar.draw(c, cx - w / 2, y - 1, w, progress, time, animated);
 			return;
 		}
 		if (t.winter) {
 			// Winternacht: ein Eisbalken, der von links zufriert, statt der Lampenreihe.
-			Frost.bar(c, cx, y + 3, maxWidth, progress, time);
+			Frost.bar(c, cx, y + 3, maxWidth, progress, time, animated);
 			return;
 		}
 		if (t.fox) {
 			// Fuchsbau: ein glimmender Ast, durch den sich die Glut von links frisst.
-			Ember.bar(c, cx, y + 3, maxWidth, progress, time);
+			Ember.bar(c, cx, y + 3, maxWidth, progress, time, animated);
 			return;
 		}
 		int n = 10;
@@ -674,18 +685,21 @@ public final class MenuSkin {
 		int total = n * size + (n - 1) * gap;
 		int x0 = cx - total / 2;
 		float lit = progress < 0 ? -1 : Math.max(0f, Math.min(1f, progress)) * n;
+		boolean still = lit < 0 && !animated;
 		float head = (time * 6f) % (n + 3) - 1.5f;
 		for (int i = 0; i < n; i++) {
 			int x = x0 + i * (size + gap);
 			float l;
-			if (lit < 0) {
+			if (still) {
+				l = 0.5f;
+			} else if (lit < 0) {
 				float d = Math.abs(i - head);
 				l = d < 1f ? 1f - d * 0.6f : (d < 2f ? 0.4f * (2f - d) : 0f);
 			} else {
 				l = Math.max(0f, Math.min(1f, lit - i));
 			}
 			if (i < n - 1) {
-				int dust = l > 0.5f ? t.dustOn : t.dustOff;
+				int dust = still ? ColorMath.lerp(t.dustOff, t.dustOn, 0.5f) : (l > 0.5f ? t.dustOn : t.dustOff);
 				c.fill(x + size, y + size / 2 - 1, x + size + gap, y + size / 2 + 1, dust);
 			}
 			Redstone.lamp(c, x, y, size, size, l, 0f);
@@ -731,7 +745,7 @@ public final class MenuSkin {
 			c.fill(0, 0, width, height, 0xFF0D1424);
 			for (int x = cell / 2; x < width; x += cell) c.fill(x, 0, x + 1, height, 0x0CBFE3FF);
 			for (int y = cell / 2; y < height; y += cell) c.fill(0, y, width, y + 1, 0x0CBFE3FF);
-			float drift = seconds() * 6f;
+			float drift = sceneSeconds() * 6f;
 			for (int i = 0; i < 40; i++) {
 				int fx = Math.floorMod(i * 97 + (int) (drift * (0.4f + (i % 3) * 0.3f)), Math.max(1, width));
 				int fy = Math.floorMod(i * 57 + (int) (drift * (1f + (i % 3))), Math.max(1, height));
@@ -792,7 +806,8 @@ public final class MenuSkin {
 		}
 		c.fill(0, horizon + block, width, height, 0xFF261C22);
 		c.fill(0, height * 92 / 100, width, height, 0xFF170D14);
-		float drift = seconds() * 6f;
+		float time = sceneSeconds();
+		float drift = time * 6f;
 		for (int i = 0; i < 36; i++) {
 			int fx = Math.floorMod(i * 97 + (int) (drift * (0.6f + (i % 3) * 0.3f)), Math.max(1, width));
 			int fy = Math.floorMod(i * 57 + (int) (drift * (0.5f + (i % 3) * 0.4f)), Math.max(1, height));
@@ -800,7 +815,7 @@ public final class MenuSkin {
 			c.fill(fx, fy, fx + (i % 4 == 0 ? 2 : 1), fy + 1, ColorMath.withAlpha(col, 0xC0));
 		}
 		for (int i = 0; i < 14; i++) {
-			float a = 0.5f + 0.5f * (float) Math.sin(seconds() * (0.8 + (i % 4) * 0.3) + i * 1.7);
+			float a = 0.5f + 0.5f * (float) Math.sin(time * (0.8 + (i % 4) * 0.3) + i * 1.7);
 			if (a < 0.4f) continue;
 			int fx = Math.floorMod(i * 211 + 37, Math.max(1, width));
 			int fy = horizon + 4 + Math.floorMod(i * 89, Math.max(1, height - horizon - 8));
@@ -818,7 +833,7 @@ public final class MenuSkin {
 		int horizon = height * 3 / 4;
 		for (int i = 0; i < sky.length; i++) c.fill(0, horizon * i / sky.length, width, horizon * (i + 1) / sky.length, sky[i]);
 		c.fill(0, horizon, width, height, sky[sky.length - 1]);
-		float time = seconds();
+		float time = sceneSeconds();
 		for (int i = 0; i < 70; i++) {
 			int sx = Math.floorMod(i * 977 + 31, Math.max(1, width));
 			int sy = Math.floorMod(i * 571 + 17, Math.max(1, horizon - 8));
