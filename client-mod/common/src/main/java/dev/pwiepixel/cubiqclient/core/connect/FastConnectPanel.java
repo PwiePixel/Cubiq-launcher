@@ -24,7 +24,7 @@ public final class FastConnectPanel implements ModulePanel {
 	public int draw(Canvas c, Hits hits, int x, int y, int w, int mx, int my, Runnable click) {
 		Theme t = Theme.get();
 		int textW = Math.min(w, 420);
-		int good = ColorMath.lerp(t.text, t.dustOn, 0.5f);
+		int good = ColorMath.lerp(t.text, t.accentText, 0.5f);
 		if (FastConnect.pausedReason() != null) {
 			y = Paint.paragraph(c, I18n.tr("fastConnect.panel.paused"), x, y, textW, LINE, t.textDim);
 		}

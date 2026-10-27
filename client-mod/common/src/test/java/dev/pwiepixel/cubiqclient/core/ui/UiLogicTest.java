@@ -169,7 +169,9 @@ class UiLogicTest {
 	@Test
 	void themeReadsLauncherValuesSafely() {
 		assertEquals(0xFF17A34A, Theme.of("dark", "emerald", null).accent);
-		assertEquals(0xFF000000, Theme.of("oled", "redstone", null).background);
+		// OLED wie im Launcher: Fenster base-900 (fast Schwarz), Mulden base-950 (Schwarz).
+		assertEquals(0xFF050706, Theme.of("oled", "redstone", null).background);
+		assertEquals(0xFF000000, Theme.of("oled", "redstone", null).deep);
 		assertTrue(Theme.of("light", "lapis", null).light);
 		// Unbekanntes Thema/Akzent → Standard
 		assertEquals(0xFF71A330, Theme.of("neon", "türkis", null).accent);

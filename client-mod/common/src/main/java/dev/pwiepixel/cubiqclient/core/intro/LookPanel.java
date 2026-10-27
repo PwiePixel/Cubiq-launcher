@@ -3,15 +3,13 @@ package dev.pwiepixel.cubiqclient.core.intro;
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
-import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel;
 
 /**
- * „Aussehen“ auf den Seiten „Startbildschirm“ und „Menü-Stil“ des Cubiq-Menüs: Design (Redstone | Winternacht | Fuchsbau) mit
+ * „Aussehen“ auf den Seiten „Startbildschirm“ und „Menü-Stil“ des Cubiq-Menüs: Design (Cubiq | Winternacht | Fuchsbau) mit
  * Vorschau, Farbschema und Akzent – dieselbe Wahl wie im ersten Schritt der Einführung.
  */
 public final class LookPanel implements ModulePanel {
@@ -41,9 +39,9 @@ public final class LookPanel implements ModulePanel {
 			boolean hover = inside(mouseX, mouseY, bx, ny, tw, bh);
 			String label = c.clip(I18n.tr("intro.theme." + theme), tw - 6);
 			if (sel) {
-				Redstone.lampButton(c, bx, ny, tw, bh, label, 1f, 0f);
+				Paint.accentButton(c, bx, ny, tw, bh, label, 1f, 0f);
 			} else {
-				Redstone.stone(c, bx, ny, tw, bh, hover ? t.surfaceHover : t.surfaceHigh, hover ? ColorMath.lerp(t.border, t.textDim, 0.5f) : t.border);
+				Paint.panel(c, bx, ny, tw, bh, hover ? t.surfaceHover : t.surfaceHigh, hover ? Paint.hoverEdge(t) : t.border);
 				c.text(label, bx + (tw - c.textWidth(label)) / 2, ny + (bh - 8) / 2, t.text, false);
 			}
 			hits.add(bx, ny, tw, bh, new Runnable() {
@@ -66,9 +64,7 @@ public final class LookPanel implements ModulePanel {
 			boolean sel = accent.equals(t.accentName);
 			boolean hover = inside(mouseX, mouseY, sx, ny, size, size);
 			int color = Theme.of("dark", accent, null).accent;
-			if (sel) Redstone.glow(c, sx, ny, size, size, color, 0.9f);
-			Redstone.block(c, sx, ny, size, size, sel ? 0xFFFFFFFF : (hover ? t.textDim : t.border));
-			c.fill(sx + 2, ny + 2, sx + size - 2, ny + size - 2, color);
+			LookPicker.swatch(c, sx, ny, size, color, sel, hover);
 			hits.add(sx, ny, size, size, new Runnable() {
 				@Override
 				public void run() {

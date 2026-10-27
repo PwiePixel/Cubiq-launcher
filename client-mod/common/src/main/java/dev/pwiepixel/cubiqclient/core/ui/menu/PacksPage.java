@@ -9,7 +9,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 import java.util.List;
@@ -142,7 +141,7 @@ public final class PacksPage {
 		}
 		if (message != null && System.currentTimeMillis() < messageUntil) {
 			int tx = x + aw + (undo != null ? 6 + Math.min(w / 2 - 6, c.textWidth(I18n.tr("packs.mod.undo")) + 20) : 0) + 8;
-			Paint.textClipped(c, message, tx, by + 5, x + w - tx, t.dustOn, false);
+			Paint.textClipped(c, message, tx, by + 5, x + w - tx, t.accentText, false);
 		}
 	}
 
@@ -152,17 +151,17 @@ public final class PacksPage {
 		boolean hover = inside(mx, my, x, y, w, h);
 		boolean isApplied = p.id.equals(applied);
 		int fill = sel ? ColorMath.lerp(t.surfaceHover, t.accent, 0.12f) : (hover ? t.surfaceHover : t.surface);
-		int edge = sel ? ColorMath.lerp(t.border, t.accent, 0.85f) : (hover ? ColorMath.lerp(t.border, t.textDim, 0.5f) : t.border);
-		if (sel) Redstone.glow(c, x, y, w, h, t.glow, 0.7f);
-		Redstone.stone(c, x, y, w, h, fill, edge);
+		int edge = sel ? ColorMath.lerp(t.border, t.accent, 0.85f) : (hover ? Paint.hoverEdge(t) : t.border);
+		if (sel) Paint.glow(c, x, y, w, h, t.glow, 0.7f);
+		Paint.panel(c, x, y, w, h, fill, edge);
 		int iconY = y + (h - 14) / 2;
 		if (h < 18) iconY = y + 1;
-		Redstone.iconWell(c, x + 5, iconY, 1, p.icon, sel ? t.dustOn : t.textDim, sel ? 1f : 0f);
+		Paint.iconWell(c, x + 5, iconY, 1, p.icon, sel ? t.accentText : t.textDim, sel ? 1f : 0f);
 		int tx = x + 24;
 		int tw = w - 30;
 		String name = p.name();
 		if (isApplied) {
-			dev.pwiepixel.cubiqclient.core.ui.Icons.draw(c, "check", x + w - 12, y + 4, 1, t.dustOn);
+			dev.pwiepixel.cubiqclient.core.ui.Icons.draw(c, "check", x + w - 12, y + 4, 1, t.accentText);
 			tw -= 10;
 		}
 		int nameColor = sel ? t.text : ColorMath.lerp(t.text, t.textDim, 0.2f);
@@ -183,7 +182,7 @@ public final class PacksPage {
 
 	private void preview(Canvas c, Hits hits, int x, int y, int w, int h, int mx, int my) {
 		Theme t = Theme.get();
-		Redstone.well(c, x, y, w, Math.max(20, h), t.border);
+		Paint.well(c, x, y, w, Math.max(20, h), t.border);
 		int ix = x + 6;
 		int iw = w - 12;
 		int ry = y + 6;
@@ -200,10 +199,10 @@ public final class PacksPage {
 		} else if (limit - ry < 40) {
 			// Wenig Platz: nur die Zahlen („+5 an · 3 aus · 6 verschoben“).
 			String summary = I18n.tr("packs.mod.summary", p.enable.size(), p.disable.size(), p.moved.size());
-			Paint.textClipped(c, summary, ix, ry, iw, t.dustOn, false);
+			Paint.textClipped(c, summary, ix, ry, iw, t.accentText, false);
 			ry += 12;
 		} else {
-			if (!p.enable.isEmpty() && ry < limit) ry = list(c, "+ " + I18n.tr("packs.mod.enable"), p.enable, ix, ry, iw, limit, t.dustOn);
+			if (!p.enable.isEmpty() && ry < limit) ry = list(c, "+ " + I18n.tr("packs.mod.enable"), p.enable, ix, ry, iw, limit, t.accentText);
 			if (!p.disable.isEmpty() && ry < limit) ry = list(c, "- " + I18n.tr("packs.mod.disable"), p.disable, ix, ry, iw, limit, t.textDim);
 			if (!p.moved.isEmpty() && ry < limit) {
 				ry = Paint.paragraph(c, I18n.tr("packs.mod.moved", p.moved.size()), ix, ry, iw, 10, t.text) + 2;

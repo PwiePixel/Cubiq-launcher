@@ -9,7 +9,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 import java.util.List;
@@ -163,7 +162,7 @@ public final class SocialOverlay {
 		switch (t.kind) {
 			case INVITE:
 			case WORLD_INVITE:
-				edge = th.lampOn;
+				edge = th.faceOn;
 				break;
 			case JOIN_REQUEST:
 				edge = th.accent;
@@ -173,25 +172,25 @@ public final class SocialOverlay {
 				edge = th.accent;
 				break;
 			case MODERATION:
-				edge = th.dustOn;
+				edge = th.accentText;
 				break;
 			case ONLINE:
-				edge = ColorMath.lerp(th.border, th.lampOn, 0.5f);
+				edge = ColorMath.lerp(th.border, th.faceOn, 0.5f);
 				break;
 			default:
 				edge = th.accent;
 		}
-		Redstone.stone(c, x, y, w, TOAST_H, ColorMath.withAlpha(th.surface, 235), edge);
+		Paint.panel(c, x, y, w, TOAST_H, ColorMath.withAlpha(th.surface, 235), edge);
 		int ix = x + 6;
 		int iy = y + 6;
 		if (t.faceUuid != null) {
 			int[] face = FaceCache.shared("Cubiq-Client").face(t.faceUuid, null);
 			Faces.draw(c, face, t.faceUuid, t.faceName, ix, iy, 2, true);
 		} else {
-			Redstone.block(c, ix - 1, iy - 1, 18, 18, th.bevelDark);
-			Icons.draw(c, icon(t.kind), ix, iy, 2, t.kind == Toasts.Kind.MODERATION ? th.dustOn : th.text);
+			Paint.block(c, ix - 1, iy - 1, 18, 18, th.bevelDark);
+			Icons.draw(c, icon(t.kind), ix, iy, 2, t.kind == Toasts.Kind.MODERATION ? th.accentText : th.text);
 		}
-		if (t.kind == Toasts.Kind.ONLINE) Redstone.pip(c, ix + 12, iy + 12, 6, 1f);
+		if (t.kind == Toasts.Kind.ONLINE) Paint.pip(c, ix + 12, iy + 12, 6, 1f);
 		int tx = x + 28;
 		int right = x + w - 6;
 		String title = t.count > 1 ? t.title + " (" + t.count + ")" : t.title;
@@ -201,11 +200,11 @@ public final class SocialOverlay {
 			String hint = I18n.tr(t.kind == Toasts.Kind.INVITE || t.kind == Toasts.Kind.WORLD_INVITE ? "social.toast.keyJoin"
 					: t.kind == Toasts.Kind.JOIN_REQUEST ? "hosting.toast.keyAnswer"
 					: t.kind == Toasts.Kind.MESSAGE ? "social.toast.keyReply" : "social.toast.keyOpen", quickKey);
-			Paint.textClipped(c, hint, tx, y + 25, right - tx, ColorMath.lerp(th.textDim, th.lampOn, 0.6f), false);
+			Paint.textClipped(c, hint, tx, y + 25, right - tx, ColorMath.lerp(th.textDim, th.faceOn, 0.6f), false);
 		}
-		// Redstone-Staub als Zeitbalken.
+		// Zeitbalken als feine Akzentlinie.
 		int barW = Math.round((w - 4) * t.remaining(now));
-		if (barW > 0) Redstone.dustH(c, x + 2, x + 2 + barW, y + TOAST_H - 3, th.dustOn, 0.4f);
+		if (barW > 0) Paint.lineH(c, x + 2, x + 2 + barW, y + TOAST_H - 3, th.accentText, 0.4f);
 	}
 
 	private static String icon(Toasts.Kind kind) {

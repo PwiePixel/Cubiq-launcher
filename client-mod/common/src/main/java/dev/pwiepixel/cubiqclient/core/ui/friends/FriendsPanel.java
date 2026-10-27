@@ -11,7 +11,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -21,8 +20,8 @@ import dev.pwiepixel.cubiqclient.core.ui.social.Kit;
 import java.util.List;
 
 /**
- * Freunde im Redstone-Stil als Fläche (für den Sozial-Bildschirm und den alten Freunde-Bildschirm): Liste mit
- * Gesicht, Online-Lampe und was gespielt wird; Anfragen (annehmen/ablehnen/zurückziehen) samt Umhang-Angeboten;
+ * Freunde im Cubiq-Stil als Fläche (für den Sozial-Bildschirm und den alten Freunde-Bildschirm): Liste mit
+ * Gesicht, Online-Punkt und was gespielt wird; Anfragen (annehmen/ablehnen/zurückziehen) samt Umhang-Angeboten;
  * Blockierte. Breit: drei Spalten nebeneinander, schmal: Unterreiter. Daten aus {@link Friends}.
  */
 public final class FriendsPanel {
@@ -106,7 +105,7 @@ public final class FriendsPanel {
 		FriendsView view = s == null ? null : s.view;
 		String status = statusText(online);
 		if (status != null) {
-			Redstone.well(c, x, y, w, h, t.border);
+			Paint.well(c, x, y, w, h, t.border);
 			List<String> lines = Paint.wrap(c, status, w - 20);
 			int ty = y + Math.max(8, h / 2 - lines.size() * 5);
 			for (String line : lines) {
@@ -135,7 +134,7 @@ public final class FriendsPanel {
 				});
 			}
 			if (incoming > 0 && tab != Tab.REQUESTS) {
-				Redstone.pip(c, x + tabW + 4 + tabW - 9, y + 4, 6, (float) (0.6 + 0.4 * Math.sin(System.currentTimeMillis() / 180.0)));
+				Paint.pip(c, x + tabW + 4 + tabW - 9, y + 4, 6, (float) (0.6 + 0.4 * Math.sin(System.currentTimeMillis() / 180.0)));
 			}
 			cy += 20;
 		}
@@ -175,10 +174,10 @@ public final class FriendsPanel {
 		int noteColor = t.textDim;
 		if (s.message != null && now - s.messageAt < MESSAGE_MS) {
 			note = I18n.tr(s.message, s.args);
-			noteColor = s.messageError ? t.dustOn : t.text;
+			noteColor = s.messageError ? t.danger : t.text;
 		} else if (s.error != null) {
 			note = I18n.tr(s.error);
-			noteColor = t.dustOn;
+			noteColor = t.accentText;
 		} else if (busy || (s.loading && view == null)) {
 			note = I18n.tr("friends.loading");
 		}
@@ -208,10 +207,10 @@ public final class FriendsPanel {
 		Theme t = Theme.get();
 		String label = block ? I18n.tr("friends.block") : I18n.tr("friends.add");
 		boolean hov = canSubmit && Kit.inside(mx, my, bx, cy, bw, 18);
-		Redstone.button(c, bx, cy, bw, 18, "", canSubmit && !block, hov);
-		Icons.draw(c, block ? "lock" : "plus", bx + 6, cy + 5, 1, canSubmit ? (block ? t.text : t.lampTextLit) : t.textDim);
+		Paint.button(c, bx, cy, bw, 18, "", canSubmit && !block, hov);
+		Icons.draw(c, block ? "lock" : "plus", bx + 6, cy + 5, 1, canSubmit ? (block ? t.text : t.faceTextOn) : t.textDim);
 		Paint.textClipped(c, label, bx + 18, cy + 5, bw - 20,
-				canSubmit ? (block ? t.text : Redstone.lampTextColor(1f)) : t.textDim, false);
+				canSubmit ? (block ? t.text : Paint.accentFaceText(1f)) : t.textDim, false);
 		if (canSubmit) {
 			kit.area(bx, cy, bw, 18, new Runnable() {
 				@Override
@@ -230,7 +229,7 @@ public final class FriendsPanel {
 		r[1] = y;
 		r[2] = w;
 		r[3] = h;
-		Redstone.well(c, x, y, w, h, t.border);
+		Paint.well(c, x, y, w, h, t.border);
 		int lx = x + 3;
 		int lw = w - 10;
 		int ly = y + 3;
@@ -291,11 +290,11 @@ public final class FriendsPanel {
 			if (ry + ROW_H < top || ry > top + h) continue;
 			final FriendsView.Friend f = list.get(i);
 			boolean hover = Kit.inside(mx, my, x, ry, w, ROW_H - 2) && Kit.inside(mx, my, x, top, w, h);
-			Redstone.stone(c, x, ry, w, ROW_H - 2, hover ? t.surfaceHover : t.surface,
+			Paint.panel(c, x, ry, w, ROW_H - 2, hover ? t.surfaceHover : t.surface,
 					f.inGame() ? ColorMath.lerp(t.border, t.accent, 0.5f) : t.border);
 			face(c, f.uuid, f.name, x + 4, ry + 3);
 			float lit = f.inGame() ? 1f : f.online() ? 0.45f : 0f;
-			Redstone.pip(c, x + 15, ry + 14, 6, lit);
+			Paint.pip(c, x + 15, ry + 14, 6, lit);
 			int tx = x + 26;
 			int right = x + w - 4;
 			if (f.uuid.equals(confirmUuid)) {
@@ -328,7 +327,7 @@ public final class FriendsPanel {
 				right = ib - 4;
 			}
 			Paint.textClipped(c, f.name, tx, ry + 3, right - tx, f.online() ? t.text : ColorMath.lerp(t.text, t.textDim, 0.4f), false);
-			Paint.textClipped(c, presence(f), tx, ry + 13, right - tx, f.inGame() ? t.dustOn : t.textDim, false);
+			Paint.textClipped(c, presence(f), tx, ry + 13, right - tx, f.inGame() ? t.accentText : t.textDim, false);
 		}
 		return list.size() * ROW_H;
 	}
@@ -361,7 +360,7 @@ public final class FriendsPanel {
 		});
 		String q = I18n.tr(action == Friends.Action.BLOCK ? "friends.confirm.block" : "friends.confirm.remove");
 		int qw = Math.min(c.textWidth(q), Math.max(0, (yes - 4 - (x + 26)) / 2));
-		Paint.textRight(c, c.clip(q, qw), yes - 4, ry + 8, t.dustOn, false);
+		Paint.textRight(c, c.clip(q, qw), yes - 4, ry + 8, t.accentText, false);
 		return yes - 8 - qw;
 	}
 
@@ -406,7 +405,7 @@ public final class FriendsPanel {
 			ry += SECTION_H;
 			for (final CapeShare.Offer o : offers) {
 				if (ry + ROW_H >= top && ry <= top + h) {
-					Redstone.stone(c, x, ry, w, ROW_H - 2, t.surface, ColorMath.lerp(t.border, t.dustOn, 0.5f));
+					Paint.panel(c, x, ry, w, ROW_H - 2, t.surface, ColorMath.lerp(t.border, t.accentText, 0.5f));
 					face(c, o.fromUuid, o.fromName, x + 4, ry + 3);
 					int right = x + w - 4;
 					int no = right - 14;
@@ -443,7 +442,7 @@ public final class FriendsPanel {
 			ry += SECTION_H;
 			for (final FriendsView.User u : view.incoming) {
 				if (ry + ROW_H >= top && ry <= top + h) {
-					Redstone.stone(c, x, ry, w, ROW_H - 2, t.surface, ColorMath.lerp(t.border, t.accent, 0.5f));
+					Paint.panel(c, x, ry, w, ROW_H - 2, t.surface, ColorMath.lerp(t.border, t.accent, 0.5f));
 					face(c, u.uuid, u.name, x + 4, ry + 3);
 					int right = x + w - 4;
 					int no = right - 14;
@@ -472,7 +471,7 @@ public final class FriendsPanel {
 			ry += SECTION_H;
 			for (final FriendsView.User u : view.outgoing) {
 				if (ry + ROW_H >= top && ry <= top + h) {
-					Redstone.stone(c, x, ry, w, ROW_H - 2, t.surface, t.border);
+					Paint.panel(c, x, ry, w, ROW_H - 2, t.surface, t.border);
 					face(c, u.uuid, u.name, x + 4, ry + 3);
 					int right = x + w - 4;
 					int cancel = right - 14;
@@ -513,7 +512,7 @@ public final class FriendsPanel {
 		}
 		for (final FriendsView.User u : list) {
 			if (ry + ROW_H >= top && ry <= top + h) {
-				Redstone.stone(c, x, ry, w, ROW_H - 2, t.surface, t.border);
+				Paint.panel(c, x, ry, w, ROW_H - 2, t.surface, t.border);
 				face(c, u.uuid, u.name, x + 4, ry + 3);
 				String label = I18n.tr("friends.unblock");
 				int bw = Math.min(w / 2, c.textWidth(label) + 14);

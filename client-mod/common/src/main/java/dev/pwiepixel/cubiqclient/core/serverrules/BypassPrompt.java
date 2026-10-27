@@ -9,7 +9,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
 
@@ -126,8 +125,8 @@ public final class BypassPrompt {
 		int h = 30 + question.size() * 10 + 4 + detail.size() * 10 + 10 + 18 + 10;
 		int x = (width - w) / 2;
 		int y = Math.max(4, (height - h) / 2);
-		Redstone.window(c, x, y, w, h);
-		Icons.draw(c, "lock", x + 10, y + 9, 1, t.dustOn);
+		Paint.window(c, x, y, w, h);
+		Icons.draw(c, "lock", x + 10, y + 9, 1, t.accentText);
 		c.text(c.clip(I18n.tr("serverrules.bypass.title"), w - 34), x + 24, y + 9, t.text, false);
 		c.fill(x + 1, y + 22, x + w - 1, y + 23, t.border);
 		int ty = y + 30;

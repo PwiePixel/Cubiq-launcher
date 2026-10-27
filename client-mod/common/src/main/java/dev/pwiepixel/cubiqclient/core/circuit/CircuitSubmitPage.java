@@ -6,7 +6,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -99,7 +98,7 @@ final class CircuitSubmitPage {
 		final Circuit parsed = cap.parsed;
 		// Vorschau
 		int ph = Math.min(90, Math.max(60, h / 3));
-		Redstone.well(c, x, yy, w - 6, ph, t.border);
+		Paint.well(c, x, yy, w - 6, ph, t.border);
 		// Scissor nie verschachteln (ab 1.20 ein Stapel, davor nicht): Seite beenden, Vorschau, Seite wieder an
 		c.noScissor();
 		c.scissor(x + 1, Math.max(yy + 1, y), x + w - 7, Math.max(Math.max(yy + 1, y), Math.min(yy + ph - 1, y + h)));
@@ -136,7 +135,7 @@ final class CircuitSubmitPage {
 			}
 			boolean sel = category == cat;
 			boolean hover = inside(mx, my, cx, yy, cw, 14);
-			Redstone.stone(c, cx, yy, cw, 14, sel ? ColorMath.lerp(t.surface, t.accent, 0.3f) : hover ? t.surfaceHover : t.surface,
+			Paint.panel(c, cx, yy, cw, 14, sel ? ColorMath.lerp(t.surface, t.accent, 0.3f) : hover ? t.surfaceHover : t.surface,
 					sel ? t.accent : t.border);
 			c.text(label, cx + 5, yy + 3, sel ? t.text : t.textDim, false);
 			hits.add(cx, yy, cw, 14, new Runnable() {
@@ -155,7 +154,7 @@ final class CircuitSubmitPage {
 		int lw = c.textWidth(langLabel) + 12;
 		int lx = x + w - 6 - lw;
 		boolean lh2 = inside(mx, my, lx, yy - 2, lw, 12);
-		Redstone.stone(c, lx, yy - 2, lw, 12, lh2 ? t.surfaceHover : t.surface, t.accent);
+		Paint.panel(c, lx, yy - 2, lw, 12, lh2 ? t.surfaceHover : t.surface, t.accent);
 		c.text(langLabel, lx + 6, yy, t.text, false);
 		hits.add(lx, yy - 2, lw, 12, new Runnable() {
 			@Override
@@ -258,8 +257,8 @@ final class CircuitSubmitPage {
 			String status = s.status == null ? "pending" : s.status;
 			int color = "approved".equals(status) ? 0xFF7CD88C : "rejected".equals(status) ? 0xFFFF8080 : 0xFFF0C050;
 			int rowH = s.reason != null && "rejected".equals(status) ? 34 : 22;
-			Redstone.stone(c, x, yy, w - 6, rowH - 2, t.surface, t.border);
-			Redstone.pip(c, x + 5, yy + 6, 7, "approved".equals(status) ? 1f : 0f);
+			Paint.panel(c, x, yy, w - 6, rowH - 2, t.surface, t.border);
+			Paint.pip(c, x + 5, yy + 6, 7, "approved".equals(status) ? 1f : 0f);
 			Paint.textClipped(c, s.name == null ? s.id : s.name, x + 17, yy + 3, w - 100, t.text, false);
 			Paint.textRight(c, I18n.tr("circuits.mine.status." + (status.matches("pending|approved|rejected") ? status : "pending")),
 					x + w - 12, yy + 3, color, false);
@@ -282,13 +281,13 @@ final class CircuitSubmitPage {
 
 	private void input(Canvas c, Hits hits, final TextInput input, int x, int y, int w, int mx, int my) {
 		Theme t = Theme.get();
-		Redstone.well(c, x, y, w, 16, input.focused() ? t.accent : t.border);
+		Paint.well(c, x, y, w, 16, input.focused() ? t.accent : t.border);
 		String text = input.text();
 		while (c.textWidth(text) > w - 10 && text.length() > 1) text = text.substring(1);
 		c.text(text, x + 4, y + 4, t.text, false);
 		if (input.focused() && (System.currentTimeMillis() / 500) % 2 == 0) {
 			int caret = Math.min(x + 4 + c.textWidth(text), x + w - 3);
-			c.fill(caret, y + 4, caret + 1, y + 12, t.dustOn);
+			c.fill(caret, y + 4, caret + 1, y + 12, t.accentText);
 		}
 		hits.add(x, y, w, 16, new Runnable() {
 			@Override
@@ -312,7 +311,7 @@ final class CircuitSubmitPage {
 				}
 			});
 		} else {
-			Redstone.stone(c, x, y, w, 17, t.surface, t.border);
+			Paint.panel(c, x, y, w, 17, t.surface, t.border);
 			Paint.textCentered(c, c.clip(label, w - 10), x + w / 2, y + 5, ColorMath.withAlpha(t.textDim, 140), false);
 		}
 		return y + 21;

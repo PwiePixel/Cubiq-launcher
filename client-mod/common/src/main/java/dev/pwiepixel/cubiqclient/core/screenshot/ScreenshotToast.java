@@ -6,7 +6,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
@@ -163,7 +162,7 @@ public final class ScreenshotToast {
 		c.push();
 		c.raise(200f);
 		Paint.shadow(c, x, y, w, h, 3, 0.35f * vis);
-		Redstone.stone(c, x, y, w, h, t.surface, hovered ? t.accent : ColorMath.lerp(t.border, t.accent, 0.5f));
+		Paint.panel(c, x, y, w, h, t.surface, hovered ? t.accent : ColorMath.lerp(t.border, t.accent, 0.5f));
 		int ix = x + PAD;
 		int iy = y + PAD;
 		c.fill(ix, iy, ix + imgW, iy + imgH, 0xFF0B0909);
@@ -174,10 +173,10 @@ public final class ScreenshotToast {
 			Icons.draw(c, "image", ix + imgW / 2 - 8, iy + imgH / 2 - 8, 2, t.textDim);
 		}
 		boolean fav = owner.isFavorite(file);
-		if (fav && !hovered) Icons.draw(c, "heart", ix + imgW - 11, iy + 3, 1, t.dustOn);
-		// Zeitbalken (Redstone-Staub) an der Unterkante des Bildes.
+		if (fav && !hovered) Icons.draw(c, "heart", ix + imgW - 11, iy + 3, 1, t.accentText);
+		// Zeitbalken (feine Akzentlinie) an der Unterkante des Bildes.
 		int barW = Math.round(imgW * Math.max(0f, 1f - elapsed / (float) duration));
-		if (barW > 0) Redstone.dustH(c, ix, ix + barW, iy + imgH - 2, t.dustOn, hovered ? 1f : 0.4f);
+		if (barW > 0) Paint.lineH(c, ix, ix + barW, iy + imgH - 2, t.accentText, hovered ? 1f : 0.4f);
 
 		String sub = mouseFree ? name : hint;
 		Paint.textClipped(c, title, x + PAD + 1, iy + imgH + 3, w - PAD * 2 - 2, t.text, false);
@@ -198,9 +197,9 @@ public final class ScreenshotToast {
 				boolean enabled = enabled(CORNERS[i]);
 				String icon = icon(CORNERS[i], fav);
 				if (enabled) {
-					Redstone.iconButton(c, bx, by, BUTTON, icon, over, CORNERS[i] == Screenshots.Action.FAVORITE && fav);
+					Paint.iconButton(c, bx, by, BUTTON, icon, over, CORNERS[i] == Screenshots.Action.FAVORITE && fav);
 				} else {
-					Redstone.stone(c, bx, by, BUTTON, BUTTON, t.surface, t.border);
+					Paint.panel(c, bx, by, BUTTON, BUTTON, t.surface, t.border);
 					Icons.draw(c, icon, bx + 2, by + 2, 2, t.textDim);
 				}
 			}
@@ -259,7 +258,7 @@ public final class ScreenshotToast {
 		int tx = Math.max(2, Math.min(x + w - tw, screenW - tw - 2));
 		c.push();
 		c.raise(50f);
-		Redstone.stone(c, tx, y, tw, 13, t.surfaceHigh, t.border);
+		Paint.panel(c, tx, y, tw, 13, t.surfaceHigh, t.border);
 		c.text(text, tx + 4, y + 3, t.text, false);
 		c.flush();
 		c.pop();
@@ -284,7 +283,7 @@ public final class ScreenshotToast {
 		c.push();
 		c.raise(260f);
 		Paint.shadow(c, x, y, w, h, 3, 0.4f);
-		Redstone.stone(c, x, y, w, h, t.surface, ColorMath.lerp(t.border, t.accent, 0.6f));
+		Paint.panel(c, x, y, w, h, t.surface, ColorMath.lerp(t.border, t.accent, 0.6f));
 		c.fill(x + 3, y + 3, x + w - 3, y + h - 3, 0xFF0B0909);
 		if (ref != null && c.images()) fit(c, ref, x + 3, y + 3, w - 6, h - 6, 0xFFFFFFFF);
 		else Paint.textCentered(c, I18n.tr("clips.loading"), x + w / 2, y + h / 2 - 4, t.textDim, false);

@@ -148,8 +148,8 @@ public final class MinimapRenderer {
 		if (m.minimapCompass.get()) drawCompass(c, e, cx, cy, radius, round, theta, scale, theme);
 		// Eigene Position: Pfeil in Blickrichtung (bei gedrehter Karte immer nach oben).
 		float arrowRot = theta + yawRad + (float) Math.PI;
-		if (!e.sprites().draw(c, MapSprites.ARROW, cx, cy, 10f, arrowRot, 0xFF000000 | (theme.dustOn & 0xFFFFFF), scale)) {
-			c.fill((int) cx - 2, (int) cy - 2, (int) cx + 2, (int) cy + 2, theme.dustOn);
+		if (!e.sprites().draw(c, MapSprites.ARROW, cx, cy, 10f, arrowRot, 0xFF000000 | (theme.accentText & 0xFFFFFF), scale)) {
+			c.fill((int) cx - 2, (int) cy - 2, (int) cx + 2, (int) cy + 2, theme.accentText);
 		}
 		drawInfo(c, e, pad * 2 + size, pad * 2 + size + 1, preview, live);
 		e.recordDraw(System.nanoTime() - t0);
@@ -510,7 +510,7 @@ public final class MinimapRenderer {
 			float lx = cx + (float) x, ly = cy + (float) y;
 			e.sprites().draw(c, MapSprites.BADGE, lx, ly, 9f, 0f, 0xF0141217, scale);
 			String s = letters[i];
-			int color = i == 0 ? (0xFF000000 | (theme.dustOn & 0xFFFFFF)) : 0xFFE6E2DA;
+			int color = i == 0 ? (0xFF000000 | (theme.accentText & 0xFFFFFF)) : 0xFFE6E2DA;
 			c.push();
 			c.translate(lx, ly);
 			c.scale(0.75f);
@@ -531,7 +531,7 @@ public final class MinimapRenderer {
 		c.fill(x, y + h - 1, x + w, y + h, 0xFF0B0A0D);
 		c.fill(x, y, x + 1, y + h, 0xFF0B0A0D);
 		c.fill(x + w - 1, y, x + w, y + h, 0xFF0B0A0D);
-		int dust = 0xFF000000 | (t.dustOn & 0xFFFFFF);
+		int dust = 0xFF000000 | (t.accentText & 0xFFFFFF);
 		int in = pad - 1;
 		c.fill(in, in, w - in, in + 1, dust);
 		c.fill(in, h - in - 1, w - in, h - in, dust);

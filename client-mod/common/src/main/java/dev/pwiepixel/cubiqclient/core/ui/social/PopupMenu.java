@@ -5,7 +5,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 import java.util.ArrayList;
@@ -105,7 +104,7 @@ public final class PopupMenu {
 		c.push();
 		c.raise(200f);
 		Paint.shadow(c, x, y, w, h, 2, 0.6f);
-		Redstone.stone(c, x, y, w, h, t.surfaceHigh, t.border);
+		Paint.panel(c, x, y, w, h, t.surfaceHigh, t.border);
 		// Klicks im Menü, die keinen Eintrag treffen, nicht durchreichen.
 		kit.quiet(x, y, w, h, new Runnable() {
 			@Override
@@ -121,7 +120,7 @@ public final class PopupMenu {
 				int bx = rx + i * 12;
 				boolean hov = Kit.inside(mx, my, bx, cy, 12, REACT_H);
 				boolean own = mine.contains(id);
-				if (own) Redstone.block(c, bx, cy, 12, REACT_H, ColorMath.withAlpha(t.accent, 90));
+				if (own) Paint.block(c, bx, cy, 12, REACT_H, ColorMath.withAlpha(t.accent, 90));
 				else if (hov) c.fill(bx, cy, bx + 12, cy + REACT_H, t.surfaceHover);
 				Icons.draw(c, Reactions.icon(id), bx + 2, cy + 4, 1, Reactions.color(id));
 				kit.area(bx, cy, 12, REACT_H, new Runnable() {
@@ -144,7 +143,7 @@ public final class PopupMenu {
 			}
 			boolean hov = Kit.inside(mx, my, x + 1, cy, w - 2, ROW_H);
 			if (hov) c.fill(x + 1, cy, x + w - 1, cy + ROW_H, t.surfaceHover);
-			int color = e.danger ? t.dustOn : t.text;
+			int color = e.danger ? t.danger : t.text;
 			if (e.icon != null) Icons.draw(c, e.icon, x + 5, cy + 3, 1, color);
 			Paint.textClipped(c, e.label, x + 18, cy + 3, w - 22, color, false);
 			kit.area(x + 1, cy, w - 2, ROW_H, new Runnable() {

@@ -11,7 +11,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
@@ -370,7 +369,7 @@ public final class BugReportPage {
 	private int drawDone(Canvas c, Hits hits, final BugReports br, int x, int yy, int cw, int mx, int my) {
 		Theme t = Theme.get();
 		final BugReportBody.Created created = br.created();
-		Redstone.pip(c, x, yy + 1, 7, 1f);
+		Paint.pip(c, x, yy + 1, 7, 1f);
 		yy = Paint.paragraph(c, I18n.tr("bugreport.done.number", created == null ? "?" : created.number), x + 12, yy, cw - 12, LH, OK);
 		yy += 4;
 		if (created != null && created.url != null) {
@@ -414,7 +413,7 @@ public final class BugReportPage {
 		BugReports.Access a = br.access();
 		if (a == BugReports.Access.READY) {
 			String name = br.accountName();
-			Redstone.pip(c, x, yy + 1, 6, 1f);
+			Paint.pip(c, x, yy + 1, 6, 1f);
 			Paint.textClipped(c, I18n.tr("bugreport.access.ready", name == null ? "?" : name), x + 10, yy, cw - 10, Theme.get().textDim,
 					false);
 			return yy + LH;
@@ -428,12 +427,12 @@ public final class BugReportPage {
 		Theme t = Theme.get();
 		c.text(text, x, yy, t.textDim, false);
 		String n = count + "/" + max;
-		Paint.textRight(c, n, x + cw, yy, count > max ? t.dustOn : ColorMath.withAlpha(t.textDim, 170), false);
+		Paint.textRight(c, n, x + cw, yy, count > max ? t.danger : ColorMath.withAlpha(t.textDim, 170), false);
 	}
 
 	private void singleLine(Canvas c, Hits hits, final TextInput input, final ChatInput other, String hint, int x, int y, int w) {
 		Theme t = Theme.get();
-		Redstone.well(c, x, y, w, 16, input.focused() ? t.accent : t.border);
+		Paint.well(c, x, y, w, 16, input.focused() ? t.accent : t.border);
 		String text = input.text();
 		if (text.isEmpty() && !input.focused()) {
 			Paint.textClipped(c, hint, x + 4, y + 4, w - 8, ColorMath.withAlpha(t.textDim, 170), false);
@@ -446,7 +445,7 @@ public final class BugReportPage {
 			c.text(shown, x + 4, y + 4, t.text, false);
 			if (input.focused() && (System.currentTimeMillis() / 500) % 2 == 0) {
 				int caret = Math.min(x + 4 + c.textWidth(text.substring(start, before.length())), x + w - 3);
-				c.fill(caret, y + 3, caret + 1, y + 13, t.dustOn);
+				c.fill(caret, y + 3, caret + 1, y + 13, t.accentText);
 			}
 		}
 		hits.add(x, y, w, 16, new Runnable() {
@@ -465,7 +464,7 @@ public final class BugReportPage {
 		List<int[]> lines = descWrap.get(c, text, w - 10);
 		int visible = Math.max(5, Math.min(9, lines.size()));
 		int fh = visible * LH + 8;
-		Redstone.well(c, x, y, w, fh, input.focused() ? t.accent : t.border);
+		Paint.well(c, x, y, w, fh, input.focused() ? t.accent : t.border);
 		if (text.isEmpty() && !input.focused()) {
 			Paint.paragraph(c, I18n.tr("bugreport.field.descriptionHint"), x + 5, y + 5, w - 10, LH, ColorMath.withAlpha(t.textDim, 170));
 		}
@@ -486,11 +485,11 @@ public final class BugReportPage {
 			if (input.focused() && i == cursorLine && (System.currentTimeMillis() / 500) % 2 == 0) {
 				int col = Math.max(r[0], Math.min(input.cursor(), r[1]));
 				int cx = x + 5 + c.textWidth(text.substring(r[0], col));
-				c.fill(cx, ty - 1, cx + 1, ty + 9, t.dustOn);
+				c.fill(cx, ty - 1, cx + 1, ty + 9, t.accentText);
 			}
 			ty += LH;
 		}
-		if (text.isEmpty() && input.focused() && (System.currentTimeMillis() / 500) % 2 == 0) c.fill(x + 5, y + 4, x + 6, y + 14, t.dustOn);
+		if (text.isEmpty() && input.focused() && (System.currentTimeMillis() / 500) % 2 == 0) c.fill(x + 5, y + 4, x + 6, y + 14, t.accentText);
 		hits.add(x, y, w, fh, new Runnable() {
 			@Override
 			public void run() {
@@ -505,7 +504,7 @@ public final class BugReportPage {
 			Runnable toggle) {
 		Theme t = Theme.get();
 		boolean hover = inside(mx, my, x, y, w, 16);
-		if (hover) Redstone.block(c, x - 2, y, w + 4, 16, t.surfaceHover);
+		if (hover) Paint.block(c, x - 2, y, w + 4, 16, t.surfaceHover);
 		Paint.toggle(c, x, y + 3, 22, 11, on ? 1f : 0f, hover);
 		int lw = c.textWidth(label);
 		int maxLabel = Math.max(40, w - 28 - 60);
@@ -532,7 +531,7 @@ public final class BugReportPage {
 			if (cw < 20) break;
 			boolean sel = br.useCrashReport == crash;
 			boolean hover = inside(mx, my, cx, y, cw, 13);
-			Redstone.stone(c, cx, y, cw, 13, sel ? ColorMath.lerp(t.surface, t.accent, 0.3f) : hover ? t.surfaceHover : t.surface,
+			Paint.panel(c, cx, y, cw, 13, sel ? ColorMath.lerp(t.surface, t.accent, 0.3f) : hover ? t.surfaceHover : t.surface,
 					sel ? t.accent : t.border);
 			Paint.textClipped(c, label, cx + 5, y + 3, cw - 8, sel ? t.text : t.textDim, false);
 			hits.add(cx, y, cw, 13, click(new Runnable() {
@@ -640,7 +639,7 @@ public final class BugReportPage {
 	private int logBox(Canvas c, Hits hits, String log, int x, int y, int w, int top, int h, int mx, int my) {
 		Theme t = Theme.get();
 		int bh = Math.max(60, Math.min(190, h - 40));
-		Redstone.well(c, x, y, w, bh, t.border);
+		Paint.well(c, x, y, w, bh, t.border);
 		List<int[]> lines = logWrap.get(c, log, w - 12);
 		int contentH = lines.size() * 9;
 		logMaxScroll = Math.max(0, contentH - (bh - 8));
@@ -697,7 +696,7 @@ public final class BugReportPage {
 			Paint.button(c, x, y, w, 17, c.clip(label, w - 10), primary, inside(mx, my, x, y, w, 17));
 			hits.add(x, y, w, 17, click(action));
 		} else {
-			Redstone.stone(c, x, y, w, 17, t.surface, t.border);
+			Paint.panel(c, x, y, w, 17, t.surface, t.border);
 			Paint.textCentered(c, c.clip(label, w - 10), x + w / 2, y + 5, ColorMath.withAlpha(t.textDim, 140), false);
 		}
 		return y + 21;

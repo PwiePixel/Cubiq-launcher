@@ -17,7 +17,7 @@ public final class Faces {
 	 */
 	public static void draw(Canvas c, int[] face, String key, String name, int x, int y, int px, boolean frame) {
 		int size = 8 * px;
-		if (frame) Redstone.block(c, x - 1, y - 1, size + 2, size + 2, Theme.get().bevelDark);
+		if (frame) Paint.block(c, x - 1, y - 1, size + 2, size + 2, Theme.get().bevelDark);
 		if (face == null || face.length < 128) {
 			int hash = key == null ? 0 : key.hashCode();
 			int base = 0xFF000000 | (hash & 0x3F3F3F) | 0x202020;

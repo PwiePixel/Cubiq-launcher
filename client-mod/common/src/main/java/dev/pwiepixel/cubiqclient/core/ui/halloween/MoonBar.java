@@ -4,7 +4,7 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 
 /**
- * Ladebalken „Mondlauf“ (ersetzt Lampenreihe, Eisbalken und Hexe, solange Halloween läuft): der Mond wandert über eine
+ * Ladebalken „Mondlauf“ (ersetzt Ladebalken, Eisbalken und glimmenden Ast, solange Halloween läuft): der Mond wandert über eine
  * silberne Schiene und nimmt dabei zu – 0 % Neumond, 100 % Vollmond mit pulsierendem Hof. Unbestimmt (−1) gleitet er
  * hin und her und durchläuft dabei die Phasen (wie {@code moonPhase}/{@code setBar} im Entwurf).
  */

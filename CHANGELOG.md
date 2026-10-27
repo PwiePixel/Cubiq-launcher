@@ -35,15 +35,22 @@ How this file is written:
 
 ### English
 
-- **The Cubiq Client gets the launcher's look.** Menus, title screen and intro of the in-game mod now use the same calm green design as the launcher: dark surfaces, flat rounded buttons and the Cubiq logo instead of the redstone look.
 - **Clearer message when a shared mod file is missing.** Joining a friend's world with mods: if the host doesn't share a file (anymore), you now see that instead of "connection closed".
 - **Green where it belongs.** The clip storage bar and presets without their own color are now Cubiq green instead of red, and the controls editor points to the green resize corner.
 
 ### Deutsch
 
-- **Der Cubiq Client bekommt den Look des Launchers.** Menüs, Titelbildschirm und Intro der Ingame-Mod haben jetzt dasselbe ruhige, grüne Design wie der Launcher: dunkle Flächen, flache abgerundete Knöpfe und das Cubiq-Logo statt des Redstone-Looks.
 - **Klarere Meldung, wenn eine geteilte Mod-Datei fehlt.** Welt eines Freundes mit Mods beitreten: Teilt der Host eine Datei nicht (mehr), steht das jetzt da statt „Verbindung getrennt“.
 - **Grün, wo es hingehört.** Der Speicherplatz-Balken der Clips und Presets ohne eigene Farbe sind jetzt Cubiq-grün statt rot, und der Steuerungs-Editor nennt die grüne Ecke zum Vergrößern.
+
+## 0.1.1 – 2026-10-27
+<!-- banner: accent=#71a330 -->
+
+### English
+- **The Cubiq Client gets the launcher's look.** Menus, title screen and intro of the in-game mod now use the same calm green design as the launcher: dark surfaces, flat rounded buttons and the Cubiq logo instead of the redstone look.
+
+### Deutsch
+- **Der Cubiq Client bekommt den Look des Launchers.** Menüs, Titelbildschirm und Intro der Ingame-Mod haben jetzt dasselbe ruhige, grüne Design wie der Launcher: dunkle Flächen, flache abgerundete Knöpfe und das Cubiq-Logo statt des Redstone-Looks.
 
 ## 0.1.0 – 2026-10-27 – Hello, Cubiq | Hallo, Cubiq
 <!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png -->

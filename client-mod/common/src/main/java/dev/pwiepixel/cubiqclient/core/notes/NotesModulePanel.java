@@ -4,7 +4,6 @@ import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel;
 
@@ -31,12 +30,12 @@ public final class NotesModulePanel implements ModulePanel {
 			return Paint.paragraph(c, I18n.tr("notes.sync.localOnly"), x, ty, Math.min(w, 360), 10, t.textDim) + 4;
 		}
 		float lit = sync.status() == NotesSync.Status.SYNCED ? 1f : sync.status() == NotesSync.Status.SYNCING ? 0.6f : 0f;
-		Redstone.pip(c, x, ty + 1, 7, lit);
+		Paint.pip(c, x, ty + 1, 7, lit);
 		Paint.textClipped(c, statusText(sync), x + 12, ty, w - 12, t.text, false);
 		ty += 12;
 		if (sync.rejectReason() != null) {
 			ty = Paint.paragraph(c, I18n.tr(NotesSyncApi.Result.LIMIT.equals(sync.rejectReason()) ? "notes.sync.limit" : "notes.sync.invalid"),
-					x, ty, Math.min(w, 360), 10, t.dustOn);
+					x, ty, Math.min(w, 360), 10, t.accentText);
 		}
 		return Paint.paragraph(c, I18n.tr("notes.sync.what"), x, ty + 2, Math.min(w, 360), 10, t.textDim) + 4;
 	}

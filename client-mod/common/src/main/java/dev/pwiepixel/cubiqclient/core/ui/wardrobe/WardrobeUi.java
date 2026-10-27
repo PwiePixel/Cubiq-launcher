@@ -25,7 +25,6 @@ import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
@@ -46,7 +45,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Die Garderobe im Redstone-Stil (Vorbild Essential): links Kategorien (Skins, Outfits, Umhänge, Emotes), in der
+ * Die Garderobe im Cubiq-Stil (Vorbild Essential): links Kategorien (Skins, Outfits, Umhänge, Emotes), in der
  * Mitte das Raster mit „Favoriten“ und „Bibliothek“ (Herz zum Merken, „+“ zum Hinzufügen), rechts die große
  * 3D-Vorschau mit den Aktionen. Der volle Skin-Editor ({@link SkinEditorView}) übernimmt bei „Bearbeiten“ das Fenster.
  *
@@ -55,7 +54,7 @@ import java.util.Set;
  * zeigt auch, wer ihn hat (entziehen). Die Daten dafür kommen aus {@link Friends} (Cubiq-Thread).
  *
  * <p>Skins: ganz vorn in der Bibliothek steht immer die Karte „Aktueller Skin“ (was das Konto gerade trägt, wie im
- * Launcher) – nur sie hat die Lampe „getragen“; ein gleicher Bibliotheks-Skin zeigt „= aktuell“ (siehe
+ * Launcher) – nur sie hat den Punkt „getragen“; ein gleicher Bibliotheks-Skin zeigt „= aktuell“ (siehe
  * {@link CurrentSkin}). Der Leuchtrahmen ist nur die Auswahl für die Vorschau.
  *
  * <p>Versionsunabhängig; Minecraft kommt nur über {@link WardrobeHost}, alle Daten über {@link WardrobeService}
@@ -426,7 +425,7 @@ public final class WardrobeUi extends UiScreen {
 
 		c.push();
 		c.raise(300f);
-		Redstone.window(c, px, py, pw, ph);
+		Paint.window(c, px, py, pw, ph);
 		header(c, s, px, py, pw, mx, my);
 		int bx = px + PAD;
 		int by = py + HEADER_H + GAP;
@@ -563,7 +562,7 @@ public final class WardrobeUi extends UiScreen {
 		c.push();
 		c.raise(80f);
 		c.fill(0, 0, width, height, 0x60000000);
-		Redstone.window(c, x, y, w, h);
+		Paint.window(c, x, y, w, h);
 		Paint.textClipped(c, I18n.tr("wardrobe.share.title", cape.name), x + 8, y + 7, w - 30, t.text, false);
 		int cs = 14;
 		Paint.iconButton(c, x + w - cs - 5, y + 4, cs, "close", inside(mx, my, x + w - cs - 5, y + 4, cs, cs), false);
@@ -588,7 +587,7 @@ public final class WardrobeUi extends UiScreen {
 		shareListRect[1] = ly;
 		shareListRect[2] = lw;
 		shareListRect[3] = lh;
-		Redstone.well(c, lx, ly, lw, lh, t.border);
+		Paint.well(c, lx, ly, lw, lh, t.border);
 		c.scissor(lx + 1, ly + 1, lx + lw - 1, ly + lh - 1);
 		hits.clip(lx + 1, ly + 1, lw - 2, lh - 2);
 		int iy = ly + 4 - shareScroll;
@@ -672,7 +671,7 @@ public final class WardrobeUi extends UiScreen {
 
 	private void rowBox(Canvas c, int x, int y, int w, int mx, int my) {
 		Theme t = Theme.get();
-		Redstone.stone(c, x, y, w, 18, inside(mx, my, x, y, w, 18) ? t.surfaceHover : t.surface, t.border);
+		Paint.panel(c, x, y, w, 18, inside(mx, my, x, y, w, 18) ? t.surfaceHover : t.surface, t.border);
 	}
 
 	/** Ergebnisse des Dienstes übernehmen (neuer Skin auswählen, Meldungen). */
@@ -716,8 +715,7 @@ public final class WardrobeUi extends UiScreen {
 
 	private void header(Canvas c, WardrobeService.State s, int px, int py, int pw, int mx, int my) {
 		Theme t = Theme.get();
-		c.fill(px + 1, py + 2, px + pw - 1, py + HEADER_H, t.surfaceHigh);
-		c.fill(px + 1, py + HEADER_H - 1, px + pw - 1, py + HEADER_H, t.border);
+		Paint.windowHeader(c, px, py, pw, HEADER_H, t.surfaceHigh, t.border);
 		int lx = px + PAD + 2;
 		int ly = py + (HEADER_H - PixelFont.HEIGHT * 2) / 2;
 		List<int[]> rects = PixelFont.rects("CUBIQ");
@@ -732,10 +730,10 @@ public final class WardrobeUi extends UiScreen {
 		int statusColor = t.textDim;
 		if (s.task == WardrobeService.Task.LOADING || s.task == WardrobeService.Task.SYNCING) {
 			status = I18n.tr("wardrobe.status.syncing");
-			statusColor = t.dustOn;
+			statusColor = t.accentText;
 		} else if (s.busy()) {
 			status = I18n.tr("wardrobe.status.working");
-			statusColor = t.dustOn;
+			statusColor = t.accentText;
 		} else {
 			status = I18n.tr(s.cubiq ? "wardrobe.status.synced" : "wardrobe.status.local");
 		}
@@ -743,7 +741,7 @@ public final class WardrobeUi extends UiScreen {
 		int sw = Math.min(c.textWidth(status), maxStatus);
 		if (sw > 30) {
 			Paint.textRight(c, c.clip(status, sw), closeX - 8, py + (HEADER_H - 8) / 2, statusColor, false);
-			Redstone.pip(c, closeX - 8 - sw - 10, py + (HEADER_H - 6) / 2, 6, s.busy() ? (float) (0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 150.0)) : (s.cubiq ? 1f : 0.15f));
+			Paint.pip(c, closeX - 8 - sw - 10, py + (HEADER_H - 6) / 2, 6, s.busy() ? (float) (0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 150.0)) : (s.cubiq ? 1f : 0.15f));
 		} else {
 			sw = 0;
 		}
@@ -765,12 +763,12 @@ public final class WardrobeUi extends UiScreen {
 			boolean active = cat == category;
 			boolean hov = inside(mx, my, x, cy, w, rowH);
 			if (active) {
-				Redstone.glow(c, x, cy, w, rowH, t.glow, 0.3f);
-				Redstone.stone(c, x, cy, w, rowH, ColorMath.lerp(t.surface, t.accent, 0.12f), ColorMath.lerp(t.border, t.accent, 0.7f));
+				Paint.glow(c, x, cy, w, rowH, t.glow, 0.3f);
+				Paint.panel(c, x, cy, w, rowH, ColorMath.lerp(t.surface, t.accent, 0.12f), ColorMath.lerp(t.border, t.accent, 0.7f));
 			} else {
-				Redstone.stone(c, x, cy, w, rowH, hov ? t.surfaceHover : t.surface, t.border);
+				Paint.panel(c, x, cy, w, rowH, hov ? t.surfaceHover : t.surface, t.border);
 			}
-			int iconColor = active ? t.dustOn : (hov ? t.text : t.textDim);
+			int iconColor = active ? t.accentText : (hov ? t.text : t.textDim);
 			if (icons) {
 				Icons.draw(c, cat.icon, x + (w - 8) / 2, cy + 6, 1, iconColor);
 			} else {
@@ -814,7 +812,7 @@ public final class WardrobeUi extends UiScreen {
 		gridRect[1] = y;
 		gridRect[2] = w;
 		gridRect[3] = h;
-		Redstone.well(c, x, y, w, h, t.border);
+		Paint.well(c, x, y, w, h, t.border);
 		int ix = x + 4;
 		int iw = w - 8;
 		int top = y + 4;
@@ -898,13 +896,13 @@ public final class WardrobeUi extends UiScreen {
 		return y - start;
 	}
 
-	/** Karte „Aktueller Skin“: was das Konto trägt – mit der Lampe „getragen“, ohne Herz/Löschen. */
+	/** Karte „Aktueller Skin“: was das Konto trägt – mit dem Punkt „getragen“, ohne Herz/Löschen. */
 	private void currentCard(Canvas c, WardrobeService.State s, int x, int y, int w, int h, int mx, int my) {
 		Theme t = Theme.get();
 		boolean sel = currentSelected(s);
 		boolean hov = inside(mx, my, x, y, w, h);
-		if (sel) Redstone.glow(c, x, y, w, h, t.glow, 0.45f);
-		Redstone.stone(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
+		if (sel) Paint.glow(c, x, y, w, h, t.glow, 0.45f);
+		Paint.panel(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
 		PlayerLook look = host.look();
 		TextureRef tex = currentTexture(look);
 		if (tex != null || (current != null && current.pixels != null)) {
@@ -913,8 +911,8 @@ public final class WardrobeUi extends UiScreen {
 		} else {
 			Paint.textCentered(c, c.clip(I18n.tr("wardrobe.loading"), w - 6), x + w / 2, y + (h - 17) / 2, t.textDim, false);
 		}
-		// Getragen: die Lampe gibt es nur hier (siehe CurrentSkin).
-		Redstone.pip(c, x + 3, y + 3, 6, 1f);
+		// Getragen: den Punkt gibt es nur hier (siehe CurrentSkin).
+		Paint.pip(c, x + 3, y + 3, 6, 1f);
 		Paint.textClipped(c, I18n.tr("wardrobe.currentCard"), x + 3, y + h - 11, w - 6, sel ? t.text : ColorMath.lerp(t.text, t.textDim, 0.3f), false);
 		hits.add(x, y, w, h, () -> {
 			host.playClick();
@@ -926,8 +924,8 @@ public final class WardrobeUi extends UiScreen {
 	private void addCard(Canvas c, int x, int y, int w, int h, int mx, int my) {
 		Theme t = Theme.get();
 		boolean hov = inside(mx, my, x, y, w, h);
-		Redstone.stone(c, x, y, w, h, hov ? t.surfaceHover : t.surface, hov ? t.accent : t.border);
-		Icons.draw(c, "plus", x + w / 2 - 8, y + h / 2 - 14, 2, hov ? t.dustOn : t.textDim);
+		Paint.panel(c, x, y, w, h, hov ? t.surfaceHover : t.surface, hov ? t.accent : t.border);
+		Icons.draw(c, "plus", x + w / 2 - 8, y + h / 2 - 14, 2, hov ? t.accentText : t.textDim);
 		List<String> lines = Paint.wrap(c, I18n.tr("wardrobe.addSkin"), w - 6);
 		int ly = y + h / 2 + 6;
 		for (int i = 0; i < lines.size() && i < 2; i++) {
@@ -947,8 +945,8 @@ public final class WardrobeUi extends UiScreen {
 		Theme t = Theme.get();
 		boolean sel = sk.id.equals(selectedSkin);
 		boolean hov = inside(mx, my, x, y, w, h);
-		if (sel) Redstone.glow(c, x, y, w, h, t.glow, 0.45f);
-		Redstone.stone(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
+		if (sel) Paint.glow(c, x, y, w, h, t.glow, 0.45f);
+		Paint.panel(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
 		TextureRef tex = textures.get("wardrobe/s_" + sk.id, sk.pixels, 64, 64, 0);
 		SkinDraw.doll(c, tex, sk.pixels, sk.slim, x + 3, y + 4, w - 6, h - 17);
 		Paint.textClipped(c, sk.name, x + 3, y + h - 11, w - 6, sel ? t.text : ColorMath.lerp(t.text, t.textDim, 0.3f), false);
@@ -957,21 +955,21 @@ public final class WardrobeUi extends UiScreen {
 			selectedSkin = sk.id;
 			lastInteraction = System.currentTimeMillis();
 		});
-		// Gleich dem getragenen Skin: Hinweis statt zweiter Lampe (die hat nur „Aktueller Skin“).
+		// Gleich dem getragenen Skin: Hinweis statt zweitem Punkt (den hat nur „Aktueller Skin“).
 		// Als kleines Schild über den Beinen der Figur (der Kopf bleibt frei).
 		if (current != null && current.sameAs(sk)) {
 			String hint = I18n.tr("wardrobe.sameAsCurrent");
 			int hw = Math.min(c.textWidth(hint) + 4, w - 2);
 			int hy = y + h - 23;
 			c.fill(x + 1, hy, x + 1 + hw, hy + 10, ColorMath.withAlpha(t.surfaceHigh, 0xE0));
-			Paint.textClipped(c, hint, x + 3, hy + 1, hw - 2, t.dustOn, false);
+			Paint.textClipped(c, hint, x + 3, hy + 1, hw - 2, t.accentText, false);
 		}
 		// Herz
 		boolean fav = s.doc.favorite(sk.id);
 		int hx = x + w - 12;
 		int hy = y + 3;
 		boolean hh = inside(mx, my, hx - 1, hy - 1, 10, 10);
-		if (fav || hov) Icons.draw(c, fav ? "heart" : "heartOutline", hx, hy, 1, fav ? (hh ? t.lampHot : t.dustOn) : (hh ? t.dustOn : t.textDim));
+		if (fav || hov) Icons.draw(c, fav ? "heart" : "heartOutline", hx, hy, 1, fav ? (hh ? t.faceHot : t.accentText) : (hh ? t.accentText : t.textDim));
 		hits.add(hx - 1, hy - 1, 10, 10, () -> {
 			host.playClick();
 			service.toggleFavorite(sk.id);
@@ -987,8 +985,8 @@ public final class WardrobeUi extends UiScreen {
 		// „+“ = aktuelles Aussehen speichern
 		Theme t = Theme.get();
 		boolean hov = inside(mx, my, x, y, cw, ch);
-		Redstone.stone(c, x, y, cw, ch, hov ? t.surfaceHover : t.surface, hov ? t.accent : t.border);
-		Icons.draw(c, "plus", x + cw / 2 - 8, y + ch / 2 - 14, 2, hov ? t.dustOn : t.textDim);
+		Paint.panel(c, x, y, cw, ch, hov ? t.surfaceHover : t.surface, hov ? t.accent : t.border);
+		Icons.draw(c, "plus", x + cw / 2 - 8, y + ch / 2 - 14, 2, hov ? t.accentText : t.textDim);
 		List<String> lines = Paint.wrap(c, I18n.tr("wardrobe.saveOutfit"), cw - 6);
 		int ly = y + ch / 2 + 6;
 		for (int i = 0; i < lines.size() && i < 2; i++) {
@@ -1011,8 +1009,8 @@ public final class WardrobeUi extends UiScreen {
 		Theme t = Theme.get();
 		boolean sel = o.id.equals(selectedOutfit);
 		boolean hov = inside(mx, my, x, y, w, h);
-		if (sel) Redstone.glow(c, x, y, w, h, t.glow, 0.45f);
-		Redstone.stone(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
+		if (sel) Paint.glow(c, x, y, w, h, t.glow, 0.45f);
+		Paint.panel(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
 		WardrobeService.Skin sk = s.skin(o.skin);
 		if (sk != null) {
 			TextureRef tex = textures.get("wardrobe/s_" + sk.id, sk.pixels, 64, 64, 0);
@@ -1088,8 +1086,8 @@ public final class WardrobeUi extends UiScreen {
 		boolean hov = inside(mx, my, x, y, w, h);
 		boolean active = cape == null ? s.activeMojangCape == null && s.activeCubiqCape == null
 				: key.equals(s.activeMojangCape) || key.equals(s.activeCubiqCape);
-		if (sel) Redstone.glow(c, x, y, w, h, t.glow, 0.45f);
-		Redstone.stone(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
+		if (sel) Paint.glow(c, x, y, w, h, t.glow, 0.45f);
+		Paint.panel(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
 		if (cape == null) {
 			Icons.draw(c, "close", x + w / 2 - 8, y + (h - 12) / 2 - 8, 2, t.textDim);
 		} else {
@@ -1097,10 +1095,10 @@ public final class WardrobeUi extends UiScreen {
 			if (tex != null) SkinDraw.cape(c, tex, x + 4, y + 4, w - 8, h - 17);
 			else Icons.draw(c, "cape", x + w / 2 - 8, y + (h - 12) / 2 - 8, 2, t.textDim);
 		}
-		if (active) Redstone.pip(c, x + 3, y + 3, 6, 1f);
+		if (active) Paint.pip(c, x + 3, y + 3, 6, 1f);
 		// Geteilt bekommen bzw. mit Freunden geteilt: kleines Freunde-Symbol oben rechts.
 		if (cape != null && (cape.shared() || cape.holders > 0)) {
-			Icons.draw(c, "friends", x + w - 11, y + 3, 1, cape.shared() ? t.dustOn : t.textDim);
+			Icons.draw(c, "friends", x + w - 11, y + 3, 1, cape.shared() ? t.accentText : t.textDim);
 		}
 		String name = cape == null ? I18n.tr("wardrobe.capes.none") : cape.name;
 		Paint.textClipped(c, name, x + 3, y + h - 11, w - 6, sel ? t.text : ColorMath.lerp(t.text, t.textDim, 0.3f), false);
@@ -1117,9 +1115,9 @@ public final class WardrobeUi extends UiScreen {
 		final String key = WardrobeService.offerKey(o.capeId);
 		boolean sel = key.equals(selectedCape);
 		boolean hov = inside(mx, my, x, y, w, h);
-		if (sel) Redstone.glow(c, x, y, w, h, t.glow, 0.45f);
-		Redstone.stone(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f)
-				: ColorMath.lerp(t.border, t.dustOn, 0.5f));
+		if (sel) Paint.glow(c, x, y, w, h, t.glow, 0.45f);
+		Paint.panel(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f)
+				: ColorMath.lerp(t.border, t.accentText, 0.5f));
 		TextureRef tex = capeTexture(s, key);
 		if (tex != null) SkinDraw.cape(c, tex, x + 4, y + 4, w - 8, h - 17);
 		else Icons.draw(c, "cape", x + w / 2 - 8, y + (h - 12) / 2 - 8, 2, t.textDim);
@@ -1142,8 +1140,8 @@ public final class WardrobeUi extends UiScreen {
 			int sx = x + i * (slot + 3);
 			boolean sel = selectedSlot == i;
 			boolean hov = inside(mx, my, sx, y, slot, slot);
-			if (sel) Redstone.glow(c, sx, y, slot, slot, t.glow, 0.5f);
-			Redstone.well(c, sx, y, slot, slot, sel ? t.accent : (hov ? t.textDim : t.border));
+			if (sel) Paint.glow(c, sx, y, slot, slot, t.glow, 0.5f);
+			Paint.well(c, sx, y, slot, slot, sel ? t.accent : (hov ? t.textDim : t.border));
 			EmoteDef d = slots[i] == null ? null : Emotes.byId(slots[i]);
 			if (d != null) Icons.draw(c, d.icon(), sx + (slot - 8) / 2, y + (slot - 8) / 2, 1, t.text);
 			else c.text(String.valueOf(i + 1), sx + (slot - c.textWidth(String.valueOf(i + 1))) / 2 + 1, y + (slot - 8) / 2 + 1, t.textDim, false);
@@ -1171,8 +1169,8 @@ public final class WardrobeUi extends UiScreen {
 			boolean sel = d.id().equals(selectedEmote);
 			boolean hov = inside(mx, my, ex, ey, cw, rowH);
 			boolean locked = ctrl != null && isKnown(ctrl) && !ctrl.unlocked(d.id());
-			Redstone.stone(c, ex, ey, cw, rowH, hov ? t.surfaceHover : t.surface, sel ? t.accent : t.border);
-			Icons.draw(c, d.icon(), ex + 4, ey + 4, 1, locked ? t.textDim : (sel ? t.dustOn : t.text));
+			Paint.panel(c, ex, ey, cw, rowH, hov ? t.surfaceHover : t.surface, sel ? t.accent : t.border);
+			Icons.draw(c, d.icon(), ex + 4, ey + 4, 1, locked ? t.textDim : (sel ? t.accentText : t.text));
 			int inWheel = -1;
 			for (int k = 0; k < slots.length; k++) if (d.id().equals(slots[k])) inWheel = k;
 			int right = ex + cw - 4;
@@ -1182,7 +1180,7 @@ public final class WardrobeUi extends UiScreen {
 			}
 			if (inWheel >= 0) {
 				String n = String.valueOf(inWheel + 1);
-				Paint.textRight(c, n, right, ey + 4, t.dustOn, false);
+				Paint.textRight(c, n, right, ey + 4, t.accentText, false);
 				right -= c.textWidth(n) + 4;
 			}
 			Paint.textClipped(c, I18n.trOr(d.nameKey(), d.id()), ex + 16, ey + 4, right - ex - 18, locked ? t.textDim : t.text, false);
@@ -1249,7 +1247,7 @@ public final class WardrobeUi extends UiScreen {
 		previewRect[1] = y;
 		previewRect[2] = w;
 		previewRect[3] = h;
-		Redstone.well(c, x, y, w, h, t.border);
+		Paint.well(c, x, y, w, h, t.border);
 		PlayerLook look = host.look();
 		// Was zeigen?
 		TextureRef skin = look == null ? null : look.skin;
@@ -1745,8 +1743,8 @@ public final class WardrobeUi extends UiScreen {
 						: "pet:none".equals(nothingId) ? "pet" : "hat") == null
 				: cs.worn(it);
 		boolean lockedCard = it != null && it.locked();
-		if (sel) Redstone.glow(c, x, y, w, h, t.glow, 0.45f);
-		Redstone.stone(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
+		if (sel) Paint.glow(c, x, y, w, h, t.glow, 0.45f);
+		Paint.panel(c, x, y, w, h, hov ? t.surfaceHover : t.surface, sel ? ColorMath.lerp(t.border, t.accent, 0.8f) : t.border);
 		int ih = h - 15;
 		if (it == null) {
 			Icons.draw(c, "close", x + w / 2 - 8, y + ih / 2 - 6, 2, t.textDim);
@@ -1772,7 +1770,7 @@ public final class WardrobeUi extends UiScreen {
 				Icons.draw(c, "lock", x + w - 11, y + 3, 1, t.textDim);
 			}
 		}
-		if (worn) Redstone.pip(c, x + 3, y + 3, 6, 1f);
+		if (worn) Paint.pip(c, x + 3, y + 3, 6, 1f);
 		String name = it == null ? I18n.tr("wardrobe.cosmetics.nothing") : it.name;
 		int color = lockedCard ? t.textDim : (sel ? t.text : ColorMath.lerp(t.text, t.textDim, 0.3f));
 		Paint.textClipped(c, name, x + 3, y + h - 11, w - 6, color, false);
@@ -2086,13 +2084,13 @@ public final class WardrobeUi extends UiScreen {
 		Theme t = Theme.get();
 		boolean hov = enabled && inside(mx, my, x, y, w, h);
 		if (enabled) {
-			Redstone.button(c, x, y, w, h, label, primary, hov);
+			Paint.button(c, x, y, w, h, label, primary, hov);
 			hits.add(x, y, w, h, () -> {
 				host.playClick();
 				action.run();
 			});
 		} else {
-			Redstone.stone(c, x, y, w, h, t.surface, t.border);
+			Paint.panel(c, x, y, w, h, t.surface, t.border);
 			String s = c.clip(label, w - 6);
 			c.text(s, x + (w - c.textWidth(s)) / 2, y + (h - 8) / 2, t.textDim, false);
 		}
@@ -2148,7 +2146,7 @@ public final class WardrobeUi extends UiScreen {
 		c.flush();
 		c.push();
 		c.raise(40f);
-		Redstone.stone(c, tx, y, tw, 16, t.surfaceHigh, t.accent);
+		Paint.panel(c, tx, y, tw, 16, t.surfaceHigh, t.accent);
 		Paint.textClipped(c, toast, tx + 8, y + 4, tw - 12, t.text, false);
 		c.pop();
 	}
@@ -2169,14 +2167,14 @@ public final class WardrobeUi extends UiScreen {
 		c.flush();
 		c.push();
 		c.raise(60f);
-		Redstone.glow(c, x, y, w, h, t.glow, 0.3f);
-		Redstone.stone(c, x, y, w, h, t.surfaceHigh, t.accent);
+		Paint.glow(c, x, y, w, h, t.glow, 0.3f);
+		Paint.panel(c, x, y, w, h, t.surfaceHigh, t.accent);
 		for (int i = 0; i < keys.length; i++) {
 			final int idx = i;
 			int ry = y + 2 + i * 16;
 			boolean hov = inside(mx, my, x + 1, ry, w - 2, 16);
 			if (hov) c.fill(x + 2, ry, x + w - 2, ry + 16, t.surfaceHover);
-			Icons.draw(c, icons[i], x + 6, ry + 4, 1, hov ? t.dustOn : t.text);
+			Icons.draw(c, icons[i], x + 6, ry + 4, 1, hov ? t.accentText : t.text);
 			Paint.textClipped(c, I18n.tr(keys[i]), x + 18, ry + 4, w - 22, hov ? t.text : ColorMath.lerp(t.text, t.textDim, 0.2f), false);
 			hits.add(x + 1, ry, w - 2, 16, () -> {
 				host.playClick();
@@ -2241,14 +2239,14 @@ public final class WardrobeUi extends UiScreen {
 		c.push();
 		c.raise(80f);
 		c.fill(0, 0, width, height, 0x60000000);
-		Redstone.window(c, x, y, w, h);
+		Paint.window(c, x, y, w, h);
 		Paint.textClipped(c, I18n.tr(titleKey), x + 8, y + 7, w - 16, t.text, false);
 		int fy = y + 20;
 		if (hintKey != null) {
 			Paint.textClipped(c, I18n.tr(hintKey), x + 8, fy, w - 16, t.textDim, false);
 			fy += 12;
 		}
-		Redstone.well(c, x + 8, fy, w - 16, 16, t.accent);
+		Paint.well(c, x + 8, fy, w - 16, 16, t.accent);
 		String text = field.text();
 		String shown = text;
 		while (c.textWidth(shown) > w - 28 && shown.length() > 0) shown = shown.substring(1);
@@ -2262,8 +2260,8 @@ public final class WardrobeUi extends UiScreen {
 		int bw = (w - 24) / 2;
 		boolean hc = inside(mx, my, x + 8, by, bw, 16);
 		boolean ho = inside(mx, my, x + 16 + bw, by, bw, 16);
-		Redstone.button(c, x + 8, by, bw, 16, I18n.tr("common.cancel"), false, hc);
-		Redstone.button(c, x + 16 + bw, by, bw, 16, I18n.tr("wardrobe.ok"), true, ho);
+		Paint.button(c, x + 8, by, bw, 16, I18n.tr("common.cancel"), false, hc);
+		Paint.button(c, x + 16 + bw, by, bw, 16, I18n.tr("wardrobe.ok"), true, ho);
 		hits.add(x + 8, by, bw, 16, () -> {
 			host.playClick();
 			input = Input.NONE;

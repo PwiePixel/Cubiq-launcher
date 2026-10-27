@@ -6,7 +6,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
 import dev.pwiepixel.cubiqclient.core.ui.UiScreen;
@@ -15,8 +14,8 @@ import java.util.List;
 
 /**
  * Gemeinsamer Rahmen der Cubiq-Fenster (Freunde, Clips &amp; Bilder, Server-Info): abgedunkelter Hintergrund,
- * Redstone-Fenster mit Cubiq-Schriftzug, Titel und Schließen-Knopf, Ein-/Ausblenden. Unterklassen zeichnen nur
- * den Inhalt in {@link #content}.
+ * flaches, abgerundetes Fenster mit Cubiq-Zeichen, Titel und Schließen-Knopf, Ein-/Ausblenden. Unterklassen zeichnen
+ * nur den Inhalt in {@link #content}.
  */
 public abstract class WindowUi extends UiScreen {
 	protected static final int HEADER_H = 30;
@@ -60,7 +59,7 @@ public abstract class WindowUi extends UiScreen {
 		window[3] = ph;
 		c.push();
 		c.raise(300f);
-		Redstone.window(c, px, py, pw, ph);
+		Paint.window(c, px, py, pw, ph);
 		header(c, px, py, pw, mouseX, mouseY);
 		content(c, px + PAD, py + HEADER_H + 6, pw - PAD * 2, ph - HEADER_H - 6 - PAD, mouseX, mouseY, dt);
 		c.pop();
@@ -68,8 +67,7 @@ public abstract class WindowUi extends UiScreen {
 
 	private void header(Canvas c, int px, int py, int pw, int mx, int my) {
 		Theme t = Theme.get();
-		c.fill(px + 1, py + 2, px + pw - 1, py + HEADER_H, t.surfaceHigh);
-		c.fill(px + 1, py + HEADER_H - 1, px + pw - 1, py + HEADER_H, t.border);
+		Paint.windowHeader(c, px, py, pw, HEADER_H, t.surfaceHigh, t.border);
 		int lx = px + PAD;
 		int ly = py + (HEADER_H - PixelFont.HEIGHT * 2) / 2;
 		List<int[]> rects = PixelFont.rects("CUBIQ");
@@ -97,13 +95,13 @@ public abstract class WindowUi extends UiScreen {
 		return mx >= x && my >= y && mx < x + w && my < y + h;
 	}
 
-	/** Knopf mit Aktion (Stein bzw. Lampe) inklusive Klickfläche. */
+	/** Knopf mit Aktion (flach, primär in der Akzentfarbe) inklusive Klickfläche. */
 	protected void button(Canvas c, int x, int y, int w, int h, String label, boolean primary, boolean enabled, int mx, int my,
 			final Runnable action) {
 		Theme t = Theme.get();
 		boolean hov = enabled && inside(mx, my, x, y, w, h);
 		if (enabled) {
-			Redstone.button(c, x, y, w, h, label, primary, hov);
+			Paint.button(c, x, y, w, h, label, primary, hov);
 			hits.add(x, y, w, h, new Runnable() {
 				@Override
 				public void run() {
@@ -112,7 +110,7 @@ public abstract class WindowUi extends UiScreen {
 				}
 			});
 		} else {
-			Redstone.stone(c, x, y, w, h, t.surface, t.border);
+			Paint.panel(c, x, y, w, h, t.surface, t.border);
 			String s = c.clip(label, w - 6);
 			c.text(s, x + (w - c.textWidth(s)) / 2, y + (h - 8) / 2, t.textDim, false);
 		}
@@ -130,16 +128,16 @@ public abstract class WindowUi extends UiScreen {
 		});
 	}
 
-	/** Reiter-Knopf (aktiv = bestromt). */
+	/** Reiter-Knopf (aktiv = hervorgehoben). */
 	protected void tab(Canvas c, int x, int y, int w, int h, String label, boolean active, int mx, int my, final Runnable action) {
 		Theme t = Theme.get();
 		boolean hov = inside(mx, my, x, y, w, h);
 		if (active) {
-			Redstone.block(c, x, y, w, h, ColorMath.withAlpha(t.accent, 50));
-			Redstone.dustH(c, x + 2, x + w - 2, y + h - 2, t.dustOn, 1f);
+			Paint.block(c, x, y, w, h, ColorMath.withAlpha(t.accent, 50));
+			Paint.lineH(c, x + 2, x + w - 2, y + h - 2, t.accentText, 1f);
 		} else if (hov) {
-			Redstone.block(c, x, y, w, h, t.surfaceHover);
-			Redstone.dustH(c, x + 2, x + w - 2, y + h - 2, t.dustOff, 0f);
+			Paint.block(c, x, y, w, h, t.surfaceHover);
+			Paint.lineH(c, x + 2, x + w - 2, y + h - 2, t.track, 0f);
 		}
 		String s = c.clip(label, w - 6);
 		c.text(s, x + (w - c.textWidth(s)) / 2, y + (h - 8) / 2 - 1, active || hov ? t.text : t.textDim, false);

@@ -16,7 +16,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.TileGrid;
@@ -353,15 +352,15 @@ public final class ModMenu extends UiScreen {
 		// Das Fenster liegt über allem, was vorher gezeichnet wurde (HUD-Text hat eigene Tiefe).
 		c.push();
 		c.raise(300f);
-		Redstone.window(c, px, py, pw, ph);
+		Paint.window(c, px, py, pw, ph);
 		boolean narrow = pw < 520;
 		railW = narrow ? 96 : RAIL_W;
 		tileMin = narrow ? 98 : TILE_MIN_W;
 
 		header(c, px, py, pw, mouseX, mouseY);
 		rail(c, px + PAD, py + HEADER_H + PAD, railW - PAD - 6, ph - HEADER_H - PAD * 2, mouseX, mouseY, dt);
-		// Trennlinie zwischen Leiste und Inhalt: unbestromter Staub.
-		Redstone.dustV(c, px + railW, py + HEADER_H + PAD, py + ph - PAD, Theme.get().dustOff, 0f);
+		// Trennlinie zwischen Leiste und Inhalt.
+		Paint.lineV(c, px + railW, py + HEADER_H + PAD, py + ph - PAD, Theme.get().track, 0f);
 
 		int cx = px + railW + PAD;
 		int cy = py + HEADER_H + PAD;
@@ -445,18 +444,22 @@ public final class ModMenu extends UiScreen {
 
 	private void header(Canvas c, int px, int py, int pw, int mx, int my) {
 		Theme t = Theme.get();
-		c.fill(px + 1, py + 2, px + pw - 1, py + HEADER_H, t.surfaceHigh);
-		c.fill(px + 1, py + HEADER_H - 1, px + pw - 1, py + HEADER_H, t.border);
-		// Schriftzug: "Cubiq" in Pixelschrift mit Leuchten, daneben "Client"
+		Paint.windowHeader(c, px, py, pw, HEADER_H, t.surfaceHigh, t.border);
+		// Schriftzug: Cubiq-Zeichen mit „Cubiq“ in Pixelschrift (Winternacht/Fuchsbau: leuchtend), daneben "Client"
 		int lx = px + PAD;
 		int ly = py + (HEADER_H - PixelFont.HEIGHT * 2) / 2;
 		List<int[]> rects = PixelFont.rects("CUBIQ");
-		int glow = ColorMath.withAlpha(t.glow, 40);
-		for (int[] r : rects) c.fill(lx + r[0] * 2 - 1, ly + r[1] * 2 - 1, lx + r[2] * 2 + 1, ly + r[3] * 2 + 1, glow);
-		int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
-		for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
+		int clientX;
+		if (t.winter || t.fox || t.halloween) {
+			int glow = ColorMath.withAlpha(t.glow, 40);
+			for (int[] r : rects) c.fill(lx + r[0] * 2 - 1, ly + r[1] * 2 - 1, lx + r[2] * 2 + 1, ly + r[3] * 2 + 1, glow);
+			int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
+			for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
+			clientX = lx + PixelFont.width("CUBIQ") * 2 + 5;
+		} else {
+			clientX = lx + dev.pwiepixel.cubiqclient.core.ui.CubiqMark.lockup(c, lx, ly, 2, 1f) + 5;
+		}
 		String client = I18n.tr("menu.client");
-		int clientX = lx + PixelFont.width("CUBIQ") * 2 + 5;
 		c.text(client, clientX, py + (HEADER_H - 8) / 2, t.textDim, false);
 		if (t.halloween) {
 			// Halloween: Spinnennetz in der Ecke, Blutstropfen an der Kopfkante, Kürbislaterne neben dem Schriftzug.
@@ -476,7 +479,7 @@ public final class ModMenu extends UiScreen {
 				int sx = px + 1 + (fx2 - px - 1) * i / segs;
 				int ex = px + 1 + (fx2 - px - 1) * (i + 1) / segs;
 				int a = Math.round(200 * (1f - i / (float) segs));
-				c.fill(sx, py + HEADER_H - 1, ex, py + HEADER_H, ColorMath.withAlpha(t.dustOn, a));
+				c.fill(sx, py + HEADER_H - 1, ex, py + HEADER_H, ColorMath.withAlpha(t.accentText, a));
 			}
 			for (int fx = px + 7; fx < fx2 - 2; fx += 19) {
 				float f = 1f - (fx - px) / (float) Math.max(1, fx2 - px);
@@ -495,7 +498,7 @@ public final class ModMenu extends UiScreen {
 				int sx = px + 1 + (fx2 - px - 1) * i / segs;
 				int ex = px + 1 + (fx2 - px - 1) * (i + 1) / segs;
 				int a = Math.round(200 * (1f - i / (float) segs));
-				c.fill(sx, py + HEADER_H - 1, ex, py + HEADER_H, ColorMath.withAlpha(t.dustOn, a));
+				c.fill(sx, py + HEADER_H - 1, ex, py + HEADER_H, ColorMath.withAlpha(t.accentText, a));
 			}
 			for (int fx = px + 3; fx < fx2 - 2; fx += 14) {
 				float f = 1f - (fx - px) / (float) Math.max(1, fx2 - px);
@@ -523,15 +526,15 @@ public final class ModMenu extends UiScreen {
 		int searchX = closeX - 8 - searchW;
 		int searchY = py + (HEADER_H - searchH) / 2;
 		boolean searchHover = inside(mx, my, searchX, searchY, searchW, searchH);
-		Redstone.well(c, searchX, searchY, searchW, searchH, search.focused() ? t.accent : (searchHover ? t.textDim : t.border));
-		if (search.focused()) Redstone.glow(c, searchX, searchY, searchW, searchH, t.glow, 0.5f);
-		Icons.draw(c, "search", searchX + 5, searchY + 4, 1, search.focused() ? t.dustOn : t.textDim);
+		Paint.well(c, searchX, searchY, searchW, searchH, search.focused() ? t.accent : (searchHover ? t.textDim : t.border));
+		if (search.focused()) Paint.glow(c, searchX, searchY, searchW, searchH, t.glow, 0.5f);
+		Icons.draw(c, "search", searchX + 5, searchY + 4, 1, search.focused() ? t.accentText : t.textDim);
 		String shown = search.isEmpty() && !search.focused() ? I18n.tr("menu.search") : search.text();
 		int textColor = search.isEmpty() && !search.focused() ? t.textDim : t.text;
 		Paint.textClipped(c, shown, searchX + 16, searchY + 4, searchW - 22, textColor, false);
 		if (search.focused() && (System.currentTimeMillis() / 500) % 2 == 0) {
 			int caret = searchX + 16 + c.textWidth(search.text());
-			c.fill(Math.min(caret, searchX + searchW - 3), searchY + 4, Math.min(caret + 1, searchX + searchW - 2), searchY + 12, t.dustOn);
+			c.fill(Math.min(caret, searchX + searchW - 3), searchY + 4, Math.min(caret + 1, searchX + searchW - 2), searchY + 12, t.accentText);
 		}
 		searchBox[0] = searchX;
 		searchBox[1] = searchY;
@@ -546,7 +549,7 @@ public final class ModMenu extends UiScreen {
 
 		// „Hilfe“ ohne Browser: Adresse zwischen Schriftzug und Suchfeld zeigen (zum Abtippen).
 		if (docsFailed != null && System.currentTimeMillis() < docsFailedUntil) {
-			int nx = lx + PixelFont.width("CUBIQ") * 2 + 5 + c.textWidth(I18n.tr("menu.client")) + 10;
+			int nx = clientX + c.textWidth(I18n.tr("menu.client")) + 10;
 			if (searchX - 8 - nx > 24) {
 				Paint.textClipped(c, I18n.tr("bugreport.done.openFailed", docsFailed), nx, py + (HEADER_H - 8) / 2,
 						searchX - 8 - nx, DOCS_WARN, false);
@@ -770,7 +773,7 @@ public final class ModMenu extends UiScreen {
 			return;
 		}
 
-		// Fußzeile der Leiste: wie viele Module unter Strom stehen, und die Taste des Menüs.
+		// Fußzeile der Leiste: wie viele Module eingeschaltet sind, und die Taste des Menüs.
 		int active = 0;
 		int total = 0;
 		List<Module> all = host.modules().registry.all();
@@ -781,9 +784,9 @@ public final class ModMenu extends UiScreen {
 		}
 		int footerY = y + h - 30;
 		if (footer == 0 || footerY < cy + 2) return;
-		Redstone.pip(c, x + 2, footerY + 1, 7, active > 0 ? 1f : 0f);
+		Paint.pip(c, x + 2, footerY + 1, 7, active > 0 ? 1f : 0f);
 		Paint.textClipped(c, I18n.tr("menu.activeCount", active, total), x + 14, footerY, w - 14, t.text, false);
-		Redstone.keycap(c, x, footerY + 14, host.menuKeyLabel(), w);
+		Paint.keycap(c, x, footerY + 14, host.menuKeyLabel(), w);
 	}
 
 	/** Gibt es in {@code cat} (null = überall) ein „NEU“-Modul dieser Version? */
@@ -824,13 +827,13 @@ public final class ModMenu extends UiScreen {
 		Theme t = Theme.get();
 		boolean hovered = inside(mx, my, x, y, w, h);
 		if (active) {
-			Redstone.block(c, x, y, w, h, ColorMath.withAlpha(t.accent, 44));
-			Redstone.dustV(c, x, y + 2, y + h - 2, t.dustOn, 1f);
+			Paint.block(c, x, y, w, h, ColorMath.withAlpha(t.accent, 44));
+			Paint.lineV(c, x, y + 2, y + h - 2, t.accentText, 1f);
 		} else if (hovered) {
-			Redstone.block(c, x, y, w, h, t.surfaceHover);
-			Redstone.dustV(c, x, y + 3, y + h - 3, t.dustOff, 0f);
+			Paint.block(c, x, y, w, h, t.surfaceHover);
+			Paint.lineV(c, x, y + 3, y + h - 3, t.track, 0f);
 		}
-		Icons.draw(c, icon, x + 7, y + (h - 8) / 2, 1, active ? t.dustOn : (hovered ? t.text : t.textDim));
+		Icons.draw(c, icon, x + 7, y + (h - 8) / 2, 1, active ? t.accentText : (hovered ? t.text : t.textDim));
 		final NewMarkers news = host.modules().clientState.news();
 		boolean isNew = newId != null && news.isNew(newId);
 		int labelW = w - 22;
@@ -934,14 +937,14 @@ public final class ModMenu extends UiScreen {
 		float progress = Anim.approach(hoverOf(m.id() + "#on"), m.isEnabled() ? 1f : 0f, dt, 0.05f);
 		hover.put(m.id() + "#on", Float.valueOf(progress));
 
-		// Eingeschaltete Kacheln stehen "unter Strom": Akzent-Kante und Leuchten.
+		// Eingeschaltete Kacheln: Akzent-Kante und sanftes Leuchten.
 		int fill = ColorMath.lerp(ColorMath.lerp(t.surface, t.surfaceHover, hv), ColorMath.lerp(ColorMath.lerp(t.surface, t.surfaceHover, hv), t.accent, 0.09f), progress);
 		int edge = ColorMath.lerp(ColorMath.lerp(t.border, t.textDim, hv * 0.6f), ColorMath.lerp(t.border, t.accent, 0.75f + 0.25f * hv), progress);
-		if (progress > 0.02f) Redstone.glow(c, x, y, w, h, t.glow, progress * (0.45f + 0.35f * hv));
-		Redstone.stone(c, x, y, w, h, fill, edge);
+		if (progress > 0.02f) Paint.glow(c, x, y, w, h, t.glow, progress * (0.45f + 0.35f * hv));
+		Paint.panel(c, x, y, w, h, fill, edge);
 
-		int iconColor = ColorMath.lerp(hovered ? t.text : t.textDim, t.dustOn, progress);
-		Redstone.iconWell(c, x + 8, y + 8, 2, m.icon(), iconColor, progress);
+		int iconColor = ColorMath.lerp(hovered ? t.text : t.textDim, t.accentText, progress);
+		Paint.iconWell(c, x + 8, y + 8, 2, m.icon(), iconColor, progress);
 		if (host.modules().clientState.news().hasNew(m)) NewBadge.draw(c, x + 34, y + 11);
 
 		int tw = 24;
@@ -952,7 +955,7 @@ public final class ModMenu extends UiScreen {
 		Paint.toggle(c, tx, ty, tw, 12, progress, toggleHover);
 		if (moduleLocked) c.fill(tx, ty, tx + tw, ty + 12, ColorMath.withAlpha(t.surface, 150));
 		// Vom Server gesperrt/begrenzt: Schloss neben dem Schalter.
-		if (m.serverRestricted()) Icons.draw(c, "lock", tx - 11, ty + 2, 1, moduleLocked ? t.dustOn : t.textDim);
+		if (m.serverRestricted()) Icons.draw(c, "lock", tx - 11, ty + 2, 1, moduleLocked ? t.accentText : t.textDim);
 
 		// Name ungekürzt: notfalls in zwei Zeilen.
 		boolean gear = !m.settings().isEmpty();
@@ -965,7 +968,7 @@ public final class ModMenu extends UiScreen {
 			Paint.textClipped(c, lines.get(0), x + 8, y + h - 25, nameW, nameColor, false);
 			Paint.textClipped(c, Paint.join(lines, 1), x + 8, y + h - 15, nameW, nameColor, false);
 		}
-		if (gear) Icons.draw(c, "gear", x + w - 16, y + h - 15, 1, hovered ? t.dustOn : ColorMath.withAlpha(t.textDim, 170));
+		if (gear) Icons.draw(c, "gear", x + w - 16, y + h - 15, 1, hovered ? t.accentText : ColorMath.withAlpha(t.textDim, 170));
 
 		hits.add(x, y, w, h, new Runnable() {
 			@Override
@@ -1006,13 +1009,13 @@ public final class ModMenu extends UiScreen {
 		};
 	}
 
-	/** Schmaler Rollbalken: unbestromter Staub, der sichtbare Teil leuchtet. */
+	/** Schmaler Rollbalken: feine Schiene, der sichtbare Teil in der Akzentfarbe. */
 	private static void scrollbar(Canvas c, int x, int y, int h, int scroll, int maxScroll) {
 		Theme t = Theme.get();
 		int barH = Math.max(14, h * h / (h + maxScroll));
 		int barY = y + (h - barH) * scroll / maxScroll;
-		c.fill(x, y, x + 2, y + h, t.dustOff);
-		c.fill(x, barY, x + 2, barY + barH, t.dustOn);
+		c.fill(x, y, x + 2, y + h, t.track);
+		c.fill(x, barY, x + 2, barY + barH, t.accentText);
 	}
 
 	private float hoverOf(String key) {
@@ -1044,7 +1047,7 @@ public final class ModMenu extends UiScreen {
 				panel.reset();
 			}
 		});
-		Redstone.iconWell(c, x + 24, y + 1, 2, m.icon(), ColorMath.lerp(t.textDim, t.dustOn, progress), progress);
+		Paint.iconWell(c, x + 24, y + 1, 2, m.icon(), ColorMath.lerp(t.textDim, t.accentText, progress), progress);
 		if (newsOpenFor != m) {
 			// Seite geöffnet: Modul und seine neuen Einstellungen gelten als gesehen (Zeilen-Schilder bleiben bis zum Verlassen).
 			host.modules().clientState.news().opened(m);
@@ -1074,7 +1077,7 @@ public final class ModMenu extends UiScreen {
 		// An/Aus vom Server gesperrt: statt der Kategorie „Vom Server“. Sind nur Einstellungen begrenzt, bleibt die
 		// Kategorie stehen (sonst läse sich „An · Vom Server“ wie erzwungen an) – die Zeilen zeigen die Grenzen selbst.
 		String where = moduleLocked ? I18n.tr("settings.serverLocked") : m.category().label();
-		c.text(c.clip(state + " · " + where, resetX - nameX - 6), nameX, y + 14, m.isEnabled() ? t.dustOn : t.textDim, false);
+		c.text(c.clip(state + " · " + where, resetX - nameX - 6), nameX, y + 14, m.isEnabled() ? t.accentText : t.textDim, false);
 
 		int top = y + headH + 8;
 		c.fill(x, top - 4, x + w, top - 3, t.border);
@@ -1168,7 +1171,7 @@ public final class ModMenu extends UiScreen {
 		final Module m = selected;
 		int buttonH = 17;
 		int boxH = h - buttonH - 16;
-		Redstone.well(c, x, y, w, boxH, t.border);
+		Paint.well(c, x, y, w, boxH, t.border);
 		long now = System.currentTimeMillis();
 		boolean dragging = !Double.isNaN(previewDragX);
 		// Nach 2 s ohne Bedienung dreht sich der Spieler wieder von selbst.
@@ -1180,7 +1183,7 @@ public final class ModMenu extends UiScreen {
 			String caption = host.previewHasCape()
 					? I18n.tr(host.previewWalking() ? "preview.walking" : "preview.standing")
 					: I18n.tr("preview.noCape");
-			Paint.textClipped(c, caption, x + 4, y + boxH - 11, w - 8, host.previewHasCape() ? t.textDim : t.dustOn, false);
+			Paint.textClipped(c, caption, x + 4, y + boxH - 11, w - 8, host.previewHasCape() ? t.textDim : t.accentText, false);
 			hits.addDrag(x, y, w, boxH, new Hits.Drag() {
 				@Override
 				public void to(double mouseX, double mouseY) {
@@ -1267,7 +1270,7 @@ public final class ModMenu extends UiScreen {
 			}
 			tx += tw + 4;
 		}
-		Redstone.dustH(c, x, x + w, y + 18, Theme.get().dustOff, 0f);
+		Paint.lineH(c, x, x + w, y + 18, Theme.get().track, 0f);
 	}
 
 	private void profilesPage(Canvas c, int x, int y, int w, int h, int mx, int my) {
@@ -1281,7 +1284,7 @@ public final class ModMenu extends UiScreen {
 			int hw = c.textWidth(hint);
 			Paint.textRight(c, hint, x + w, y + 4, t.textDim, false);
 			int kw = Math.min(90, c.textWidth(keyLabel) + 8);
-			Redstone.keycap(c, x + w - hw - 6 - kw, y + 1, keyLabel, kw);
+			Paint.keycap(c, x + w - hw - 6 - kw, y + 1, keyLabel, kw);
 		}
 
 		int rowH = 22;
@@ -1292,12 +1295,12 @@ public final class ModMenu extends UiScreen {
 			boolean active = profiles.activeIndex() == i;
 			boolean rowHover = inside(mx, my, x, ry, w, rowH - 3);
 			if (active) {
-				Redstone.glow(c, x, ry, w, rowH - 3, t.glow, 0.35f);
-				Redstone.stone(c, x, ry, w, rowH - 3, ColorMath.lerp(t.surface, t.accent, 0.1f), ColorMath.lerp(t.border, t.accent, 0.75f));
+				Paint.glow(c, x, ry, w, rowH - 3, t.glow, 0.35f);
+				Paint.panel(c, x, ry, w, rowH - 3, ColorMath.lerp(t.surface, t.accent, 0.1f), ColorMath.lerp(t.border, t.accent, 0.75f));
 			} else {
-				Redstone.stone(c, x, ry, w, rowH - 3, rowHover ? t.surfaceHover : t.surface, t.border);
+				Paint.panel(c, x, ry, w, rowH - 3, rowHover ? t.surfaceHover : t.surface, t.border);
 			}
-			Redstone.pip(c, x + 7, ry + 6, 7, active ? 1f : 0f);
+			Paint.pip(c, x + 7, ry + 6, 7, active ? 1f : 0f);
 			if (editingProfile == index) {
 				drawInput(c, x + 20, ry + 2, w - 80, mx, my);
 			} else {
@@ -1355,7 +1358,7 @@ public final class ModMenu extends UiScreen {
 			int bw = Math.min(w, c.textWidth(newLabel) + 30);
 			boolean addHover = inside(mx, my, x, ry + 1, bw, 17);
 			Paint.button(c, x, ry + 1, bw, 17, "", false, addHover);
-			Icons.draw(c, "plus", x + 7, ry + 5, 1, addHover ? t.dustOn : t.text);
+			Icons.draw(c, "plus", x + 7, ry + 5, 1, addHover ? t.accentText : t.text);
 			Paint.textClipped(c, newLabel, x + 20, ry + 5 - (addHover ? 1 : 0), bw - 24, t.text, false);
 			hits.add(x, ry + 1, bw, 17, new Runnable() {
 				@Override
@@ -1375,17 +1378,17 @@ public final class ModMenu extends UiScreen {
 		List<String> lines = Paint.wrap(c, note, w - 4);
 		int ly = y + h - 9 - (Math.min(3, lines.size()) - 1) * 10;
 		for (int i = 0; i < Math.min(3, lines.size()); i++) {
-			Paint.textClipped(c, lines.get(i), x + 2, ly + i * 10, w - 4, profileError != null ? t.dustOn : t.textDim, false);
+			Paint.textClipped(c, lines.get(i), x + 2, ly + i * 10, w - 4, profileError != null ? t.danger : t.textDim, false);
 		}
 	}
 
 	private void drawInput(Canvas c, int x, int y, int w, int mx, int my) {
 		Theme t = Theme.get();
-		Redstone.well(c, x, y, w, 15, t.accent);
+		Paint.well(c, x, y, w, 15, t.accent);
 		Paint.textClipped(c, nameInput.text(), x + 4, y + 4, w - 8, t.text, false);
 		if ((System.currentTimeMillis() / 500) % 2 == 0) {
 			int caret = x + 4 + c.textWidth(nameInput.text());
-			c.fill(Math.min(caret, x + w - 3), y + 4, Math.min(caret + 1, x + w - 2), y + 12, t.dustOn);
+			c.fill(Math.min(caret, x + w - 3), y + 4, Math.min(caret + 1, x + w - 2), y + 12, t.accentText);
 		}
 		hits.add(x, y, w, 15, new Runnable() {
 			@Override
