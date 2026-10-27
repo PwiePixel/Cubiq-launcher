@@ -2448,7 +2448,7 @@
       "eventLookTitle": "Show event design (e.g. Halloween)",
       "eventLookDescription": "Colours, backgrounds, progress bars, atmosphere and the event icon during an event. Off = normal look. The pumpkin hunt, trick or treat and rewards stay.",
       "motionTitle": "Animations",
-      "motionDescription": "Animated background, running lights, page and dialog transitions, and lists that glide into place. “Reduce animations” turns them all off; “Follow Windows/system” uses the animation setting of Windows or your desktop – it is often off on tuned or remote PCs.",
+      "motionDescription": "Animated background, running lights, page and dialog transitions, and lists that glide into place. “Reduce animations” turns them all off; “Follow Windows/system” uses the animation setting of Windows or your desktop – it is often off on tuned or remote PCs. The Cubiq Client follows reduced animations as well – its title and loading screens then stay still.",
       "motionModes": {
         "full": "Always on",
         "system": "Follow Windows/system",

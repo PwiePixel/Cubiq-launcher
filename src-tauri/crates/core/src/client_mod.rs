@@ -14,7 +14,7 @@ use crate::download;
 use crate::history::{self, HistoryEntry, HistoryKind};
 use crate::instance::{Instance, LoaderKind};
 use crate::paths::Paths;
-use crate::settings::{Accent, Theme, UiSettings};
+use crate::settings::{Accent, Motion, Theme, UiSettings};
 use crate::{Error, Result, fsutil, modrinth};
 
 /// So heißt die Datei im Mods-Ordner – fester Name, damit Updates sie ersetzen.
@@ -260,6 +260,8 @@ pub fn availability(builds: &[Build], instance: &Instance) -> Availability {
 /// in der Instanz liegt – bzw. entfernt ihn, wenn er abgeschaltet wurde oder
 /// für die Version keinen Build mehr hat. Quelle ist die neueste geprüfte
 /// Version: Update-Kanal (falls neuer und ladbar), sonst das Launcher-Paket.
+/// `system_reduced_motion`: „Bewegung reduzieren“ des Systems, wie die Oberfläche es meldet
+/// (löst „Wie System“ der Animationen für den Mod auf, siehe [`write_theme`]).
 #[allow(clippy::too_many_arguments)]
 pub async fn sync(
     http: &reqwest::Client,
@@ -268,6 +270,7 @@ pub async fn sync(
     updater: Option<&ClientModUpdater>,
     instance: &Instance,
     ui: &UiSettings,
+    system_reduced_motion: bool,
     cubiq_api: bool,
     events: &[String],
     look: &[String],
@@ -343,8 +346,8 @@ pub async fn sync(
         let _ = fsutil::write_atomic(&marker, version.as_bytes()).await;
     }
 
-    // Der Mod übernimmt Thema und Akzentfarbe des Launchers.
-    if let Err(e) = write_theme(paths, &instance.id, ui, events, look).await {
+    // Der Mod übernimmt Thema, Akzentfarbe und Animationen des Launchers.
+    if let Err(e) = write_theme(paths, &instance.id, ui, system_reduced_motion, events, look).await {
         tracing::warn!("Farben für den Cubiq Client konnten nicht geschrieben werden: {e}");
     }
     // Und ob er die Cubiq API benutzen darf (Einwilligung im Launcher).
@@ -570,6 +573,9 @@ struct LauncherTheme {
     language: &'static str,
     /// Design des Launchers (derzeit immer "cubiq") – der Mod kann sein Aussehen anpassen.
     design: &'static str,
+    /// Animationen, wie der Launcher sie gerade zeigt: "full" oder "reduced" („Wie System“ ist schon
+    /// aufgelöst). Für den Mod ein zusätzliches Signal – seine eigene Einstellung bleibt, wie sie ist.
+    motion: &'static str,
     /// Läuft ein Event für diesen Spieler (`"halloween"`), weiß der Mod es sofort; sonst fehlt das Feld.
     #[serde(skip_serializing_if = "Option::is_none")]
     event: Option<&'static str>,
@@ -586,7 +592,15 @@ struct LauncherTheme {
 const THEME_EVENTS: [&str; 1] = ["halloween"];
 
 /// Schreibt `config/cubiqclient/launcher-theme.json` in die Instanz (nur bekannte, feste Werte).
-pub async fn write_theme(paths: &Paths, instance_id: &str, ui: &UiSettings, events: &[String], look: &[String]) -> Result<()> {
+/// `system_reduced_motion`: „Bewegung reduzieren“ des Systems, wie die Oberfläche es meldet.
+pub async fn write_theme(
+    paths: &Paths,
+    instance_id: &str,
+    ui: &UiSettings,
+    system_reduced_motion: bool,
+    events: &[String],
+    look: &[String],
+) -> Result<()> {
     let file = theme_path(paths, instance_id);
     let dir = file.parent().expect("Elternordner");
     tokio::fs::create_dir_all(dir).await.map_err(|e| Error::io(dir, e))?;
@@ -598,6 +612,7 @@ pub async fn write_theme(paths: &Paths, instance_id: &str, ui: &UiSettings, even
         accent_color: accent_color(ui.accent),
         language: ui.language.code(),
         design: ui.design.code(),
+        motion: motion_name(ui.motion, system_reduced_motion),
         event,
         event_look: ui.event_look && event.is_none_or(|e| look.iter().any(|x| x == e)),
         halloween_flicker: ui.halloween_flicker,
@@ -613,6 +628,12 @@ fn theme_name(theme: Theme) -> &'static str {
         Theme::Oled => "oled",
         Theme::Light => "light",
     }
+}
+
+/// Animationen für den Mod. Den Systemwert sieht nur die Oberfläche – „Wie System“ folgt deshalb dem,
+/// was sie zuletzt gemeldet hat (ohne Meldung: nicht reduziert, also "full" wie ab Werk).
+fn motion_name(motion: Motion, system_reduced: bool) -> &'static str {
+    if motion.is_reduced(system_reduced) { "reduced" } else { "full" }
 }
 
 fn accent_name(accent: Accent) -> &'static str {
@@ -843,13 +864,13 @@ mod tests {
         let ui = UiSettings::default();
         let mods = content::content_dir(&paths, &inst.id, ContentKind::Mod);
 
-        sync(&http, &paths, Some(bundle.path()), None, &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(bundle.path()), None, &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(mods.join(INSTALLED_NAME)).unwrap(), b"neu");
 
         // Nutzer schaltet ihn in der Mod-Liste aus, danach kommt ein Launcher-Update.
         std::fs::rename(mods.join(INSTALLED_NAME), mods.join("cubiqclient.jar.disabled")).unwrap();
         std::fs::write(bundle.path().join("cubiqclient-forge-1.8.9.jar"), b"neuer").unwrap();
-        sync(&http, &paths, Some(bundle.path()), None, &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(bundle.path()), None, &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert!(!mods.join(INSTALLED_NAME).exists(), "darf nicht wieder eingeschaltet werden");
         assert_eq!(std::fs::read(mods.join("cubiqclient.jar.disabled")).unwrap(), b"neuer");
     }
@@ -1054,7 +1075,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let paths = Paths::new(dir.path().join("root"));
         let mut ui = UiSettings { accent: Accent::Emerald, theme: Theme::Oled, ..UiSettings::default() };
-        write_theme(&paths, "test", &ui, &[], &[]).await.unwrap();
+        write_theme(&paths, "test", &ui, false, &[], &[]).await.unwrap();
 
         let file = paths.instance_game_dir("test").join("config/cubiqclient/launcher-theme.json");
         let json: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
@@ -1067,6 +1088,7 @@ mod tests {
         assert_eq!(json["design"], "cubiq");
         assert_eq!(json["halloweenFlicker"], true, "Flackern & Rauschen ab Werk an");
         assert_eq!(json["eventLook"], true, "Event-Design ab Werk an");
+        assert_eq!(json["motion"], "full", "Animationen ab Werk an");
 
         // "System" gibt es im Spiel nicht – dort gilt das dunkle Thema.
         ui.theme = Theme::System;
@@ -1074,7 +1096,7 @@ mod tests {
         ui.language = crate::settings::Language::PtBr;
         ui.halloween_flicker = false;
         let events: Vec<String> = vec!["halloween".into(), "other".into()];
-        write_theme(&paths, "test", &ui, &events, &events).await.unwrap();
+        write_theme(&paths, "test", &ui, false, &events, &events).await.unwrap();
         let json: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
         assert_eq!(json["theme"], "dark");
         assert_eq!(json["accentColor"], "#71A330", "der gespeicherte Akzent bleibt");
@@ -1085,23 +1107,39 @@ mod tests {
         assert_eq!(json["halloweenFlicker"], false);
 
         // Team-Sperre: Event (Features) bleibt, nur der Look ist aus.
-        write_theme(&paths, "test", &ui, &events, &["other".into()]).await.unwrap();
+        write_theme(&paths, "test", &ui, false, &events, &["other".into()]).await.unwrap();
         let json: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
         assert_eq!((json["event"].as_str(), json["eventLook"].as_bool()), (Some("halloween"), Some(false)));
         // Eigener Schalter aus: ebenso – auch ohne laufendes Event.
         ui.event_look = false;
-        write_theme(&paths, "test", &ui, &events, &events).await.unwrap();
+        write_theme(&paths, "test", &ui, false, &events, &events).await.unwrap();
         let json: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
         assert_eq!((json["event"].as_str(), json["eventLook"].as_bool()), (Some("halloween"), Some(false)));
-        write_theme(&paths, "test", &ui, &[], &[]).await.unwrap();
+        write_theme(&paths, "test", &ui, false, &[], &[]).await.unwrap();
         let json: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
         assert_eq!((json.get("event"), json["eventLook"].as_bool()), (None, Some(false)));
         ui.event_look = true;
 
         ui.accent = Accent::Ice;
-        write_theme(&paths, "test", &ui, &[], &[]).await.unwrap();
+        write_theme(&paths, "test", &ui, false, &[], &[]).await.unwrap();
         let json: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
         assert_eq!((json["accent"].as_str(), json["accentColor"].as_str()), (Some("ice"), Some("#2B97D6")));
+
+        // Animationen: "System" gibt es im Spiel nicht – es gilt, was die Oberfläche als
+        // „Bewegung reduzieren“ des Systems meldet. „Immer“ bleibt auch dann "full".
+        for (motion, system_reduced, expected) in [
+            (Motion::Full, false, "full"),
+            (Motion::Full, true, "full"),
+            (Motion::System, false, "full"),
+            (Motion::System, true, "reduced"),
+            (Motion::Reduced, false, "reduced"),
+            (Motion::Reduced, true, "reduced"),
+        ] {
+            ui.motion = motion;
+            write_theme(&paths, "test", &ui, system_reduced, &[], &[]).await.unwrap();
+            let json: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
+            assert_eq!(json["motion"], expected, "{motion:?}, System reduziert: {system_reduced}");
+        }
     }
 
     #[test]
@@ -1140,7 +1178,7 @@ mod tests {
         let ui = UiSettings::default();
 
         let on = instance("1.21.1", LoaderKind::Fabric, None);
-        sync(&http, &paths, Some(&res), None, &on, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), None, &on, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(tokio::fs::read(mods.join(INSTALLED_NAME)).await.unwrap(), b"v1");
         assert!(theme_path(&paths, "test").is_file(), "Farben des Launchers liegen in der Instanz");
         let cubiq: serde_json::Value =
@@ -1148,20 +1186,26 @@ mod tests {
         assert_eq!(cubiq, serde_json::json!({ "version": 1, "enabled": true }), "Einwilligung für den Mod, kein Token");
 
         tokio::fs::write(res.join("cubiqclient-fabric-1.21.jar"), b"v2").await.unwrap();
-        sync(&http, &paths, Some(&res), None, &on, &ui, false, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), None, &on, &ui, false, false, &[], &[]).await.unwrap();
         let cubiq: serde_json::Value =
             serde_json::from_slice(&tokio::fs::read(cubiq_api_path(&paths, "test")).await.unwrap()).unwrap();
         assert_eq!(cubiq["enabled"], false, "ohne Einwilligung darf der Mod die API nicht nutzen");
         assert_eq!(tokio::fs::read(mods.join(INSTALLED_NAME)).await.unwrap(), b"v2");
 
+        // „Wie System“ bei reduzierter Systembewegung (meldet die Oberfläche) kommt im Spiel als "reduced" an.
+        let calm = UiSettings { motion: Motion::System, ..UiSettings::default() };
+        sync(&http, &paths, Some(&res), None, &on, &calm, true, true, &[], &[]).await.unwrap();
+        let theme: serde_json::Value = serde_json::from_slice(&tokio::fs::read(theme_path(&paths, "test")).await.unwrap()).unwrap();
+        assert_eq!(theme["motion"], "reduced");
+
         // Versionswechsel auf eine Version ohne Build: alte Kopie verschwindet.
         let other = instance("1.20.4", LoaderKind::Fabric, None);
-        sync(&http, &paths, Some(&res), None, &other, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), None, &other, &ui, false, true, &[], &[]).await.unwrap();
         assert!(!mods.join(INSTALLED_NAME).exists());
 
-        sync(&http, &paths, Some(&res), None, &on, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), None, &on, &ui, false, true, &[], &[]).await.unwrap();
         let off = instance("1.21.1", LoaderKind::Fabric, Some(false));
-        sync(&http, &paths, Some(&res), None, &off, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), None, &off, &ui, false, true, &[], &[]).await.unwrap();
         assert!(!mods.join(INSTALLED_NAME).exists());
         assert!(!theme_path(&paths, "test").exists(), "abgeschaltet: auch die Farbdatei ist weg");
         assert!(!cubiq_api_path(&paths, "test").exists());
@@ -1218,7 +1262,7 @@ mod tests {
 
         // Noch nichts im Kanal: mitgelieferte Version.
         assert_eq!(updater.check_now(Some("0.2.0")).await, client_mod_update::CheckOutcome::Failed);
-        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(&jar).unwrap(), b"v2");
 
         // Neuere Version im Kanal: wird geladen, geprüft und installiert.
@@ -1226,14 +1270,14 @@ mod tests {
         updater.check_now(Some("0.2.0")).await;
         let catalog = Catalog::load(Some(&res), Some(&updater)).await;
         assert_eq!(catalog.status(), ClientModStatus { bundled: Some("0.2.0".into()), update: Some("0.3.0".into()) });
-        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(&jar).unwrap(), b"v3");
         let entry = history::list(&paths, "test").await.unwrap().into_iter().next().unwrap();
         assert_eq!(entry.kind, HistoryKind::ModUpdated);
         assert_eq!((entry.from.as_deref(), entry.to.as_deref()), (Some("0.2.0"), Some("0.3.0")));
 
         // Zweiter Start: nichts Neues zu laden, nichts Neues im Verlauf.
-        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(server.hits("cubiqclient-fabric-1.21.jar"), 1);
         assert_eq!(history::list(&paths, "test").await.unwrap().len(), 1);
 
@@ -1241,7 +1285,7 @@ mod tests {
         bundle_version(&res, "0.4.0", b"v4");
         let catalog = Catalog::load(Some(&res), Some(&updater)).await;
         assert_eq!(catalog.status(), ClientModStatus { bundled: Some("0.4.0".into()), update: None });
-        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(&jar).unwrap(), b"v4");
         updater.cleanup(Some("0.4.0")).await;
         assert!(!paths.client_mod_cache_dir().join("0.3.0").exists());
@@ -1265,13 +1309,13 @@ mod tests {
         publish(&server, &key, "0.3.0", b"v3");
         updater.check_now(Some("0.2.0")).await;
         server.put("cubiqclient-fabric-1.21.jar", b"v3-manipuliert".to_vec());
-        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(mods.join(INSTALLED_NAME)).unwrap(), b"v2", "Rückfall auf die mitgelieferte Version");
 
         // In der Mod-Liste deaktiviert: bleibt aus, die deaktivierte Kopie bekommt das Update.
         std::fs::rename(mods.join(INSTALLED_NAME), mods.join("cubiqclient.jar.disabled")).unwrap();
         server.put("cubiqclient-fabric-1.21.jar", b"v3".to_vec());
-        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert!(!mods.join(INSTALLED_NAME).exists(), "darf nicht wieder eingeschaltet werden");
         assert_eq!(std::fs::read(mods.join("cubiqclient.jar.disabled")).unwrap(), b"v3");
         std::fs::rename(mods.join("cubiqclient.jar.disabled"), mods.join(INSTALLED_NAME)).unwrap();
@@ -1279,22 +1323,22 @@ mod tests {
         // Offline: geprüftes Manifest + Jar aus dem Cache reichen.
         let offline = ClientModUpdater::for_tests(paths.client_mod_cache_dir(), "http://127.0.0.1:9/", &key.public);
         assert_eq!(offline.check_now(Some("0.2.0")).await, client_mod_update::CheckOutcome::Failed);
-        sync(&http, &paths, Some(&res), Some(&offline), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&offline), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(mods.join(INSTALLED_NAME)).unwrap(), b"v3");
 
         // Offline und Cache weg: die installierte Kopie ist genau dieser Build und bleibt.
         std::fs::remove_dir_all(paths.client_mod_cache_dir().join("0.3.0")).unwrap();
-        sync(&http, &paths, Some(&res), Some(&offline), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&offline), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(mods.join(INSTALLED_NAME)).unwrap(), b"v3");
 
         // Offline, kein Cache und keine passende Kopie: mitgelieferte Version.
         std::fs::remove_file(mods.join(INSTALLED_NAME)).unwrap();
-        sync(&http, &paths, Some(&res), Some(&offline), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&offline), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(mods.join(INSTALLED_NAME)).unwrap(), b"v2");
 
         // Keine Quelle hat einen Build für die Version: Kopie wird entfernt.
         let other = instance("1.8.9", LoaderKind::Forge, None);
-        sync(&http, &paths, Some(&res), Some(&offline), &other, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, Some(&res), Some(&offline), &other, &ui, false, true, &[], &[]).await.unwrap();
         assert!(!mods.join(INSTALLED_NAME).exists(), "kein Build für 1.8.9: entfernt");
     }
 
@@ -1334,7 +1378,7 @@ mod tests {
 
         // Kanal noch nie erreicht: nichts bekannt, nichts angefasst.
         assert_eq!(updater.check_now(None).await, client_mod_update::CheckOutcome::Failed);
-        sync(&http, &paths, None, Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, None, Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert!(!jar.exists());
 
         publish_all("0.3.0", "a");
@@ -1343,7 +1387,7 @@ mod tests {
         assert_eq!(catalog.status(), ClientModStatus { bundled: Some("0.3.0".into()), update: None }, "Kanal = aktueller Stand");
         assert!(server.hits(FABRIC) + server.hits(FORGE) + server.hits(NEO) == 0, "Prüfen lädt keine Jars");
 
-        sync(&http, &paths, None, Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, None, Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(&jar).unwrap(), b"cubiqclient-fabric-1.21.1.jar-a");
         assert_eq!((server.hits(FABRIC), server.hits(FORGE), server.hits(NEO)), (1, 0, 0), "nur der Jar der Instanz");
         let cached: Vec<_> = std::fs::read_dir(cache.join("0.3.0")).unwrap().map(|e| e.unwrap().file_name()).collect();
@@ -1351,15 +1395,15 @@ mod tests {
         assert_eq!(installed_version(&paths, &inst.id).await.as_deref(), Some("0.3.0"));
 
         // Nächster Start und eine zweite Instanz derselben Version: aus dem Cache.
-        sync(&http, &paths, None, Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, None, Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         let second = Instance { id: "zwei".into(), ..inst.clone() };
-        sync(&http, &paths, None, Some(&updater), &second, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, None, Some(&updater), &second, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(installed_jar(&paths, "zwei")).unwrap(), b"cubiqclient-fabric-1.21.1.jar-a");
         assert_eq!(server.hits(FABRIC), 1);
 
         // In der Instanz abgeschaltet: nichts geladen, nichts installiert.
         let off = Instance { id: "aus".into(), ..instance("1.8.9", LoaderKind::Forge, Some(false)) };
-        sync(&http, &paths, None, Some(&updater), &off, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, None, Some(&updater), &off, &ui, false, true, &[], &[]).await.unwrap();
         assert!(!installed_jar(&paths, "aus").exists());
         assert_eq!(server.hits(FORGE), 0);
 
@@ -1367,7 +1411,7 @@ mod tests {
         publish_all("0.4.0", "b");
         assert_eq!(updater.check_now(None).await, client_mod_update::CheckOutcome::Updated("0.4.0".into()));
         assert!(!cache.join("0.3.0").exists(), "alter Cache weg");
-        sync(&http, &paths, None, Some(&updater), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, None, Some(&updater), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(&jar).unwrap(), b"cubiqclient-fabric-1.21.1.jar-b");
         assert_eq!((server.hits(FABRIC), server.hits(FORGE), server.hits(NEO)), (2, 0, 0));
 
@@ -1375,7 +1419,7 @@ mod tests {
         let offline = ClientModUpdater::for_tests(cache.clone(), "http://127.0.0.1:9/", &key.public);
         assert_eq!(offline.check_now(None).await, client_mod_update::CheckOutcome::Failed);
         std::fs::remove_file(&jar).unwrap();
-        sync(&http, &paths, None, Some(&offline), &inst, &ui, true, &[], &[]).await.unwrap();
+        sync(&http, &paths, None, Some(&offline), &inst, &ui, false, true, &[], &[]).await.unwrap();
         assert_eq!(std::fs::read(&jar).unwrap(), b"cubiqclient-fabric-1.21.1.jar-b");
     }
 

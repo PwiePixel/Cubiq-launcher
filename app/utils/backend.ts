@@ -387,6 +387,8 @@ export const backend = {
 
   getSettings: () => call<Settings>('get_settings'),
   updateSettings: (settings: Settings) => call<Settings>('update_settings', { settings }),
+  /** „Bewegung reduzieren“ des Systems melden – der Kern löst damit „Wie System“ für den Cubiq Client auf. */
+  setSystemReducedMotion: (reduced: boolean) => call<void>('set_system_reduced_motion', { reduced }),
 
   listInstances: () => call<Instance[]>('list_instances'),
   getInstance: (id: string) => call<Instance>('get_instance', { id }),

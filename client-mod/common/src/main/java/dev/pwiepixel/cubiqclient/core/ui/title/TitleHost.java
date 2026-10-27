@@ -31,7 +31,10 @@ public interface TitleHost {
 	/** Liest einen Text über den Erzähler vor (nur wenn der Spieler ihn eingeschaltet hat); darf nichts tun. */
 	void narrate(String text);
 
-	/** Animierter Hintergrund? (Einstellung des Moduls „Startbildschirm“ – aus = ruhiges Standbild.) */
+	/**
+	 * Animierter Hintergrund? (Einstellung des Moduls „Startbildschirm“ – aus = ruhiges Standbild.) „Reduziert“ im Launcher
+	 * rechnet {@link TitleUi} selbst dazu ({@link dev.pwiepixel.cubiqclient.core.menus.MenuStyle#animated(boolean)}).
+	 */
 	boolean animated();
 
 	/** Sparsame Hintergrund-Animation (alte Versionen, die jedes Rechteck einzeln zeichnen). */

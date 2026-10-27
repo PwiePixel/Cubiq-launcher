@@ -261,8 +261,11 @@ public final class Ember {
 	/**
 	 * Fortschritt als glimmender Ast (Launcher: EmberProgress): von links frisst sich die Glut durch das dunkle Holz, vorn
 	 * sitzt eine kleine Flamme, aus der ein Funke steigt. {@code progress} &lt; 0 = unbekannt (ein Funke läuft durch).
+	 * {@code animated} = false → ruhig: Glut und Flamme stehen, unbekannter Fortschritt glimmt gleichmäßig halb hell
+	 * auf dem ganzen Ast.
 	 */
-	public static void bar(Canvas c, int cx, int y, int maxWidth, float progress, float time) {
+	public static void bar(Canvas c, int cx, int y, int maxWidth, float progress, float time, boolean animated) {
+		if (!animated) time = 0f;
 		Theme t = Theme.get();
 		int w = Math.max(24, Math.min(maxWidth, 200));
 		int h = 6;
@@ -280,6 +283,10 @@ public final class Ember {
 		for (int gx = x0 + 9; gx < x0 + w; gx += 17) {
 			c.fill(gx, y, gx + 1, y + h, 0x4D000000);
 			if (gx + 8 < x0 + w) c.fill(gx + 8, y + 1, gx + 9, y + h - 1, ColorMath.withAlpha(a300, 0x1A));
+		}
+		if (progress < 0 && !animated) {
+			c.fill(x0, y, x0 + w, y + h, ColorMath.withAlpha(a500, 0x70));
+			return;
 		}
 		if (progress < 0) {
 			// Unbekannter Fortschritt: ein Funke läuft durch.

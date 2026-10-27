@@ -1,6 +1,7 @@
 package dev.pwiepixel.cubiqclient.core.intro;
 
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
+import dev.pwiepixel.cubiqclient.core.menus.MenuStyle;
 import dev.pwiepixel.cubiqclient.core.module.KeySetting;
 import dev.pwiepixel.cubiqclient.core.module.Module;
 import dev.pwiepixel.cubiqclient.core.module.ModulePacks;
@@ -70,6 +71,8 @@ public final class IntroUi extends UiScreen {
 	private final PacksPage packs;
 	private final List<KeyBind> allKeys;
 	private final List<KeyBind> cubiqKeys = new ArrayList<KeyBind>();
+	/** Ruhige Bewegung: eigener Schalter „Animierter Hintergrund“ aus oder „Reduziert“ im Launcher. */
+	private final boolean still;
 	private int step;
 	private float stepAnim;
 	private KeyBind capturing;
@@ -82,8 +85,14 @@ public final class IntroUi extends UiScreen {
 	public IntroUi(final MenuHost host) {
 		this.host = host;
 		this.modules = host.modules();
-		// Bewegung reduziert („Animierter Hintergrund“ aus): keine Start-Animation, gleich der erste Schritt.
-		if (modules != null && !modules.titleAnimated.get()) skipSplash();
+		// Bewegung reduziert („Animierter Hintergrund“ aus oder „Reduziert“ im Launcher): keine Start-Animation, gleich
+		// der erste Schritt – sofort ganz da, ohne Einblenden und Hineingleiten.
+		this.still = !MenuStyle.animated(modules == null || modules.titleAnimated.get());
+		if (still) {
+			skipSplash();
+			open = 1f;
+			stepAnim = 1f;
+		}
 		I18n.refresh();
 		this.packs = new PacksPage(modules, new ModulePacks.Support() {
 			@Override
@@ -117,6 +126,11 @@ public final class IntroUi extends UiScreen {
 
 	public int step() {
 		return step;
+	}
+
+	/** Ohne Bewegung (keine Start-Animation, kein Einblenden, kein Gleiten, keine pulsierende Lampe)? */
+	public boolean still() {
+		return still;
 	}
 
 	/** Springt zu einem Schritt (Selbsttest: Screenshot je Schritt); eine laufende Start-Animation endet sofort. */
@@ -289,11 +303,11 @@ public final class IntroUi extends UiScreen {
 	private void steps(Canvas c, int width, int height, int mouseX, int mouseY, float dt) {
 		Theme t = Theme.get();
 		c.fill(0, 0, width, height, t.scrim);
-		stepAnim = Anim.approach(stepAnim, 1f, dt, 0.06f);
+		stepAnim = still ? 1f : Anim.approach(stepAnim, 1f, dt, 0.06f);
 		int pw = Math.min(width - 16, Math.max(Math.min(420, width - 16), Math.min(640, Math.round(width * 0.8f))));
 		int ph = Math.min(height - 16, Math.max(Math.min(250, height - 16), Math.min(400, Math.round(height * 0.84f))));
 		int px = (width - pw) / 2;
-		int py = (height - ph) / 2 + Math.round((1 - Anim.easeOut(open)) * 14);
+		int py = (height - ph) / 2 + (still ? 0 : Math.round((1 - Anim.easeOut(open)) * 14));
 		c.push();
 		c.raise(300f);
 		Paint.window(c, px, py, pw, ph);
@@ -368,7 +382,8 @@ public final class IntroUi extends UiScreen {
 				boolean powered = i <= step;
 				Paint.lineH(c, x - spacing + lamp, x, sy + lamp / 2 - 1, powered ? t.accentText : t.track, powered ? 0.6f : 0f);
 			}
-			float lit = i < step ? 0.85f : (i == step ? 0.75f + 0.25f * (float) Math.sin(System.currentTimeMillis() / 300.0) : 0f);
+			float pulse = still ? 1f : 0.75f + 0.25f * (float) Math.sin(System.currentTimeMillis() / 300.0);
+			float lit = i < step ? 0.85f : (i == step ? pulse : 0f);
 			Paint.accentFace(c, x, sy, lamp, lamp, lit, 0f);
 		}
 	}
