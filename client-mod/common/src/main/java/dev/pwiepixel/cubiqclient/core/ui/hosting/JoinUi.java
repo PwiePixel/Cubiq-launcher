@@ -91,7 +91,7 @@ public final class JoinUi extends WindowUi {
 		Hosting.Notice n = hosting == null ? null : hosting.notice(now);
 		String line = codeError != null ? I18n.tr(codeError) : n != null ? n.text() : null;
 		if (line != null) {
-			Paint.textClipped(c, line, x, ny, w, codeError != null || (n != null && n.error) ? t.dustOn : t.text, false);
+			Paint.textClipped(c, line, x, ny, w, codeError != null || (n != null && n.error) ? t.danger : t.text, false);
 		}
 		int ly = ny + 14;
 		Paint.textClipped(c, I18n.tr("hosting.worlds.title"), x, ly, w, t.text, false);

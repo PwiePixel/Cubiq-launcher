@@ -56,7 +56,7 @@ public final class CubiqModules {
 	/** Automatisch nachlegen: füllt den leeren Hotbar-Slot aus dem Inventar nach (serverseitig, Fair-Play-Pause). */
 	public final Module autoRefill;
 	public final Module titleScreen;
-	/** Redstone-Stil für Vanilla-Menüs (Pause, Serverliste, Laden, Optionen, Welten); je Menü abschaltbar. */
+	/** Cubiq-Stil für Vanilla-Menüs (Pause, Serverliste, Laden, Optionen, Welten); je Menü abschaltbar. */
 	public final Module menuStyle;
 	public final Module oldAnimations;
 	public final Module lowFire;
@@ -211,7 +211,10 @@ public final class CubiqModules {
 	public final BoolSetting crosshairAttack;
 	public final ColorSetting hitColorColor;
 	public final NumberSetting hitColorOpacity;
-	/** Startbildschirm: animierte Redstone-Schaltung im Hintergrund (aus = ruhiges Standbild). */
+	/**
+	 * Startbildschirm: langsam schwebende Würfel im Hintergrund und die Start-Animation der Einführung (aus = Bewegung
+	 * reduziert: ruhiges Standbild, keine Start-Animation).
+	 */
 	public final BoolSetting titleAnimated;
 	public final BoolSetting menuPause;
 	public final BoolSetting menuPauseButtons;
@@ -553,7 +556,7 @@ public final class CubiqModules {
 		titleScreen = registry.register(new Module("titleScreen", "Title Screen",
 				"Cubiq title screen instead of the vanilla one", true));
 		menuStyle = registry.register(new Module("menuStyle", "Menu Style",
-				"Cubiq look (Redstone or Winter Night) for the pause menu, server list, loading screens, options and world list. All buttons "
+				"Cubiq look (Cubiq, Winter Night or Fox Den) for the pause menu, server list, loading screens, options and world list. All buttons "
 						+ "(also those of other mods) keep working; turn single menus back to the classic look.", true));
 		oldAnimations = registry.register(new Module("oldAnimations", "1.7 Animations",
 				"Old hand movements: the hand does not dip during the attack cooldown, "
@@ -773,7 +776,7 @@ public final class CubiqModules {
 		hitColorColor = hitColor.add(new ColorSetting("color", "Color", 0xB07CFF));
 		hitColorOpacity = hitColor.add(new NumberSetting("opacity", "Opacity (%)", 70, 10, 100, 10, ""));
 		titleAnimated = titleScreen.add(new BoolSetting("animated", "Animated background", true));
-		// Aussehen (Design Redstone | Winternacht, Farbschema, Akzent) auf den Seiten „Startbildschirm“ und „Menü-Stil“.
+		// Aussehen (Design Cubiq | Winternacht | Fuchsbau, Farbschema, Akzent) auf den Seiten „Startbildschirm“ und „Menü-Stil“.
 		dev.pwiepixel.cubiqclient.core.intro.LookPanel look = new dev.pwiepixel.cubiqclient.core.intro.LookPanel(this);
 		dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel.Registry.set(titleScreen, look);
 		dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel.Registry.set(menuStyle, look);

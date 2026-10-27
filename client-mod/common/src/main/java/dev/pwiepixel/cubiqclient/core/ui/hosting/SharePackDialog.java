@@ -4,7 +4,6 @@ import dev.pwiepixel.cubiqclient.core.hosting.share.ShareModel;
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.social.Dialog;
 import dev.pwiepixel.cubiqclient.core.ui.social.Kit;
@@ -42,7 +41,7 @@ public final class SharePackDialog extends Dialog {
 		int ty = Paint.paragraph(c, I18n.tr("hosting.share.packText"), x, y, w, 10, t.textDim) + 4;
 		int listH = y + h - 24 - ty;
 		list = new int[] { x, ty, w, listH };
-		Redstone.well(c, x, ty, w, listH, t.border);
+		Paint.well(c, x, ty, w, listH, t.border);
 		List<ShareModel.PackFile> packs = model.packs();
 		if (model.state() != ShareModel.State.READY) {
 			Paint.textCentered(c, I18n.tr("hosting.share.scanning"), x + w / 2, ty + listH / 2 - 4, t.textDim, false);

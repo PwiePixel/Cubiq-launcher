@@ -3,7 +3,6 @@ package dev.pwiepixel.cubiqclient.core.ui.social;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
 
@@ -47,7 +46,7 @@ public abstract class Dialog {
 		int x = (screenW - w) / 2;
 		int y = (screenH - h) / 2;
 		Paint.shadow(c, x, y, w, h, 2, 0.7f);
-		Redstone.window(c, x, y, w, h);
+		Paint.window(c, x, y, w, h);
 		String title = title();
 		int top = y + 6;
 		if (title != null) {

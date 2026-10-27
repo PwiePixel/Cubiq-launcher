@@ -3,7 +3,7 @@ package dev.pwiepixel.cubiqclient.core.menus;
 import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
 
 /**
- * Welche Vanilla-Menüs im Redstone-Stil gezeichnet werden (Modul „Menü-Stil“). Jede Loader-Variante ordnet
+ * Welche Vanilla-Menüs im Cubiq-Stil gezeichnet werden (Modul „Menü-Stil“). Jede Loader-Variante ordnet
  * den offenen Minecraft-Bildschirm einer {@link Kind} zu und fragt hier nach; ausgeschaltete Menüs bleiben
  * „klassisch“. Die Menüs selbst werden nie ersetzt – nur Hintergrund, Knopfflächen und Listen neu gezeichnet,
  * damit alle Knöpfe (auch die anderer Mods) weiter funktionieren.
@@ -26,7 +26,7 @@ public final class MenuStyle {
 		modules = m;
 	}
 
-	/** Im Redstone-Stil zeichnen? {@code null} = kein bekanntes Menü. */
+	/** Im Cubiq-Stil zeichnen? {@code null} = kein bekanntes Menü. */
 	public static boolean enabled(Kind kind) {
 		CubiqModules m = modules;
 		if (kind == null || m == null || !m.menuStyle.isEnabled()) return false;
@@ -67,7 +67,7 @@ public final class MenuStyle {
 		return m != null && m.menuStyle.isEnabled() && m.menuPauseButtons.get();
 	}
 
-	/** Bewegter Redstone-Hintergrund (Einstellung des Startbildschirms)? */
+	/** Bewegter Hintergrund (Einstellung des Startbildschirms; aus = Bewegung reduziert)? */
 	public static boolean animated() {
 		CubiqModules m = modules;
 		return m == null || m.titleAnimated.get();

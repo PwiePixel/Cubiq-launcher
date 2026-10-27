@@ -7,7 +7,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel;
 import dev.pwiepixel.cubiqclient.core.ui.menu.NewBadge;
@@ -39,13 +38,13 @@ final class PerfPanel implements ModulePanel {
 		int textW = Math.min(w, 420);
 
 		if (!perf.modules().fpsBoost.isEnabled()) {
-			y = Paint.paragraph(c, I18n.tr("perf.master.off"), x, y, textW, LINE, t.dustOn) + 4;
+			y = Paint.paragraph(c, I18n.tr("perf.master.off"), x, y, textW, LINE, t.accentText) + 4;
 		}
 
 		// --- Bildrate ---
 		FpsMeter meter = perf.meter();
 		double current = meter.recent(now, 1500);
-		Redstone.stone(c, x, y, w, 30, t.surface, t.border);
+		Paint.panel(c, x, y, w, 30, t.surface, t.border);
 		String fpsText = current > 0 ? I18n.tr("perf.fps.now", Math.round(current)) : I18n.tr("perf.fps.unknown");
 		c.text(fpsText, x + 6, y + 5, t.text, false);
 		String compare;
@@ -54,15 +53,15 @@ final class PerfPanel implements ModulePanel {
 			case MEASURING:
 				compare = I18n.tr("perf.fps.measuring", meter.reason());
 				int barW = Math.max(20, w - 12);
-				c.fill(x + 6, y + 24, x + 6 + barW, y + 25, t.dustOff);
-				c.fill(x + 6, y + 24, x + 6 + Math.round(barW * meter.progress(now)), y + 25, t.dustOn);
+				c.fill(x + 6, y + 24, x + 6 + barW, y + 25, t.track);
+				c.fill(x + 6, y + 24, x + 6 + Math.round(barW * meter.progress(now)), y + 25, t.accentText);
 				break;
 			case DONE:
 				double pct = meter.percent();
 				String sign = pct >= 0 ? "+" : "";
 				compare = I18n.tr("perf.fps.result", Math.round(meter.before()), Math.round(meter.after()),
 						sign + String.format(Locale.ROOT, "%.0f", pct) + " %", meter.reason());
-				compareColor = pct >= 3 ? t.dustOn : t.textDim;
+				compareColor = pct >= 3 ? t.accentText : t.textDim;
 				break;
 			default:
 				compare = I18n.tr("perf.fps.none");
@@ -146,11 +145,11 @@ final class PerfPanel implements ModulePanel {
 		y = by + BUTTON_H + 4;
 		y = Paint.paragraph(c, I18n.tr("perf.boost.hint"), x, y, textW, LINE, t.textDim) + 2;
 		String message = perf.message(now);
-		if (message != null) y = Paint.paragraph(c, message, x, y, textW, LINE, t.dustOn) + 2;
+		if (message != null) y = Paint.paragraph(c, message, x, y, textW, LINE, t.accentText) + 2;
 
 		// --- Leistungs-Check ---
 		y += 4;
-		Redstone.dustH(c, x, x + w, y, t.dustOff, 0f);
+		Paint.lineH(c, x, x + w, y, t.track, 0f);
 		y += 6;
 		final List<PerfCheck.Finding> findings = perf.findings(now);
 		int fixable = 0;
@@ -182,7 +181,7 @@ final class PerfPanel implements ModulePanel {
 			List<String> lines = Paint.wrap(c, f.text, tw);
 			int rowH = Math.max(BUTTON_H, lines.size() * LINE + 2);
 			float lit = f.level == PerfCheck.Level.HIGH ? 1f : (f.level == PerfCheck.Level.MEDIUM ? 0.5f : 0f);
-			Redstone.pip(c, x, y + 3, 6, lit);
+			Paint.pip(c, x, y + 3, 6, lit);
 			int ly = y + (lines.size() == 1 ? 4 : 1);
 			for (String line : lines) {
 				c.text(line, x + 10, ly, f.level == PerfCheck.Level.TIP ? t.textDim : t.text, false);
@@ -205,7 +204,7 @@ final class PerfPanel implements ModulePanel {
 
 		// --- Leistungs-Mods ---
 		y += 3;
-		Redstone.dustH(c, x, x + w, y, t.dustOff, 0f);
+		Paint.lineH(c, x, x + w, y, t.track, 0f);
 		y += 6;
 		c.text(I18n.tr("perf.mods.title"), x, y, t.text, false);
 		y += LINE + 3;
@@ -220,7 +219,7 @@ final class PerfPanel implements ModulePanel {
 			}
 			String line = taken.isEmpty() ? I18n.tr("perf.mods.detected", mod.displayName())
 					: I18n.tr("perf.mods.takesOver", mod.displayName(), join(taken));
-			Redstone.pip(c, x, y + 1, 6, taken.isEmpty() ? 0f : 1f);
+			Paint.pip(c, x, y + 1, 6, taken.isEmpty() ? 0f : 1f);
 			y = Paint.paragraph(c, line, x + 10, y, textW - 10, LINE, taken.isEmpty() ? t.textDim : t.text) + 2;
 		}
 		return y + 6;
@@ -258,7 +257,7 @@ final class PerfPanel implements ModulePanel {
 			int textW = Math.min(w, 420);
 			int start = y;
 			if (!perf.modules().fpsBoost.isEnabled()) {
-				y = Paint.paragraph(c, I18n.tr("perf.master.offShort"), x, y, textW, LINE, t.dustOn);
+				y = Paint.paragraph(c, I18n.tr("perf.master.offShort"), x, y, textW, LINE, t.accentText);
 			}
 			Map<PerfMod, List<String>> owned = new LinkedHashMap<PerfMod, List<String>>();
 			List<String> unsupported = new ArrayList<String>();
@@ -276,7 +275,7 @@ final class PerfPanel implements ModulePanel {
 			}
 			for (Map.Entry<PerfMod, List<String>> e : owned.entrySet()) {
 				y = Paint.paragraph(c, I18n.tr("perf.notice.owner", e.getKey().displayName(), join(e.getValue())), x, y, textW,
-						LINE, ColorMath.lerp(t.text, t.dustOn, 0.5f));
+						LINE, ColorMath.lerp(t.text, t.accentText, 0.5f));
 			}
 			if (!unsupported.isEmpty()) {
 				y = Paint.paragraph(c, I18n.tr("perf.notice.unsupported", join(unsupported)), x, y, textW, LINE, t.textDim);
@@ -312,7 +311,7 @@ final class PerfPanel implements ModulePanel {
 				switch (state) {
 					case ACTIVE:
 						text = I18n.tr("perf.bundled.active", e.name, e.version);
-						color = ColorMath.lerp(t.text, t.dustOn, 0.5f);
+						color = ColorMath.lerp(t.text, t.accentText, 0.5f);
 						anyRunning = true;
 						break;
 					case OTHER_VERSION:
@@ -327,7 +326,7 @@ final class PerfPanel implements ModulePanel {
 			}
 			// Umschalten wirkt erst beim nächsten Start (über den Cubiq Launcher).
 			if (module.isEnabled() != anyRunning && !bundled.entries().isEmpty()) {
-				y = Paint.paragraph(c, I18n.tr("perf.bundled.restart"), x, y + 2, textW, LINE, t.dustOn);
+				y = Paint.paragraph(c, I18n.tr("perf.bundled.restart"), x, y + 2, textW, LINE, t.accentText);
 			}
 			return y + 6;
 		}

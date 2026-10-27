@@ -21,9 +21,10 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 /**
  * Selbsttest Einführung ({@code -PcubiqAutotestOnly=intro}): setzt die Einführung zurück, öffnet den Startbildschirm
- * (die Einführung muss von selbst erscheinen), Screenshot je Schritt, wählt das Paket „PvP“, schließt ab; danach das
- * Cubiq-Menü mit „NEU“-Markierungen (Stand künstlich auf 0.3.0 gesetzt), eine Einstellungsseite mit neuer Zeile und die
- * Seite „Modul-Pakete“. Stellt am Ende die Config wieder her und beendet das Spiel.
+ * (die Einführung muss von selbst erscheinen), Screenshot der Start-Animation und je Schritt, wählt das Paket „PvP“,
+ * schließt ab; danach das Cubiq-Menü mit „NEU“-Markierungen (Stand künstlich auf 0.3.0 gesetzt), eine
+ * Einstellungsseite mit neuer Zeile und die Seite „Modul-Pakete“. Stellt am Ende die Config wieder her und beendet
+ * das Spiel.
  */
 public final class IntroTest {
 	private int phase;
@@ -95,31 +96,39 @@ public final class IntroTest {
 				return;
 			}
 			case 2:
+				// Start-Animation (Cubiq-Zeichen wie im Launcher): nach 1 s ist alles eingeblendet, ab 1,6 s blendet sie aus.
+				shot(mc, "cubiqclient-intro-0-splash");
+				CubiqClient.LOGGER.info("[Autotest] Einführung: Start-Animation läuft={}", intro().splashing());
+				intro().skipSplash();
+				phase++;
+				wait = 15;
+				return;
+			case 3:
 				shot(mc, "cubiqclient-intro-1-look");
 				intro().goTo(1);
 				phase++;
 				wait = 15;
 				return;
-			case 3:
+			case 4:
 				shot(mc, "cubiqclient-intro-2-perf");
 				intro().goTo(2);
 				phase++;
 				wait = 15;
 				return;
-			case 4:
+			case 5:
 				shot(mc, "cubiqclient-intro-3-keys");
 				intro().goTo(3);
 				intro().packs().select(ModulePacks.PVP);
 				phase++;
 				wait = 15;
 				return;
-			case 5:
+			case 6:
 				shot(mc, "cubiqclient-intro-4-packs");
 				intro().finish();
 				phase++;
 				wait = 30;
 				return;
-			case 6:
+			case 7:
 				shot(mc, "cubiqclient-intro-done");
 				CubiqClient.LOGGER.info("[Autotest] Einführung: erledigt={} wie={} paket={} reach={} keystrokes={} minimap={}",
 						modules.clientState.introDone(), modules.clientState.introHow(), modules.clientState.introPack(),
@@ -130,7 +139,7 @@ public final class IntroTest {
 				phase++;
 				wait = 20;
 				return;
-			case 7:
+			case 8:
 				shot(mc, "cubiqclient-menu-new");
 				CubiqMenuScreen page = new CubiqMenuScreen(new CubiqTitleScreen());
 				((ModMenu) page.ui()).select(modules.cubiqOnline).scrollSettings(400);
@@ -138,7 +147,7 @@ public final class IntroTest {
 				phase++;
 				wait = 20;
 				return;
-			case 8:
+			case 9:
 				shot(mc, "cubiqclient-menu-new-settings");
 				CubiqClient.LOGGER.info("[Autotest] NEU: cubiqOnline noch neu={} (Kachel), sync-Zeile gesehen={}",
 						modules.clientState.news().hasNew(modules.cubiqOnline), modules.clientState.news().seen().contains("cubiqOnline.sync"));
@@ -148,7 +157,7 @@ public final class IntroTest {
 				phase++;
 				wait = 20;
 				return;
-			case 9:
+			case 10:
 				shot(mc, "cubiqclient-menu-packs");
 				phase = 20;
 				return;

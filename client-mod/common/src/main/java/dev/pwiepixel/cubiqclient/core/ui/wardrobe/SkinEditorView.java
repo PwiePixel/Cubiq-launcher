@@ -8,7 +8,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
@@ -148,7 +147,7 @@ final class SkinEditorView {
 		view3d[1] = top;
 		view3d[2] = vw;
 		view3d[3] = bodyH;
-		Redstone.well(c, vx, top, vw, bodyH, t.border);
+		Paint.well(c, vx, top, vw, bodyH, t.border);
 		TextureRef tex = textures.get("wardrobe/editor", editor.pixels(), 64, 64, editor.version());
 		spec.skin = tex;
 		spec.slim = editor.slim();
@@ -172,7 +171,7 @@ final class SkinEditorView {
 		if (tex != null) model.draw(c, figCx, figFeet, figScale, spec);
 		c.noScissor();
 		String layerKey = overlayLayer ? "wardrobe.editor.layerOverlay" : "wardrobe.editor.layerBase";
-		Paint.textClipped(c, I18n.tr(layerKey), vx + 4, top + 4, vw - 8, overlayLayer ? t.dustOn : t.text, false);
+		Paint.textClipped(c, I18n.tr(layerKey), vx + 4, top + 4, vw - 8, overlayLayer ? t.accentText : t.text, false);
 		String hint = I18n.tr("wardrobe.editor.rotateHint");
 		Paint.textClipped(c, hint, vx + 4, top + bodyH - 11, vw - 8, t.textDim, false);
 		// Hover-Texel aus der 3D-Ansicht bestimmen
@@ -202,14 +201,14 @@ final class SkinEditorView {
 		});
 		int ax = bx - 4 - aw;
 		boolean ha = inside(mx, my, ax, y, aw, ACTION_H);
-		Redstone.button(c, ax, y, aw, ACTION_H, applyLabel, false, ha);
+		Paint.button(c, ax, y, aw, ACTION_H, applyLabel, false, ha);
 		hits.add(ax, y, aw, ACTION_H, () -> {
 			actions.click();
 			actions.apply(editor.copyPixels(), editor.slim());
 		});
 		int sx = ax - 4 - sw;
 		boolean hs = inside(mx, my, sx, y, sw, ACTION_H);
-		Redstone.button(c, sx, y, sw, ACTION_H, saveLabel, true, hs);
+		Paint.button(c, sx, y, sw, ACTION_H, saveLabel, true, hs);
 		hits.add(sx, y, sw, ACTION_H, () -> {
 			actions.click();
 			if (saving) return;
@@ -218,7 +217,7 @@ final class SkinEditorView {
 		});
 		int tx = sx - 4 - tw;
 		boolean ht = inside(mx, my, tx, y, tw, ACTION_H);
-		Redstone.button(c, tx, y, tw, ACTION_H, tplLabel, false, ht || templatesOpen);
+		Paint.button(c, tx, y, tw, ACTION_H, tplLabel, false, ht || templatesOpen);
 		hits.add(tx, y, tw, ACTION_H, () -> {
 			actions.click();
 			templatesOpen = !templatesOpen;
@@ -234,7 +233,7 @@ final class SkinEditorView {
 				hex.setFocused(false);
 			});
 		}
-		if (editor.dirty()) c.fill(x + nw - 4, y + 2, x + nw - 2, y + 4, t.dustOn);
+		if (editor.dirty()) c.fill(x + nw - 4, y + 2, x + nw - 2, y + 4, t.accentText);
 	}
 
 	private final int[] templateAnchor = new int[2];
@@ -251,14 +250,14 @@ final class SkinEditorView {
 		c.flush();
 		c.push();
 		c.raise(50f);
-		Redstone.stone(c, x, y, w, h, t.surfaceHigh, t.border);
+		Paint.panel(c, x, y, w, h, t.surfaceHigh, t.border);
 		for (int i = 0; i < keys.length; i++) {
 			final int idx = i;
 			int ry = y + 2 + i * 14;
 			boolean hov = inside(mx, my, x + 1, ry, w - 2, 14);
 			if (hov) c.fill(x + 2, ry, x + w - 2, ry + 14, t.surfaceHover);
 			boolean enabled = idx != 2 || actions.currentSkin() != null;
-			Paint.textClipped(c, I18n.tr(keys[i]), x + 6, ry + 3, w - 10, enabled ? (hov ? t.dustOn : t.text) : t.textDim, false);
+			Paint.textClipped(c, I18n.tr(keys[i]), x + 6, ry + 3, w - 10, enabled ? (hov ? t.accentText : t.text) : t.textDim, false);
 			if (enabled) {
 				hits.add(x + 1, ry, w - 2, 14, () -> {
 					actions.click();
@@ -320,9 +319,9 @@ final class SkinEditorView {
 		cy = place(cy, 0);
 		int bx = toolX;
 		boolean hs = inside(mx, my, bx, cy, TOOL, TOOL);
-		Redstone.stone(c, bx, cy, TOOL, TOOL, hs ? t.surfaceHover : t.surfaceHigh, t.border);
+		Paint.panel(c, bx, cy, TOOL, TOOL, hs ? t.surfaceHover : t.surfaceHigh, t.border);
 		String size = String.valueOf(editor.brushSize());
-		c.text(size, bx + (TOOL - c.textWidth(size)) / 2 + 1, cy + 4, hs ? t.dustOn : t.text, false);
+		c.text(size, bx + (TOOL - c.textWidth(size)) / 2 + 1, cy + 4, hs ? t.accentText : t.text, false);
 		hits.add(bx, cy, TOOL, TOOL, () -> {
 			actions.click();
 			editor.setBrushSize(editor.brushSize() % 3 + 1);
@@ -336,9 +335,9 @@ final class SkinEditorView {
 		cy = place(cy, 0);
 		bx = toolX;
 		boolean ha = inside(mx, my, bx, cy, TOOL, TOOL);
-		Redstone.stone(c, bx, cy, TOOL, TOOL, ha ? t.surfaceHover : t.surfaceHigh, t.border);
+		Paint.panel(c, bx, cy, TOOL, TOOL, ha ? t.surfaceHover : t.surfaceHigh, t.border);
 		String arm = editor.slim() ? "S" : "C";
-		c.text(arm, bx + (TOOL - c.textWidth(arm)) / 2 + 1, cy + 4, ha ? t.dustOn : t.text, false);
+		c.text(arm, bx + (TOOL - c.textWidth(arm)) / 2 + 1, cy + 4, ha ? t.accentText : t.text, false);
 		hits.add(bx, cy, TOOL, TOOL, () -> {
 			actions.click();
 			editor.setSlim(!editor.slim());
@@ -392,7 +391,7 @@ final class SkinEditorView {
 		view2d[1] = y;
 		view2d[2] = size;
 		view2d[3] = size;
-		Redstone.well(c, x - 2, y - 2, size + 4, size + 4, t.border);
+		Paint.well(c, x - 2, y - 2, size + 4, size + 4, t.border);
 		// Schachbrett für Durchsichtiges
 		int cell = 4 * s;
 		for (int cy = 0; cy < 16; cy++) {
@@ -431,7 +430,7 @@ final class SkinEditorView {
 			Paint.outline(c, hx - 1, hy - 1, s + 2, s + 2, 0xFFFFFFFF);
 			if (editor.mirror()) {
 				int m = l.mirror(texel);
-				if (m >= 0) Paint.outline(c, x + (m % 64) * s - 1, y + (m / 64) * s - 1, s + 2, s + 2, ColorMath.withAlpha(t.dustOn, 200));
+				if (m >= 0) Paint.outline(c, x + (m % 64) * s - 1, y + (m / 64) * s - 1, s + 2, s + 2, ColorMath.withAlpha(t.accentText, 200));
 			}
 		}
 	}
@@ -454,7 +453,7 @@ final class SkinEditorView {
 		cy += step + 2;
 		// Aktuelle Farbe + Hex
 		int box = 14;
-		Redstone.block(c, x, cy, box, box, t.bevelDark);
+		Paint.block(c, x, cy, box, box, t.bevelDark);
 		c.fill(x + 1, cy + 1, x + box - 1, cy + box - 1, editor.color());
 		int fx = x + box + 4;
 		int fw = Math.min(w - box - 4, 64);
@@ -473,7 +472,7 @@ final class SkinEditorView {
 		Theme t = Theme.get();
 		boolean hov = inside(mx, my, x, y, size, size);
 		boolean sel = (editor.color() | 0xFF000000) == (argb | 0xFF000000);
-		Redstone.block(c, x - 1, y - 1, size + 2, size + 2, sel ? t.dustOn : (hov ? t.textDim : t.bevelDark));
+		Paint.block(c, x - 1, y - 1, size + 2, size + 2, sel ? t.accentText : (hov ? t.textDim : t.bevelDark));
 		c.fill(x, y, x + size, y + size, argb | 0xFF000000);
 		hits.add(x, y, size, size, () -> {
 			editor.setColor(argb);
@@ -484,7 +483,7 @@ final class SkinEditorView {
 
 	private static void field(Canvas c, TextInput in, int x, int y, int w, int h, String placeholder, int mx, int my) {
 		Theme t = Theme.get();
-		Redstone.well(c, x, y, w, h, in.focused() ? t.accent : t.border);
+		Paint.well(c, x, y, w, h, in.focused() ? t.accent : t.border);
 		int ty = y + (h - 8) / 2;
 		String text = in.text();
 		if (text.isEmpty() && !in.focused()) {

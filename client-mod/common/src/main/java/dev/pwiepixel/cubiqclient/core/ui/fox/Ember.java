@@ -2,18 +2,18 @@ package dev.pwiepixel.cubiqclient.core.ui.fox;
 
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 import java.util.List;
 
 /**
- * Bausteine des Designs „Fuchsbau“ – das Gegenstück zu {@link Redstone} (das bei {@link Theme#fox} hierher verzweigt)
- * wie {@code Frost} für die Winternacht: Laternen mit warmem Glutlicht statt Redstone-Lampen (Eisenrahmen, Glut im
- * Glas, ein Zweig mit Laub obenauf), glimmende Äste mit Blättchen statt Staub, eine kleine Flamme statt der Fackel, das
- * Pixel-Fuchsgesicht des Launchers (blinzelt) und der glimmende Ast, der beim Laden von links durchglüht
- * ({@code EmberProgress} im Launcher). Alles aus Rechtecken im GUI-Raster.
+ * Bausteine des Designs „Fuchsbau“ – das Gegenstück zu den flachen Flächen von {@link Paint} (das bei
+ * {@link Theme#fox} hierher verzweigt) wie {@code Frost} für die Winternacht: Laternen mit warmem Glutlicht statt
+ * leuchtender Knöpfe (Eisenrahmen, Glut im Glas, ein Zweig mit Laub obenauf), glimmende Äste mit Blättchen statt
+ * glatter Linien, das Pixel-Fuchsgesicht (blinzelt) und der glimmende Ast, der beim Laden von links durchglüht.
+ * Alles aus Rechtecken im GUI-Raster.
  */
 public final class Ember {
 	private Ember() {
@@ -25,7 +25,7 @@ public final class Ember {
 	public static final int FLAME_MID = 0xFFFFB340;
 	public static final int FLAME_OUT = 0xFFFF6A1A;
 	public static final int GLOW = 0xFFFF8A2A;
-	/** „Unter Strom“ im Fuchsbau: golden wie Glut (Launcher lamp-300/400). */
+	/** Leuchtende Teile im Fuchsbau: golden wie Glut. */
 	public static final int GOLD_LIGHT = 0xFFFFE1A6;
 	public static final int GOLD = 0xFFFFC362;
 	/** Laub: Fichtengrün, Herbstblatt, Kirschblüte. */
@@ -45,18 +45,18 @@ public final class Ember {
 	public static void lantern(Canvas c, int x, int y, int w, int h, float lit, float flash) {
 		Theme t = Theme.get();
 		float l = ColorMath.clamp01(lit);
-		if (l > 0.02f) Redstone.glow(c, x, y, w, h, t.lampGlow, l);
-		Redstone.block(c, x, y, w, h, ColorMath.lerp(t.lampOffEdge, t.lampOnEdge, l));
-		// Rand des Lichts: Gold, zum Akzent hin getönt (wie die Lampe im Launcher).
-		int warm = ColorMath.lerp(t.lampOn, t.accent, 0.3f);
-		int face = ColorMath.lerp(t.lampOff, warm, l);
+		if (l > 0.02f) Paint.glow(c, x, y, w, h, t.faceGlow, l);
+		Paint.block(c, x, y, w, h, ColorMath.lerp(t.faceOffEdge, t.faceOnEdge, l));
+		// Rand des Lichts: Gold, zum Akzent hin getönt.
+		int warm = ColorMath.lerp(t.faceOn, t.accent, 0.3f);
+		int face = ColorMath.lerp(t.faceOff, warm, l);
 		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, face);
 		if (w < 8 || h < 8) return;
 		if (l > 0.02f) {
 			// Licht von innen: innen heller, im unteren Drittel fast weiß (Bänder über die ganze Breite – keine Kästen
 			// hinter der Schrift).
 			c.fill(x + 3, y + 3, x + w - 3, y + h - 3, ColorMath.withAlpha(GOLD_LIGHT, Math.round(90 * l)));
-			if (h >= 14) c.fill(x + 3, y + h * 3 / 5, x + w - 3, y + h - 3, ColorMath.withAlpha(t.lampHot, Math.round(60 * l)));
+			if (h >= 14) c.fill(x + 3, y + h * 3 / 5, x + w - 3, y + h - 3, ColorMath.withAlpha(t.faceHot, Math.round(60 * l)));
 		}
 		// Glut im dunklen Glas (fest je Breite, damit sie nicht flackert); mit Licht verschwindet sie darin.
 		float dim = 1f - Math.min(1f, l * 2f);
@@ -77,7 +77,7 @@ public final class Ember {
 		}
 		// Eisenrahmen: Innenkante, Nieten in den Ecken, Stege oben und unten (nicht durch die Schrift).
 		int iron = ColorMath.lerp(0xFF2A1C1E, 0xFF8A4A1C, l);
-		Redstone.frame(c, x + 2, y + 2, w - 4, h - 4, iron);
+		Paint.frame(c, x + 2, y + 2, w - 4, h - 4, iron);
 		int rivet = ColorMath.lerp(0xFF4A3432, 0xFFFFE1A6, l);
 		c.fill(x + 2, y + 2, x + 3, y + 3, rivet);
 		c.fill(x + w - 3, y + 2, x + w - 2, y + 3, rivet);
@@ -118,7 +118,7 @@ public final class Ember {
 		}
 	}
 
-	// --- Glimmende Äste statt Staub ---
+	// --- Glimmende Äste als Linien ---
 
 	/**
 	 * Waagerechter Ast (2 px): oben Holz in der Leitungsfarbe, unten dunkler, Maserung alle 9 px, ab und zu ein Blatt;
@@ -178,35 +178,6 @@ public final class Ember {
 				c.fill(right ? lx + 1 : lx, y - 1, right ? lx + 2 : lx + 1, y, LEAF_LIGHT);
 			}
 		}
-	}
-
-	// --- Flamme statt Fackel ---
-
-	/**
-	 * Kleine Flamme auf einem Holzscheit (statt der Redstone-Fackel); (x, y) = Mitte des Fußes. {@code lit} 0..1,
-	 * {@code flicker} 0..1 lässt die Spitze tanzen.
-	 */
-	public static void flame(Canvas c, int x, int y, float lit, float flicker) {
-		Theme t = Theme.get();
-		float l = ColorMath.clamp01(lit);
-		c.fill(x - 1, y - 6, x + 1, y, 0xFF6B4A2B);
-		c.fill(x - 1, y - 6, x, y, 0xFF7E5A36);
-		if (l > 0.05f) {
-			c.fill(x - 3, y - 13, x + 3, y - 5, ColorMath.withAlpha(t.lampGlow, Math.round(30 * l)));
-			c.fill(x - 4, y - 11, x + 4, y - 6, ColorMath.withAlpha(t.lampGlow, Math.round(18 * l)));
-		}
-		int out = ColorMath.lerp(0xFF3A2014, FLAME_OUT, l);
-		int mid = ColorMath.lerp(0xFF4A2A1A, FLAME_MID, l);
-		int core = ColorMath.lerp(0xFF5A3420, FLAME_CORE, l * (0.85f + 0.15f * flicker));
-		// Unten breit (4), oben schmal (2), Spitze tanzt je nach Flackern.
-		c.fill(x - 2, y - 9, x + 2, y - 6, out);
-		c.fill(x - 1, y - 11, x + 1, y - 9, out);
-		int tip = flicker > 0.5f ? 0 : -1;
-		c.fill(x + tip, y - 12, x + tip + 1, y - 11, out);
-		c.fill(x - 1, y - 9, x + 1, y - 6, mid);
-		c.fill(x - 1, y - 8, x, y - 6, core);
-		// Glut am Fuß.
-		c.fill(x - 2, y - 6, x + 2, y - 5, ColorMath.lerp(0xFF3B2614, GLOW, l));
 	}
 
 	// --- Fuchsgesicht (wie neben dem Logo im Launcher) ---
@@ -302,7 +273,7 @@ public final class Ember {
 		int a600 = ColorMath.scaleRgb(a500, 0.78f);
 		int a900 = ColorMath.lerp(ColorMath.scaleRgb(a500, 0.22f), 0xFF000000, 0.25f);
 		// Spur: verkohltes Holz mit Maserung.
-		Redstone.block(c, x0 - 1, y - 1, w + 2, h + 2, 0xFF0C0608);
+		Paint.block(c, x0 - 1, y - 1, w + 2, h + 2, 0xFF0C0608);
 		c.fill(x0, y, x0 + w, y + h, ColorMath.lerp(a900, 0xFF1A0F08, 0.2f));
 		c.fill(x0, y, x0 + w, y + 1, ColorMath.withAlpha(a300, 0x1A));
 		c.fill(x0, y + h - 1, x0 + w, y + h, 0x4D000000);

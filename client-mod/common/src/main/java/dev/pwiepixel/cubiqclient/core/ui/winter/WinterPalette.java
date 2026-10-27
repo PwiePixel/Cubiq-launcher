@@ -59,7 +59,7 @@ public final class WinterPalette {
 
 	/**
 	 * @param variant {@link #DARK}, {@link #OLED} oder {@link #LIGHT}
-	 * @param a300 helle Akzentstufe, {@code a400} mittlere, {@code a500} kräftige (Launcher-Variablen redstone-300…500)
+	 * @param a300 helle Akzentstufe, {@code a400} mittlere, {@code a500} kräftige (Launcher-Variablen primary-300…500)
 	 */
 	public WinterPalette(int variant, int a300, int a400, int a500) {
 		this.variant = variant;

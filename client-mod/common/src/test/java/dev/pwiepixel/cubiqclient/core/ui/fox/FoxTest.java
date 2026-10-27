@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class FoxTest {
 	@AfterEach
 	void reset() {
-		Theme.set(Theme.of("dark", "redstone", null));
+		Theme.set(Theme.of("dark", "cubiq", null));
 		dev.pwiepixel.cubiqclient.core.halloween.Halloween.reset();
 	}
 
@@ -45,9 +45,9 @@ class FoxTest {
 		assertEquals(Theme.FOX, Theme.of("dark", "fox", null, " Fox ").designName);
 		assertEquals(Theme.FOX, Theme.normalizeDesign("fox"));
 		assertEquals(Theme.WINTER, Theme.normalizeDesign("winter"));
-		assertEquals(Theme.REDSTONE, Theme.normalizeDesign("foxden"));
-		assertEquals(Theme.REDSTONE, Theme.normalizeDesign(null));
-		assertFalse(Theme.of("dark", "redstone", null).fox, "ohne Design: Redstone");
+		assertEquals(Theme.CUBIQ, Theme.normalizeDesign("foxden"));
+		assertEquals(Theme.CUBIQ, Theme.normalizeDesign(null));
+		assertFalse(Theme.of("dark", "cubiq", null).fox, "ohne Design: Cubiq");
 		assertFalse(Theme.of("dark", "ice", null, "winter").fox);
 		assertEquals(0xFFE8702A, Theme.of("dark", "fox", null, "fox").accent);
 		assertEquals(0xFFE8702A, Theme.of("dark", "fox", "#000000").accent, "Fuchsorange ist ein bekannter Akzent");
@@ -60,8 +60,8 @@ class FoxTest {
 		assertEquals(0xFF1A1119, f.background);
 		assertEquals(0xFF281A27, f.surface);
 		assertEquals(0xFFFFF3EA, f.text);
-		assertEquals(0xFFFFC362, f.lampOn, "Laternen leuchten golden wie Glut, nicht Bernstein oder Eis");
-		assertEquals(0xFFFFC362, f.on);
+		assertEquals(0xFFFFC362, f.faceOn, "Laternen leuchten golden wie Glut, nicht Bernstein oder Eis");
+		assertEquals(0xFFFDA4A4, f.danger, "Fehler bleiben rot wie im Launcher");
 		assertEquals(0xFF000000, Theme.of("oled", "fox", null, "fox").background);
 		Theme day = Theme.of("light", "fox", null, "fox");
 		assertTrue(day.light);
@@ -70,26 +70,26 @@ class FoxTest {
 		// Andere Akzente bleiben frei wählbar; die Glut der Äste folgt dem Akzent.
 		Theme green = Theme.of("dark", "emerald", null, "fox");
 		assertEquals(0xFF17A34A, green.accent);
-		assertNotEquals(f.dustOn, green.dustOn);
+		assertNotEquals(f.accentText, green.accentText);
 	}
 
 	@Test
 	void accentFollowsDesignLikeTheLauncher() {
-		assertEquals("fox", Theme.accentForDesign("fox", "redstone"));
-		assertEquals("fox", Theme.accentForDesign("fox", "ice"));
+		assertEquals("orange", Theme.accentForDesign("fox", "redstone"));
+		assertEquals("orange", Theme.accentForDesign("fox", "ice"));
 		assertEquals("cubiq", Theme.accentForDesign("redstone", "fox"));
 		assertEquals("ice", Theme.accentForDesign("winter", "fox"));
 		assertEquals("ice", Theme.accentForDesign("winter", "redstone"));
 		assertEquals("cubiq", Theme.accentForDesign("redstone", "ice"));
 		assertEquals("emerald", Theme.accentForDesign("fox", "emerald"));
 		assertEquals("lapis", Theme.accentForDesign("redstone", "lapis"));
-		assertEquals("fox", Theme.designAccent("fox"));
+		assertEquals("orange", Theme.designAccent("fox"));
 	}
 
 	@Test
 	void pickerOffersTheThirdDesignAndAccent() {
 		assertTrue(Arrays.asList(LookPicker.DESIGNS).contains(Theme.FOX));
-		assertTrue(Arrays.asList(LookPicker.ACCENTS).contains("fox"));
+		assertTrue(Arrays.asList(LookPicker.ACCENTS).contains("orange"), "Fuchsorange heißt wie im Launcher");
 	}
 
 	@Test
@@ -100,7 +100,7 @@ class FoxTest {
 				.getBytes(StandardCharsets.UTF_8));
 		assertTrue(Theme.loadFrom(dir));
 		assertTrue(Theme.get().fox);
-		assertEquals("fox", Theme.get().accentName);
+		assertEquals("orange", Theme.get().accentName, "früherer Name „fox“ → Name des Launchers");
 		assertEquals(0xFFE8702A, Theme.get().accent);
 	}
 

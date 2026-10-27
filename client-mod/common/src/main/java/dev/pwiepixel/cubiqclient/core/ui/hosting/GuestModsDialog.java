@@ -6,8 +6,8 @@ import dev.pwiepixel.cubiqclient.core.hosting.share.GuestCheck;
 import dev.pwiepixel.cubiqclient.core.hosting.share.SharedContent;
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
+import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.social.Dialog;
 import dev.pwiepixel.cubiqclient.core.ui.social.Kit;
@@ -61,7 +61,7 @@ public final class GuestModsDialog extends Dialog {
 		int foot = check.canJoinWithout() ? 36 : 58;
 		int listH = Math.max(30, y + h - foot - ty);
 		list = new int[] { x, ty, w, listH };
-		Redstone.well(c, x, ty, w, listH, t.border);
+		Paint.well(c, x, ty, w, listH, t.border);
 		int content = missing.size() * ROW_H;
 		scroll = Math.max(0, Math.min(scroll, Math.max(0, content - listH + 4)));
 		c.scissor(x + 1, ty + 1, x + w - 1, ty + listH - 1);
@@ -70,14 +70,16 @@ public final class GuestModsDialog extends Dialog {
 			if (ry + ROW_H > ty && ry < ty + listH) {
 				String req = I18n.tr(m.required ? "hosting.mods.required" : "hosting.mods.optional");
 				int reqW = c.textWidth(req) + 8;
-				Redstone.stone(c, x + 4, ry + 2, reqW, 14, m.required ? 0xFF6A1414 : t.surface, m.required ? t.dustOn : t.border);
-				c.text(req, x + 8, ry + 5, 0xFFFFFFFF, false);
+				// Pflicht: rot getönte Pille (wie die Fehler-Abzeichen im Launcher), sonst neutral.
+				Paint.panel(c, x + 4, ry + 2, reqW, 14, m.required ? ColorMath.lerp(t.surface, t.danger, 0.18f) : t.surface,
+						m.required ? ColorMath.lerp(t.border, t.danger, 0.55f) : t.border);
+				c.text(req, x + 8, ry + 5, m.required ? t.danger : t.text, false);
 				int nx = x + reqW + 8;
 				int srcW = Math.min(150, w / 3);
 				Paint.textClipped(c, m.name + (m.version.isEmpty() ? "" : " " + m.version), nx, ry + 5, w - (nx - x) - srcW - 50, t.text,
 						false);
 				Paint.textClipped(c, ShareModsDialog.sourceLabel(m.source), x + w - srcW - 50, ry + 5, srcW,
-						m.source == SharedContent.Source.HOST ? t.dustOn : m.source == SharedContent.Source.MANUAL ? t.textDim : t.lampOn,
+						ShareModsDialog.sourceColor(m.source),
 						false);
 				Paint.textRight(c, ShareModsDialog.size(m.size), x + w - 8, ry + 5, t.textDim, false);
 			}
@@ -87,7 +89,7 @@ public final class GuestModsDialog extends Dialog {
 		Kit.scrollbar(c, x + w - 3, ty + 1, listH - 2, scroll, Math.max(0, content - listH + 4), content);
 		int fy = ty + listH + 4;
 		if (!check.canJoinWithout()) {
-			fy = Paint.paragraph(c, I18n.tr("hosting.mods.requiredMissing"), x, fy, w, 10, t.dustOn) + 2;
+			fy = Paint.paragraph(c, I18n.tr("hosting.mods.requiredMissing"), x, fy, w, 10, t.danger) + 2;
 		}
 		boolean launcher = Hosting.launcherCanOpen();
 		if (!launcher) Paint.textClipped(c, I18n.tr("hosting.mods.noLauncher"), x, fy, w, t.textDim, false);
