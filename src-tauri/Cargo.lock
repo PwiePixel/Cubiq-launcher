@@ -967,7 +967,7 @@ dependencies = [
 
 [[package]]
 name = "cubiq-core"
-version = "0.2.0"
+version = "0.2.5"
 dependencies = [
  "android-native-keyring-store",
  "apple-native-keyring-store",
@@ -1008,7 +1008,7 @@ dependencies = [
 
 [[package]]
 name = "cubiq-launcher"
-version = "0.2.0"
+version = "0.2.5"
 dependencies = [
  "arboard",
  "chrono",
@@ -5145,7 +5145,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-cubiq-game"
-version = "0.2.0"
+version = "0.2.5"
 dependencies = [
  "log",
  "lzma-rust2",
@@ -5164,7 +5164,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-cubiq-push"
-version = "0.2.0"
+version = "0.2.5"
 dependencies = [
  "serde",
  "serde_json",
