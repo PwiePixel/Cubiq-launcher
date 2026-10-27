@@ -1342,7 +1342,13 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
           </div>
 
           <!-- Kosmetik: altes Kartenbild, nur im Reiter. -->
-          <div v-show="tab === 'cosmetics'" id="skins-panel-cosmetics" role="tabpanel" aria-labelledby="skins-tab-cosmetics">
+          <div
+            v-show="tab === 'cosmetics'"
+            id="skins-panel-cosmetics"
+            class="flex flex-col gap-8"
+            role="tabpanel"
+            aria-labelledby="skins-tab-cosmetics"
+          >
             <CubiqHeadCosmetics
               cosmetic-slot="hat"
               :preview-id="headPreview?.id ?? null"
@@ -1353,7 +1359,6 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
               @redeem="openRedeem"
             />
             <CubiqHeadCosmetics
-              class="mt-8"
               cosmetic-slot="wings"
               :preview-id="wingsPreview?.id ?? null"
               :night="night"
@@ -1363,7 +1368,6 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
               @redeem="openRedeem"
             />
             <CubiqHeadCosmetics
-              class="mt-8"
               cosmetic-slot="companion"
               :preview-id="companionPreview?.id ?? null"
               :night="night"
@@ -1373,7 +1377,6 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
               @redeem="openRedeem"
             />
             <CubiqHeadCosmetics
-              class="mt-8"
               cosmetic-slot="pet"
               :preview-id="petPreview?.id ?? null"
               :night="night"

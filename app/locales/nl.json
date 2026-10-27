@@ -3903,7 +3903,6 @@
     "glows": "Gloeit",
     "tryOn": "{name} passen",
     "tryOnLocked": "{name} passen (vergrendeld)",
-    "empty": "Nog geen hoofdcosmetica beschikbaar.",
     "offline": "De Cubiq-server is op dit moment niet bereikbaar.",
     "previewFailed": "De 3D-preview van dit item kon niet worden geladen.",
     "how": {
@@ -3936,7 +3935,6 @@
     "companion": {
       "title": "Metgezellen",
       "intro": "Vliegt om je hoofd, naast een hoed. De preview toont hoed, metgezel en cape samen.",
-      "empty": "Nog geen metgezellen.",
       "wearing": "Metgezel: {name}",
       "selectedWorn": "Vliegt mee – iedereen met de Cubiq Client ziet het.",
       "toasts": {
@@ -3948,7 +3946,6 @@
       "title": "Metgezellen op de grond",
       "intro": "Loopt naast je mee – iedereen met Cubiq Client ziet hem. De voorbeeldweergave toont hem naast je personage.",
       "creatorHint": "Creator-huisdier: fans krijgen het met de codes van de creator, de creator zelf loopt met meer naargelang de fans (twee vanaf 10, drie vanaf 100, vier vanaf 1000).",
-      "empty": "Nog geen metgezellen op de grond.",
       "wearing": "Naast je: {name}",
       "selectedWorn": "Loopt naast je mee – iedereen met Cubiq Client ziet hem.",
       "toasts": {

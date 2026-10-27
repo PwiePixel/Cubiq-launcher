@@ -3953,7 +3953,6 @@
     "glows": "Brilla",
     "tryOn": "Probar {name}",
     "tryOnLocked": "Probar {name} (bloqueado)",
-    "empty": "Todavía no hay cosméticos de cabeza.",
     "offline": "El servidor de Cubiq no está disponible en este momento.",
     "previewFailed": "No se pudo cargar la vista previa 3D de este objeto.",
     "how": {
@@ -3987,7 +3986,6 @@
     "companion": {
       "title": "Compañeros",
       "intro": "Vuela alrededor de tu cabeza además del sombrero. La vista previa muestra sombrero, compañero y capa juntos.",
-      "empty": "Aún no hay compañeros.",
       "wearing": "Compañero: {name}",
       "selectedWorn": "Vuela contigo: todos con Cubiq Client lo ven.",
       "toasts": {
@@ -3998,7 +3996,6 @@
     "wings": {
       "title": "Alas",
       "intro": "Van en tu espalda además del sombrero y el acompañante. La vista previa las muestra en el suelo, en el aire y agachado.",
-      "empty": "Aún no hay alas.",
       "wearing": "Alas: {name}",
       "selectedWorn": "En tu espalda: todos con Cubiq Client las ven.",
       "toasts": {
@@ -4016,7 +4013,6 @@
       "title": "Compañeros en el suelo",
       "intro": "Camina a tu lado: todos con Cubiq Client lo ven. La vista previa lo muestra junto a tu personaje.",
       "creatorHint": "Mascota de creador: los fans la consiguen con los códigos del creador, y el creador lleva más según sus fans (dos desde 10, tres desde 100, cuatro desde 1000).",
-      "empty": "Aún no hay compañeros en el suelo.",
       "wearing": "A tu lado: {name}",
       "selectedWorn": "Camina a tu lado: todos con Cubiq Client lo ven.",
       "toasts": {

@@ -3953,7 +3953,6 @@
     "glows": "Leuchtet",
     "tryOn": "{name} anprobieren",
     "tryOnLocked": "{name} anprobieren (gesperrt)",
-    "empty": "Noch keine Kopf-Kosmetik verfügbar.",
     "offline": "Der Cubiq-Server ist gerade nicht erreichbar.",
     "previewFailed": "Die 3D-Vorschau dieses Teils konnte nicht geladen werden.",
     "how": {
@@ -3987,7 +3986,6 @@
     "companion": {
       "title": "Begleiter",
       "intro": "Fliegt zusätzlich zum Hut um deinen Kopf. Die Vorschau zeigt Hut, Begleiter und Umhang zusammen.",
-      "empty": "Noch keine Begleiter.",
       "wearing": "Begleiter: {name}",
       "selectedWorn": "Fliegt mit – alle mit Cubiq Client sehen ihn.",
       "toasts": {
@@ -3998,7 +3996,6 @@
     "wings": {
       "title": "Flügel",
       "intro": "Sitzen zusätzlich zu Hut und Begleiter auf deinem Rücken. Die Vorschau zeigt sie am Boden, in der Luft und beim Schleichen.",
-      "empty": "Noch keine Flügel.",
       "wearing": "Flügel: {name}",
       "selectedWorn": "Auf deinem Rücken – alle mit Cubiq Client sehen sie.",
       "toasts": {
@@ -4016,7 +4013,6 @@
       "title": "Begleiter am Boden",
       "intro": "Läuft neben dir her – alle mit Cubiq Client sehen ihn. Die Vorschau zeigt ihn neben deiner Figur.",
       "creatorHint": "Creator-Haustier: Fans bekommen es über die Codes des Creators, der Creator selbst läuft mit mehr je nach Fans (ab 10 zwei, ab 100 drei, ab 1000 vier).",
-      "empty": "Noch keine Begleiter am Boden.",
       "wearing": "Neben dir: {name}",
       "selectedWorn": "Läuft neben dir her – alle mit Cubiq Client sehen ihn.",
       "toasts": {

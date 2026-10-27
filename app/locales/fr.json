@@ -3903,7 +3903,6 @@
     "glows": "Brille",
     "tryOn": "Essayer {name}",
     "tryOnLocked": "Essayer {name} (verrouillé)",
-    "empty": "Aucun cosmétique de tête pour le moment.",
     "offline": "Le serveur Cubiq est injoignable pour le moment.",
     "previewFailed": "Impossible de charger l’aperçu 3D de cet objet.",
     "how": {
@@ -3936,7 +3935,6 @@
     "companion": {
       "title": "Compagnons",
       "intro": "Vole autour de ta tête en plus du chapeau. L’aperçu montre chapeau, compagnon et cape ensemble.",
-      "empty": "Pas encore de compagnon.",
       "wearing": "Compagnon : {name}",
       "selectedWorn": "Il vole avec toi – tous les joueurs avec le Cubiq Client le voient.",
       "toasts": {
@@ -3948,7 +3946,6 @@
       "title": "Compagnons au sol",
       "intro": "Marche à côté de toi – tous ceux qui ont Cubiq Client le voient. L’aperçu le montre à côté de ton personnage.",
       "creatorHint": "Compagnon de créateur : les fans l'obtiennent avec les codes du créateur, et le créateur en a plus selon ses fans (deux dès 10, trois dès 100, quatre dès 1000).",
-      "empty": "Pas encore de compagnons au sol.",
       "wearing": "À côté de toi : {name}",
       "selectedWorn": "Marche à côté de toi – tous ceux qui ont Cubiq Client le voient.",
       "toasts": {

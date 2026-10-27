@@ -3903,7 +3903,6 @@
     "glows": "Świeci",
     "tryOn": "Przymierz {name}",
     "tryOnLocked": "Przymierz {name} (zablokowane)",
-    "empty": "Nie ma jeszcze kosmetyków na głowę.",
     "offline": "Serwer Cubiq jest w tej chwili nieosiągalny.",
     "previewFailed": "Nie udało się wczytać podglądu 3D tego przedmiotu.",
     "how": {
@@ -3936,7 +3935,6 @@
     "companion": {
       "title": "Towarzysze",
       "intro": "Lata wokół głowy oprócz kapelusza. Podgląd pokazuje kapelusz, towarzysza i pelerynę razem.",
-      "empty": "Nie ma jeszcze towarzyszy.",
       "wearing": "Towarzysz: {name}",
       "selectedWorn": "Lata z tobą – widzą go wszyscy z Cubiq Client.",
       "toasts": {
@@ -3948,7 +3946,6 @@
       "title": "Towarzysze na ziemi",
       "intro": "Chodzi obok ciebie – widzą go wszyscy z Cubiq Client. Podgląd pokazuje go obok twojej postaci.",
       "creatorHint": "Zwierzak twórcy: fani dostają go dzięki kodom twórcy, a sam twórca ma ich więcej zależnie od fanów (dwa od 10, trzy od 100, cztery od 1000).",
-      "empty": "Brak towarzyszy na ziemi.",
       "wearing": "Obok ciebie: {name}",
       "selectedWorn": "Chodzi obok ciebie – widzą go wszyscy z Cubiq Client.",
       "toasts": {

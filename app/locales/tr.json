@@ -3903,7 +3903,6 @@
     "glows": "Parlar",
     "tryOn": "Dene: {name}",
     "tryOnLocked": "Dene: {name} (kilitli)",
-    "empty": "Henüz kafa kozmetiği yok.",
     "offline": "Cubiq sunucusuna şu anda ulaşılamıyor.",
     "previewFailed": "Bu eşyanın 3D önizlemesi yüklenemedi.",
     "how": {
@@ -3936,7 +3935,6 @@
     "companion": {
       "title": "Yoldaşlar",
       "intro": "Şapkanın yanında başının etrafında uçar. Önizleme şapkayı, yoldaşı ve pelerini birlikte gösterir.",
-      "empty": "Henüz yoldaş yok.",
       "wearing": "Yoldaş: {name}",
       "selectedWorn": "Seninle uçuyor – Cubiq Client kullanan herkes görür.",
       "toasts": {
@@ -3948,7 +3946,6 @@
       "title": "Yerdeki yoldaşlar",
       "intro": "Yanında yürür – Cubiq Client kullanan herkes onu görür. Önizleme onu karakterinin yanında gösterir.",
       "creatorHint": "Creator evcil hayvanı: hayranlar onu creator'ın kodlarıyla alır, creator'ın kendisi hayran sayısına göre daha fazlasıyla dolaşır (10'dan itibaren iki, 100'den üç, 1000'den dört).",
-      "empty": "Henüz yerde yoldaş yok.",
       "wearing": "Yanında: {name}",
       "selectedWorn": "Yanında yürür – Cubiq Client kullanan herkes onu görür.",
       "toasts": {

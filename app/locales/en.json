@@ -3953,7 +3953,6 @@
     "glows": "Glows",
     "tryOn": "Try on {name}",
     "tryOnLocked": "Try on {name} (locked)",
-    "empty": "No head cosmetics available yet.",
     "offline": "The Cubiq server can't be reached right now.",
     "previewFailed": "The 3D preview of this item couldn't be loaded.",
     "how": {
@@ -3987,7 +3986,6 @@
     "companion": {
       "title": "Companions",
       "intro": "Flies around your head in addition to a hat. The preview shows hat, companion and cape together.",
-      "empty": "No companions available yet.",
       "wearing": "Companion: {name}",
       "selectedWorn": "Flying with you – everyone with the Cubiq Client sees it.",
       "toasts": {
@@ -3998,7 +3996,6 @@
     "wings": {
       "title": "Wings",
       "intro": "Sit on your back in addition to hat and companion. Preview them standing, in the air and sneaking.",
-      "empty": "No wings yet.",
       "wearing": "Wings: {name}",
       "selectedWorn": "On your back – everyone with the Cubiq Client sees them.",
       "toasts": {
@@ -4016,7 +4013,6 @@
       "title": "Ground companions",
       "intro": "Walks along next to you – everyone with Cubiq Client sees it. The preview shows it next to your character.",
       "creatorHint": "A creator's own pet: fans get it with the creator's codes, and the creator walks with more by fans (two from 10, three from 100, four from 1000).",
-      "empty": "No ground companions yet.",
       "wearing": "Next to you: {name}",
       "selectedWorn": "Walks along next to you – everyone with Cubiq Client sees it.",
       "toasts": {

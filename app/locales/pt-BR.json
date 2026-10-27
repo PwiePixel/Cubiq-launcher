@@ -3903,7 +3903,6 @@
     "glows": "Brilha",
     "tryOn": "Experimentar {name}",
     "tryOnLocked": "Experimentar {name} (bloqueado)",
-    "empty": "Ainda não há cosméticos de cabeça.",
     "offline": "O servidor Cubiq não está acessível no momento.",
     "previewFailed": "Não foi possível carregar a prévia 3D deste item.",
     "how": {
@@ -3936,7 +3935,6 @@
     "companion": {
       "title": "Companheiros",
       "intro": "Voa em volta da sua cabeça além do chapéu. A prévia mostra chapéu, companheiro e capa juntos.",
-      "empty": "Ainda não há companheiros.",
       "wearing": "Companheiro: {name}",
       "selectedWorn": "Voando com você – todo mundo com o Cubiq Client vê.",
       "toasts": {
@@ -3948,7 +3946,6 @@
       "title": "Companheiros no chão",
       "intro": "Anda ao seu lado – todos com o Cubiq Client o veem. A prévia o mostra ao lado do seu personagem.",
       "creatorHint": "Pet de criador: os fãs ganham com os códigos do criador, e o próprio criador anda com mais conforme os fãs (dois a partir de 10, três a partir de 100, quatro a partir de 1000).",
-      "empty": "Ainda não há companheiros no chão.",
       "wearing": "Ao seu lado: {name}",
       "selectedWorn": "Anda ao seu lado – todos com o Cubiq Client o veem.",
       "toasts": {
