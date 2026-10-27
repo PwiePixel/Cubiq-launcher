@@ -157,6 +157,8 @@ pub struct Launcher {
     hosting_open_sink: std::sync::RwLock<Option<HostingOpenSink>>,
     /// Gemeinsame Ordner: Zusammenführen/Lösen nie gleichzeitig (siehe [`shared_folders`]).
     shared_folders_lock: tokio::sync::Mutex<()>,
+    /// „Bewegung reduzieren“ des Systems, wie die Oberfläche es sieht (siehe [`Self::set_system_reduced_motion`]).
+    system_reduced_motion: std::sync::atomic::AtomicBool,
 }
 
 /// „Im Launcher öffnen“ einer gehosteten Welt mit Mods (Raum-ID) – die App holt das Fenster nach vorn.
@@ -233,6 +235,7 @@ impl Launcher {
             clip_open_sink: std::sync::RwLock::default(),
             hosting_open_sink: std::sync::RwLock::default(),
             shared_folders_lock: tokio::sync::Mutex::default(),
+            system_reduced_motion: std::sync::atomic::AtomicBool::default(),
             instances: InstanceStore::new(paths.clone()),
             accounts: AccountStore::new(paths.clone(), http.clone()),
             games: GameManager::new(events, paths.root().join("running.json")),
@@ -422,6 +425,18 @@ impl Launcher {
 
     pub async fn settings(&self) -> Settings {
         self.settings.read().await.clone()
+    }
+
+    /// „Bewegung reduzieren“ des Systems: Die Oberfläche sieht es (`prefers-reduced-motion`), der Kern
+    /// nicht. Damit löst er „Wie System“ der Einstellung „Animationen“ für den Cubiq Client auf
+    /// (`launcher-theme.json` → `motion`); bis zur ersten Meldung gilt „nicht reduziert“.
+    pub fn set_system_reduced_motion(&self, reduced: bool) {
+        self.system_reduced_motion.store(reduced, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// Zuletzt gemeldetes „Bewegung reduzieren“ des Systems.
+    pub fn system_reduced_motion(&self) -> bool {
+        self.system_reduced_motion.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     pub async fn update_settings(&self, new: Settings) -> Result<Settings> {
@@ -927,9 +942,19 @@ impl Launcher {
         // Der Mod liest daraus, ob er die Cubiq API benutzen darf (nur feste Werte, kein Token).
         let cubiq_enabled = self.cubiq.enabled().await;
         let (events, look) = (self.cubiq.active_events(), self.cubiq.look_events());
-        if let Err(e) =
-            client_mod::sync(&self.http, &self.paths, client_mod_dir.as_deref(), updates, instance, &settings.ui, cubiq_enabled, &events, &look)
-                .await
+        if let Err(e) = client_mod::sync(
+            &self.http,
+            &self.paths,
+            client_mod_dir.as_deref(),
+            updates,
+            instance,
+            &settings.ui,
+            self.system_reduced_motion(),
+            cubiq_enabled,
+            &events,
+            &look,
+        )
+        .await
         {
             tracing::warn!("Cubiq Client konnte nicht eingerichtet werden: {e}");
         }

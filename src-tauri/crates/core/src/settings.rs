@@ -239,6 +239,19 @@ pub enum Motion {
     Reduced,
 }
 
+impl Motion {
+    /// Gilt gerade „reduziert“? `System` folgt `system_reduced` – „Bewegung reduzieren“ des
+    /// Systems, wie es die Oberfläche sieht (der Kern kann es nicht selbst abfragen). Wie
+    /// `isReducedMotion` in `app/utils/motion.ts`.
+    pub fn is_reduced(self, system_reduced: bool) -> bool {
+        match self {
+            Self::Full => false,
+            Self::System => system_reduced,
+            Self::Reduced => true,
+        }
+    }
+}
+
 /// Ein unbekannter Wert (z. B. aus einer neueren Version) setzt nur die
 /// Animationen auf den Standard zurück, nicht die ganze `settings.json`.
 fn lenient_motion<'de, D: serde::Deserializer<'de>>(deserializer: D) -> std::result::Result<Motion, D::Error> {
@@ -802,6 +815,15 @@ mod tests {
         let s = Settings { ui: UiSettings { motion: Motion::Reduced, ..Default::default() }, ..Default::default() };
         s.save(&file).await.unwrap();
         assert_eq!(Settings::load(&file).await.unwrap().ui.motion, Motion::Reduced);
+    }
+
+    #[test]
+    fn only_system_motion_follows_the_system() {
+        for system_reduced in [false, true] {
+            assert!(!Motion::Full.is_reduced(system_reduced), "„Immer“ läuft auch bei reduzierter Systembewegung");
+            assert!(Motion::Reduced.is_reduced(system_reduced));
+            assert_eq!(Motion::System.is_reduced(system_reduced), system_reduced);
+        }
     }
 
     #[tokio::test]

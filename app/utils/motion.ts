@@ -1,4 +1,4 @@
-import { computed, ref, type ComputedRef, type Ref } from 'vue'
+import { computed, ref, watch, type ComputedRef, type Ref } from 'vue'
 import type { Motion } from '~/types'
 
 // Animationen im ganzen Launcher (Würfel-Hintergrund, Lauflichter,
@@ -101,4 +101,19 @@ export function sharedMotion(): MotionController {
 /** Einstellung übernehmen (aus `applyAppearance`). */
 export function applyMotion(value: unknown) {
   sharedMotion().apply(value)
+}
+
+/**
+ * Meldet dem Kern „Bewegung reduzieren“ des Systems – sofort und bei jeder Änderung. Er kann es nicht selbst
+ * abfragen, braucht es aber für „Wie System“ im Cubiq Client (`launcher-theme.json` → `motion`). Scheitert die
+ * Meldung (z. B. ohne Desktop-App), gilt dort „nicht reduziert“.
+ */
+export function reportSystemMotion(motion: Pick<MotionController, 'systemReduced'>, send: (reduced: boolean) => Promise<unknown>) {
+  return watch(
+    motion.systemReduced,
+    (reduced) => {
+      send(reduced).catch(() => {})
+    },
+    { immediate: true },
+  )
 }
