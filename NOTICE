@@ -20,6 +20,8 @@ Third-party parts
   that ship AppleSkin textures are supported.
 - Inter by Rasmus Andersson (SIL Open Font License 1.1, via @fontsource-variable/inter): the
   launcher's font.
+- Sora by The Sora Project Authors (SIL Open Font License 1.1, via @fontsource-variable/sora): the
+  launcher's heading font.
 - Fonts for the Halloween look (SIL Open Font License 1.1, bundled in app/assets/fonts with their
   license texts): IM Fell English SC by Igino Marini; Cormorant Garamond by The Cormorant Project
   Authors (Christian Thalmann).

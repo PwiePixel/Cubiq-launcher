@@ -144,12 +144,15 @@ async function openBigPicture() {
 }
 
 // --- Aussehen -----------------------------------------------------------------
-// Namen kommen beim Rendern aus settings.appearance.themes/accents.
-const themes: { key: Theme; bg: string; panel: string; line: string }[] = [
-  { key: 'dark', bg: '#0c100e', panel: '#161c18', line: '#29332c' },
-  { key: 'oled', bg: '#000000', panel: '#0a0d0b', line: '#1f2721' },
-  { key: 'light', bg: '#eef2ef', panel: '#ffffff', line: '#d2dbd4' },
-  { key: 'system', bg: 'linear-gradient(135deg,#0c100e 50%,#eef2ef 50%)', panel: '#161c18', line: '#29332c' },
+// Namen kommen beim Rendern aus settings.appearance.themes/accents. Die Vorschau zeigt Rahmen, Leinwand,
+// Karte, Kanten und Platzhalter-Schrift des Schemas (Werte aus main.css); „Wie System“ halb dunkel, halb hell.
+const darkLook = { frame: '#04061a', canvas: '#070a1d', card: '#0c1028', line: '#1e2550', ink: '#283062' }
+const lightLook = { frame: '#e1e5f1', canvas: '#edf0f8', card: '#ffffff', line: '#dde1ef', ink: '#d2d7e8' }
+const themes: { key: Theme; look: typeof darkLook; split?: typeof darkLook }[] = [
+  { key: 'dark', look: darkLook },
+  { key: 'oled', look: { frame: '#000000', canvas: '#000000', card: '#05060f', line: '#151937', ink: '#1f2447' } },
+  { key: 'light', look: lightLook },
+  { key: 'system', look: darkLook, split: lightLook },
 ]
 const accents: { key: Accent; color: string }[] = [
   { key: 'cubiq', color: '#71a330' },
@@ -358,16 +361,14 @@ async function allowFirewall() {
         <button
           v-for="theme in themes"
           :key="theme.key"
-          class="overflow-hidden rounded-xl border-2 text-left transition-colors"
-          :class="form.ui.theme === theme.key ? 'border-primary-500' : 'border-base-800 hover:border-base-700'"
+          class="squircle overflow-hidden rounded-xl border-2 text-left transition-colors"
+          :class="form.ui.theme === theme.key ? 'border-primary-500' : 'border-line hover:border-line-strong'"
           :aria-pressed="form.ui.theme === theme.key"
           @click="form.ui.theme = theme.key"
         >
-          <div class="relative h-20 p-2" :style="{ background: theme.bg }">
-            <div class="absolute inset-y-2 left-2 w-5 rounded" :style="{ background: theme.panel, border: `1px solid ${theme.line}` }" />
-            <div class="absolute top-2 right-2 left-9 h-3 rounded" :style="{ background: theme.panel, border: `1px solid ${theme.line}` }" />
-            <div class="absolute right-2 bottom-2 left-9 h-8 rounded" :style="{ background: theme.panel, border: `1px solid ${theme.line}` }" />
-            <div class="absolute bottom-4 left-11 h-2 w-8 rounded-full bg-primary-500" />
+          <div class="relative h-20 overflow-hidden">
+            <ThemePreview v-bind="theme.look" />
+            <ThemePreview v-if="theme.split" v-bind="theme.split" class="[clip-path:polygon(100%_0,100%_100%,0_100%)]" />
           </div>
           <div class="flex items-center gap-2 bg-base-850 px-3 py-2 text-sm font-medium">
             <span class="grid size-4 place-items-center rounded-full border-2" :class="form.ui.theme === theme.key ? 'border-primary-500' : 'border-base-600'">
@@ -378,12 +379,12 @@ async function allowFirewall() {
         </button>
       </div>
 
-      <SettingRow :title="t('settings.appearance.accentTitle')" :description="t('settings.appearance.accentDescription')">
+      <SettingRow :title="t('settings.appearance.accentTitle')" :description="t('settings.appearance.accentDescription')" :stacked="mobile">
         <div class="flex gap-2 mobile:flex-wrap">
           <button
             v-for="a in accents"
             :key="a.key"
-            class="size-7 rounded-full ring-offset-2 ring-offset-base-900 transition-transform hover:scale-110 mobile:size-9"
+            class="squircle size-7 rounded-lg ring-offset-2 ring-offset-base-900 transition-transform hover:scale-110 mobile:size-9"
             :class="form.ui.accent === a.key ? 'ring-2 ring-base-50' : ''"
             :style="{ background: a.color }"
             :title="t(`settings.appearance.accents.${a.key}`)"

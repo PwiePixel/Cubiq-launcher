@@ -47,7 +47,7 @@ class TouchOverlayProvider : dev.pwiepixel.cubiq.game.engine.OverlayProvider {
             setPadding((14 * dp).toInt(), 0, (14 * dp).toInt(), 0)
             background = GradientDrawable().apply {
                 cornerRadius = 8 * dp
-                setColor(0xE6111613.toInt())
+                setColor(0xE60C1028.toInt())
                 setStroke((1 * dp).toInt(), TouchOverlayView.COLOR_BORDER)
             }
             visibility = if (input.isGrabbed()) View.GONE else View.VISIBLE

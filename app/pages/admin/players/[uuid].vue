@@ -211,7 +211,7 @@ const reportLine = (r: AdminReportSummary) => `${reasonLabel(r.reason)} · ${t(`
         <!-- Kennzahlen -->
         <div class="grid grid-cols-2 border-t border-base-800 text-center sm:grid-cols-4">
           <div class="border-r border-base-800 px-3 py-2.5">
-            <p class="text-lg font-semibold tabular-nums" :class="activeCount ? 'text-primary-300' : 'text-base-50'">{{ activeCount }}</p>
+            <p class="text-lg font-semibold tabular-nums" :class="activeCount ? 'text-danger-300' : 'text-base-50'">{{ activeCount }}</p>
             <p class="text-[11px] text-base-400">{{ t('team.file.activeSanctions') }}</p>
           </div>
           <div class="border-r border-base-800 px-3 py-2.5">
@@ -287,7 +287,7 @@ const reportLine = (r: AdminReportSummary) => `${reasonLabel(r.reason)} · ${t(`
               <span v-if="c.reports" class="text-[10px] text-caution-300">⚑ {{ c.reports }}</span>
               <button
                 v-if="team.can('items.grant') && c.source !== 'upload'"
-                class="text-base-400 hover:text-primary-300"
+                class="text-base-400 hover:text-danger-300"
                 :aria-label="t('admin.players.revokeCape', { cape: c.name || c.id })"
                 @click="revokeGrant(c.id)"
               >✕</button>

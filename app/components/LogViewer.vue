@@ -353,7 +353,7 @@ const shareLabel = computed(() => (isLive.value ? t('logViewer.latest') : (curre
     <!-- Kopfzeile: Quelle, Suche, Aktionen -->
     <div class="flex flex-wrap items-center gap-2 border-b border-base-800 px-3 py-2">
       <div class="relative">
-        <span class="pointer-events-none absolute top-1/2 left-2.5 size-2 -translate-y-1/2 rounded-full" :class="isLive ? (running ? 'animate-live bg-primary-500 shadow-[0_0_8px_var(--color-primary-500)]' : 'bg-base-600') : 'bg-live-400'" />
+        <span class="pointer-events-none absolute top-1/2 left-2.5 size-2 -translate-y-1/2 rounded-full" :class="isLive ? (running ? 'animate-live bg-live-400 shadow-[0_0_8px_var(--color-live-400)]' : 'bg-base-600') : 'bg-base-400'" />
         <select
           class="field h-8 w-auto max-w-72 py-0 pr-8 pl-6 text-xs"
           :value="source"

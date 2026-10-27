@@ -161,7 +161,8 @@ function back() {
     </div>
 
     <template v-else-if="details">
-      <header class="project-hero relative mb-6 flex flex-wrap items-start gap-6 overflow-hidden rounded-2xl border border-base-800 p-6 mobile:mb-4 mobile:gap-4 mobile:p-4">
+      <header class="project-hero squircle relative isolate mb-6 flex flex-wrap items-start gap-6 overflow-hidden rounded-3xl border border-line p-6 mobile:mb-4 mobile:gap-4 mobile:p-4">
+        <span class="hero-grid" aria-hidden="true"><span class="iso-grid absolute inset-0" /></span>
         <ModIcon :src="details.iconUrl" :name="details.title" :size="mobile ? 72 : 104" class="shadow-lg shadow-black/30" />
         <div class="min-w-0 flex-1 basis-80 mobile:basis-full">
           <h1 class="display text-4xl leading-tight break-words text-base-50 mobile:text-3xl">{{ details.title }}</h1>
@@ -326,11 +327,19 @@ function back() {
 </template>
 
 <style scoped>
+/* Kopf der Projektseite: Navy mit einem grünen Schein oben links und dem feinen Würfel-Raster des Logos. */
 .project-hero {
   background:
-    radial-gradient(90% 120% at 0% 0%, rgb(224 40 30 / 0.12), transparent 60%),
-    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.02) 0 1px, transparent 1px 32px),
-    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.02) 0 1px, transparent 1px 32px),
+    radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--color-primary-500) 13%, transparent), transparent 60%),
     var(--color-base-900);
+  box-shadow: var(--edge-light), var(--elev-2);
+}
+/* Das Raster läuft nach rechts aus (zwei Ebenen: außen das Ausblenden, innen das Raster). */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  -webkit-mask-image: linear-gradient(110deg, #000 0%, transparent 65%);
+  mask-image: linear-gradient(110deg, #000 0%, transparent 65%);
 }
 </style>

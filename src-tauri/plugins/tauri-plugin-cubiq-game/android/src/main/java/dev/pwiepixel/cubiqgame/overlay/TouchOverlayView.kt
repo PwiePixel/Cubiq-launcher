@@ -388,15 +388,15 @@ class TouchOverlayView(
     }
 
     companion object {
-        /** Farben wie im Launcher (base-900, base-700, primary-500, live-400). */
-        const val COLOR_FILL = 0xFF111613.toInt()
+        /** Farben wie im Launcher (Navy base-900/800/700, Schrift base-50, primary-500, live-400). */
+        const val COLOR_FILL = 0xFF0C1028.toInt()
         const val COLOR_FILL_DOWN = 0xFF1A2810.toInt()
-        const val COLOR_BORDER = 0xFF29332C.toInt()
-        const val COLOR_TEXT = 0xFFEEF4EF.toInt()
+        const val COLOR_BORDER = 0xFF283062.toInt()
+        const val COLOR_TEXT = 0xFFF2F4FD.toInt()
         const val COLOR_ACCENT = 0xFF71A330.toInt()
         const val COLOR_ACCENT_LIGHT = 0xFF88BB45.toInt()
         const val COLOR_LAMP = 0xFFB4E46A.toInt()
-        const val COLOR_KNOB = 0xFF1D2520.toInt()
+        const val COLOR_KNOB = 0xFF1A2046.toInt()
         const val HANDLE_DP = 22f
         const val GRAB_POLL_MS = 200L
         /** Zeigergröße: Pfeil 20 dp hoch × Faktor. */

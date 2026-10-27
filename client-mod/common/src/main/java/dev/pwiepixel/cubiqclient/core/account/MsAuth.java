@@ -421,12 +421,12 @@ public final class MsAuth {
 	}
 
 	private static final String PAGE_HEAD = "<!doctype html><html><meta charset=\"utf-8\"><title>Cubiq Client</title>"
-			+ "<body style=\"font-family:Segoe UI,sans-serif;background:#0c100e;color:#f2f4f8;display:grid;place-items:center;"
+			+ "<body style=\"font-family:Segoe UI,sans-serif;background:#070a1d;color:#f2f4fd;display:grid;place-items:center;"
 			+ "height:100vh;margin:0\"><div style=\"text-align:center\">";
 	static final String DONE_PAGE = PAGE_HEAD + "<h1 style=\"font-size:20px\">Sign-in complete &middot; Anmeldung abgeschlossen</h1>"
-			+ "<p style=\"color:#7d8699\">You can close this window and return to Minecraft.</p></div>";
+			+ "<p style=\"color:#a1a8cd\">You can close this window and return to Minecraft.</p></div>";
 	static final String FAILED_PAGE = PAGE_HEAD + "<h1 style=\"font-size:20px\">Sign-in failed &middot; Anmeldung fehlgeschlagen</h1>"
-			+ "<p style=\"color:#7d8699\">Please try again in Minecraft.</p></div>";
+			+ "<p style=\"color:#a1a8cd\">Please try again in Minecraft.</p></div>";
 
 	private static void respond(Socket s, String status, String body) {
 		try {

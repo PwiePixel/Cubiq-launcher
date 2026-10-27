@@ -287,7 +287,7 @@ onBeforeUnmount(() => {
           @keydown="onKey"
           @paste="onPaste"
         />
-        <span v-if="length > MAX_TEXT - 200" class="self-center text-[11px] tabular-nums" :class="tooLong ? 'text-primary-300' : 'text-base-400'">
+        <span v-if="length > MAX_TEXT - 200" class="self-center text-[11px] tabular-nums" :class="tooLong ? 'text-danger-300' : 'text-base-400'">
           {{ length }}/{{ MAX_TEXT }}
         </span>
         <button

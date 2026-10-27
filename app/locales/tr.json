@@ -3045,8 +3045,6 @@
     "quickLaunch": "Hızlı başlat",
     "openNamed": "Aç: {name}",
     "newInstance": "Yeni kurulum",
-    "searchShortcut": "Ara (Ctrl+K)",
-    "searchTip": "Ara · Ctrl K",
     "settings": "Ayarlar",
     "accountNamed": "Hesap: {name}",
     "signIn": "Giriş yap",
@@ -3061,7 +3059,12 @@
     "achievements": "Başarımlar",
     "localServers": "Sunucularım",
     "controls": "Kontroller",
-    "pc": "PC"
+    "pc": "PC",
+    "groups": {
+      "together": "Birlikte",
+      "collection": "Koleksiyon",
+      "tools": "Araçlar"
+    }
   },
   "accountMenu": {
     "menuLabel": "Hesaplar",
@@ -3335,6 +3338,9 @@
       "add": "Sunucu ekle",
       "addHint": "Canlı durum ve tek tıkla katılma",
       "addHintEmpty": "Sunucuların canlı durumuyla – tek tıkla katıl"
+    },
+    "stage": {
+      "pick": "{name} seç"
     }
   },
   "news": {

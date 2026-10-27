@@ -270,7 +270,7 @@ function open(id: string) {
                   </button>
                   <button
                     v-if="task.cancellable"
-                    class="row-btn hover:text-primary-300"
+                    class="row-btn hover:text-danger-300"
                     :aria-label="t('tasks.cancelNamed', { title: task.title })"
                     :title="t('common.actions.cancel')"
                     :disabled="task.cancelling"
@@ -362,7 +362,7 @@ function open(id: string) {
 @reference "~/assets/css/main.css";
 
 .lead-pill {
-  @apply h-6 items-center gap-2 rounded-full border border-base-800 bg-base-850 px-2.5 text-[11px] whitespace-nowrap transition-colors hover:border-base-700;
+  @apply h-8 items-center gap-2 rounded-xl border border-line bg-base-900 px-3 text-xs whitespace-nowrap transition-colors hover:border-line-strong;
 }
 /* Ring, der sich „auflädt“ und dreht. */
 .charge {
@@ -384,10 +384,10 @@ function open(id: string) {
   }
 }
 .tasks-btn {
-  @apply relative grid size-7 place-items-center rounded-md text-base-400 transition-colors hover:bg-base-800 hover:text-base-50;
+  @apply relative grid size-8 place-items-center rounded-xl text-base-400 transition-colors hover:bg-base-900 hover:text-base-50;
 }
 .tasks-btn-open {
-  @apply bg-base-800 text-base-50;
+  @apply bg-base-900 text-base-50;
 }
 /* Zähler als kleines rundes Abzeichen. */
 .count {

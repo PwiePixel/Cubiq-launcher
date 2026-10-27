@@ -86,7 +86,7 @@ onBeforeUnmount(() => {
     <!-- Nichts läuft: ruhiger Zustand. -->
     <span v-if="!primary" class="pill text-base-400" role="status">
       <span class="dot bg-base-600" aria-hidden="true" />
-      <span class="hidden md:inline">{{ t('titleBar.running.none') }}</span>
+      <span class="hidden xl:inline">{{ t('titleBar.running.none') }}</span>
     </span>
 
     <div v-else class="pill gap-1 pr-1 text-base-50">
@@ -146,7 +146,7 @@ onBeforeUnmount(() => {
 @reference "~/assets/css/main.css";
 
 .pill {
-  @apply flex h-6 items-center gap-2 rounded-full border border-base-800 bg-base-850 px-2.5 text-[11px] whitespace-nowrap;
+  @apply flex h-8 items-center gap-2 rounded-xl border border-line bg-base-900 px-3 text-xs whitespace-nowrap;
 }
 /* Runder Statuspunkt. */
 .dot {

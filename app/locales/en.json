@@ -3088,8 +3088,6 @@
     "quickLaunch": "Quick launch",
     "openNamed": "Open {name}",
     "newInstance": "New instance",
-    "searchShortcut": "Search (Ctrl+K)",
-    "searchTip": "Search · Ctrl K",
     "settings": "Settings",
     "accountNamed": "Account: {name}",
     "signIn": "Sign in",
@@ -3105,7 +3103,12 @@
     "localServers": "My servers",
     "controls": "Controls",
     "pc": "PC",
-    "creator": "Creator"
+    "creator": "Creator",
+    "groups": {
+      "together": "Together",
+      "collection": "Collection",
+      "tools": "Tools"
+    }
   },
   "accountMenu": {
     "menuLabel": "Accounts",
@@ -3380,6 +3383,9 @@
       "add": "Add server",
       "addHint": "Live status and one-click join",
       "addHintEmpty": "Your servers with live status – join in one click"
+    },
+    "stage": {
+      "pick": "Select {name}"
     }
   },
   "news": {

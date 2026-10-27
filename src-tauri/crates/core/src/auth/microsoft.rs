@@ -192,14 +192,14 @@ fn pkce_challenge(verifier: &str) -> String {
 }
 
 const DONE_PAGE: &str = "<!doctype html><html lang=\"de\"><meta charset=\"utf-8\"><title>Cubiq Launcher</title>\
-<body style=\"font-family:Segoe UI,sans-serif;background:#0c100e;color:#f2f4f8;display:grid;place-items:center;height:100vh;margin:0\">\
+<body style=\"font-family:Segoe UI,sans-serif;background:#070a1d;color:#f2f4fd;display:grid;place-items:center;height:100vh;margin:0\">\
 <div style=\"text-align:center\"><h1 style=\"font-size:20px\">Anmeldung abgeschlossen</h1>\
-<p style=\"color:#7d8699\">Du kannst dieses Fenster schlie&szlig;en und zum Cubiq Launcher zur&uuml;ckkehren.</p></div>";
+<p style=\"color:#a1a8cd\">Du kannst dieses Fenster schlie&szlig;en und zum Cubiq Launcher zur&uuml;ckkehren.</p></div>";
 
 const FAILED_PAGE: &str = "<!doctype html><html lang=\"de\"><meta charset=\"utf-8\"><title>Cubiq Launcher</title>\
-<body style=\"font-family:Segoe UI,sans-serif;background:#0c100e;color:#f2f4f8;display:grid;place-items:center;height:100vh;margin:0\">\
+<body style=\"font-family:Segoe UI,sans-serif;background:#070a1d;color:#f2f4fd;display:grid;place-items:center;height:100vh;margin:0\">\
 <div style=\"text-align:center\"><h1 style=\"font-size:20px\">Anmeldung fehlgeschlagen</h1>\
-<p style=\"color:#7d8699\">Bitte im Cubiq Launcher erneut versuchen.</p></div>";
+<p style=\"color:#a1a8cd\">Bitte im Cubiq Launcher erneut versuchen.</p></div>";
 
 async fn respond(stream: &mut tokio::net::TcpStream, status: &str, body: &str) {
     let response = format!(

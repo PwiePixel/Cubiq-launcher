@@ -384,7 +384,7 @@ const failedIcons = ref(new Set<string>())
                 <label class="block">
                   <span class="mb-1 flex justify-between text-[11px] text-base-400">
                     {{ t('admin.featured.titleLabel') }}
-                    <span class="tabular-nums" :class="{ 'text-primary-300': drafts[p.id]![lang === 'en' ? 'enTitle' : 'deTitle'].trim().length > FEATURED_TITLE_MAX }">
+                    <span class="tabular-nums" :class="{ 'text-danger-300': drafts[p.id]![lang === 'en' ? 'enTitle' : 'deTitle'].trim().length > FEATURED_TITLE_MAX }">
                       {{ t('admin.featured.count', { n: drafts[p.id]![lang === 'en' ? 'enTitle' : 'deTitle'].trim().length, max: FEATURED_TITLE_MAX }) }}
                     </span>
                   </span>
@@ -398,7 +398,7 @@ const failedIcons = ref(new Set<string>())
                 <label class="block">
                   <span class="mb-1 flex justify-between text-[11px] text-base-400">
                     {{ t('admin.featured.textLabel') }}
-                    <span class="tabular-nums" :class="{ 'text-primary-300': drafts[p.id]![lang === 'en' ? 'enText' : 'deText'].trim().length > FEATURED_TEXT_MAX }">
+                    <span class="tabular-nums" :class="{ 'text-danger-300': drafts[p.id]![lang === 'en' ? 'enText' : 'deText'].trim().length > FEATURED_TEXT_MAX }">
                       {{ t('admin.featured.count', { n: drafts[p.id]![lang === 'en' ? 'enText' : 'deText'].trim().length, max: FEATURED_TEXT_MAX }) }}
                     </span>
                   </span>

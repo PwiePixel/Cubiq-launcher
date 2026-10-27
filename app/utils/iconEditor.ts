@@ -43,10 +43,10 @@ export function pxToRgba(px: Px): [number, number, number, number] {
   return [(px >>> 24) & 255, (px >>> 16) & 255, (px >>> 8) & 255, px & 255]
 }
 
-/** Cubiq-Farben: das Grün aus dem Logo in Stufen, das Logo-Nachtblau, Grautöne und die Akzente. */
+/** Cubiq-Farben: das Grün aus dem Logo in Stufen, das Logo-Navy, die Navy-Stufen der Oberfläche und die Akzente. */
 export const CUBIQ_PALETTE = [
   '#71a330', '#a9d46b', '#4f7a1e', '#2a4a12', '#0a0a30', '#f0b44c', '#e8702a',
-  '#0c100e', '#29332c', '#5f6d63', '#a6b2a9', '#eef4ef', '#3563e9', '#9b4ddf',
+  '#070a1d', '#283062', '#7880ad', '#bcc2e0', '#f2f4fd', '#3563e9', '#9b4ddf',
 ] as const
 
 /** Minecraft-ähnliche Grundfarben (Farbstoffe + Erze/Natur), eigene Werte. */

@@ -46,15 +46,15 @@ public final class MenuSkin {
 	/** Mittlere Zeichenzeit des Hintergrunds (µs, gleitend) – für den Selbsttest. */
 	private static float avgMicros;
 
-	// Cubiq: flache Flächen in den dunklen Farben des Launchers (base-800/850/700/600).
-	private static final int SURFACE = 0xFF1D2520;
-	private static final int SURFACE_HOVER = 0xFF242D27;
-	private static final int SURFACE_OFF = 0xFF141A16;
-	private static final int EDGE = 0xFF29332C;
-	private static final int BEVEL_LIGHT = 0xFF3D4A41;
-	private static final int BEVEL_DARK = 0xFF0C100E;
+	// Cubiq: flache Flächen im Navy des Launchers (base-800/850/700, helle Kante wie line-strong).
+	private static final int SURFACE = 0xFF1A2046;
+	private static final int SURFACE_HOVER = 0xFF212854;
+	private static final int SURFACE_OFF = 0xFF0F1430;
+	private static final int EDGE = 0xFF283062;
+	private static final int BEVEL_LIGHT = 0xFF343D7A;
+	private static final int BEVEL_DARK = 0xFF070A1D;
 	/** Tiefster Grund (base-950) für Schleier und Felder. */
-	private static final int DEEP = 0xFF0C100E;
+	private static final int DEEP = 0xFF070A1D;
 
 	// Winternacht: Eis- und Schneeplatten (immer dunkel – Vanilla schreibt weiß).
 	private static final int ICE = 0xFF1C2C48;
@@ -98,7 +98,7 @@ public final class MenuSkin {
 	private static int barFill(Theme t, boolean inWorld) {
 		if (t.winter) return inWorld ? 0x8C060B16 : 0xD80B1222;
 		if (t.fox) return inWorld ? 0x8C0E080D : 0xD8170E15;
-		return inWorld ? 0x8C0C100E : 0xD8111613;
+		return inWorld ? 0x8C070A1D : 0xD80C1028;
 	}
 
 	private MenuSkin() {
@@ -322,7 +322,7 @@ public final class MenuSkin {
 			return;
 		}
 		boolean f = fox();
-		c.fill(x1, y1, x2, y2, w ? (inWorld ? 0x70020610 : 0xA8050A16) : (f ? (inWorld ? 0x700A0408 : 0xA80E070C) : (inWorld ? 0x700C100E : 0xA80C100E)));
+		c.fill(x1, y1, x2, y2, w ? (inWorld ? 0x70020610 : 0xA8050A16) : (f ? (inWorld ? 0x700A0408 : 0xA80E070C) : (inWorld ? 0x70070A1D : 0xA8070A1D)));
 		c.fill(x1, y1, x2, y1 + 1, 0x80000000);
 		c.fill(x1, y2 - 1, x2, y2, ColorMath.withAlpha(bevelLight(Theme.get()), 0x50));
 	}
@@ -544,8 +544,8 @@ public final class MenuSkin {
 		if (Theme.get().halloween) return selected ? 0xFF261B3B : (hover ? 0xFF1C1630 : 0xFF13101F);
 		if (winter()) return selected ? 0xFF1F3354 : (hover ? 0xFF18284A : 0xFF111B31);
 		if (fox()) return selected ? 0xFF3A2434 : (hover ? 0xFF2F1E2B : 0xFF221620);
-		// Cubiq: base-850, unter der Maus etwas heller, gewählt mit einem Hauch Akzent.
-		return selected ? 0xFF1E2A20 : (hover ? 0xFF1A221C : 0xFF141A16);
+		// Cubiq: base-850 (Navy), unter der Maus etwas heller, gewählt mit einem Hauch Akzent (wie --pick-bg).
+		return selected ? 0xFF202C36 : (hover ? 0xFF171D42 : 0xFF121737);
 	}
 
 	/** Markierung „angeheftet“: Stecknadel in der Akzentfarbe (Feld 8×12 ab x, y). */
@@ -662,10 +662,10 @@ public final class MenuSkin {
 			scene(c, width, height, time);
 			c.fill(0, 0, width, height, 0x8C07060C);
 		} else if (inWorld) {
-			c.fill(0, 0, width, height, t.winter ? 0xE0060B16 : (t.fox ? 0xE00E080D : 0xE00C100E));
+			c.fill(0, 0, width, height, t.winter ? 0xE0060B16 : (t.fox ? 0xE00E080D : 0xE0070A1D));
 		} else {
 			scene(c, width, height, time);
-			c.fill(0, 0, width, height, t.winter ? (t.light ? 0x30000000 : 0x50030814) : (t.fox ? (t.light ? 0x30000000 : 0x500E0610) : 0x400C100E));
+			c.fill(0, 0, width, height, t.winter ? (t.light ? 0x30000000 : 0x50030814) : (t.fox ? (t.light ? 0x30000000 : 0x500E0610) : 0x40070A1D));
 		}
 		int cx = width / 2;
 		int[] layout = loadingLayout(height, avoidTop, avoidBottom);
@@ -816,7 +816,7 @@ public final class MenuSkin {
 		int wClient = PixelFont.width("CLIENT") * scale;
 		int x = cx - (wCubiq + gap + wClient) / 2;
 		int y = top + mark + 14;
-		for (int[] r : PixelFont.rects("CUBIQ")) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, 0xFFEEF4EF);
+		for (int[] r : PixelFont.rects("CUBIQ")) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, 0xFFF2F4FD);
 		x += wCubiq + gap;
 		for (int[] r : PixelFont.rects("CLIENT")) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, t.accentHover);
 		progress(c, cx, y + wordH + 14, Math.min(width - 40, 200), progress, seconds());

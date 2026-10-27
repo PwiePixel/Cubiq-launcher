@@ -15,13 +15,13 @@ function back() {
 </script>
 
 <template>
-  <header class="relative z-40 shrink-0 border-b border-base-800 bg-base-900 pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)]" data-testid="mobile-topbar">
+  <header class="relative z-40 shrink-0 bg-base-950 pt-[var(--safe-top)] pr-[var(--safe-right)] pl-[var(--safe-left)]" data-testid="mobile-topbar">
     <div class="flex h-12 items-center gap-1 px-2">
       <button v-if="!isRoot" class="top-btn" :aria-label="t('common.actions.back')" data-testid="mobile-back" @click="back">
         <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7" /></svg>
       </button>
       <NuxtLink v-else to="/" class="flex h-11 items-center gap-2 px-2 text-base-200" :aria-label="t('nav.home')">
-        <img src="/logo.png" alt="" class="pointer-events-none size-6" draggable="false" />
+        <img src="/logo.png" alt="" class="pointer-events-none size-7" draggable="false" />
         <span class="display text-[15px] leading-none text-base-50">Cubiq <span class="font-medium text-base-400">Launcher</span></span>
       </NuxtLink>
 
@@ -46,18 +46,6 @@ function back() {
 @reference "~/assets/css/main.css";
 
 .top-btn {
-  @apply grid size-11 shrink-0 place-items-center rounded-xl text-base-200 transition-colors active:bg-base-800;
-}
-/* Feine Linie in der Akzentfarbe unter dem Logo, wie in der Titelleiste am Desktop. */
-header::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  width: 45%;
-  height: 1px;
-  background: linear-gradient(90deg, var(--color-primary-500), transparent);
-  opacity: 0.6;
-  pointer-events: none;
+  @apply grid size-11 shrink-0 place-items-center rounded-xl text-base-200 transition-colors active:bg-base-850;
 }
 </style>

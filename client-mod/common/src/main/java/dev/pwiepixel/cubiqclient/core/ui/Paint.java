@@ -438,7 +438,7 @@ public final class Paint {
 		int kx = x + 2 + Math.round((w - k - 4) * p);
 		int ky = y + (h - k) / 2;
 		roundRect(c, kx, ky + 1, k, k, k / 2, 0x30000000);
-		roundRect(c, kx, ky, k, k, k / 2, t.light ? 0xFFFFFFFF : ColorMath.lerp(0xFFDBE3DD, 0xFFFFFFFF, p));
+		roundRect(c, kx, ky, k, k, k / 2, t.light ? 0xFFFFFFFF : ColorMath.lerp(0xFFE3E6F7, 0xFFFFFFFF, p));
 	}
 
 	/** Schieberegler: Schiene, gefüllter Teil in der Akzentfarbe, runder Knopf; die Trefferfläche verwaltet der Aufrufer. */
@@ -455,7 +455,7 @@ public final class Paint {
 		if (hover) glow(c, kx, ky, k, k, t.glow, 0.7f);
 		roundRect(c, kx, ky + 1, k, k, k / 2, 0x38000000);
 		roundRect(c, kx, ky, k, k, k / 2, hover ? t.accentHover : t.accent);
-		roundRect(c, kx + 2, ky + 2, k - 4, k - 4, (k - 4) / 2, t.light ? 0xFFFFFFFF : 0xFFEEF4EF);
+		roundRect(c, kx + 2, ky + 2, k - 4, k - 4, (k - 4) / 2, t.light ? 0xFFFFFFFF : 0xFFF2F4FD);
 	}
 
 	/**

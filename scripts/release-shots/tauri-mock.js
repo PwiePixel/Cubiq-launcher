@@ -52,6 +52,10 @@
     running_games: () => [],
     bisect_active: () => [],
     list_servers: () => [],
+    // Listen, die Seiten beim Laden abfragen – „null“ würde dort Fehler werfen.
+    curseforge_blocked: () => [],
+    all_screenshots: () => [],
+    duplicate_mods: () => [],
     get_news: () => news,
     news_image: ({ url }) => url,
     open_external_url: ({ url }) => {

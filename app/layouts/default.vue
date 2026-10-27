@@ -46,7 +46,7 @@ function onKey(e: KeyboardEvent) {
 // Jede Seite fängt oben an – sonst hängt die neue Seite auf der alten Scrollhöhe.
 const main = useTemplateRef<HTMLElement>('main')
 const route = useRoute()
-// Die Startseite zeigt die Schaltung schon groß im Kopfbereich.
+// Die Startseite hat ihre eigene Szene auf der Bühne; alle anderen Seiten bekommen sie als Hintergrund.
 const animatedBackground = computed(() => settings.current?.ui.animatedBackground !== false)
 // Halloween: die Mondnacht hinter JEDER Seite (Bibliothek, Instanzen, Entdecken, Skins, Sozial …) –
 // mit „Animierter Hintergrund“ aus als Standbild statt gar nicht.
@@ -215,30 +215,33 @@ onBeforeUnmount(() => void backListener?.unregister())
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
+  <div class="app-frame flex h-full flex-col">
     <BigShell v-if="isBig">
       <slot />
     </BigShell>
-    <TitleBar v-if="!isBig && !mobile" />
-    <MobileTopBar v-else-if="!isBig" />
-    <!-- Der Assistent überdeckt alles unter der Titelleiste; die Fenstersteuerung bleibt bedienbar. -->
-    <div v-if="!isBig" class="relative flex min-h-0 flex-1 flex-col">
-      <div class="flex min-h-0 flex-1">
-        <SideNav v-if="!mobile" />
-        <!-- Hintergrund-Szene hinter allen Seiten (die Startseite hat ihre eigene im Kopfbereich). -->
-        <div class="relative flex min-w-0 flex-1 flex-col">
+    <MobileTopBar v-if="!isBig && mobile" />
+    <!--
+      Fensterrahmen: links das Dock (mit Logo), rechts oben die Leiste und darunter die Leinwand mit der Seite.
+      Der Assistent überdeckt alles unter der Höhe der Leiste; die Fenstersteuerung bleibt bedienbar.
+    -->
+    <div v-if="!isBig" class="shell relative flex min-h-0 flex-1" :class="{ 'flex-col': mobile }">
+      <SideNav v-if="!mobile" />
+      <div class="relative flex min-h-0 min-w-0 flex-1 flex-col">
+        <TitleBar v-if="!mobile" />
+        <div class="canvas relative flex min-h-0 min-w-0 flex-1 flex-col">
+          <!-- Hintergrund-Szene hinter allen Seiten (die Startseite hat ihre eigene auf der Bühne). -->
           <div v-if="appBackground" class="app-bg" aria-hidden="true">
             <DesignScene fill bolts :still="!animatedBackground" />
           </div>
-        <!-- Seitenwechsel: ein dünner Ladebalken läuft oben entlang. -->
-        <div :key="route.path" class="route-signal" aria-hidden="true" />
-        <!-- Hinweis auf eigene Strafen: über dem Inhalt, ohne Seiten mit voller Höhe (Sozial) zu verdrängen. -->
-        <div v-if="sanctions.banner.length" class="surface relative shrink-0" :class="{ 'surface-over-scene': appBackground }">
-          <SanctionBanner />
-        </div>
-        <main ref="main" class="surface relative min-h-0 min-w-0 flex-1 overflow-y-auto mobile:overscroll-y-contain mobile:pr-[var(--safe-right)] mobile:pl-[var(--safe-left)]" :class="{ 'surface-over-scene': appBackground }">
-          <slot />
-        </main>
+          <!-- Seitenwechsel: ein dünner Ladebalken läuft oben entlang. -->
+          <div :key="route.path" class="route-signal" aria-hidden="true" />
+          <!-- Hinweis auf eigene Strafen: über dem Inhalt, ohne Seiten mit voller Höhe (Sozial) zu verdrängen. -->
+          <div v-if="sanctions.banner.length" class="surface relative shrink-0" :class="{ 'surface-over-scene': appBackground }">
+            <SanctionBanner />
+          </div>
+          <main ref="main" class="surface relative min-h-0 min-w-0 flex-1 overflow-y-auto mobile:overscroll-y-contain mobile:pr-[var(--safe-right)] mobile:pl-[var(--safe-left)]" :class="{ 'surface-over-scene': appBackground }">
+            <slot />
+          </main>
         </div>
       </div>
       <MobileTabBar v-if="mobile" />
@@ -277,6 +280,38 @@ onBeforeUnmount(() => void backListener?.unregister())
 </template>
 
 <style scoped>
+/*
+ * Fensterrahmen im tiefsten Navy; die Seiten liegen auf einer Leinwand mit weichen Ecken und feiner
+ * Kante, die sich vom Rahmen abhebt. Am Handy füllt die Leinwand den Bildschirm.
+ */
+.app-frame {
+  --chrome-h: 3rem;
+  background: var(--color-frame);
+}
+.canvas {
+  margin: 0 0.5rem 0.5rem 0;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-2xl);
+  background: var(--color-base-950);
+  box-shadow: var(--elev-2);
+}
+@supports (corner-shape: squircle) {
+  .canvas {
+    corner-shape: squircle;
+    border-radius: 2rem;
+  }
+}
+:root.is-mobile .app-frame {
+  --chrome-h: 0px;
+  background: var(--color-base-950);
+}
+:root.is-mobile .canvas {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
 /* Einmaliger Auftritt: kurz einblenden und leicht heranzoomen. */
 .onboarding-enter-active {
   transition: opacity 0.28s ease-out, transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);

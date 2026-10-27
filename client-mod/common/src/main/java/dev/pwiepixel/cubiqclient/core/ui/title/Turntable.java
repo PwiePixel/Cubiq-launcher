@@ -239,8 +239,8 @@ public final class Turntable {
 			xs[k] = cx + (float) Math.cos(a) * r;
 			ys[k] = cy + (float) Math.sin(a) * r * squash;
 		}
-		int lit = t.light ? 0xFFD2DBD4 : 0xFF29332C;
-		int shade = t.light ? 0xFFA8B5AB : 0xFF0C100E;
+		int lit = t.light ? 0xFFD2D7E8 : 0xFF283062;
+		int shade = t.light ? 0xFFAAB2D0 : 0xFF070A1D;
 		for (int k = 0; k < 4; k++) {
 			int j = (k + 1) % 4;
 			double normal = spin + Math.PI / 2 + k * Math.PI / 2;

@@ -78,7 +78,7 @@ async function submit() {
       <div>
         <label class="label" for="appeal-response">{{ t('team.appeals.response') }} *</label>
         <textarea id="appeal-response" v-model="response" class="field min-h-24 resize-y" maxlength="1050" :placeholder="t('team.appeals.responseHint')" data-testid="appeal-response" />
-        <p class="mt-1 text-right text-[11px] tabular-nums" :class="length > 1000 ? 'text-primary-300' : 'text-base-400'">{{ length }} / 1000</p>
+        <p class="mt-1 text-right text-[11px] tabular-nums" :class="length > 1000 ? 'text-danger-300' : 'text-base-400'">{{ length }} / 1000</p>
       </div>
       <p v-if="error" role="alert" class="text-xs text-danger-300">{{ error }}</p>
     </div>

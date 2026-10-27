@@ -340,9 +340,9 @@ onBeforeUnmount(() => {
     role="dialog"
     aria-modal="true"
     aria-labelledby="onboarding-title"
-    class="onboarding absolute inset-0 z-40 flex flex-col overflow-y-auto mobile:pb-[var(--safe-bottom)]"
+    class="onboarding absolute inset-x-0 top-[var(--chrome-h,0px)] bottom-0 z-40 flex flex-col overflow-y-auto mobile:pb-[var(--safe-bottom)]"
   >
-    <!-- Schrittanzeige: echte Reihenfolge, die Leitung lädt pro Schritt auf. -->
+    <!-- Schrittanzeige: echte Reihenfolge, der Balken füllt sich pro Schritt. -->
     <header class="mx-auto w-full max-w-2xl px-6 pt-8 mobile:px-4 mobile:pt-4">
       <div class="flex items-center justify-between gap-4">
         <ol class="flex flex-wrap gap-x-4 gap-y-1 text-xs">
@@ -602,12 +602,13 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Deepslate-Kacheln wie auf der Startrampe, nur ruhiger. */
+/* Navy-Grund mit einem grünen Schein oben links und dem feinen Würfel-Raster des Logos – in der Mitte, wo
+   gelesen wird, ruhig, zu den Rändern hin sichtbar. */
 .onboarding {
   background:
-    radial-gradient(90% 70% at 0% 0%, rgb(224 40 30 / 0.12), transparent 60%),
-    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.02) 0 1px, transparent 1px 32px),
-    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.02) 0 1px, transparent 1px 32px),
+    radial-gradient(90% 70% at 0% 0%, color-mix(in srgb, var(--color-primary-500) 14%, transparent), transparent 60%),
+    radial-gradient(60% 65% at 50% 50%, var(--color-base-950) 40%, transparent 100%),
+    var(--iso-pattern) 0 0 / 52px 30px,
     var(--color-base-950);
 }
 

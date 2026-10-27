@@ -22,15 +22,16 @@ const pingClass = computed(() => {
 </script>
 
 <template>
-  <article class="card flex items-center gap-3 p-3 transition-colors hover:border-base-700">
+  <article class="card flex items-center gap-3 p-3 transition-colors hover:border-line-strong">
     <div class="relative shrink-0">
-      <img v-if="favicon" :src="favicon" alt="" class="size-12 ring-2 ring-base-800 [image-rendering:pixelated]" />
-      <div v-else class="display flex size-12 items-center justify-center bg-base-800 text-xl text-base-600 ring-2 ring-base-700">
+      <img v-if="favicon" :src="favicon" alt="" class="squircle size-12 rounded-xl ring-1 ring-line-strong [image-rendering:pixelated]" />
+      <div v-else class="display squircle flex size-12 items-center justify-center rounded-xl bg-base-800 text-xl text-base-400 ring-1 ring-line-strong">
         {{ server.name.charAt(0).toUpperCase() }}
       </div>
+      <!-- Status: grün = online, rot = nicht erreichbar, blinkend grau = wird geprüft. -->
       <span
-        class="absolute -right-1 -bottom-1 size-3 border-2 border-base-900"
-        :class="status === undefined ? 'animate-live bg-base-600' : status.online ? 'bg-ok shadow-[0_0_8px_var(--color-ok)]' : 'bg-primary-500'"
+        class="absolute -right-1 -bottom-1 size-3.5 rounded-full border-[2.5px] border-base-900"
+        :class="status === undefined ? 'animate-live bg-base-600' : status.online ? 'bg-ok shadow-[0_0_8px_var(--color-ok)]' : 'bg-danger-400'"
         :title="status === undefined ? t('servers.card.checking') : status.online ? t('common.status.online') : t('servers.card.unreachable')"
       />
     </div>

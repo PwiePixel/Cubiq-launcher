@@ -93,7 +93,7 @@ const swipeOn = {
 
 function tone(s: MySanction): string {
   if (!sanctionIsActive(s)) return 'border-base-800'
-  if (s.kind === 'account_ban') return 'border-primary-600/60'
+  if (s.kind === 'account_ban') return 'border-danger-600/60'
   if (s.kind === 'warn') return 'border-caution-400/40'
   return 'border-base-700'
 }
@@ -113,7 +113,7 @@ function tone(s: MySanction): string {
       >
         <header class="flex items-center gap-3 border-b border-base-800 px-5 py-3.5 mobile:relative mobile:touch-none mobile:pt-5" v-on="mobile ? swipeOn : {}">
           <span v-if="mobile" class="absolute top-2 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-base-700" aria-hidden="true" />
-          <SocialIcon name="shield" class="size-5 text-primary-300" />
+          <SocialIcon name="shield" class="size-5 text-danger-300" />
           <div class="min-w-0 flex-1">
             <h2 class="font-semibold">{{ t('sanctions.dialog.title') }}</h2>
             <p class="text-xs text-base-400">{{ t('sanctions.dialog.subtitle', { name: cubiq.me?.name ?? '' }) }}</p>

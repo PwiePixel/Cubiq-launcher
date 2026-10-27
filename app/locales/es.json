@@ -3088,8 +3088,6 @@
     "quickLaunch": "Inicio rápido",
     "openNamed": "Abrir {name}",
     "newInstance": "Nueva instancia",
-    "searchShortcut": "Buscar (Ctrl+K)",
-    "searchTip": "Buscar · Ctrl K",
     "settings": "Ajustes",
     "accountNamed": "Cuenta: {name}",
     "signIn": "Iniciar sesión",
@@ -3105,7 +3103,12 @@
     "localServers": "Mis servidores",
     "controls": "Controles",
     "pc": "PC",
-    "creator": "Creadores"
+    "creator": "Creadores",
+    "groups": {
+      "together": "Juntos",
+      "collection": "Colección",
+      "tools": "Herramientas"
+    }
   },
   "accountMenu": {
     "menuLabel": "Cuentas",
@@ -3380,6 +3383,9 @@
       "add": "Añadir servidor",
       "addHint": "Estado en vivo y unirse con un clic",
       "addHintEmpty": "Tus servidores con estado en vivo: únete con un clic"
+    },
+    "stage": {
+      "pick": "Seleccionar {name}"
     }
   },
   "news": {

@@ -398,7 +398,7 @@ function install(hit: ModrinthHit, version: ModrinthVersion | null = null) {
         </NuxtLink>
         <InstanceIcon :instance="target" :size="48" />
         <div class="min-w-0">
-          <h1 class="truncate text-xl font-semibold tracking-tight">{{ target.name }}</h1>
+          <h1 class="display truncate text-2xl leading-tight text-base-50">{{ target.name }}</h1>
           <p class="mt-0.5 flex items-center gap-1.5 text-sm text-base-400">
             {{ t('browse.installContent') }}
             <span aria-hidden="true">·</span>
@@ -411,8 +411,8 @@ function install(hit: ModrinthHit, version: ModrinthVersion | null = null) {
       </template>
       <template v-else>
         <div class="min-w-0 flex-1">
-          <h1 class="text-xl font-semibold tracking-tight">{{ t('browse.title') }}</h1>
-          <p class="mt-0.5 text-sm text-base-400 mobile:hidden">{{ t('browse.subtitle') }}</p>
+          <h1 class="display flex items-center gap-3 text-[1.625rem] leading-tight text-base-50"><CubeMark :size="22" />{{ t('browse.title') }}</h1>
+          <p class="mt-1.5 text-sm text-base-400 mobile:hidden">{{ t('browse.subtitle') }}</p>
         </div>
         <label v-if="!isPack" class="flex items-center gap-2 text-xs text-base-400 mobile:w-full">
           {{ t('browse.installInto') }}
@@ -432,7 +432,7 @@ function install(hit: ModrinthHit, version: ModrinthVersion | null = null) {
       <div ref="listEl" class="min-w-0 flex-1 overflow-y-auto pr-1 mobile:overflow-visible mobile:pr-0">
         <PullToRefresh :refresh="search" />
         <div class="mb-3 flex flex-wrap items-center gap-2">
-          <div class="inline-flex flex-wrap rounded-full bg-base-900 p-1 ring-1 ring-base-800 mobile-scroll-x mobile:flex mobile:w-full mobile:flex-nowrap" role="tablist" :aria-label="t('browse.kindTabs')">
+          <div class="inline-flex flex-wrap rounded-2xl bg-base-900 p-1 ring-1 ring-line mobile-scroll-x mobile:flex mobile:w-full mobile:flex-nowrap" role="tablist" :aria-label="t('browse.kindTabs')">
             <button
               v-for="k in kinds"
               :key="k"
@@ -446,7 +446,7 @@ function install(hit: ModrinthHit, version: ModrinthVersion | null = null) {
             </button>
           </div>
           <!-- Quelle: Modrinth oder CurseForge (ohne API-Schlüssel im Build ausgegraut). -->
-          <div class="ml-auto inline-flex rounded-full bg-base-900 p-1 ring-1 ring-base-800 mobile:ml-0" role="radiogroup" :aria-label="t('browse.source.label')">
+          <div class="ml-auto inline-flex rounded-2xl bg-base-900 p-1 ring-1 ring-line mobile:ml-0" role="radiogroup" :aria-label="t('browse.source.label')">
             <button
               v-for="p in platforms"
               :key="p"
