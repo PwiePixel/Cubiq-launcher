@@ -6,6 +6,7 @@ import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
 import dev.pwiepixel.cubiqclient.core.ui.Anim;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.waypoint.Waypoint;
@@ -15,10 +16,11 @@ import java.util.List;
 /**
  * Zeichnet die Minimap in jeder Minecraft-Version gleich: Bereichs-Texturen (ein Texel je Block) werden mit
  * Drehung, Zoom und Bruchteil-Verschiebung gezeichnet (kein Ruckeln, kein Neuaufbau je Bild), rund über
- * Streifen ({@link MapShapes}) unter einem Redstone-Rahmen, eckig über einen Scissor. Darüber Himmelsrichtungen,
- * Wegpunkte (außerhalb des Sichtfelds als Kästchen mit Anfangsbuchstaben am Rand, siehe {@link EdgeLayout}),
- * Todespunkt, Spieler (Gesichter, Freunde hervorgehoben), Kreaturen (Köpfe aus ihrer Textur oder Symbole) und die
- * eigene Position. Der Zoom folgt auf Wunsch dem Tempo und der Umgebung ({@link AutoZoom}).
+ * Streifen ({@link MapShapes}) unter dem runden Rahmen ({@link MapSprites#drawRing}), eckig über einen Scissor
+ * (Rahmen: {@link #squareFrame}). Darüber Himmelsrichtungen, Wegpunkte (außerhalb des Sichtfelds als Kästchen mit
+ * Anfangsbuchstaben am Rand, siehe {@link EdgeLayout}), Todespunkt, Spieler (Gesichter, Freunde hervorgehoben),
+ * Kreaturen (Köpfe aus ihrer Textur oder Symbole) und die eigene Position. Der Zoom folgt auf Wunsch dem Tempo und
+ * der Umgebung ({@link AutoZoom}).
  */
 public final class MinimapRenderer {
 	/** Scissor im lokalen Koordinatensystem des HUD-Elements (false = nicht möglich → Streifen). */
@@ -160,7 +162,7 @@ public final class MinimapRenderer {
 		int n;
 		boolean clipped = false;
 		if (round) {
-			// Karte bis knapp unter den Stein; die Staublinie verdeckt die Streifenkanten.
+			// Karte bis knapp unter die Kante; der deckende Rand des Rahmens (ringIn) verdeckt die Streifenkanten.
 			float mapR = radius - 0.5f;
 			n = MapShapes.circle(mapR, MapSprites.ringIn(radius) - 0.5f, bands);
 		} else if (Math.abs(theta) < 1e-4f) {
@@ -519,24 +521,37 @@ public final class MinimapRenderer {
 		}
 	}
 
-	private void squareFrame(Canvas c, int pad, int size, Theme t) {
-		int x = 0, y = 0, w = size + 2 * pad, h = size + 2 * pad;
-		int stone = ColorMath.lerp(0xFF3A373D, t.bevelLight, 0.2f);
-		// Steinrand (oben/links hell, unten/rechts dunkel), dazwischen die Staublinie.
-		c.fill(x, y, x + w, y + pad, stone);
-		c.fill(x, y + h - pad, x + w, y + h, stone);
-		c.fill(x, y + pad, x + pad, y + h - pad, stone);
-		c.fill(x + w - pad, y + pad, x + w, y + h - pad, stone);
-		c.fill(x, y, x + w, y + 1, ColorMath.lerp(stone, 0xFFFFFFFF, 0.18f));
-		c.fill(x, y + h - 1, x + w, y + h, 0xFF0B0A0D);
-		c.fill(x, y, x + 1, y + h, 0xFF0B0A0D);
-		c.fill(x + w - 1, y, x + w, y + h, 0xFF0B0A0D);
-		int dust = 0xFF000000 | (t.accentText & 0xFFFFFF);
-		int in = pad - 1;
-		c.fill(in, in, w - in, in + 1, dust);
-		c.fill(in, h - in - 1, w - in, h - in, dust);
-		c.fill(in, in, in + 1, h - in, dust);
-		c.fill(w - in - 1, in, w - in, h - in, dust);
+	/**
+	 * Eckiger Rahmen im Rand {@code pad} (mindestens 3) um die Karte – auch Ersatz, wenn der runde nicht gezeichnet werden
+	 * kann. Cubiq: feine Kante direkt um die Karte, deren abgerundete Ecken die Kartenecken decken, und ein weicher
+	 * Schatten wie beim runden Rahmen; Winternacht, Fuchsbau und Halloween: Rand mit Licht von oben und einer Linie in
+	 * Akzentfarbe.
+	 */
+	static void squareFrame(Canvas c, int pad, int size, Theme t) {
+		if (MapSprites.themed(t)) {
+			int w = size + 2 * pad, h = size + 2 * pad;
+			int rim = ColorMath.lerp(0xFF3A373D, t.bevelLight, 0.2f);
+			c.fill(0, 0, w, pad, rim);
+			c.fill(0, h - pad, w, h, rim);
+			c.fill(0, pad, pad, h - pad, rim);
+			c.fill(w - pad, pad, w, h - pad, rim);
+			c.fill(0, 0, w, 1, ColorMath.lerp(rim, 0xFFFFFFFF, 0.18f));
+			c.fill(0, h - 1, w, h, 0xFF0B0A0D);
+			c.fill(0, 0, 1, h, 0xFF0B0A0D);
+			c.fill(w - 1, 0, w, h, 0xFF0B0A0D);
+			int line = 0xFF000000 | (t.accentText & 0xFFFFFF);
+			int in = pad - 1;
+			c.fill(in, in, w - in, in + 1, line);
+			c.fill(in, h - in - 1, w - in, h - in, line);
+			c.fill(in, in, in + 1, h - in, line);
+			c.fill(w - in - 1, in, w - in, h - in, line);
+			return;
+		}
+		int x = pad - 1, s = size + 2;
+		// Schatten in zwei Stufen nach außen (je Pixel der Verlauf von MapSprites.ringColor), dann die Kante.
+		Paint.roundOutline(c, x - 2, x - 2, s + 4, s + 4, 6, (MapSprites.SHADOW_ALPHA / 4) << 24);
+		Paint.roundOutline(c, x - 1, x - 1, s + 2, s + 2, 5, (MapSprites.SHADOW_ALPHA * 3 / 4) << 24);
+		Paint.roundOutline(c, x, x, s, s, 4, t.border);
 	}
 
 	private void drawInfo(Canvas c, MapEngine e, int width, int y, boolean preview, boolean live) {
