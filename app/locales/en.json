@@ -4733,7 +4733,6 @@
     "imageOf": "Image {n} of {total}",
     "versions": "Versions",
     "more": "{n} more images",
-    "thanks": "Thanks to {names} for contributing to this update.",
     "openRelease": "View release on GitHub"
   },
   "clips": {
@@ -7230,7 +7229,7 @@
       "grid": "Grid",
       "notch": "Notch",
       "discard": "Discard changes?",
-      "selectHint": "Tap a button to change it. Drag to move, drag the red corner to resize. Arrow keys nudge it.",
+      "selectHint": "Tap a button to change it. Drag to move, drag the green corner to resize. Arrow keys nudge it.",
       "actionType": "Action",
       "key": "Key",
       "chord": "Hold first",

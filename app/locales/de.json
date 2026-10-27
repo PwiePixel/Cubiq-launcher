@@ -4733,7 +4733,6 @@
     "imageOf": "Bild {n} von {total}",
     "versions": "Versionen",
     "more": "{n} weitere Bilder",
-    "thanks": "Danke an {names} für die Mitarbeit an diesem Update.",
     "openRelease": "Release auf GitHub ansehen"
   },
   "clips": {
@@ -7230,7 +7229,7 @@
       "grid": "Raster",
       "notch": "Notch",
       "discard": "Änderungen verwerfen?",
-      "selectHint": "Tippe einen Knopf an, um ihn zu ändern. Ziehen verschiebt, die rote Ecke ändert die Größe. Pfeiltasten schieben fein.",
+      "selectHint": "Tippe einen Knopf an, um ihn zu ändern. Ziehen verschiebt, die grüne Ecke ändert die Größe. Pfeiltasten schieben fein.",
       "actionType": "Aktion",
       "key": "Taste",
       "chord": "Vorher halten",

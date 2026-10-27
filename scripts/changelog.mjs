@@ -1,50 +1,35 @@
 // Changelog für den Release-Build: gibt die Hinweise einer Version aus (Englisch + Deutsch)
 // und bricht ab, wenn der Abschnitt fehlt, eine Sprache leer ist, das Update-Banner fehlt
-// (Zeile „<!-- banner: accent=#rrggbb -->“, optional mit eigenem Motiv „motif=/news/<version>/banner.png“ – das Bild
-// muss dann in public/ liegen, ohne Motiv zeigt der Launcher das Cubiq-Logo) oder angegebene Screenshots nicht passen
+// (Zeile „<!-- banner: accent=#rrggbb motif=/news/<version>/banner.png -->“ – das Motiv zeichnet die Release-Automatik,
+// es muss dann in public/ liegen; ohne Motiv zeigt der Launcher das Cubiq-Logo) oder angegebene Screenshots nicht passen
 // (Kommentar „<!-- shots: … -->“, freiwillig, siehe scripts/news-shots.mjs).
 // Den Abschnitt legt die Release-Automatik an (scripts/release.mjs, .github/workflows/auto-release.yml).
 //
-//   node --experimental-strip-types scripts/changelog.mjs notes 0.4.4   → Markdown für Release/Update
+//   node --experimental-strip-types scripts/changelog.mjs notes 0.4.4 [--ref main]   → Markdown für Release/Update
+//       (Bilder aus dem Repo zum Tag der Version, mit --ref aus einem anderen Stand, z. B. main)
 //   node --experimental-strip-types scripts/changelog.mjs check 0.4.4   → nur prüfen
 //   node --experimental-strip-types scripts/changelog.mjs title 0.4.4   → Titel des GitHub-Release
 //       („Cubiq Launcher 0.4.4“, mit Update-Namen aus der Überschrift „Cubiq Launcher 0.4.4 – The Clip Update“)
-//   node --experimental-strip-types scripts/changelog.mjs set-contributors 0.4.4 alice,bob
-//       → schreibt „<!-- contributors: alice,bob -->“ in den Abschnitt (ändert CHANGELOG.md; leere Liste = nichts
-//         tun). Die Namen liefert scripts/contributors.mjs; der Release-Build ruft beides vor „notes“ auf.
 //
 // Der Parser ist derselbe wie im Launcher (app/utils/changelog.ts).
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { changelogFor, parseChangelog, releaseNotes, releaseTitle, setContributors } from '../app/utils/changelog.ts'
+import { changelogFor, parseChangelog, releaseNotes, releaseTitle } from '../app/utils/changelog.ts'
 import { checkShots } from './news-shots.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const changelogPath = join(root, 'CHANGELOG.md')
-const [command, arg, extra] = process.argv.slice(2)
+const [command, arg, ...options] = process.argv.slice(2)
 
-if (!['notes', 'check', 'title', 'set-contributors'].includes(command) || !arg) {
-  console.error('Aufruf: changelog.mjs notes|check|title <version> | set-contributors <version> <a,b>')
+if (!['notes', 'check', 'title'].includes(command) || !arg) {
+  console.error('Aufruf: changelog.mjs notes|check|title <version> [--ref <stand>]')
   process.exit(2)
 }
 
 const version = arg.replace(/^v/, '')
-
-if (command === 'set-contributors') {
-  try {
-    const text = readFileSync(changelogPath, 'utf8')
-    const next = setContributors(text, version, (extra ?? '').split(','))
-    if (next !== text) writeFileSync(changelogPath, next)
-    const names = changelogFor(parseChangelog(next), version)?.contributors ?? []
-    console.error(`CHANGELOG.md, Version ${version}: Mitwirkende ${names.length ? names.join(', ') : '(keine)'}`)
-  } catch (e) {
-    console.error(e instanceof Error ? e.message : String(e))
-    process.exit(1)
-  }
-  process.exit(0)
-}
+const ref = options.includes('--ref') ? options[options.indexOf('--ref') + 1] : undefined
 
 const entry = changelogFor(parseChangelog(readFileSync(changelogPath, 'utf8')), version)
 if (command === 'title') {
@@ -89,4 +74,4 @@ if (shotProblems.length) {
   )
   process.exit(1)
 }
-if (command === 'notes') process.stdout.write(releaseNotes(entry))
+if (command === 'notes') process.stdout.write(releaseNotes(entry, { ref }))

@@ -5,8 +5,10 @@ import {
   changelogItem,
   forPlayers,
   generateSection,
+  parseChangeNote,
   parseGitLog,
   prepareChangelog,
+  setBannerMotif,
   setReleaseDate,
   tidy,
   unreleasedReady,
@@ -162,6 +164,42 @@ describe('Release-Automatik', () => {
     const fromCommits = prepareChangelog(empty, '0.2.0', '2026-11-02', [changelogItem(commit('fix: crash'))])!
     expect(changelogFor(parseChangelog(fromCommits), '0.2.0')!.en).toBe('- Crash.')
     expect(fromCommits).not.toMatch(/^## Unreleased/m)
+  })
+
+  it('nimmt Spieler-Texte aus changes/ – je Datei, fehlende Sprache ergänzt, zusammen mit „## Unreleased“', () => {
+    const a = parseChangeNote('<!-- shots:\n/news/0.2.0/a.png | A\n-->\n\n### English\n\n- **Trim clips.** Cut recordings.\n\n### Deutsch\n\n- **Clips zuschneiden.** Aufnahmen kürzen.\n')!
+    const b = parseChangeNote('### English\n- **Faster start.** The launcher opens quicker.\n')!
+    expect(a.en).toEqual(['- **Trim clips.** Cut recordings.'])
+    expect(b.de).toEqual(b.en)
+    expect(parseChangeNote('Nur ein Satz ohne Punkte.')).toBeNull()
+    expect(parseChangeNote('### English\n\n### Deutsch\n')).toBeNull()
+
+    const text = `${intro}\n${released}`
+    const next = prepareChangelog(text, '0.2.0', '2026-11-02', [changelogItem(commit('feat: ignored'))], [a, b])!
+    const entry = changelogFor(parseChangelog(next), '0.2.0')!
+    expect(entry.en).toBe('- **Trim clips.** Cut recordings.\n- **Faster start.** The launcher opens quicker.')
+    expect(entry.de).toBe('- **Clips zuschneiden.** Aufnahmen kürzen.\n- **Faster start.** The launcher opens quicker.')
+    expect(entry.shots.map((s) => s.src)).toEqual(['/news/0.2.0/a.png'])
+    expect(entry.banner?.accent).toBe('#71a330')
+    expect(next).not.toContain('Ignored')
+    // Ältere Punkte unter „## Unreleased“ kommen zuerst dazu.
+    const legacy = `${intro}\n## Unreleased\n\n### English\n\n- **Old note.** From a branch.\n\n${released}`
+    const both = changelogFor(parseChangelog(prepareChangelog(legacy, '0.2.0', '2026-11-02', [], [b])!), '0.2.0')!
+    expect(both.en).toBe('- **Old note.** From a branch.\n- **Faster start.** The launcher opens quicker.')
+  })
+
+  it('trägt das Motiv in die Banner-Zeile der Version ein', () => {
+    const text = `${intro}\n${released}`
+    const withMotif = setBannerMotif(text, '0.1.0', '/news/0.1.0/banner.png')
+    expect(withMotif).toContain('## 0.1.0 – 2026-10-27 – Hello, Cubiq | Hallo, Cubiq\n<!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png -->\n')
+    expect(changelogFor(parseChangelog(withMotif), '0.1.0')!.banner).toEqual({ accent: '#71a330', motif: '/news/0.1.0/banner.png' })
+    // Ersetzt ein vorhandenes Motiv statt es doppelt einzutragen; andere Versionen bleiben.
+    expect(setBannerMotif(withMotif, '0.1.0', '/news/0.1.0/other.png').match(/motif=/g)).toHaveLength(1)
+    expect(setBannerMotif(text, '0.9.9', '/news/0.9.9/banner.png')).toBe(text)
+    // Ohne Banner-Zeile: neue Zeile unter der Überschrift.
+    expect(setBannerMotif('## 1.0.0 – 2026-01-01\n### English\n- x', '1.0.0', '/news/1.0.0/banner.png')).toBe(
+      '## 1.0.0 – 2026-01-01\n<!-- banner: accent=#71a330 motif=/news/1.0.0/banner.png -->\n### English\n- x',
+    )
   })
 
   it('behält Windows-Zeilenenden', () => {

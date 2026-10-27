@@ -6,21 +6,26 @@
 //
 // - Noch nicht veröffentlichte Version in package.json (kein Tag v<version>): genau diese wird veröffentlicht.
 // - Sonst: Sprung nach den Commits seit dem letzten Tag (siehe scripts/release-lib.mjs) oder wie angegeben.
-// - Changelog: Punkte unter „## Unreleased“ haben Vorrang, sonst entstehen sie aus den Commit-Nachrichten.
+// - Changelog: Spieler-Texte aus changes/*.md (und ältere Punkte unter „## Unreleased“) haben Vorrang, sonst
+//   entstehen sie aus den Commit-Nachrichten. Die übernommenen Dateien in changes/ werden gelöscht.
 //   Steht die Version schon im Changelog, bleibt ihr Text; nur das Datum wird auf heute gesetzt.
+// - Bild: hat der Abschnitt noch kein Motiv, zeichnet scripts/release-art.mjs eins passend zum Text
+//   (public/news/<version>/banner.png) und trägt es in die Banner-Zeile ein.
 // - Nichts für Spieler seit dem letzten Release und kein fester Sprung: kein Release.
 // Ausgabe (für $GITHUB_OUTPUT): version=…, tag=…, title=…, skipped=true|false
 
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { changelogFor, parseChangelog, releaseTitle } from '../app/utils/changelog.ts'
-import { bumpFor, changelogItem, parseGitLog, prepareChangelog, setReleaseDate, today, unreleasedReady } from './release-lib.mjs'
+import { releaseArt } from './release-art.mjs'
+import { bumpFor, changelogItem, parseChangeNote, parseGitLog, prepareChangelog, setBannerMotif, setReleaseDate, today, unreleasedReady } from './release-lib.mjs'
 import { currentVersion, nextVersion, setVersion } from './version.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const changelogPath = join(root, 'CHANGELOG.md')
+const changesDir = join(root, 'changes')
 
 const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
 
@@ -54,7 +59,14 @@ const released = git('tag', '--list', `v${current}`) !== ''
 const log = git('log', '--no-merges', '--name-only', '--format=%x1e%H%x1f%s%x1f%b%x1f', ...(tag ? [`${tag}..HEAD`] : ['HEAD']))
 let items = parseGitLog(log).map(changelogItem).filter(Boolean)
 const text = readFileSync(changelogPath, 'utf8')
-const manual = unreleasedReady(text)
+// Spieler-Texte je Änderung (changes/<thema>.md, ohne README), in Dateinamen-Reihenfolge.
+const noteFiles = existsSync(changesDir)
+  ? readdirSync(changesDir)
+      .filter((name) => name.endsWith('.md') && name.toLowerCase() !== 'readme.md')
+      .sort()
+  : []
+const notes = noteFiles.map((name) => ({ name, note: parseChangeNote(readFileSync(join(changesDir, name), 'utf8')) })).filter((n) => n.note)
+const manual = unreleasedReady(text) || notes.length > 0
 
 let version
 if (!released) {
@@ -72,23 +84,46 @@ if (!released) {
 }
 
 let next = setReleaseDate(text, version, today())
+let consumed = []
 if (!changelogFor(parseChangelog(text), version)) {
-  const prepared = prepareChangelog(text, version, today(), items)
+  const prepared = prepareChangelog(
+    text,
+    version,
+    today(),
+    items,
+    notes.map((n) => n.note),
+  )
   if (!prepared) {
     console.error(`Für ${version} gibt es weder Punkte unter „## Unreleased“ noch Commits – kein Release.`)
     console.log('skipped=true')
     process.exit(0)
   }
   next = prepared
+  consumed = notes.map((n) => n.name)
 }
 
-const entry = changelogFor(parseChangelog(next), version)
+// Bild des Release (Motiv im Update-Banner), sofern der Abschnitt noch keins hat.
+let entry = changelogFor(parseChangelog(next), version)
+let art = null
+if (entry && !entry.banner?.motif) {
+  const motif = `/news/${version}/banner.png`
+  const file = join(root, 'public', motif)
+  art = existsSync(file) ? { png: null, topic: 'vorhanden' } : releaseArt({ version, text: entry.en || entry.de })
+  next = setBannerMotif(next, version, motif)
+  entry = changelogFor(parseChangelog(next), version)
+  if (!dryRun && art.png) {
+    mkdirSync(join(root, 'public', 'news', version), { recursive: true })
+    writeFileSync(file, art.png)
+  }
+}
+
 const title = releaseTitle(entry, version)
 if (dryRun) {
-  console.error(`Version ${current} → ${version} (${title})\n\n${entry?.en ?? ''}\n\n${entry?.de ?? ''}`)
+  console.error(`Version ${current} → ${version} (${title})${art ? ` – Bild: ${art.topic}` : ''}\n\n${entry?.en ?? ''}\n\n${entry?.de ?? ''}`)
 } else {
   if (next !== text) writeFileSync(changelogPath, next)
   if (version !== current) setVersion(version)
-  console.error(`Version ${version} vorbereitet: ${title}`)
+  for (const name of consumed) rmSync(join(changesDir, name))
+  console.error(`Version ${version} vorbereitet: ${title}${art ? ` (Bild: ${art.topic})` : ''}${consumed.length ? `, Texte aus changes/: ${consumed.join(', ')}` : ''}`)
 }
 console.log(`version=${version}\ntag=v${version}\ntitle=${title}\nskipped=false`)

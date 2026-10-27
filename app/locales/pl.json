@@ -4665,7 +4665,6 @@
     "imageOf": "Obraz {n} z {total}",
     "versions": "Wersje",
     "more": "Więcej obrazów: {n}",
-    "thanks": "Dziękujemy za wkład w tę aktualizację: {names}.",
     "openRelease": "Zobacz wydanie na GitHubie"
   },
   "clips": {
@@ -7083,7 +7082,7 @@
       "grid": "Siatka",
       "notch": "Wcięcie",
       "discard": "Odrzucić zmiany?",
-      "selectHint": "Dotknij przycisku, aby go zmienić. Przeciągnij, aby przesunąć, czerwony róg zmienia rozmiar. Strzałki przesuwają dokładnie.",
+      "selectHint": "Dotknij przycisku, aby go zmienić. Przeciągnij, aby przesunąć, zielony róg zmienia rozmiar. Strzałki przesuwają dokładnie.",
       "actionType": "Akcja",
       "key": "Klawisz",
       "chord": "Najpierw przytrzymaj",

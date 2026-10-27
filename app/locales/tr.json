@@ -4665,7 +4665,6 @@
     "imageOf": "Görsel {n} / {total}",
     "versions": "Sürümler",
     "more": "{n} görsel daha",
-    "thanks": "Bu güncellemeye katkıları için teşekkürler: {names}.",
     "openRelease": "Sürümü GitHub'da görüntüle"
   },
   "clips": {
@@ -7083,7 +7082,7 @@
       "grid": "Izgara",
       "notch": "Çentik",
       "discard": "Değişiklikler atılsın mı?",
-      "selectHint": "Değiştirmek için bir düğmeye dokun. Taşımak için sürükle, kırmızı köşe boyutu değiştirir. Ok tuşları ince ayar yapar.",
+      "selectHint": "Değiştirmek için bir düğmeye dokun. Taşımak için sürükle, yeşil köşe boyutu değiştirir. Ok tuşları ince ayar yapar.",
       "actionType": "Eylem",
       "key": "Tuş",
       "chord": "Önce basılı tut",

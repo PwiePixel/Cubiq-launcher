@@ -7,38 +7,34 @@ auto-update, and the launcher shows it once after updating ("What's new").
 <!--
 How this file is written:
 - Automatically: after every green CI run on main, the workflow "Auto release" (.github/workflows/auto-release.yml,
-  scripts/release.mjs) adds the section of the next version – from the points under "## Unreleased" if there are any,
-  otherwise from the first line of every commit since the last release (same text in both languages; a line "DE: …"
-  in the commit message gives the German text). Details: CONTRIBUTING.md, "Changelog".
-- By hand (nicer notes): collect points under "## Unreleased" with "### English" and "### Deutsch" – the same points,
-  written for players: what changed for them, in plain words, no file or function names. The next release turns
-  "## Unreleased" into "## <version> – <YYYY-MM-DD>".
+  scripts/release.mjs) adds the section of the next version – from the player notes in changes/ (one file per
+  change, see changes/README.md), otherwise from the first line of every commit since the last release (lines "EN: …"
+  and "DE: …" in the commit message give the text per language). Details: CONTRIBUTING.md, "Release notes".
+- Please don't edit this file in a branch: the release commits on main change it all the time, so every branch that
+  writes here ends up with a merge conflict. Add a file in changes/ instead – the next release moves it here.
+- The notes explain the update to players in plain words – what changed for them, no file or function names and no
+  names, mentions or thanks.
 - A release can have a theme name in the heading ("## 0.2.0 – 2026-11-30 – The Clip Update | Das Clip-Update"); it
   becomes the title of the GitHub release ("Cubiq Launcher 0.2.0 – The Clip Update").
-- Right below the heading comes the update banner, an HTML comment "banner: accent=#71a330" (the release colour). The
-  banner keeps a fixed look (dark surface, a soft glow and a fine cube grid) and shows the Cubiq logo; with
-  "motif=/news/<version>/banner.png" it shows that picture instead (transparent background, in public/news/<version>/).
+- Right below the heading comes the update banner, an HTML comment "banner: accent=#71a330 motif=/news/<version>/
+  banner.png". The release automation draws the picture for every version to match its notes (scripts/release-art.mjs,
+  transparent PNG in public/news/<version>/); the banner keeps a fixed look (dark surface, soft glow, fine cube grid).
 - Optional screenshots: a second HTML comment starting with "shots:" – one screenshot per line:
   "/news/<version>/<file>.png | English caption | Deutsche Bildunterschrift" (captions optional; without the German one
   the English caption is used for both). PNG or WebP in public/news/<version>/, at most 8, each at most 2 MB and
   640×360 to 3840×2400 px. How to take them: docs/release-screenshots.md.
 - The release build fails when the section for its version is missing, one language is empty or the banner is missing
   (scripts/changelog.mjs check <version>).
-- Contributors: the release build adds an HTML comment starting with "contributors:" to the section of its version
-  (GitHub names of everyone who contributed since the previous release, see scripts/contributors.mjs). The launcher
-  thanks them in "What's new", the GitHub release in "Thanks to / Danke an". Don't write it by hand; to keep the
-  thanks in later launcher versions, commit it after the release with
-  "node --experimental-strip-types scripts/changelog.mjs set-contributors <version> <name1,name2>".
 -->
 
 ## 0.1.1 – 2026-10-27
-<!-- banner: accent=#71a330 -->
+<!-- banner: accent=#71a330 motif=/news/0.1.1/banner.png -->
 
 ### English
-- Give the Cubiq Client mod the launcher's calm green look.
+- **The Cubiq Client gets the launcher's look.** Menus, title screen and intro of the in-game mod now use the same calm green design as the launcher: dark surfaces, flat rounded buttons and the Cubiq logo instead of the redstone look.
 
 ### Deutsch
-- Give the Cubiq Client mod the launcher's calm green look.
+- **Der Cubiq Client bekommt den Look des Launchers.** Menüs, Titelbildschirm und Intro der Ingame-Mod haben jetzt dasselbe ruhige, grüne Design wie der Launcher: dunkle Flächen, flache abgerundete Knöpfe und das Cubiq-Logo statt des Redstone-Looks.
 
 ## 0.1.0 – 2026-10-27 – Hello, Cubiq | Hallo, Cubiq
 <!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png -->

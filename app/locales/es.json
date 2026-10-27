@@ -4733,7 +4733,6 @@
     "imageOf": "Imagen {n} de {total}",
     "versions": "Versiones",
     "more": "{n} imágenes más",
-    "thanks": "Gracias a {names} por contribuir a esta actualización.",
     "openRelease": "Ver la versión en GitHub"
   },
   "clips": {
@@ -7230,7 +7229,7 @@
       "grid": "Cuadrícula",
       "notch": "Muesca",
       "discard": "¿Descartar cambios?",
-      "selectHint": "Toca un botón para cambiarlo. Arrastra para moverlo y la esquina roja para cambiar el tamaño. Las flechas lo mueven poco a poco.",
+      "selectHint": "Toca un botón para cambiarlo. Arrastra para moverlo y la esquina verde para cambiar el tamaño. Las flechas lo mueven poco a poco.",
       "actionType": "Acción",
       "key": "Tecla",
       "chord": "Mantener antes",
