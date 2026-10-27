@@ -3045,8 +3045,6 @@
     "quickLaunch": "Lancement rapide",
     "openNamed": "Ouvrir {name}",
     "newInstance": "Nouvelle instance",
-    "searchShortcut": "Rechercher (Ctrl+K)",
-    "searchTip": "Rechercher · Ctrl K",
     "settings": "Paramètres",
     "accountNamed": "Compte : {name}",
     "signIn": "Se connecter",
@@ -3061,7 +3059,12 @@
     "achievements": "Succès",
     "localServers": "Mes serveurs",
     "controls": "Commandes",
-    "pc": "PC"
+    "pc": "PC",
+    "groups": {
+      "together": "Ensemble",
+      "collection": "Collection",
+      "tools": "Outils"
+    }
   },
   "accountMenu": {
     "menuLabel": "Comptes",
@@ -3335,6 +3338,9 @@
       "add": "Ajouter un serveur",
       "addHint": "Statut en direct et connexion en un clic",
       "addHintEmpty": "Tes serveurs avec statut en direct – rejoins-les en un clic"
+    },
+    "stage": {
+      "pick": "Sélectionner {name}"
     }
   },
   "news": {

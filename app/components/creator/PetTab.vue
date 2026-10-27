@@ -471,7 +471,7 @@ const requestClass = {
             <button class="btn btn-ghost px-3 py-1 text-xs" :disabled="attaching" data-testid="creator-pet-attach" @click="chooseImage(state.request.id)">
               <SocialIcon name="image" class="size-4" />{{ state.request.hasImage ? t('creator.pet.request.replaceImage') : t('creator.pet.request.addImage') }}
             </button>
-            <button class="btn btn-ghost px-3 py-1 text-xs hover:text-primary-300" data-testid="creator-pet-withdraw" @click="confirmWithdraw = true">{{ t('creator.pet.request.withdraw') }}</button>
+            <button class="btn btn-ghost px-3 py-1 text-xs hover:text-danger-300" data-testid="creator-pet-withdraw" @click="confirmWithdraw = true">{{ t('creator.pet.request.withdraw') }}</button>
           </template>
         </div>
       </section>
@@ -541,7 +541,7 @@ const requestClass = {
           <span class="label">{{ t('creator.pet.create.note') }}</span>
           <input v-model="form.note" class="field" :maxlength="PET_NOTE_MAX" :placeholder="t('creator.pet.create.notePlaceholder')" />
         </label>
-        <p class="rounded-lg bg-base-850 px-3 py-2 text-xs" :class="cost > remaining ? 'text-primary-300' : 'text-base-200'" data-testid="creator-pet-cost">
+        <p class="rounded-lg bg-base-850 px-3 py-2 text-xs" :class="cost > remaining ? 'text-danger-300' : 'text-base-200'" data-testid="creator-pet-cost">
           {{ t('creator.pet.create.cost', { cost: formatNumber(cost), left: formatNumber(remaining) }) }}
           <span v-if="cost > remaining && fit > 0" class="mt-0.5 block text-base-400">{{ t('creator.pet.create.fit', { n: fit }) }}</span>
         </p>

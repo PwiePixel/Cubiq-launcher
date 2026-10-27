@@ -144,7 +144,7 @@ async function leave() {
   <div class="mx-auto max-w-5xl p-6 mobile:p-4" data-testid="creator-page">
     <PullToRefresh :refresh="load" />
     <PageHeader :title="t('creator.title')" :subtitle="t('creator.subtitle')">
-      <div v-if="options.length > 1" class="flex rounded-full bg-base-900 p-1 ring-1 ring-base-800 mobile-scroll-x" role="radiogroup" :aria-label="t('creator.views.label')">
+      <div v-if="options.length > 1" class="flex rounded-2xl bg-base-900 p-1 ring-1 ring-line mobile-scroll-x" role="radiogroup" :aria-label="t('creator.views.label')">
         <button
           v-for="o in options"
           :key="o.id"

@@ -246,7 +246,7 @@ public final class Theme {
 			}
 			return;
 		}
-		// Cubiq (wie der Launcher): ruhige, dunkle Flächen mit einem Hauch Grün, die Akzentfarbe für Aktionen.
+		// Cubiq (wie der Launcher): Flächen im Navy des Logos in klaren Höhenstufen, die Akzentfarbe für Aktionen.
 		int[] scale = scale(accent);
 		this.accentHover = scale[1];
 		this.accentText = light ? ColorMath.lerp(scale[3], 0xFF000000, 0.18f) : scale[0];
@@ -257,31 +257,31 @@ public final class Theme {
 		this.faceGlow = accent;
 		this.faceTextOn = onAccent(accent);
 		if (light) {
-			// Launcher „Hell“: base-900 als Fensterfläche, base-850/800/700 darüber.
+			// Launcher „Hell“: base-900 als Fensterfläche, base-850/800/700 darüber, Schrift in tiefem Navy.
 			background = 0xFFFFFFFF;
-			surface = 0xFFF5F8F6;
-			surfaceHover = 0xFFE5EBE6;
-			surfaceHigh = 0xFFEEF2EF;
-			border = 0xFFD2DBD4;
-			text = 0xFF0F1411;
-			textDim = 0xFF5D6B61;
-			scrim = 0x500F1411;
-			deep = 0xFFEEF2EF;
+			surface = 0xFFF6F7FC;
+			surfaceHover = 0xFFE6E9F4;
+			surfaceHigh = 0xFFEDF0F8;
+			border = 0xFFD2D7E8;
+			text = 0xFF0A0E26;
+			textDim = 0xFF424A73;
+			scrim = 0x500A0E26;
+			deep = 0xFFEDF0F8;
 			bevelLight = 0xFFFFFFFF;
-			bevelDark = 0xFFA8B5AB;
+			bevelDark = 0xFFAAB2D0;
 		} else {
-			// Launcher „Dunkel“/„OLED“: base-900 Fenster, base-850 Kacheln, base-800 Knöpfe, base-700 Kanten.
-			background = oled ? 0xFF050706 : 0xFF111613;
-			surface = oled ? 0xFF0A0D0B : 0xFF161C18;
-			surfaceHover = oled ? 0xFF181F1A : 0xFF242D27;
-			surfaceHigh = oled ? 0xFF121714 : 0xFF1D2520;
-			border = oled ? 0xFF1F2721 : 0xFF29332C;
-			text = 0xFFEEF4EF;
-			textDim = 0xFF869489;
-			scrim = oled ? 0xB0000000 : 0xA80C100E;
-			deep = oled ? 0xFF000000 : 0xFF0C100E;
-			bevelLight = oled ? 0xFF354038 : 0xFF3D4A41;
-			bevelDark = oled ? 0xFF000000 : 0xFF0C100E;
+			// Launcher „Dunkel“/„OLED“: base-900 Fenster, base-850 Kacheln, base-800 Knöpfe, base-700 Kanten (Navy).
+			background = oled ? 0xFF05060F : 0xFF0C1028;
+			surface = oled ? 0xFF0A0C1C : 0xFF121737;
+			surfaceHover = oled ? 0xFF181C39 : 0xFF212854;
+			surfaceHigh = oled ? 0xFF12152C : 0xFF1A2046;
+			border = oled ? 0xFF1F2447 : 0xFF283062;
+			text = 0xFFF2F4FD;
+			textDim = 0xFFA1A8CD;
+			scrim = oled ? 0xB0000000 : 0xA8070A1D;
+			deep = oled ? 0xFF000000 : 0xFF070A1D;
+			bevelLight = oled ? 0xFF2A3160 : 0xFF343D7A;
+			bevelDark = oled ? 0xFF000000 : 0xFF070A1D;
 		}
 		this.track = border;
 		this.faceOff = surfaceHigh;

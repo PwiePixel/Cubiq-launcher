@@ -15,6 +15,7 @@ defineProps<{ item: NewsItem; image?: string; post?: ChangelogEntry | null; larg
     :title="item.title"
     :accent="post.banner.accent"
     :motif="post.banner.motif"
+    :anim="post.banner.anim"
     bare
     class="absolute inset-0"
   />

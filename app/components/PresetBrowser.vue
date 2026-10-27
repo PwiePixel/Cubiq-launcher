@@ -178,7 +178,7 @@ function resetFilters() {
 <template>
   <section class="flex min-h-0 flex-col" :aria-label="t('presets.editor.searchLabel')">
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <div class="inline-flex rounded-full bg-base-900 p-1 ring-1 ring-base-800 mobile-scroll-x mobile:flex mobile:w-full" role="tablist" :aria-label="t('browse.kindTabs')">
+      <div class="inline-flex rounded-2xl bg-base-900 p-1 ring-1 ring-line mobile-scroll-x mobile:flex mobile:w-full" role="tablist" :aria-label="t('browse.kindTabs')">
         <button
           v-for="k in presetKinds"
           :key="k"
@@ -192,7 +192,7 @@ function resetFilters() {
           {{ contentKindLabel(k) }}
         </button>
       </div>
-      <div class="ml-auto inline-flex rounded-full bg-base-900 p-1 ring-1 ring-base-800 mobile:ml-0" role="radiogroup" :aria-label="t('browse.source.label')">
+      <div class="ml-auto inline-flex rounded-2xl bg-base-900 p-1 ring-1 ring-line mobile:ml-0" role="radiogroup" :aria-label="t('browse.source.label')">
         <button
           v-for="p in platforms"
           :key="p"

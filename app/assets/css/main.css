@@ -1,24 +1,37 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/sora";
 
 /*
- * Cubiq-Look: schlichte, dunkle Flächen mit einem Hauch Grün als Grund, das Grün
- * aus dem Logo (#71a330) für Aktionen und ein helleres Lime für alles, was gerade
- * läuft (Spiel gestartet, Download aktiv).
+ * Cubiq-Design: Flächen im Navy des Logos (#0a0a30) mit klaren Höhenstufen, das Grün aus dem
+ * Logo (#71a330) als einziger Akzent und ein helleres Lime für alles, was gerade läuft (Spiel
+ * gestartet, Download aktiv). Formen kommen vom Würfel-Logo: weiche Rechtecke („Squircles“),
+ * feine 1–2-px-Kanten und – sparsam – der isometrische Würfel als Zeichen (Abschnitte, Leer-
+ * Zustände, feines Raster). Weitere Designs überschreiben nur diese Variablen.
  */
 @theme {
-  --color-base-950: #0c100e;
-  --color-base-900: #111613;
-  --color-base-850: #161c18;
-  --color-base-800: #1d2520;
-  --color-base-700: #29332c;
-  --color-base-600: #3d4a41;
-  --color-base-500: #5f6d63;
-  --color-base-400: #869489;
-  --color-base-300: #a6b2a9;
-  --color-base-200: #c5d0c8;
-  --color-base-100: #dbe3dd;
-  --color-base-50: #eef4ef;
+  /*
+   * Navy-Skala. 950–700 sind Flächen und Kanten (Grund → Dock/Karten → Dialoge/Menüs →
+   * Bedienelemente → kräftige Kanten), 600–50 sind Schrift: auch die leiseste Stufe (600)
+   * hält auf Karten mindestens 4,5:1 Kontrast.
+   */
+  --color-base-950: #070a1d;
+  --color-base-900: #0c1028;
+  --color-base-850: #121737;
+  --color-base-800: #1a2046;
+  --color-base-700: #283062;
+  --color-base-600: #7880ad;
+  --color-base-500: #8b93bd;
+  --color-base-400: #a1a8cd;
+  --color-base-300: #bcc2e0;
+  --color-base-200: #d2d6ee;
+  --color-base-100: #e3e6f7;
+  --color-base-50: #f2f4fd;
+  /* Kanten: fein (Karten, Leisten, Dock) und deutlich (Hover, gewählte Rahmen). */
+  --color-line: #1e2550;
+  --color-line-strong: #323b78;
+  /* Fensterrahmen um die Leinwand (Dock, obere Leiste): eine Stufe tiefer als der Grund der Seiten. */
+  --color-frame: #04061a;
 
   --color-primary-200: #cde8a6;
   --color-primary-300: #a9d46b;
@@ -53,8 +66,19 @@
   --color-warn: #f0b44c;
 
   --font-sans: "Inter Variable", "Segoe UI Variable Text", "Segoe UI", system-ui, "Cantarell", "Noto Sans", "Ubuntu", "DejaVu Sans", sans-serif;
-  --font-display: "Inter Variable", "Segoe UI Variable Display", "Segoe UI", system-ui, "Noto Sans", sans-serif;
+  /* Überschriften: Sora – geometrisch und etwas breiter, wie die Kanten des Würfels (lokal, ohne CDN). */
+  --font-display: "Sora Variable", "Inter Variable", "Segoe UI Variable Display", "Segoe UI", system-ui, "Noto Sans", sans-serif;
   --font-mono: "Cascadia Mono", Consolas, "JetBrains Mono", "Noto Sans Mono", "DejaVu Sans Mono", "Liberation Mono", ui-monospace, monospace;
+
+  /*
+   * Rundungen: etwas großzügiger als üblich, damit Flächen wie die weichen Rechtecke des Logos
+   * wirken (mit `corner-shape` unten als echte Squircles, sonst als runde Ecken).
+   */
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 1.75rem;
 
   --animate-shimmer: shimmer 1.4s linear infinite;
   --animate-pop: pop 0.18s ease-out;
@@ -102,38 +126,67 @@
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   /* Höhe der Tab-Leiste unten (ohne Gestenleiste) – Sheets und Toasts halten Abstand. */
-  --mobile-tabbar: 3.5rem;
+  --mobile-tabbar: 4.5rem;
   /* Weicher Schein hinter Inhalten der Akzentfarbe (Szene, Knöpfe). */
   --glow-primary: color-mix(in srgb, var(--color-primary-500) 35%, transparent);
+  /*
+   * Höhenstufen: Schatten in tiefem Navy statt Schwarz, dazu eine feine helle Oberkante
+   * („Licht von oben“) auf gehobenen Flächen.
+   */
+  --shadow-rgb: 2 4 20;
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.045);
+  --elev-1: 0 1px 2px rgb(var(--shadow-rgb) / 0.4);
+  --elev-2: 0 14px 32px -14px rgb(var(--shadow-rgb) / 0.75);
+  --elev-3: 0 28px 64px -22px rgb(var(--shadow-rgb) / 0.85), 0 2px 8px rgb(var(--shadow-rgb) / 0.35);
+  /* Gewählt/aktiv: Fläche mit einem Hauch Grün und grüner Kante (Reiter, Segmente, Auswahlkarten). */
+  --pick-bg: color-mix(in srgb, var(--color-primary-500) 15%, var(--color-base-850));
+  --pick-edge: color-mix(in srgb, var(--color-primary-400) 55%, transparent);
+  /* Feines isometrisches Raster (Linienfarbe), z. B. auf der Bühne und in Leer-Zuständen. */
+  --iso-line: color-mix(in srgb, var(--color-primary-500) 12%, transparent);
+  /* Dasselbe Raster als Bild in neutraler Farbe – für große Flächen (`background: var(--iso-pattern) 0 0 / 52px 30px`). */
+  --iso-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='30' viewBox='0 0 52 30'%3E%3Cpath d='M0 0L52 30M0 30L52 0M0 0V30M26 0V30M52 0V30' stroke='%23fff' stroke-opacity='.045' stroke-width='1' fill='none'/%3E%3C/svg%3E");
 }
 
 /*
  * Farbschemata: überschreiben nur die Grundskala. „Dunkel“ ist der Standard oben;
- * OLED geht auf echtes Schwarz, Hell dreht die Skala um.
+ * OLED geht auf echtes Schwarz (Flächen bleiben navy getönt), Hell dreht die Skala um.
  */
 :root[data-theme="oled"] {
   --color-base-950: #000000;
-  --color-base-900: #050706;
-  --color-base-850: #0a0d0b;
-  --color-base-800: #121714;
-  --color-base-700: #1f2721;
-  --color-base-600: #354038;
+  --color-base-900: #05060f;
+  --color-base-850: #0a0c1c;
+  --color-base-800: #12152c;
+  --color-base-700: #1f2447;
+  --color-line: #151937;
+  --color-line-strong: #262c58;
+  --color-frame: #000000;
 }
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-base-950: #eef2ef;
+  --color-base-950: #edf0f8;
   --color-base-900: #ffffff;
-  --color-base-850: #f5f8f6;
-  --color-base-800: #e5ebe6;
-  --color-base-700: #d2dbd4;
-  --color-base-600: #a8b5ab;
-  --color-base-500: #828f86;
-  --color-base-400: #5d6b61;
-  --color-base-300: #45514a;
-  --color-base-200: #2c3530;
-  --color-base-100: #1d2420;
-  --color-base-50: #0f1411;
-  --color-primary-300: #4d7a1c;
+  --color-base-850: #f6f7fc;
+  --color-base-800: #e6e9f4;
+  --color-base-700: #d2d7e8;
+  --color-base-600: #5a628c;
+  --color-base-500: #4e5680;
+  --color-base-400: #424a73;
+  --color-base-300: #333a62;
+  --color-base-200: #252b4f;
+  --color-base-100: #171c3a;
+  --color-base-50: #0a0e26;
+  --color-line: #dde1ef;
+  --color-line-strong: #c2c8de;
+  --color-frame: #e1e5f1;
+  --shadow-rgb: 34 42 92;
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.8);
+  --elev-2: 0 14px 30px -16px rgb(var(--shadow-rgb) / 0.3);
+  --elev-3: 0 28px 60px -24px rgb(var(--shadow-rgb) / 0.38), 0 2px 8px rgb(var(--shadow-rgb) / 0.1);
+  --pick-bg: color-mix(in srgb, var(--color-primary-500) 12%, var(--color-base-900));
+  --pick-edge: color-mix(in srgb, var(--color-primary-600) 60%, transparent);
+  --iso-line: color-mix(in srgb, var(--color-primary-600) 14%, transparent);
+  --iso-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='30' viewBox='0 0 52 30'%3E%3Cpath d='M0 0L52 30M0 30L52 0M0 0V30M26 0V30M52 0V30' stroke='%230a0e26' stroke-opacity='.06' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  --color-primary-300: #46711a;
   --color-primary-200: #3b5e15;
   --color-primary-900: #e6f2d6;
   --color-live-300: #4f7a12;
@@ -264,15 +317,24 @@
   --color-base-850: #13101f;
   --color-base-800: #1b1629;
   --color-base-700: #2a2440;
-  --color-base-600: #3b3358;
+  /* 600/500 sind Schrift (leise, aber lesbar) – wie in der Navy-Skala. */
+  --color-base-600: #8a83a9;
+  --color-base-500: #948eb2;
   --color-base-400: #9a94b4;
+  --color-base-300: #b1abc9;
   --color-base-200: #c3bdd8;
+  --color-base-100: #d8d3e8;
   --color-base-50: #ece9f5;
+  --color-line: #221c35;
+  --color-line-strong: #3b3358;
+  --color-frame: #040308;
 }
 :root[data-event="halloween"][data-theme="oled"] {
   --color-base-950: #000000;
   --color-base-900: #050409;
   --color-base-850: #0a0812;
+  --color-line: #18132a;
+  --color-frame: #000000;
 }
 :root[data-event="halloween"][data-theme="light"] {
   --color-primary-300: #5b3b94;
@@ -320,6 +382,10 @@ textarea {
   outline: 2px solid var(--color-primary-400);
   outline-offset: 2px;
 }
+/* Eingabefelder zeigen den Fokus selbst (grüne Kante und Schein, siehe `.field`) – kein zweiter Ring außen. */
+.field:focus-visible {
+  outline: none;
+}
 
 ::selection {
   background: color-mix(in srgb, var(--color-primary-500) 35%, transparent);
@@ -336,7 +402,10 @@ textarea {
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-base-600);
+  background-color: var(--color-line-strong);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Seitenwechsel: kurz genug, um nicht aufzuhalten, aber mit sanftem Aufziehen. */
@@ -366,37 +435,54 @@ textarea {
 }
 
 @layer components {
+  /* --- Knöpfe ---------------------------------------------------------------- */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-[background-color,color,box-shadow,transform] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
   }
+  /* Hauptaktion: Cubiq-Grün mit feiner Lichtkante oben und Schattenkante unten – wie eine Würfelfläche. */
   .btn-primary {
     @apply bg-primary-500 hover:bg-primary-400 active:bg-primary-600;
     color: var(--color-on-primary);
     font-weight: 600;
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      inset 0 -1px 0 rgb(0 0 0 / 0.16);
   }
   .btn-primary:not(:disabled):hover {
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.22),
-      0 6px 18px -8px var(--glow-primary);
+      inset 0 1px 0 rgb(255 255 255 / 0.26),
+      inset 0 -1px 0 rgb(0 0 0 / 0.16),
+      0 8px 22px -10px var(--glow-primary);
   }
+  /* Neben-Aktionen: Navy-Fläche mit klarer 1-px-Kante. */
   .btn-ghost {
     @apply bg-base-800 text-base-200 hover:bg-base-700 hover:text-base-50;
+    box-shadow: inset 0 0 0 1px var(--color-line-strong);
   }
   .btn-danger {
     @apply bg-transparent text-danger-300 ring-1 ring-danger-600/60 hover:bg-danger-900;
   }
+  .btn-icon {
+    @apply inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-base-800 text-base-200 transition-[background-color,border-color,color,fill,stroke,scale,box-shadow] hover:bg-base-700 hover:text-base-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+    box-shadow: inset 0 0 0 1px var(--color-line-strong);
+  }
+
+  /* --- Felder ---------------------------------------------------------------- */
+  /* Eingabefelder liegen eine Stufe tiefer als ihre Fläche (wie eine Mulde) und leuchten beim Fokus grün. */
   .field {
-    @apply w-full rounded-lg border border-base-700 bg-base-900 px-3 py-2 text-sm text-base-50 outline-none transition-[border-color,box-shadow] placeholder:text-base-400 focus:border-primary-500;
+    @apply w-full rounded-lg border border-base-700 bg-base-950 px-3 py-2 text-sm text-base-50 outline-none transition-[border-color,box-shadow,background-color] placeholder:text-base-500 hover:border-line-strong focus:border-primary-500;
   }
   .field:focus {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500) 20%, transparent);
   }
   .label {
     @apply mb-1.5 block text-xs font-medium text-base-400;
   }
+
+  /* --- Flächen --------------------------------------------------------------- */
   .card {
-    @apply rounded-xl border border-base-800 bg-base-900;
+    @apply rounded-xl border border-line bg-base-900;
+    box-shadow: var(--edge-light);
   }
   /*
    * Halloween: Spinnweben in der rechten oberen Ecke jeder Karte (als Hintergrundbild,
@@ -420,10 +506,10 @@ textarea {
     box-shadow: inset 0 0 0 1px #cfd5e3, 0 0 18px rgba(207, 213, 227, 0.18), 0 0 22px rgba(224, 138, 60, 0.18);
   }
   .card-hover {
-    @apply relative transition-[border-color,background-color,box-shadow] duration-150 hover:border-base-700 hover:bg-base-850;
+    @apply relative transition-[border-color,background-color,box-shadow] duration-150 hover:border-line-strong hover:bg-base-850;
   }
   .card-hover:hover {
-    box-shadow: 0 10px 30px -18px rgb(0 0 0 / 0.6), 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 22%, transparent);
+    box-shadow: var(--edge-light), var(--elev-2);
   }
   /*
    * Klickbare Karten (Knöpfe/Links) heben sich beim Drüberfahren leicht an und
@@ -433,42 +519,61 @@ textarea {
   .card-lift {
     @apply transition-[border-color,background-color,translate,scale,box-shadow] duration-150 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
   }
-  .btn-icon {
-    @apply inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-base-800 text-base-200 transition-[background-color,border-color,color,fill,stroke,scale] hover:bg-base-700 hover:text-base-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+  /* Schwebende Fläche (Dock, Bühne, Dialoge): eine Stufe über dem Grund, mit Schatten. */
+  .panel {
+    @apply rounded-2xl border border-line bg-base-900;
+    box-shadow: var(--edge-light), var(--elev-2);
   }
+
+  /* --- Kleine Elemente --------------------------------------------------------- */
+  /* Abzeichen und Chips sind kleine weiche Rechtecke (keine Pillen) – wie die Pixel des Logos. */
   .badge {
-    @apply inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap;
+    @apply inline-flex shrink-0 items-center gap-1 rounded-[0.4rem] px-2 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap;
   }
   .chip {
-    @apply inline-flex items-center rounded-full bg-base-800 px-2.5 py-1 text-xs text-base-200;
+    @apply inline-flex items-center rounded-lg bg-base-800 px-2.5 py-1 text-xs text-base-200;
+    box-shadow: inset 0 0 0 1px var(--color-line);
   }
   .menu {
-    @apply absolute z-40 min-w-48 rounded-xl border border-base-700 bg-base-850 p-1 shadow-xl shadow-black/40;
+    @apply absolute z-40 min-w-48 rounded-xl border border-line-strong bg-base-850 p-1.5;
+    box-shadow: var(--edge-light), var(--elev-3);
     animation: menu-in 0.14s ease-out;
     transform-origin: top;
   }
   .menu-item {
     @apply flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-base-200 transition-colors hover:bg-base-700 hover:text-base-50 disabled:opacity-40;
   }
+  /* Raute aus den Pixel-Spuren des Logos: Zeichen für „aktiv“ und Aufzählungen. */
+  .diamond {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 0.625rem;
+    height: 0.375rem;
+    background: currentColor;
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  }
+
+  /* --- Schrift ----------------------------------------------------------------- */
   .section-title {
     @apply text-sm font-semibold text-base-50;
   }
   .display {
     font-family: var(--font-display);
     font-weight: 650;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
   }
-  /* Abschnittstitel auf der Startseite: kräftig, klar über dem Inhalt. */
+  /* Abschnittstitel: kräftig, klar über dem Inhalt. */
   .heading {
     font-family: var(--font-display);
-    font-weight: 650;
-    letter-spacing: -0.01em;
+    font-weight: 620;
+    letter-spacing: -0.015em;
     @apply text-lg leading-tight text-base-50;
   }
-  /* Früher Pixel-Ecken; heute weich gerundet wie alle Flächen (`--notch` bleibt als Maß). */
-  .pixel-corners {
-    border-radius: calc(var(--notch, 4px) * 2.5);
+  /* Kleine Zeile über Titeln („Zuletzt gespielt“, „Update 0.2.0“). */
+  .eyebrow {
+    @apply text-[11px] font-semibold tracking-[0.12em] text-base-400 uppercase;
   }
+
   /* Grundfläche der Seiten. */
   .surface {
     background-color: var(--color-base-950);
@@ -484,6 +589,16 @@ textarea {
   /* Über der Szene: halbdurchsichtiger Schleier, damit Inhalte lesbar bleiben. */
   .surface.surface-over-scene {
     background-color: color-mix(in srgb, var(--color-base-950) 72%, transparent);
+  }
+  /*
+   * Isometrisches Würfel-Raster (wie die Kanten im Logo) als eigene Ebene: die Linien sind eine
+   * Maske über der Linienfarbe, folgen also Akzent und Farbschema. Sparsam einsetzen.
+   */
+  .iso-grid {
+    background-color: var(--iso-line);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='30' viewBox='0 0 52 30'%3E%3Cpath d='M0 0L52 30M0 30L52 0M0 0V30M26 0V30M52 0V30' stroke='%23000' stroke-width='1' fill='none'/%3E%3C/svg%3E") 0 0 / 52px 30px repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='30' viewBox='0 0 52 30'%3E%3Cpath d='M0 0L52 30M0 30L52 0M0 0V30M26 0V30M52 0V30' stroke='%23000' stroke-width='1' fill='none'/%3E%3C/svg%3E") 0 0 / 52px 30px repeat;
+    pointer-events: none;
   }
   /* Platzhalter, während Daten laden: ruhiger Schimmer über der Fläche. */
   .skeleton {
@@ -502,14 +617,43 @@ textarea {
     transform: translateX(-100%);
     animation: skeleton-sweep 1.6s ease-in-out infinite;
   }
+
+  /* --- Auswahl: Segmente und Reiter ----------------------------------------------- */
+  /* Gewählt heißt überall: Navy mit einem Hauch Grün und grüner Kante. */
   .seg {
     @apply px-3 py-1.5 text-base-400 transition-colors hover:text-base-50;
   }
   .seg-on {
-    @apply bg-base-700 text-base-50;
+    @apply text-base-50;
+    background: var(--pick-bg);
+    box-shadow: inset 0 0 0 1px var(--pick-edge);
   }
   .tab {
-    @apply relative rounded-full px-3.5 py-1.5 text-sm font-medium text-base-400 transition-colors hover:bg-base-850 hover:text-base-50;
+    @apply relative rounded-lg px-3.5 py-1.5 text-sm font-medium text-base-400 transition-colors hover:bg-base-850 hover:text-base-50;
+  }
+  .tab-on,
+  .tab-on:hover {
+    @apply text-base-50;
+    background: var(--pick-bg);
+    box-shadow: inset 0 0 0 1px var(--pick-edge);
+  }
+  /* Auswahl-Kacheln (Loader, Stufen, Presets, Optionen): gewählt wie alles andere – Navy mit Hauch Grün. */
+  .choice {
+    @apply rounded-xl border border-line bg-base-900 text-base-400 transition-[border-color,background-color,color,box-shadow] hover:border-line-strong hover:text-base-50 disabled:cursor-not-allowed disabled:opacity-45;
+  }
+  .choice-on,
+  .choice-on:hover {
+    @apply border-transparent text-base-50;
+    background: var(--pick-bg);
+    box-shadow: inset 0 0 0 1.5px var(--pick-edge);
+  }
+  /* Kästchen in Auswahl-Zeilen: an = gefüllt in der Akzentfarbe mit Haken (statt eines Leuchtens). */
+  .tick {
+    @apply grid size-4 shrink-0 place-items-center rounded-[0.3rem] border border-line-strong bg-base-950;
+  }
+  .tick-on {
+    @apply border-primary-500 bg-primary-500;
+    color: var(--color-on-primary);
   }
   /* Team-Bereich: Listenzeile mit aktivem Eintrag (j/k) und Auswahl. */
   .adm-row {
@@ -521,13 +665,20 @@ textarea {
   .adm-row-selected {
     background: color-mix(in srgb, var(--color-primary-900) 45%, var(--color-base-900));
   }
-  .tab-on {
-    @apply bg-base-800 text-base-50 hover:bg-base-800;
-  }
   /* Skins-Seite: Karten-Raster der Skin-Figuren. */
   .skin-grid {
     @apply grid gap-2.5;
     grid-template-columns: repeat(auto-fill, minmax(6.75rem, 1fr));
+  }
+}
+
+/*
+ * Echte Squircles, wo der Webview sie kann (Chromium/WebView2): Ecken wie beim App-Symbol –
+ * stetig gekrümmt statt Viertelkreis. Sonst bleiben es runde Ecken mit denselben Maßen.
+ */
+@supports (corner-shape: squircle) {
+  :where(.squircle, .card, .panel, .btn, .btn-icon, .field, .menu, .chip, .badge, .tab, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
+    corner-shape: squircle;
   }
 }
 
@@ -677,7 +828,7 @@ html.os-linux select {
   -webkit-appearance: none;
   background-color: var(--color-base-900);
   color: var(--color-base-50);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23869489' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a8cd' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.55rem center;
   background-size: 0.9rem;

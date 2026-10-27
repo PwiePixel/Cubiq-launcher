@@ -134,7 +134,7 @@ function close() {
         </div>
         <div class="flex justify-between px-4 py-2.5">
           <span class="text-base-400">{{ t('relocate.free') }}</span>
-          <span class="font-mono" :class="plan.enoughSpace ? '' : 'text-primary-300'">{{ plan.free === null ? t('relocate.freeUnknown') : formatBytes(plan.free) }}</span>
+          <span class="font-mono" :class="plan.enoughSpace ? '' : 'text-danger-300'">{{ plan.free === null ? t('relocate.freeUnknown') : formatBytes(plan.free) }}</span>
         </div>
       </div>
       <p v-if="plan.links" class="text-xs text-warn">{{ t('relocate.linksSkipped', { count: plan.links }, plan.links) }}</p>

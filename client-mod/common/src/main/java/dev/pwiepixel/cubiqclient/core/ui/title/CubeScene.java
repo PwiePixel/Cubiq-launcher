@@ -107,8 +107,8 @@ public final class CubeScene {
 		Theme t = Theme.get();
 		boolean light = t.light && !alwaysDark;
 		boolean lite = isSimple();
-		int top = light ? t.background : (alwaysDark || !"oled".equals(t.themeName) ? 0xFF111613 : 0xFF050706);
-		int bottom = light ? t.deep : (alwaysDark || !"oled".equals(t.themeName) ? 0xFF0C100E : 0xFF000000);
+		int top = light ? t.background : (alwaysDark || !"oled".equals(t.themeName) ? 0xFF0C1028 : 0xFF05060F);
+		int bottom = light ? t.deep : (alwaysDark || !"oled".equals(t.themeName) ? 0xFF070A1D : 0xFF000000);
 		background(c, width, height, top, bottom);
 		// Schein oben rechts (wie der Verlauf der Szene im Launcher) und hinter den Knöpfen.
 		if (!lite) Paint.radialGlow(c, width, 0, Math.round(width * 0.62f), Math.round(height * 0.8f), t.accent, light ? 20 : 30, width, height);

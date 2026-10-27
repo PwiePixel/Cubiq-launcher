@@ -1,5 +1,5 @@
 // Cubiq Launcher – Texte der nativen Spielansicht (Deutsch/Englisch).
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 import Foundation
 

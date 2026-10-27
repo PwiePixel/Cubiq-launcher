@@ -1,7 +1,7 @@
 // Cubiq Launcher – Ersatz für die Amethyst-Oberfläche, die der Engine-Code erwartet.
 // Teile (Zwischenablage, showError) sind aus Amethyst-iOS ios_uikit_bridge.m übernommen
 // (GPL-3.0, Copyright (C) 2021 Tran Hoang Khanh Duy und Mitwirkende).
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 #import <UIKit/UIKit.h>
 

@@ -163,11 +163,46 @@ export function parseChangeNote(text) {
   return { preamble: parts.preamble, en: parts.en.length ? parts.en : parts.de, de: parts.de.length ? parts.de : parts.en }
 }
 
+/** Screenshot neben einem Spieler-Text: nur ein Dateiname (PNG/WebP) – die Datei liegt in changes/. */
+export const NOTE_SHOT = /^(?:\.\/)?([\w.-]+\.(?:png|webp))$/i
+
 /**
- * Motiv des Update-Banners einer Version eintragen: ergänzt oder ersetzt „motif=…“ in der Banner-Zeile ihres
- * Abschnitts; ohne Banner-Zeile kommt eine mit Cubiq-Grün unter die Überschrift. Ohne Abschnitt: Text unverändert.
+ * Screenshots der Spieler-Texte aus changes/ beim Release umziehen: Einträge im Kommentar „shots:“, die nur einen
+ * Dateinamen nennen („bild.png | English | Deutsch“), meinen Dateien in changes/. Sie kommen nach
+ * public/news/<version>/ und der Eintrag bekommt den Pfad dorthin. Gleiche Namen aus verschiedenen Texten bekommen
+ * eine Nummer. Gibt die neuen Kommentarzeilen und die Umzüge { from, to } (Dateinamen) zurück.
+ * @param {string[]} preamble Zeilen vor „### English“ (parseChangeNote)
+ * @param {string} version
+ * @param {Set<string>} [taken] schon vergebene Dateinamen in public/news/<version>/
  */
-export function setBannerMotif(text, version, motif) {
+export function relocateShots(preamble, version, taken = new Set()) {
+  const moves = []
+  const text = preamble.join('\n').replace(/<!--\s*shots:([\s\S]*?)-->/gi, (_, body) => {
+    const entries = body
+      .split(/\r?\n|;/)
+      .map((raw) => raw.trim())
+      .filter(Boolean)
+      .map((raw) => {
+        const [file = '', ...captions] = raw.split('|').map((part) => part.trim())
+        const local = NOTE_SHOT.exec(file)?.[1]
+        if (!local) return [file, ...captions].join(' | ')
+        let name = local
+        for (let n = 2; taken.has(name.toLowerCase()); n++) name = local.replace(/(\.\w+)$/, `-${n}$1`)
+        taken.add(name.toLowerCase())
+        moves.push({ from: local, to: name })
+        return [`/news/${version}/${name}`, ...captions].join(' | ')
+      })
+    return `<!-- shots:\n${entries.join('\n')}\n-->`
+  })
+  return { preamble: text.split('\n'), moves }
+}
+
+/**
+ * Motiv des Update-Banners einer Version eintragen: ergänzt oder ersetzt „motif=…“ (und „anim=…“, die bewegte
+ * Fassung) in der Banner-Zeile ihres Abschnitts; ohne Banner-Zeile kommt eine mit Cubiq-Grün unter die Überschrift.
+ * Ohne Abschnitt: Text unverändert.
+ */
+export function setBannerMotif(text, version, motif, anim = null) {
   const nl = text.includes('\r\n') ? '\r\n' : '\n'
   const lines = text.split(/\r?\n/)
   const heading = new RegExp(`^## +\\[?v?${version.replace(/\./g, '\\.')}\\]?(?: |$)`)
@@ -175,12 +210,13 @@ export function setBannerMotif(text, version, motif) {
   if (start < 0) return text
   let end = lines.findIndex((line, i) => i > start && /^## /.test(line))
   if (end < 0) end = lines.length
+  const images = anim ? ` motif=${motif} anim=${anim}` : ` motif=${motif}`
   const at = lines.findIndex((line, i) => i > start && i < end && /^<!--\s*banner:/i.test(line.trim()))
   if (at < 0) {
-    lines.splice(start + 1, 0, `<!-- banner: accent=#71a330 motif=${motif} -->`)
+    lines.splice(start + 1, 0, `<!-- banner: accent=#71a330${images} -->`)
   } else {
-    const line = lines[at].replace(/\s+motif=\S+/, '')
-    lines[at] = line.replace(/\s*-->\s*$/, ` motif=${motif} -->`)
+    const line = lines[at].replace(/\s+(?:motif|anim)=\S+/g, '')
+    lines[at] = line.replace(/\s*-->\s*$/, `${images} -->`)
   }
   return lines.join(nl)
 }
@@ -197,14 +233,17 @@ export function unreleasedReady(text) {
 /**
  * CHANGELOG.md für eine neue Version vorbereiten. Spieler-Texte – Dateien aus changes/ (`notes`, siehe
  * parseChangeNote) und Punkte unter „## Unreleased“ – haben Vorrang und werden zur Version (fehlt eine Sprache,
- * gilt die andere); sonst entsteht der Abschnitt aus den Commits. `null` = es gibt nichts zu veröffentlichen.
+ * gilt die andere); sonst entsteht der Abschnitt aus den Commits. `extra` = Punkte aus Commits, deren Änderung
+ * keinen Spieler-Text mitgebracht hat – sie kommen hinter die Spieler-Texte, damit nichts verloren geht.
+ * `null` = es gibt nichts zu veröffentlichen.
  * @param {string} text
  * @param {string} version
  * @param {string} date
  * @param {ReturnType<typeof changelogItem>[]} items
  * @param {ReturnType<typeof parseChangeNote>[]} [notes]
+ * @param {ReturnType<typeof changelogItem>[]} [extra]
  */
-export function prepareChangelog(text, version, date, items, notes = []) {
+export function prepareChangelog(text, version, date, items, notes = [], extra = []) {
   const nl = text.includes('\r\n') ? '\r\n' : '\n'
   const lines = text.split(/\r?\n/)
   const range = unreleasedRange(lines)
@@ -215,7 +254,10 @@ export function prepareChangelog(text, version, date, items, notes = []) {
   if (parts.length) {
     const preamble = parts.flatMap((p) => p.preamble)
     const banner = preamble.some((line) => /^<!--\s*banner:/i.test(line.trim())) ? [] : [BANNER]
-    section = [`## ${version} – ${date}`, ...banner, ...preamble, '', '### English', ...parts.flatMap((p) => p.en), '', '### Deutsch', ...parts.flatMap((p) => p.de), '']
+    const more = extra.filter(Boolean)
+    const en = [...parts.flatMap((p) => p.en), ...bullets(more, 'en')]
+    const de = [...parts.flatMap((p) => p.de), ...bullets(more, 'de')]
+    section = [`## ${version} – ${date}`, ...banner, ...preamble, '', '### English', ...en, '', '### Deutsch', ...de, '']
   }
   if (!section) {
     const real = items.filter(Boolean)

@@ -21,13 +21,13 @@ class CubiqLookTest {
 		Theme d = Theme.of("dark", "cubiq", null);
 		assertEquals(Theme.CUBIQ, d.designName);
 		// app/assets/css/main.css: base-950/900/850/800/700/400/50 und primary-300/400/500, on-primary.
-		assertEquals(0xFF0C100E, d.deep);
-		assertEquals(0xFF111613, d.background);
-		assertEquals(0xFF161C18, d.surface);
-		assertEquals(0xFF1D2520, d.surfaceHigh);
-		assertEquals(0xFF29332C, d.border);
-		assertEquals(0xFF869489, d.textDim);
-		assertEquals(0xFFEEF4EF, d.text);
+		assertEquals(0xFF070A1D, d.deep);
+		assertEquals(0xFF0C1028, d.background);
+		assertEquals(0xFF121737, d.surface);
+		assertEquals(0xFF1A2046, d.surfaceHigh);
+		assertEquals(0xFF283062, d.border);
+		assertEquals(0xFFA1A8CD, d.textDim);
+		assertEquals(0xFFF2F4FD, d.text);
 		assertEquals(0xFF71A330, d.accent);
 		assertEquals(0xFF88BB45, d.accentHover);
 		assertEquals(0xFFA9D46B, d.accentText);
@@ -36,11 +36,11 @@ class CubiqLookTest {
 		assertEquals(0xFFF8CD7A, d.caution);
 		Theme oled = Theme.of("oled", "cubiq", null);
 		assertEquals(0xFF000000, oled.deep);
-		assertEquals(0xFF050706, oled.background);
+		assertEquals(0xFF05060F, oled.background);
 		Theme light = Theme.of("light", "cubiq", null);
 		assertTrue(light.light);
 		assertEquals(0xFFFFFFFF, light.background);
-		assertEquals(0xFF0F1411, light.text);
+		assertEquals(0xFF0A0E26, light.text);
 		assertEquals(0xFFB42318, light.danger);
 		assertEquals(0xFF8A5A00, light.caution);
 	}

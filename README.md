@@ -25,9 +25,8 @@
 </div>
 
 > [!NOTE]
-> Cubiq Launcher is in early development (version 0.1.0). It is based on
-> [TRS Launcher](https://github.com/theredstonee/TRS-Launcher) by Ohev Tamerin (Theredstonee) and, like it, licensed
-> under the GPL-3.0. What was changed is listed in [NOTICE](NOTICE).
+> Cubiq Launcher is in early development (version 0.1.0). It is free software under the GPL-3.0; copyright and
+> third-party notices are in [NOTICE](NOTICE).
 
 ## Features
 
@@ -94,12 +93,12 @@ Your data lives in `~/.local/share/Cubiq-Launcher`. More in the [Linux guide](do
 
 ## Before the first release
 
-These values are your own and are set when building – nothing of the original project is used. Without them the
-matching feature stays off, the rest of the launcher works.
+These values are your own and are set when building. Without them the matching feature stays off, the rest of the
+launcher works.
 
 | What | Where | Without it |
 |---|---|---|
-| **Microsoft sign-in**: client ID of your own Azure app ("Personal Microsoft accounts only", platform "Mobile and desktop applications" with redirect `http://localhost/login`, "Allow public client flows" on), [approved by Mojang](https://aka.ms/mce-reviewappid) for the Minecraft API | Repository variable `CUBIQ_MSA_CLIENT_ID` | No sign-in (development builds start the demo) |
+| **Microsoft sign-in**: already built in – the Azure app "Cubiq Launcher" (client ID `5cc8876f-8fe1-4c27-bc28-9355a79db635`), works as soon as Microsoft has [approved it](https://aka.ms/mce-reviewappid) for the Minecraft API; setup and form answers: [docs/microsoft-sign-in.md](docs/microsoft-sign-in.md) | Optional repository variable `CUBIQ_MSA_CLIENT_ID` for a different Azure app | – (until the approval, sign-in says it is waiting for it) |
 | **Update signing key**: already created (key ID `A427CF588D4DF86A`); the public key is in `src-tauri/tauri.conf.json` and `src-tauri/crates/core/src/client_mod_update.rs` | Secrets `TAURI_SIGNING_PRIVATE_KEY` (content of the key file) and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Installers without update signature – installed launchers don't update themselves |
 | **Cubiq services** (friends, chat, capes, creator codes, …): base URL of your own server implementing the API | Repository variable `CUBIQ_API_BASE`; for the in-game mod also `DEFAULT_API` in `client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/online/OnlineConfig.java` | Services hidden, nothing is sent |
 | **Discord status**: application ID of your Discord app | Repository variable `CUBIQ_DISCORD_APP_ID` | No Discord status |
@@ -154,8 +153,9 @@ checks whether anything changed for players since the last release. If so, it
 2. writes the new section of [CHANGELOG.md](CHANGELOG.md) in English and German – from the player notes in
    [`changes/`](changes/README.md) (one file per change), otherwise from the commit messages
    ([how](CONTRIBUTING.md#release-notes)),
-3. draws the picture of the release to match its notes (a small voxel scene, e.g. a wrench for fixes or a rocket for a
-   launch – `scripts/release-art.mjs`); the launcher, the website and the GitHub release show it with the update,
+3. draws the picture of the release to match its notes – a small animated pixel-art scene with Cubi, the cube from
+   the logo, e.g. next to a wrench for fixes or a rocket for a launch (`scripts/release-art.mjs`); the launcher, the
+   website and the GitHub release show it with the update, together with the screenshots from the player notes,
 4. commits "Release vX.Y.Z", tags it and starts [`release.yml`](.github/workflows/release.yml).
 
 `release.yml` builds the Windows installer (`Cubiq-Launcher_<version>_x64-setup.exe`), a portable ZIP and the Linux
@@ -210,8 +210,7 @@ Contributions are welcome – read [CONTRIBUTING.md](CONTRIBUTING.md). Report se
 
 Cubiq Launcher is licensed under the [GNU General Public License v3.0](LICENSE).
 
-Copyright (C) 2026 PwiePixel. Based on TRS Launcher, Copyright (C) 2026 Ohev Tamerin (Theredstonee). Copyright and
-third-party notices: [NOTICE](NOTICE). Parts of the process handling are adapted from
+Copyright (C) 2026 PwiePixel. Copyright and third-party notices: [NOTICE](NOTICE). Parts of the process handling are adapted from
 [Polyfrost OneLauncher](https://github.com/Polyfrost/OneLauncher) (GPL-3.0-only).
 
 <sub>Cubiq Launcher is not an official Minecraft product. It is not approved by or associated with Mojang or Microsoft.</sub>

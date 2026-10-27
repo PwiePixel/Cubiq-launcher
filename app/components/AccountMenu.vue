@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { messeRestricted } from '~/utils/messe'
-// Konto oben rechts in der Titelleiste: Skin-Kopf und Name, im Menü alle
-// Accounts zum Wechseln, dazu „Account hinzufügen“ und „Accounts verwalten“.
+// Konto: Skin-Kopf und Name, im Menü alle Accounts zum Wechseln, dazu „Account hinzufügen“ und
+// „Accounts verwalten“. Sitzt als Kachel unten im Dock (`dock`, eingeklappt nur der Kopf:
+// `dock-compact`) – oder oben rechts in der Leiste (`bar`), wenn die Konto-Kachel aus ist.
+const props = withDefaults(defineProps<{ placement?: 'bar' | 'dock' | 'dock-compact' }>(), { placement: 'bar' })
 const accounts = useAccountsStore()
 const toasts = useToasts()
 const router = useRouter()
@@ -10,6 +12,13 @@ const open = ref(false)
 const switching = ref<string | null>(null)
 const root = useTemplateRef<HTMLElement>('root')
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
+
+/** Das Menü öffnet dorthin, wo Platz ist: unter der Leiste, über der Kachel, neben dem eingeklappten Dock. */
+const menuPosition = computed(() => {
+  if (props.placement === 'bar') return 'top-full right-0 mt-1.5'
+  if (props.placement === 'dock') return 'bottom-full left-0 mb-2 origin-bottom'
+  return 'bottom-0 left-full ml-2.5 origin-bottom-left'
+})
 
 async function activate(id: string) {
   if (accounts.active?.id === id) {
@@ -52,25 +61,42 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="root" class="relative h-full">
+  <div ref="root" class="relative" :class="{ 'h-full': placement === 'bar' }">
     <button
       ref="trigger"
-      class="account-trigger"
-      :class="{ 'account-open': open }"
+      class="account-trigger group"
+      :class="[`account-${placement}`, { 'account-open': open }]"
       :aria-expanded="open"
       aria-haspopup="menu"
       :aria-label="accounts.active ? t('nav.accountNamed', { name: accounts.active.name }) : t('nav.signIn')"
       @click="open = !open"
     >
-      <span class="relative">
-        <SkinHead :skin-url="accounts.active?.skinUrl ?? null" :name="accounts.active?.name ?? '?'" :size="20" />
-        <span v-if="accounts.active" class="absolute -right-0.5 -bottom-0.5 size-1.5 bg-ok ring-1 ring-base-900" />
+      <span class="relative shrink-0">
+        <SkinHead :skin-url="accounts.active?.skinUrl ?? null" :name="accounts.active?.name ?? '?'" :size="placement === 'bar' ? 22 : 30" />
+        <span v-if="accounts.active" class="account-online" />
       </span>
-      <span class="max-w-36 truncate">{{ accounts.active?.name ?? t('nav.signIn') }}</span>
-      <svg viewBox="0 0 24 24" class="size-3 text-base-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+      <span v-if="placement === 'bar'" class="max-w-36 truncate">{{ accounts.active?.name ?? t('nav.signIn') }}</span>
+      <span v-else-if="placement === 'dock'" class="min-w-0 flex-1 text-left">
+        <span class="block truncate text-[13px] leading-tight font-semibold text-base-50">{{ accounts.active?.name ?? t('nav.signIn') }}</span>
+        <span class="block truncate text-[11px] leading-tight text-base-500">{{ accounts.active ? t('accountMenu.playingAs') : t('accountMenu.add') }}</span>
+      </span>
+      <svg
+        v-if="placement !== 'dock-compact'"
+        viewBox="0 0 24 24"
+        class="size-3 shrink-0 text-base-400 transition-transform"
+        :class="{ 'rotate-180': placement === 'bar' ? open : !open }"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+      <span v-else class="tip-account">{{ accounts.active?.name ?? t('nav.signIn') }}</span>
     </button>
 
-    <div v-if="open" class="menu top-full right-0 mt-1 w-64 animate-pop" role="menu" :aria-label="t('accountMenu.menuLabel')">
+    <div v-if="open" class="menu w-64 animate-pop" :class="menuPosition" role="menu" :aria-label="t('accountMenu.menuLabel')">
       <p class="px-2.5 pt-1.5 pb-1 text-[11px] text-base-400">{{ t('accountMenu.playingAs') }}</p>
       <template v-if="accounts.items.length">
         <button
@@ -89,12 +115,12 @@ onBeforeUnmount(() => {
               {{ a.active ? t('common.status.active') : switching === a.id ? t('accountMenu.switching') : t('accountMenu.switch') }}
             </span>
           </span>
-          <span v-if="a.active" class="size-2 bg-ok shadow-[0_0_6px_var(--color-ok)]" />
+          <span v-if="a.active" class="diamond text-ok" />
         </button>
       </template>
       <p v-else class="px-2.5 pb-2 text-xs text-base-400">{{ t('accountMenu.noAccount') }}</p>
 
-      <div class="my-1 h-px bg-base-700" />
+      <div class="my-1 h-px bg-line-strong" />
       <button v-if="!messeRestricted" class="menu-item" role="menuitem" @click="go('/accounts', { add: 'browser' })">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
         {{ t('accountMenu.add') }}
@@ -115,9 +141,38 @@ onBeforeUnmount(() => {
 @reference "~/assets/css/main.css";
 
 .account-trigger {
-  @apply flex h-full items-center gap-2 px-2.5 text-xs font-medium text-base-200 transition-colors hover:bg-base-800 hover:text-base-50;
+  @apply relative flex items-center gap-2 text-xs font-medium text-base-200 transition-colors outline-none hover:text-base-50;
+}
+.account-trigger:focus-visible {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 1px;
+}
+/* Oben in der Leiste: schlicht, wie die übrigen Knöpfe dort. */
+.account-bar {
+  @apply h-8 rounded-xl px-2 hover:bg-base-900;
+}
+/* Kachel unten im Dock: Kopf, Name und „Du spielst als“. */
+.account-dock {
+  @apply h-12 w-full gap-2.5 rounded-xl px-1.5 hover:bg-base-900;
+}
+.account-dock-compact {
+  @apply size-11 justify-center rounded-xl hover:bg-base-900;
 }
 .account-open {
-  @apply bg-base-800 text-base-50;
+  @apply bg-base-900 text-base-50;
+  box-shadow: inset 0 0 0 1px var(--color-line-strong);
+}
+/* Online-Punkt am Kopf, mit Rand in der Farbe des Rahmens. */
+.account-online {
+  @apply absolute -right-0.5 -bottom-0.5 size-2 rounded-full bg-ok;
+  box-shadow: 0 0 0 2px var(--color-frame);
+}
+/* Kurzhinweis neben dem eingeklappten Dock. */
+.tip-account {
+  @apply pointer-events-none absolute top-1/2 left-full z-50 ml-2.5 -translate-y-1/2 scale-95 rounded-lg border border-line-strong bg-base-850 px-2 py-1 text-xs font-medium whitespace-nowrap text-base-50 opacity-0 transition-[opacity,transform] duration-150;
+}
+.group:hover .tip-account,
+.group:focus-visible .tip-account {
+  @apply scale-100 opacity-100;
 }
 </style>

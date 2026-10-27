@@ -1,7 +1,7 @@
 // Cubiq-Ersatz für Amethysts SurfaceViewController.h: der Amethyst-Code braucht nur die
 // Zeichenfläche, den Laufzustand und den Absturz-Wartepunkt. Die echte Spielansicht ist
 // GameViewController (Swift).
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 #pragma once
 

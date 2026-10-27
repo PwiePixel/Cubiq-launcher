@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Spielen-Knopf. In groß (Startseite, Instanzseite) ein kräftiger Knopf in der Akzentfarbe:
+// Spielen-Knopf. In groß (Startseite, Instanzseite) eine kräftige Pille in der Akzentfarbe:
 // beim Start füllt er sich mit dem Fortschritt, läuft das Spiel, zeigt er „Läuft“ in hellem
 // Lime und stoppt auf Klick. In klein ein schlichter Knopf für Listen und Kacheln.
 const props = withDefaults(defineProps<{ instanceId: string; large?: boolean }>(), { large: false })
@@ -34,7 +34,7 @@ const files = computed(() => {
   <template v-if="hidden" />
   <div v-else-if="large && events.lookHalloween && (install || game.phase === 'preparing')" class="relative min-w-0 flex-1">
     <div
-      class="rounded-lg bg-base-900/80 px-3 py-2"
+      class="rounded-2xl bg-base-900/80 px-4 py-2"
       role="progressbar"
       :aria-valuenow="install ? (install.percent ?? 0) : percent"
       aria-valuemin="0"
@@ -79,7 +79,7 @@ const files = computed(() => {
     </button>
 
     <button v-else-if="game.phase === 'idle'" class="play play-idle" @click="games.launch(instanceId)">
-      <svg viewBox="0 0 24 24" class="size-5" fill="currentColor"><path d="M7.5 4.6v14.8a1 1 0 0 0 1.5.86l12.2-7.4a1 1 0 0 0 0-1.72L9 3.74a1 1 0 0 0-1.5.86Z" /></svg>
+      <span class="play-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" class="ml-0.5 size-4" fill="currentColor"><path d="M7.5 4.6v14.8a1 1 0 0 0 1.5.86l12.2-7.4a1 1 0 0 0 0-1.72L9 3.74a1 1 0 0 0-1.5.86Z" /></svg></span>
       <span class="display text-lg">{{ t('common.actions.play') }}</span>
     </button>
 
@@ -176,6 +176,7 @@ const files = computed(() => {
 </template>
 
 <style scoped>
+/* Groß: eine kräftige Pille in der Akzentfarbe – das eine Ziel auf Bühne und Instanzseite. */
 .play {
   position: relative;
   display: flex;
@@ -185,7 +186,7 @@ const files = computed(() => {
   justify-content: center;
   gap: 0.625rem;
   overflow: hidden;
-  border-radius: 0.875rem;
+  border-radius: 999px;
   transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, color 0.2s ease;
 }
 button.play:active {
@@ -198,16 +199,27 @@ button.play:active {
   background: var(--color-primary-500);
   color: var(--color-on-primary);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.2),
-    0 10px 28px -12px var(--glow-primary);
+    inset 0 1px 0 rgb(255 255 255 / 0.24),
+    inset 0 -2px 0 rgb(0 0 0 / 0.14),
+    0 12px 30px -12px var(--glow-primary);
 }
 .play-idle:hover {
   background: var(--color-primary-400);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.24),
-    0 14px 36px -10px var(--glow-primary);
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    inset 0 -2px 0 rgb(0 0 0 / 0.14),
+    0 16px 38px -10px var(--glow-primary);
 }
-/* Beim Start und Installieren: dunkler Knopf, der sich von links in der Akzentfarbe füllt. */
+/* Das Dreieck sitzt in einem kleinen dunklen Kreis – wie ein Knopf im Knopf. */
+.play-glyph {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.16);
+}
+/* Beim Start und Installieren: dunkle Pille, die sich von links in der Akzentfarbe füllt. */
 .play-busy {
   color: var(--color-base-50);
   background: var(--color-base-850);
@@ -243,7 +255,7 @@ button.play:active {
   border-radius: 999px;
   background: var(--color-base-850);
   color: var(--color-base-200);
-  box-shadow: inset 0 0 0 1px var(--color-base-700);
+  box-shadow: inset 0 0 0 1px var(--color-line-strong);
 }
 .cancel:hover {
   color: var(--color-danger-300);

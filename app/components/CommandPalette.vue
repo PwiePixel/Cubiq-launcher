@@ -367,19 +367,20 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div ref="backdrop" class="fixed inset-0 z-[70] flex justify-center bg-black/60 p-6 pt-[12vh] backdrop-blur-[2px] mobile:p-0" @mousedown.self="close">
+  <!-- Suche: schwebende Navy-Fläche über abgedunkeltem Grund; die aktive Zeile trägt die grüne Auswahl-Kante. -->
+  <div ref="backdrop" class="palette-backdrop fixed inset-0 z-[70] flex justify-center p-6 pt-[12vh] mobile:p-0" @mousedown.self="close">
     <div
       data-motion-panel
-      class="flex max-h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-base-700 bg-base-850 shadow-2xl shadow-black/60 mobile:max-h-none mobile:max-w-none mobile:rounded-none mobile:border-0 mobile:pt-[var(--safe-top)] mobile:pb-[var(--safe-bottom)]"
+      class="palette flex max-h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line-strong bg-base-850 mobile:max-h-none mobile:max-w-none mobile:rounded-none mobile:border-0 mobile:pt-[var(--safe-top)] mobile:pb-[var(--safe-bottom)]"
       role="dialog"
       aria-modal="true"
       :aria-label="t('palette.dialogLabel')"
     >
-      <div class="flex items-center gap-3 border-b border-base-800 px-4">
-        <svg viewBox="0 0 24 24" class="size-4 shrink-0 text-base-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path :d="icons.search" /></svg>
+      <div class="flex items-center gap-3 border-b border-line px-4">
+        <svg viewBox="0 0 24 24" class="size-[1.05rem] shrink-0 text-primary-400" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path :d="icons.search" /></svg>
         <input
           v-model="query"
-          class="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-base-50 outline-none placeholder:text-base-600 mobile:text-base"
+          class="palette-input min-w-0 flex-1 bg-transparent py-4 text-[15px] text-base-50 outline-none placeholder:text-base-500 mobile:text-base"
           :placeholder="t('palette.placeholder')"
           :aria-label="t('common.actions.search')"
           role="combobox"
@@ -393,18 +394,18 @@ onMounted(async () => {
         <button v-if="mobile" class="btn-icon -mr-2 shrink-0 bg-transparent" :aria-label="t('common.actions.close')" data-testid="palette-close" @click="close">
           <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path :d="icons.close" /></svg>
         </button>
-        <kbd v-else class="shrink-0 rounded border border-base-700 px-1.5 py-0.5 font-mono text-[10px] text-base-400">Esc</kbd>
+        <kbd v-else class="kbd shrink-0 px-1.5">Esc</kbd>
       </div>
 
       <div v-if="results.length" id="palette-list" ref="listEl" class="min-h-0 flex-1 overflow-y-auto p-2" role="listbox" :aria-label="t('palette.resultsLabel')">
         <template v-for="(entry, index) in results" :key="entry.item.id">
-          <p v-if="groupLabel(index)" class="mt-2 mb-1 px-2 text-[11px] font-semibold tracking-wider text-base-600 uppercase first:mt-0">
+          <p v-if="groupLabel(index)" class="eyebrow mt-3 mb-1.5 px-2.5 text-base-500 first:mt-1">
             {{ groupLabel(index) }}
           </p>
           <div
             :id="`palette-item-${index}`"
-            class="group flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors mobile:min-h-12"
-            :class="index === activeIndex ? 'bg-base-800' : 'hover:bg-base-800/60'"
+            class="group flex cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2 transition-colors mobile:min-h-12"
+            :class="index === activeIndex ? 'palette-on' : 'hover:bg-base-800/60'"
             :data-active="index === activeIndex"
             role="option"
             :aria-selected="index === activeIndex"
@@ -412,8 +413,8 @@ onMounted(async () => {
             @click="runCommand(entry.item)"
           >
             <InstanceIcon v-if="entry.item.instance" :instance="entry.item.instance" :size="28" />
-            <img v-else-if="entry.item.iconUrl" :src="entry.item.iconUrl" alt="" class="size-7 shrink-0 rounded-md bg-base-800 object-cover" />
-            <span v-else class="grid size-7 shrink-0 place-items-center rounded-md bg-base-800 text-base-400">
+            <img v-else-if="entry.item.iconUrl" :src="entry.item.iconUrl" alt="" class="squircle size-7 shrink-0 rounded-lg bg-base-800 object-cover" />
+            <span v-else class="palette-glyph squircle grid size-7 shrink-0 place-items-center rounded-lg bg-base-800 text-base-300">
               <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path :d="icons[entry.item.icon ?? 'general']" />
               </svg>
@@ -441,7 +442,7 @@ onMounted(async () => {
 
       <p v-else class="flex-1 px-4 py-10 text-center text-sm text-base-400">{{ t('palette.noResults') }}</p>
 
-      <div class="flex items-center gap-4 border-t border-base-800 px-4 py-2 text-[11px] text-base-600 mobile:hidden">
+      <div class="palette-foot flex items-center gap-4 border-t border-line px-4 py-2 text-[11px] text-base-500 mobile:hidden">
         <span><kbd class="kbd">↑</kbd><kbd class="kbd">↓</kbd> {{ t('palette.hints.select') }}</span>
         <span><kbd class="kbd">↵</kbd> {{ t('palette.hints.open') }}</span>
         <span><kbd class="kbd">{{ t('titleBar.ctrl') }}</kbd>+<kbd class="kbd">↵</kbd> {{ t('palette.hints.second') }}</span>
@@ -454,7 +455,29 @@ onMounted(async () => {
 <style scoped>
 @reference "~/assets/css/main.css";
 
+.palette-backdrop {
+  background: rgb(var(--shadow-rgb) / 0.62);
+  backdrop-filter: blur(3px);
+}
+.palette {
+  box-shadow: var(--edge-light), var(--elev-3);
+}
+/* Das Feld zeigt den Fokus über die Schreibmarke; die ganze Fläche ist die Suche. */
+.palette-input:focus-visible {
+  outline: none;
+}
+/* Aktive Zeile: Navy mit einem Hauch Grün und grüner Kante – wie jede Auswahl im Launcher. */
+.palette-on {
+  background: var(--pick-bg);
+  box-shadow: inset 0 0 0 1px var(--pick-edge);
+}
+.palette-on .palette-glyph {
+  @apply text-primary-300;
+}
+.palette-foot {
+  background: color-mix(in srgb, var(--color-base-950) 35%, var(--color-base-850));
+}
 .kbd {
-  @apply mx-0.5 rounded border border-base-700 px-1 py-0.5 font-mono text-[10px] text-base-400;
+  @apply mx-0.5 rounded-md border border-line-strong bg-base-900 px-1 py-0.5 font-mono text-[10px] text-base-300;
 }
 </style>

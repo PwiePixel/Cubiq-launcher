@@ -423,7 +423,7 @@ function lockClass(cape: CubiqCape) {
           </button>
           <button
             v-if="selected.shared"
-            class="btn btn-ghost px-3 py-1.5 text-xs hover:text-primary-300"
+            class="btn btn-ghost px-3 py-1.5 text-xs hover:text-danger-300"
             :disabled="!!busy"
             @click="toGiveBack = selected"
           >
@@ -431,7 +431,7 @@ function lockClass(cape: CubiqCape) {
           </button>
           <button
             v-else-if="selected.kind === 'upload'"
-            class="btn btn-ghost px-3 py-1.5 text-xs hover:text-primary-300"
+            class="btn btn-ghost px-3 py-1.5 text-xs hover:text-danger-300"
             :disabled="!!busy"
             @click="toDelete = selected"
           >

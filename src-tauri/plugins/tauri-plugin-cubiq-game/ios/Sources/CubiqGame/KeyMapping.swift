@@ -1,6 +1,6 @@
 // Cubiq Launcher – Hardware-Tastatur (HID) → GLFW-Tastencodes.
 // Die Zahlen in `GlfwKey` prüft tests/ios-keymap.test.ts gegen Amethysts glfw_keycodes.h.
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 import UIKit
 

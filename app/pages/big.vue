@@ -324,10 +324,15 @@ function backPress() {
 .tab:hover {
   color: var(--color-base-50);
 }
-.tab-on {
-  color: var(--color-base-50);
-  background: color-mix(in srgb, var(--color-primary-500) 22%, var(--color-base-850));
-  box-shadow: inset 0 -3px 0 var(--color-primary-500);
+/* Gewählter Bereich: grüne Fläche mit Lichtkante, Schrift dunkel darauf – wie das Dock am Desktop. */
+.tab-on,
+.tab-on:hover {
+  color: var(--color-on-primary);
+  background: var(--color-primary-500);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    inset 0 -2px 0 rgb(0 0 0 / 0.14),
+    0 10px 26px -12px var(--glow-primary);
 }
 
 /* Bereichswechsel: kurzes Gleiten in Richtung LB/RB. */
@@ -357,7 +362,7 @@ function backPress() {
   display: grid;
   place-items: center;
   padding: 3rem;
-  background: rgb(0 0 0 / 0.6);
+  background: rgb(var(--shadow-rgb) / 0.66);
   backdrop-filter: blur(6px);
 }
 .layer-panel {
@@ -366,10 +371,10 @@ function backPress() {
   min-width: 28rem;
   overflow-y: auto;
   padding: 2.5rem;
-  border: 2px solid var(--color-base-700);
-  border-radius: 1.5rem;
+  border: 2px solid var(--color-line-strong);
+  border-radius: 1.75rem;
   background: var(--color-base-900);
-  box-shadow: 0 30px 80px rgb(0 0 0 / 0.6);
+  box-shadow: var(--edge-light), var(--elev-3);
 }
 .bp-layer-enter-active,
 .bp-layer-leave-active {

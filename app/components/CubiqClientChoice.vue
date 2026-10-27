@@ -58,22 +58,13 @@ const options = computed(() => [
         :tabindex="model === o.value ? 0 : -1"
         :disabled="o.value && withDisabled"
         :title="o.value && withDisabled ? (unsupportedText ?? undefined) : undefined"
-        class="flex flex-col gap-1 rounded-md border text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45"
-        :class="[
-          compact ? 'px-2.5 py-2' : 'px-3 py-2.5',
-          model === o.value
-            ? 'border-primary-500 bg-primary-900 text-base-50'
-            : 'border-base-700 bg-base-900 text-base-400 hover:border-base-600 hover:text-base-50',
-        ]"
+        class="choice flex flex-col gap-1 text-left"
+        :class="[compact ? 'px-2.5 py-2' : 'px-3 py-2.5', { 'choice-on': model === o.value }]"
         @click="pick(o.value)"
       >
         <span class="flex flex-wrap items-center gap-x-1.5 gap-y-1 font-semibold" :class="compact ? 'text-xs' : 'text-sm'">
-          <!-- Lampe: an = gewählt -->
-          <span
-            class="size-2 shrink-0 rounded-full"
-            :class="model === o.value ? 'bg-live-400 shadow-[0_0_6px_var(--color-live-400)]' : 'bg-base-600'"
-            aria-hidden="true"
-          />
+          <!-- Raute aus dem Logo: grün = gewählt -->
+          <span class="diamond" :class="model === o.value ? 'text-primary-400' : 'text-base-600'" aria-hidden="true" />
           <span>{{ o.name }}</span>
           <span
             v-if="o.badge && !loading"

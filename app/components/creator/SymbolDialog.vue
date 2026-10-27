@@ -160,13 +160,13 @@ async function upload() {
             <CreatorSymbol :image="preview.image" :frames="preview.frames" :frame-ms="preview.frameMs" :px="px" />
             <p class="mt-1 text-[11px] text-base-400">{{ px }}×{{ px }}</p>
           </div>
-          <p class="ml-auto text-[11px] tabular-nums" :class="tooLarge ? 'text-primary-300' : 'text-base-400'">
+          <p class="ml-auto text-[11px] tabular-nums" :class="tooLarge ? 'text-danger-300' : 'text-base-400'">
             {{ t('creator.symbol.dialog.fileSize', { size: formatFileSize(result.bytes) }) }}
           </p>
         </div>
         <CreatorIngamePreview :player="player" :symbol="preview" compact />
-        <p v-if="!result.visible" class="text-xs text-primary-300">{{ t('creator.symbol.dialog.empty') }}</p>
-        <p v-if="tooLarge" class="text-xs text-primary-300">{{ t('creator.symbol.dialog.tooLarge') }}</p>
+        <p v-if="!result.visible" class="text-xs text-danger-300">{{ t('creator.symbol.dialog.empty') }}</p>
+        <p v-if="tooLarge" class="text-xs text-danger-300">{{ t('creator.symbol.dialog.tooLarge') }}</p>
       </template>
       <p v-if="error" role="alert" class="text-xs text-danger-300">{{ error }}</p>
     </div>

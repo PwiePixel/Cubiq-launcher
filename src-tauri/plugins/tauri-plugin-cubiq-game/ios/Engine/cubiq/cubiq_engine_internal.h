@@ -1,5 +1,5 @@
 // Cubiq Launcher – interne Haken zwischen Amethyst-Code und Cubiq-Engine.
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 #pragma once
 

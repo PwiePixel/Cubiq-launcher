@@ -1,6 +1,6 @@
 // Cubiq Launcher – Hilfe-Bildschirm, solange JIT fehlt. Prüft jede Sekunde und meldet sich,
 // sobald JIT aktiv ist; ohne JIT startet das Spiel nie.
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 import UIKit
 
@@ -17,7 +17,8 @@ final class JitHelpView: UIView {
     self.txm = txm
     self.isEnabled = isEnabled
     super.init(frame: .zero)
-    backgroundColor = UIColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1)
+    // Navy und Grün wie im Launcher (base-900, primary-500/300, base-200, Schrift dunkel auf Grün).
+    backgroundColor = UIColor(red: 0.047, green: 0.063, blue: 0.157, alpha: 1)
     build()
     if txm {
       JitHelpView.exportScript()
@@ -29,7 +30,10 @@ final class JitHelpView: UIView {
   }
 
   private func build() {
-    let accent = UIColor(red: 0.90, green: 0.18, blue: 0.16, alpha: 1)
+    let accent = UIColor(red: 0.443, green: 0.639, blue: 0.188, alpha: 1)
+    let accentText = UIColor(red: 0.663, green: 0.831, blue: 0.420, alpha: 1)
+    let onAccent = UIColor(red: 0.043, green: 0.078, blue: 0.020, alpha: 1)
+    let soft = UIColor(red: 0.824, green: 0.839, blue: 0.933, alpha: 1)
 
     let title = UILabel()
     title.text = Strings.jitTitle
@@ -40,24 +44,24 @@ final class JitHelpView: UIView {
     let body = UILabel()
     body.text = Strings.jitIntro + "\n\n" + (txm ? Strings.jitStepsTxm : Strings.jitStepsGeneric)
     body.font = .systemFont(ofSize: 15)
-    body.textColor = UIColor(white: 0.85, alpha: 1)
+    body.textColor = soft
     body.numberOfLines = 0
 
     status.text = Strings.jitWaiting
     status.font = .systemFont(ofSize: 14, weight: .semibold)
-    status.textColor = accent
+    status.textColor = accentText
 
     let check = UIButton(type: .system)
     check.setTitle(Strings.checkAgain, for: .normal)
-    check.setTitleColor(.white, for: .normal)
+    check.setTitleColor(onAccent, for: .normal)
     check.backgroundColor = accent
-    check.layer.cornerRadius = 8
+    check.layer.cornerRadius = 12
     check.contentEdgeInsets = UIEdgeInsets(top: 10, left: 18, bottom: 10, right: 18)
     check.addTarget(self, action: #selector(checkNow), for: .touchUpInside)
 
     let cancel = UIButton(type: .system)
     cancel.setTitle(Strings.cancel, for: .normal)
-    cancel.setTitleColor(UIColor(white: 0.85, alpha: 1), for: .normal)
+    cancel.setTitleColor(soft, for: .normal)
     cancel.contentEdgeInsets = UIEdgeInsets(top: 10, left: 18, bottom: 10, right: 18)
     cancel.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
 

@@ -110,8 +110,8 @@ const needsLoader = computed(
         <!-- FPS-Boost: eine Zeile, darunter die Stufe -->
         <div
           v-if="row.type === 'fps'"
-          class="rounded-md border transition-colors"
-          :class="tier ? 'border-primary-500 bg-primary-900/60' : 'border-base-700 bg-base-900'"
+          class="choice text-base-200"
+          :class="{ 'choice-on': tier }"
         >
           <button
             type="button"
@@ -121,12 +121,8 @@ const needsLoader = computed(
             class="flex w-full items-center gap-3 px-3 py-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
             @click="toggleFps"
           >
-            <span
-              class="grid size-4 shrink-0 place-items-center rounded-[3px] border"
-              :class="tier ? 'border-live-400 bg-live-400 shadow-[0_0_8px_var(--color-live-400)]' : 'border-base-600 bg-base-850'"
-              aria-hidden="true"
-            >
-              <svg v-if="tier" viewBox="0 0 24 24" class="size-3 text-base-950" fill="none" stroke="currentColor" stroke-width="3.5"><path :d="icons.check" /></svg>
+            <span class="tick" :class="{ 'tick-on': tier }" aria-hidden="true">
+              <svg v-if="tier" viewBox="0 0 24 24" class="size-3" fill="none" stroke="currentColor" stroke-width="3.5"><path :d="icons.check" /></svg>
             </span>
             <span class="min-w-0 flex-1">
               <span class="flex items-center gap-1.5">
@@ -148,19 +144,13 @@ const needsLoader = computed(
           role="checkbox"
           :aria-checked="selected.includes(row.preset.id)"
           :disabled="disabled(row.preset)"
-          class="flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-          :class="selected.includes(row.preset.id)
-            ? 'border-primary-500 bg-primary-900'
-            : 'border-base-700 bg-base-900 hover:border-base-600'"
+          class="choice flex w-full items-center gap-3 px-3 py-2 text-left text-base-200"
+          :class="{ 'choice-on': selected.includes(row.preset.id) }"
           @click="toggle(row.preset)"
         >
-          <!-- Kästchen: an = leuchtet in Lime -->
-          <span
-            class="grid size-4 shrink-0 place-items-center rounded-[3px] border"
-            :class="selected.includes(row.preset.id) ? 'border-live-400 bg-live-400 shadow-[0_0_8px_var(--color-live-400)]' : 'border-base-600 bg-base-850'"
-            aria-hidden="true"
-          >
-            <svg v-if="selected.includes(row.preset.id)" viewBox="0 0 24 24" class="size-3 text-base-950" fill="none" stroke="currentColor" stroke-width="3.5"><path :d="icons.check" /></svg>
+          <!-- Kästchen: an = gefüllt in der Akzentfarbe -->
+          <span class="tick" :class="{ 'tick-on': selected.includes(row.preset.id) }" aria-hidden="true">
+            <svg v-if="selected.includes(row.preset.id)" viewBox="0 0 24 24" class="size-3" fill="none" stroke="currentColor" stroke-width="3.5"><path :d="icons.check" /></svg>
           </span>
           <PresetBadge :icon="row.preset.icon" :color="row.preset.color" :size="28" />
           <span class="min-w-0 flex-1">

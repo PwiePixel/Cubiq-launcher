@@ -234,14 +234,14 @@ defineExpose({ upload, canUpload, uploading, uploadFan, canUploadFan, fanMode })
           </div>
           <div>
             <dt class="text-[11px] text-base-500">{{ t('capes.editor.sizeLabel') }}</dt>
-            <dd class="text-sm font-semibold tabular-nums" :class="tooLarge ? 'text-primary-300' : 'text-base-50'">
+            <dd class="text-sm font-semibold tabular-nums" :class="tooLarge ? 'text-danger-300' : 'text-base-50'">
               {{ busy || !result ? '…' : formatFileSize(result.bytes) }}
             </dd>
           </div>
         </dl>
         <ProgressBar v-if="busy" :percent="progress ? (progress.done / Math.max(1, progress.total)) * 100 : 0" :indeterminate="!progress || progress.done >= progress.total" />
         <div v-else class="h-1.5 overflow-hidden rounded-full bg-base-800" aria-hidden="true">
-          <div class="h-full rounded-full transition-[width]" :class="tooLarge ? 'bg-primary-500' : 'bg-emerald-500'" :style="{ width: `${sizePercent}%` }" />
+          <div class="h-full rounded-full transition-[width]" :class="tooLarge ? 'bg-danger-500' : 'bg-ok'" :style="{ width: `${sizePercent}%` }" />
         </div>
         <p class="text-[11px] text-base-400">
           {{ busy ? t('capes.studio.export.computing') : t('capes.editor.size', { size: result ? formatFileSize(result.bytes) : '–' }) }}
@@ -249,8 +249,8 @@ defineExpose({ upload, canUpload, uploading, uploadFan, canUploadFan, fanMode })
       </div>
 
       <!-- Zu groß: Verkleinerungen anbieten -->
-      <div v-if="tooLarge && !busy" class="space-y-2 rounded-lg border border-primary-600/60 bg-primary-900/40 p-3" data-testid="cape-export-reduce">
-        <p class="text-xs text-primary-300">{{ t('capes.studio.export.tooLarge', { size: formatFileSize(result?.bytes ?? 0) }) }}</p>
+      <div v-if="tooLarge && !busy" class="space-y-2 rounded-lg border border-danger-600/60 bg-danger-900/40 p-3" data-testid="cape-export-reduce">
+        <p class="text-xs text-danger-300">{{ t('capes.studio.export.tooLarge', { size: formatFileSize(result?.bytes ?? 0) }) }}</p>
         <p v-if="hd" class="text-[11px] text-base-300">{{ t('capes.studio.export.hdTooLarge') }}</p>
         <div class="flex flex-wrap gap-2">
           <button v-for="r in reductions" :key="r.kind" type="button" class="btn btn-ghost px-3 py-1.5 text-xs" @click="applyReduction(r)">

@@ -11,7 +11,9 @@ import { execFileSync } from 'node:child_process'
 import { appendFileSync, existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { changelogItem, parseChangeNote, parseGitLog } from './release-lib.mjs'
+import { parseShot, SHOTS_MAX } from '../app/utils/changelog.ts'
+import { imageInfo, SHOT_MAX_BYTES, SHOT_MAX_SIZE, SHOT_MIN_SIZE } from './news-shots.mjs'
+import { changelogItem, NOTE_SHOT, parseChangeNote, parseGitLog } from './release-lib.mjs'
 
 /**
  * Ergebnis der Prüfung aus den Commits des PRs und den Texten der geänderten Dateien in changes/.
@@ -51,6 +53,53 @@ export function checkNotes(commits, notes) {
   return { ok: problems.length === 0, problems, needed }
 }
 
+/**
+ * Screenshots der Spieler-Texte (Kommentar „shots:“ über „### English“): nur Dateinamen von Bildern in changes/,
+ * die es gibt, echtes PNG/WebP in der Größe der Update-Bilder, höchstens SHOTS_MAX je Text.
+ * @param {{ name: string, text: string }[]} notes
+ * @param {string} changesDir
+ * @returns {string[]}
+ */
+export function checkNoteShots(notes, changesDir) {
+  const problems = []
+  for (const { name, text } of notes) {
+    const entries = [...text.matchAll(/<!--\s*shots:([\s\S]*?)-->/gi)]
+      .flatMap((m) => m[1].split(/\r?\n|;/))
+      .map((line) => line.trim())
+      .filter(Boolean)
+    if (entries.length > SHOTS_MAX) problems.push(`changes/${name}: ${entries.length} Screenshots – höchstens ${SHOTS_MAX}.`)
+    for (const entry of entries) {
+      const [file = '', ...captions] = entry.split('|').map((part) => part.trim())
+      const local = NOTE_SHOT.exec(file)?.[1]
+      if (!local) {
+        problems.push(`changes/${name}: „${file}“ – bitte nur den Dateinamen eines Screenshots in changes/ (PNG oder WebP), z. B. „neu.png | English | Deutsch“.`)
+        continue
+      }
+      if (!parseShot([`/news/0.0.0/${local}`, ...captions].join(' | '))) {
+        problems.push(`changes/${name}: Bildunterschrift zu „${local}“ ungültig – höchstens zwei (English | Deutsch), eine Zeile, ohne [ ] < >.`)
+      }
+      const path = join(changesDir, local)
+      if (!existsSync(path)) {
+        problems.push(`changes/${name}: Screenshot ${local} fehlt – bitte nach changes/${local} legen.`)
+        continue
+      }
+      const bytes = readFileSync(path)
+      if (bytes.length > SHOT_MAX_BYTES) problems.push(`changes/${local}: ${(bytes.length / 1048576).toFixed(1)} MB – höchstens ${SHOT_MAX_BYTES / 1048576} MB.`)
+      const info = imageInfo(bytes.subarray(0, 64))
+      if (!info) {
+        problems.push(`changes/${local}: kein gültiges PNG/WebP.`)
+        continue
+      }
+      if (info.format !== (local.toLowerCase().endsWith('.webp') ? 'webp' : 'png')) problems.push(`changes/${local}: Inhalt passt nicht zur Endung.`)
+      const { width, height } = info
+      if (width < SHOT_MIN_SIZE.width || height < SHOT_MIN_SIZE.height || width > SHOT_MAX_SIZE.width || height > SHOT_MAX_SIZE.height) {
+        problems.push(`changes/${local}: ${width}×${height} px – erlaubt ${SHOT_MIN_SIZE.width}×${SHOT_MIN_SIZE.height} bis ${SHOT_MAX_SIZE.width}×${SHOT_MAX_SIZE.height}.`)
+      }
+    }
+  }
+  return problems
+}
+
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
 if (isMain) {
   const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -66,7 +115,9 @@ if (isMain) {
     .map((f) => f.trim())
     .filter((f) => /^changes\/[^/]+\.md$/.test(f) && !/readme\.md$/i.test(f))
   const notes = names.filter((f) => existsSync(join(root, f))).map((f) => ({ name: f.slice('changes/'.length), text: readFileSync(join(root, f), 'utf8') }))
-  const result = checkNotes(commits, notes)
+  const checked = checkNotes(commits, notes)
+  const shotProblems = checkNoteShots(notes, join(root, 'changes'))
+  const result = { ...checked, ok: checked.ok && !shotProblems.length, problems: [...checked.problems, ...shotProblems] }
   const summary = process.env.GITHUB_STEP_SUMMARY
   if (result.ok) {
     const what = notes.length ? `Spieler-Text: ${notes.map((n) => n.name).join(', ')}` : 'Nichts für Spieler geändert – kein Spieler-Text nötig.'

@@ -1,5 +1,5 @@
 // Cubiq-Ersatz für Amethysts PLLogOutputView.h (Log-Ansicht gibt es in Cubiq im Launcher).
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 #pragma once
 

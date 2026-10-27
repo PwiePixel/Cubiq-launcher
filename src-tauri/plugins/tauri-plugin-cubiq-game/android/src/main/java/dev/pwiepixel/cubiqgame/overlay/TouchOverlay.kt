@@ -133,7 +133,7 @@ object TouchOverlay : OverlayProvider {
             setPadding((8 * dp).toInt(), (6 * dp).toInt(), (8 * dp).toInt(), (6 * dp).toInt())
         }
         val root = HorizontalScrollView(context).apply {
-            setBackgroundColor(0xE6111613.toInt())
+            setBackgroundColor(0xE60C1028.toInt())
             isHorizontalScrollBarEnabled = false
             addView(row)
         }
@@ -180,7 +180,7 @@ object TouchOverlay : OverlayProvider {
                 setPadding((12 * dp).toInt(), 0, (12 * dp).toInt(), 0)
                 background = GradientDrawable().apply {
                     cornerRadius = 8 * dp
-                    setColor(if (primary) TouchOverlayView.COLOR_ACCENT else 0xFF1D2520.toInt())
+                    setColor(if (primary) TouchOverlayView.COLOR_ACCENT else 0xFF1A2046.toInt())
                     setStroke((1 * dp).toInt(), if (primary) TouchOverlayView.COLOR_ACCENT_LIGHT else TouchOverlayView.COLOR_BORDER)
                 }
                 setOnClickListener { onClick() }

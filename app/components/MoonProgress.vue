@@ -4,7 +4,7 @@ import { drawMoonPhase, MOON_SIZE, moonState, phaseKey } from '~/utils/moonnight
 // Ladebalken „Mondlauf“ (Halloween 2026): ein kleiner Mond zieht über einen Silberfaden und
 // nimmt dabei zu – Neumond bei 0 %, Vollmond bei 100 % (dann leuchtet er sanft nach).
 // Unbestimmt gleitet er hin und her und durchläuft die Phasen. Ersetzt während Halloween
-// jeden Leitungs-/Lampen-Balken. „Animationen aus“: Standbild.
+// jeden Fortschrittsbalken. „Animationen aus“: Standbild.
 const props = withDefaults(defineProps<{ percent?: number; indeterminate?: boolean; powered?: boolean }>(), {
   percent: 0,
   indeterminate: false,

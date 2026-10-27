@@ -18,8 +18,9 @@
 - Englisch und Deutsch, gleicher Inhalt. Keine Datei-, Funktions- oder Klassennamen.
 - **Keine Namen, Erwähnungen oder Danksagungen** (auch nicht an Claude) – die Hinweise erklären nur das Update.
 - **Fotos vom Update:** Bei sichtbaren Änderungen 1–3 Screenshots in `changes/` legen und im Spieler-Text eintragen
-  (Kommentar `<!-- shots: … -->` über `### English`, siehe `changes/README.md`).
-- Das Bild des Release (Motiv im Update-Banner) entsteht automatisch passend zum Text (`scripts/release-art.mjs`).
+  (Kommentar `<!-- shots:` mit `datei.png | English | Deutsch` über `### English`, siehe `changes/README.md`).
+- Das Bild des Release (animierte Pixel-Art-Szene im Update-Banner) entsteht automatisch passend zum Text
+  (`scripts/release-art.mjs`).
 
 ## Sonst
 

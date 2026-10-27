@@ -4,7 +4,7 @@
 // Teilen von main.m (GPL-3.0, Copyright (C) 2021 Tran Hoang Khanh Duy und Mitwirkende,
 // https://github.com/AngelAuraMC/Amethyst-iOS). Statt Amethysts Profilen kommen alle
 // Argumente fertig aus dem Cubiq-Kern (Rust, src/ios/args.rs).
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 #import <UIKit/UIKit.h>
 

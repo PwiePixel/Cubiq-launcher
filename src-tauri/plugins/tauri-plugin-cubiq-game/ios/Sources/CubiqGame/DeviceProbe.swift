@@ -1,5 +1,5 @@
 // Cubiq Launcher – Gerätedaten für den Rust-Teil (src/ios/probe.rs, gleiche Feldnamen).
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 import UIKit
 

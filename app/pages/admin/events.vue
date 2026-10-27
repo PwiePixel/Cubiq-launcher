@@ -168,7 +168,7 @@ async function remove() {
           <span class="text-xs text-base-400">{{ when(p.addedAt) }}</span>
           <button
             v-if="team.can('events.manage')"
-            class="btn btn-ghost px-2 py-0.5 text-[11px] hover:text-primary-300"
+            class="btn btn-ghost px-2 py-0.5 text-[11px] hover:text-danger-300"
             @click="removing = { eventId: ev.id, uuid: p.uuid, name: p.name || p.uuid }"
           >
             {{ t('admin.events.remove') }}
@@ -204,7 +204,7 @@ async function remove() {
             <span class="text-xs text-base-400">{{ when(p.addedAt) }}</span>
             <button
               v-if="team.can('events.manage')"
-              class="btn btn-ghost px-2 py-0.5 text-[11px] hover:text-primary-300"
+              class="btn btn-ghost px-2 py-0.5 text-[11px] hover:text-danger-300"
               @click="removing = { eventId: ev.id, uuid: p.uuid, name: p.name || p.uuid, look: true }"
             >
               {{ t('admin.events.remove') }}

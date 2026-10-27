@@ -3045,8 +3045,6 @@
     "quickLaunch": "Snel starten",
     "openNamed": "{name} openen",
     "newInstance": "Nieuwe instantie",
-    "searchShortcut": "Zoeken (Ctrl+K)",
-    "searchTip": "Zoeken · Ctrl K",
     "settings": "Instellingen",
     "accountNamed": "Account: {name}",
     "signIn": "Inloggen",
@@ -3061,7 +3059,12 @@
     "achievements": "Prestaties",
     "localServers": "Mijn servers",
     "controls": "Bediening",
-    "pc": "PC"
+    "pc": "PC",
+    "groups": {
+      "together": "Samen",
+      "collection": "Collectie",
+      "tools": "Hulpmiddelen"
+    }
   },
   "accountMenu": {
     "menuLabel": "Accounts",
@@ -3335,6 +3338,9 @@
       "add": "Server toevoegen",
       "addHint": "Live status en joinen met één klik",
       "addHintEmpty": "Je servers met live status – joinen met één klik"
+    },
+    "stage": {
+      "pick": "{name} selecteren"
     }
   },
   "news": {

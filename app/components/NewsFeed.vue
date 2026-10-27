@@ -188,7 +188,7 @@ async function showPatchNotes(item: NewsItem) {
 <template>
   <section class="min-w-0" aria-labelledby="news-heading">
     <header class="mb-3 flex flex-wrap items-center justify-between gap-3">
-      <h2 id="news-heading" class="heading">{{ t('news.title') }}</h2>
+      <h2 id="news-heading" class="heading flex items-center gap-2.5"><CubeMark />{{ t('news.title') }}</h2>
       <div class="flex items-center gap-1.5 mobile:w-full">
         <span v-if="stale" class="badge bg-base-800 text-base-400" :title="t('news.offlineHint')">{{ t('common.status.offline') }}</span>
         <div class="mobile-scroll-x flex items-center rounded-lg border border-base-800 bg-base-900 p-0.5 text-xs mobile:min-w-0 mobile:flex-1" role="group" :aria-label="t('news.sourceLabel')">
@@ -228,24 +228,25 @@ async function showPatchNotes(item: NewsItem) {
     </p>
 
     <div v-else class="space-y-3">
-      <!-- Aufmacher: großes Titelbild, Titel darauf. -->
+      <!-- Aufmacher: Karte mit Titelbild links und Text rechts (schmal: untereinander). -->
       <article class="card card-hover group overflow-hidden">
-        <button class="block w-full text-left" :title="actionLabel(featured)" @click="open(featured)">
-          <div class="relative aspect-[21/9] max-h-80 w-full overflow-hidden bg-base-850 mobile:aspect-[16/9]">
+        <button class="lead grid w-full text-left" :title="actionLabel(featured)" @click="open(featured)">
+          <div class="lead-cover relative aspect-[16/9] w-full overflow-hidden bg-base-850">
             <NewsCover :item="featured" :image="images[featured.id]" :post="launcherPost(featured)" large />
-            <div class="cover-shade absolute inset-0" />
-            <span class="badge absolute top-3 left-3 bg-black/65 text-white backdrop-blur">{{ sourceLabel(featured.source) }}</span>
-            <div class="absolute inset-x-5 bottom-4 mobile:inset-x-4 mobile:bottom-3">
-              <p class="flex items-center gap-2 text-xs text-base-200">
-                <span v-if="tagOf(featured)" class="truncate">{{ tagOf(featured) }}</span>
-                <span v-if="featured.date" class="shrink-0">· {{ formatRelative(featured.date) }}</span>
-              </p>
-              <h3 class="display mt-1 line-clamp-2 text-3xl leading-tight text-base-50 drop-shadow mobile:text-2xl">{{ titleOf(featured) }}</h3>
-            </div>
+            <span class="badge absolute top-3 left-3 bg-base-950/75 text-base-50 backdrop-blur">{{ sourceLabel(featured.source) }}</span>
           </div>
-          <div class="flex items-center gap-4 px-5 py-3 mobile:px-4">
-            <p class="line-clamp-2 flex-1 text-sm leading-relaxed text-base-400">{{ summaryOf(featured) }}</p>
-            <span class="shrink-0 text-xs font-medium text-primary-300">{{ actionLabel(featured) }}</span>
+          <div class="flex min-w-0 flex-col gap-2.5 p-5 mobile:p-4">
+            <p class="eyebrow flex min-w-0 items-center gap-2 text-primary-300">
+              <span class="diamond" />
+              <span v-if="tagOf(featured)" class="truncate">{{ tagOf(featured) }}</span>
+              <span v-if="featured.date" class="shrink-0 text-base-400">{{ formatRelative(featured.date) }}</span>
+            </p>
+            <h3 class="display line-clamp-3 text-2xl leading-tight text-base-50 mobile:text-xl">{{ titleOf(featured) }}</h3>
+            <p class="line-clamp-4 text-sm leading-relaxed text-base-400">{{ summaryOf(featured) }}</p>
+            <span class="mt-auto inline-flex items-center gap-1.5 pt-1 text-sm font-semibold text-primary-300">
+              {{ actionLabel(featured) }}
+              <svg viewBox="0 0 24 24" class="size-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </span>
           </div>
         </button>
       </article>
@@ -261,7 +262,7 @@ async function showPatchNotes(item: NewsItem) {
           >
             <div class="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-base-850">
               <NewsCover :item="item" :image="images[item.id]" :post="launcherPost(item)" />
-              <span class="badge absolute top-2 left-2 bg-black/65 text-[11px] text-white backdrop-blur">{{ sourceLabel(item.source) }}</span>
+              <span class="badge absolute top-2 left-2 bg-base-950/75 text-[11px] text-base-50 backdrop-blur">{{ sourceLabel(item.source) }}</span>
             </div>
             <div class="flex min-w-0 flex-1 flex-col gap-1 p-3">
               <h3 class="line-clamp-2 text-sm leading-snug font-semibold text-base-50">{{ titleOf(item) }}</h3>
@@ -306,11 +307,21 @@ async function showPatchNotes(item: NewsItem) {
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
 }
-.cover-shade {
-  background: linear-gradient(to top, rgb(12 11 14 / 0.9), rgb(12 11 14 / 0.25) 55%, transparent);
+/* Aufmacher: ab mittlerer Breite Bild und Text nebeneinander. */
+.lead {
+  grid-template-columns: minmax(0, 1fr);
+}
+@container (min-width: 34rem) {
+  .lead {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+  .lead-cover {
+    aspect-ratio: auto;
+    min-height: 15rem;
+  }
 }
 .launcher-item,
 .cubiq-item {
-  border-color: color-mix(in srgb, var(--color-primary-500) 35%, var(--color-base-800));
+  border-color: color-mix(in srgb, var(--color-primary-500) 35%, var(--color-line));
 }
 </style>

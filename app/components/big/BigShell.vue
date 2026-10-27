@@ -26,7 +26,7 @@ const scene = computed(() => animated.value || events.lookHalloween)
   opacity: 0.35;
   pointer-events: none;
 }
-/* Abdunkeln, damit große Schrift auf der Schaltung lesbar bleibt. */
+/* Abdunkeln, damit große Schrift auf der Würfel-Szene lesbar bleibt. */
 .big-shade {
   position: absolute;
   inset: 0;
@@ -42,20 +42,14 @@ const scene = computed(() => animated.value || events.lookHalloween)
 .bp-page :focus {
   outline: none;
 }
-/* Fokus deutlich sichtbar: Lampen-Rahmen mit Leuchten – mit Controller/Tastatur immer, mit Maus nur bei Tab. */
-.bp-page[data-input='nav'] :focus:not(.pixel-corners),
-.bp-page :focus-visible:not(.pixel-corners) {
+/* Fokus deutlich sichtbar: heller Rahmen mit Schein – mit Controller/Tastatur immer, mit Maus nur bei Tab. */
+.bp-page[data-input='nav'] :focus,
+.bp-page :focus-visible {
   outline: 4px solid var(--color-live-300);
   outline-offset: 4px;
   box-shadow:
     0 0 0 9px color-mix(in srgb, var(--color-live-400) 22%, transparent),
     0 0 36px color-mix(in srgb, var(--color-live-400) 45%, transparent);
-}
-/* Pixel-Ecken (clip-path) schneiden alles außen ab: Rahmen nach innen. */
-.bp-page[data-input='nav'] .pixel-corners:focus,
-.bp-page .pixel-corners:focus-visible {
-  outline: 4px solid var(--color-base-50);
-  outline-offset: -12px;
 }
 
 /* In der Ebene „components“, damit Tailwind-Klassen sie im Einzelfall überschreiben. */

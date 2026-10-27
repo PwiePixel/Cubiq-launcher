@@ -17,8 +17,9 @@ How this file is written:
 - A release can have a theme name in the heading ("## 0.2.0 – 2026-11-30 – The Clip Update | Das Clip-Update"); it
   becomes the title of the GitHub release ("Cubiq Launcher 0.2.0 – The Clip Update").
 - Right below the heading comes the update banner, an HTML comment "banner: accent=#71a330 motif=/news/<version>/
-  banner.png". The release automation draws the picture for every version to match its notes (scripts/release-art.mjs,
-  transparent PNG in public/news/<version>/); the banner keeps a fixed look (dark surface, soft glow, fine cube grid).
+  banner.png anim=/news/<version>/banner-anim.png". The release automation draws the picture for every version to
+  match its notes – a small pixel-art scene, still and animated (scripts/release-art.mjs, transparent PNGs in
+  public/news/<version>/); the banner keeps a fixed look (dark surface, soft glow, fine cube grid).
 - Optional screenshots: a second HTML comment starting with "shots:" – one screenshot per line:
   "/news/<version>/<file>.png | English caption | Deutsche Bildunterschrift" (captions optional; without the German one
   the English caption is used for both). PNG or WebP in public/news/<version>/, at most 8, each at most 2 MB and
@@ -28,7 +29,7 @@ How this file is written:
 -->
 
 ## 0.2.0 – 2026-10-27
-<!-- banner: accent=#71a330 motif=/news/0.2.0/banner.png -->
+<!-- banner: accent=#71a330 motif=/news/0.2.0/banner.png anim=/news/0.2.0/banner-anim.png -->
 
 ### English
 - **Green where it belongs.** A few spots still showed red although nothing was wrong: the storage bar on the clips
@@ -37,6 +38,11 @@ How this file is written:
 - **Clearer message when a shared mod file is missing.** When you join a friend's world that uses mods and the host
   doesn't share one of the files (anymore), the launcher now tells you exactly that instead of only saying
   "connection closed" – so you know to ask your friend to share the file again.
+- **Calmer animations in the game, too.** If you chose "Reduce animations" under Settings → Appearance → Animations –
+  or "Follow Windows/system" while your system asks for less motion – the Cubiq Client now follows along: the
+  backgrounds of the title screen, the menus and the loading screens stand still, the intro appears without fading or
+  sliding in, and progress bars glow evenly instead of running. Your own in-game setting for animated backgrounds
+  stays exactly as it is.
 
 ### Deutsch
 - **Grün, wo es hingehört.** Ein paar Stellen waren noch rot, obwohl nichts falsch war: der Speicherplatz-Balken auf
@@ -45,18 +51,23 @@ How this file is written:
 - **Klarere Meldung, wenn eine geteilte Mod-Datei fehlt.** Trittst du der Welt eines Freundes mit Mods bei und der
   Host teilt eine der Dateien nicht (mehr), sagt dir der Launcher jetzt genau das statt nur „Verbindung getrennt“ –
   so weißt du, dass dein Freund die Datei wieder freigeben muss.
+- **Ruhigere Animationen auch im Spiel.** Hast du unter Einstellungen → Aussehen → Animationen „Animationen
+  reduzieren“ gewählt – oder „Wie Windows/System“, während dein System weniger Bewegung wünscht –, macht der Cubiq
+  Client jetzt mit: Die Hintergründe von Titelbildschirm, Menüs und Ladebildschirmen stehen still, das Intro erscheint
+  ohne Ein- und Ausblenden, und Fortschrittsbalken leuchten gleichmäßig, statt zu laufen. Deine eigene Einstellung im
+  Spiel für animierte Hintergründe bleibt dabei genau so, wie sie ist.
 
 ## 0.1.1 – 2026-10-27
-<!-- banner: accent=#71a330 motif=/news/0.1.1/banner.png -->
+<!-- banner: accent=#71a330 motif=/news/0.1.1/banner.png anim=/news/0.1.1/banner-anim.png -->
 
 ### English
-- **The Cubiq Client gets the launcher's look.** Menus, title screen and intro of the in-game mod now use the same calm green design as the launcher: dark surfaces, flat rounded buttons and the Cubiq logo instead of the redstone look.
+- **The Cubiq Client gets the launcher's look.** The in-game mod now looks like it belongs to the launcher: its menus, the title screen and the intro when the game starts use the same calm green design – dark surfaces, flat rounded buttons and the Cubiq logo. There is nothing to set up; you'll see it the next time you start Minecraft with the Cubiq Client.
 
 ### Deutsch
-- **Der Cubiq Client bekommt den Look des Launchers.** Menüs, Titelbildschirm und Intro der Ingame-Mod haben jetzt dasselbe ruhige, grüne Design wie der Launcher: dunkle Flächen, flache abgerundete Knöpfe und das Cubiq-Logo statt des Redstone-Looks.
+- **Der Cubiq Client bekommt den Look des Launchers.** Die Ingame-Mod sieht jetzt aus, als gehöre sie zum Launcher: Ihre Menüs, der Titelbildschirm und das Intro beim Spielstart haben dasselbe ruhige, grüne Design – dunkle Flächen, flache abgerundete Knöpfe und das Cubiq-Logo. Einstellen musst du nichts; beim nächsten Start von Minecraft mit dem Cubiq Client ist es da.
 
 ## 0.1.0 – 2026-10-27 – Hello, Cubiq | Hallo, Cubiq
-<!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png -->
+<!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png anim=/news/0.1.0/banner-anim.png -->
 <!-- shots:
 /news/0.1.0/home.png | The new start page | Die neue Startseite
 -->

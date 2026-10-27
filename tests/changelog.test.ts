@@ -101,7 +101,7 @@ describe('Changelog', () => {
     const [a, b, c] = parseChangelog(
       [
         '## 0.4.4 – 2026-09-25 – The Clip Update | Das Clip-Update',
-        '<!-- banner: accent=#FF7AB8 motif=/news/0.4.4/banner.png -->',
+        '<!-- banner: accent=#FF7AB8 motif=/news/0.4.4/banner.png anim=/news/0.4.4/banner-anim.png -->',
         '### English',
         '- A',
         '### Deutsch',
@@ -111,16 +111,18 @@ describe('Changelog', () => {
         '### English',
         '- B',
         '## 0.4.2 – 2026-09-23',
-        '<!-- banner: accent=#00ff00 motif=/news/../secret.png -->',
+        '<!-- banner: accent=#00ff00 motif=/news/../secret.png anim=/news/0.4.2/a.png -->',
         '### English',
         '- C',
       ].join('\n'),
     )
-    expect(a!.banner).toEqual({ accent: '#ff7ab8', motif: '/news/0.4.4/banner.png' })
+    expect(a!.banner).toEqual({ accent: '#ff7ab8', motif: '/news/0.4.4/banner.png', anim: '/news/0.4.4/banner-anim.png' })
     expect(a!.en).toBe('- A')
     expect(b!.banner).toBeNull()
-    expect(c!.banner).toEqual({ accent: '#00ff00', motif: null })
+    // Bewegte Fassung nur zusammen mit einem gültigen ruhigen Motiv.
+    expect(c!.banner).toEqual({ accent: '#00ff00', motif: null, anim: null })
     expect(parseBanner('motif=/news/1/x.png')).toBeNull()
+    expect(parseBanner('accent=#71a330 motif=/news/1/x.png anim=https://evil.example/a.png')!.anim).toBeNull()
   })
 
   it('vergleicht Versionen', () => {
@@ -152,6 +154,7 @@ describe('Changelog', () => {
       expect(e.banner, `${e.version}: Banner`).not.toBeNull()
       // Eigenes Motiv ist freiwillig (sonst das Logo) – angegeben muss es aber da sein.
       if (e.banner?.motif) expect(existsSync(path.join(root, 'public', e.banner.motif)), `${e.version}: ${e.banner.motif} fehlt`).toBe(true)
+      if (e.banner?.anim) expect(existsSync(path.join(root, 'public', e.banner.anim)), `${e.version}: ${e.banner.anim} fehlt`).toBe(true)
       // Screenshots (freiwillig): gültig, vorhanden, echte PNG/WebP in vernünftiger Größe.
       expect(checkShots(e, path.join(root, 'public')), `${e.version}: Screenshots`).toEqual([])
     }
@@ -322,6 +325,9 @@ describe('Changelog', () => {
     expect(notes.endsWith('- A\n')).toBe(true)
     // Aus einem anderen Stand (z. B. main), wenn die Hinweise später neu geschrieben werden.
     expect(releaseNotes(a!, { ref: 'main' })).toContain('/Cubiq-launcher/main/public/news/0.15.0/banner.png')
+    // Mit bewegter Fassung zeigt GitHub die Animation.
+    const animated = parseChangelog('## 0.16.0 – 2026-10-02\n<!-- banner: accent=#71a330 motif=/news/0.16.0/banner.png anim=/news/0.16.0/banner-anim.png -->\n### English\n- C\n### Deutsch\n- C')[0]!
+    expect(releaseNotes(animated)).toContain('/v0.16.0/public/news/0.16.0/banner-anim.png" alt=""')
     // Ohne Motiv: kein Bild, der Text bleibt wie bisher.
     expect(releaseNotes(b!).startsWith("## What's new")).toBe(true)
     expect(releaseNotes(b!).endsWith('- B\n')).toBe(true)
