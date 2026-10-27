@@ -2379,6 +2379,21 @@
       "updatesPortable": "Wersja przenośna – aktualizacje są na stronie pobierania"
     },
     "appearance": {
+      "look": {
+        "title": "Styl",
+        "text": "Zmienia cały wygląd – scenę w tle, kolory i drobne detale. Motyw kolorów i kolor akcentu zostają takie, jak je ustawiłeś, a Cubiq Client przenosi styl do gry.",
+        "choose": "Użyj stylu {name}",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Granat z logo z akcentami w zieleni Cubiq"
+          },
+          "winter": {
+            "name": "Zorza polarna",
+            "text": "Zorza w zieleni Cubiq nad unoszącymi się śnieżnymi wyspami"
+          }
+        }
+      },
       "colorScheme": "Motyw kolorów",
       "themes": {
         "dark": "Ciemny",

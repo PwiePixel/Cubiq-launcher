@@ -1,7 +1,7 @@
 package dev.pwiepixel.cubiqclient.core.ui.fox;
 
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.hex;
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.mix;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.hex;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.mix;
 
 /**
  * Farben der Fuchsbau-Landschaft (Port von {@code app/utils/fox/palette.ts}). Feste, abgestimmte Töne je Farbschema:

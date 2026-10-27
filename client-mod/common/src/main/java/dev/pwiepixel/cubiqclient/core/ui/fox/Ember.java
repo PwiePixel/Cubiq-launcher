@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Bausteine des Designs „Fuchsbau“ – das Gegenstück zu den flachen Flächen von {@link Paint} (das bei
- * {@link Theme#fox} hierher verzweigt) wie {@code Frost} für die Winternacht: Laternen mit warmem Glutlicht statt
+ * {@link Theme#fox} hierher verzweigt): Laternen mit warmem Glutlicht statt
  * leuchtender Knöpfe (Eisenrahmen, Glut im Glas, ein Zweig mit Laub obenauf), glimmende Äste mit Blättchen statt
  * glatter Linien, das Pixel-Fuchsgesicht (blinzelt) und der glimmende Ast, der beim Laden von links durchglüht.
  * Alles aus Rechtecken im GUI-Raster.

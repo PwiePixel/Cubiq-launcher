@@ -571,7 +571,7 @@ struct LauncherTheme {
     accent_color: &'static str,
     /// Sprache des Launchers ("en", "de", "pt-BR", …) – der Mod darf sie übernehmen.
     language: &'static str,
-    /// Design des Launchers (derzeit immer "cubiq") – der Mod kann sein Aussehen anpassen.
+    /// Design des Launchers ("cubiq" oder "winter") – der Mod zeigt dasselbe Aussehen.
     design: &'static str,
     /// Animationen, wie der Launcher sie gerade zeigt: "full" oder "reduced" („Wie System“ ist schon
     /// aufgelöst). Für den Mod ein zusätzliches Signal – seine eigene Einstellung bleibt, wie sie ist.
@@ -1094,6 +1094,7 @@ mod tests {
         ui.theme = Theme::System;
         ui.accent = Accent::Cubiq;
         ui.language = crate::settings::Language::PtBr;
+        ui.design = crate::settings::Design::Winter;
         ui.halloween_flicker = false;
         let events: Vec<String> = vec!["halloween".into(), "other".into()];
         write_theme(&paths, "test", &ui, false, &events, &events).await.unwrap();
@@ -1103,8 +1104,10 @@ mod tests {
         assert_eq!(json["language"], "pt-BR");
         assert_eq!(json["event"], "halloween");
         assert_eq!(json["eventLook"], true);
-        assert_eq!(json["design"], "cubiq");
+        // Das Design kommt als Code an – „winter“ schaltet den Cubiq Client auf Polarlicht.
+        assert_eq!(json["design"], "winter");
         assert_eq!(json["halloweenFlicker"], false);
+        ui.design = crate::settings::Design::Cubiq;
 
         // Team-Sperre: Event (Features) bleibt, nur der Look ist aus.
         write_theme(&paths, "test", &ui, false, &events, &["other".into()]).await.unwrap();

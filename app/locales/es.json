@@ -2420,6 +2420,21 @@
       "updatesPortable": "Versión portátil – las actualizaciones están en la página de descargas"
     },
     "appearance": {
+      "look": {
+        "title": "Diseño",
+        "text": "Cambia todo el aspecto: escena de fondo, colores y pequeños detalles. El tema y el color de acento se quedan como los elegiste, y el Cubiq Client lleva el diseño al juego.",
+        "choose": "Usar el diseño {name}",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Azul marino del logo con acentos en verde Cubiq"
+          },
+          "winter": {
+            "name": "Aurora boreal",
+            "text": "Aurora en verde Cubiq sobre islas nevadas flotantes"
+          }
+        }
+      },
       "colorScheme": "Tema de color",
       "themes": {
         "dark": "Oscuro",

@@ -5,7 +5,6 @@ import dev.pwiepixel.cubiqclient.compat.Mc;
 import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.menus.MenuSkin;
-import dev.pwiepixel.cubiqclient.core.ui.winter.Penguin;
 import dev.pwiepixel.cubiqclient.core.ui.winter.WinterScene;
 import dev.pwiepixel.cubiqclient.screen.CubiqMenuScreen;
 import dev.pwiepixel.cubiqclient.screen.CubiqTitleScreen;
@@ -23,9 +22,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 /**
- * Selbsttest Design „Winternacht“ unter 1.8.9–1.12.2 ({@code -PcubiqAutotestOnly=winter}): Startbildschirm in der Nacht,
- * mit Polarlicht, mit dem Pinguin draußen und am hellen Wintertag, Cubiq-Menü (Design-Wahl), Serverliste, Ladebildschirm
- * („Gelände wird geladen“ in der Welt) und Pausenmenü. Danach gilt wieder die Launcher-Datei; das Spiel endet.
+ * Selbsttest Design „Polarlicht“ unter 1.8.9–1.12.2 ({@code -PcubiqAutotestOnly=winter}): Startbildschirm in der Nacht
+ * (zweimal, das Polarlicht wiegt sich weiter) und am hellen Morgen, Cubiq-Menü (Design-Wahl), Serverliste,
+ * Ladebildschirm („Gelände wird geladen“ in der Welt) und Pausenmenü. Danach gilt wieder die Launcher-Datei; das Spiel
+ * endet.
  * Screenshots: cubiqclient-&lt;mc&gt;-winter-*.png.
  */
 public final class WinterTest {
@@ -110,36 +110,31 @@ public final class WinterTest {
 				return;
 			case 1:
 				shot(mc, "title");
-				WinterScene.shared().setSeconds(20);
+				WinterScene.shared().setSeconds(40);
 				phase++;
 				wait = 10;
 				return;
 			case 2:
+				// Dieselbe Szene ein paar Sekunden später: das Polarlicht hat sich weitergewiegt.
 				shot(mc, "title-aurora");
-				WinterScene.shared().penguinOut();
-				phase++;
-				return;
-			case 3:
-				if (!waitFor(WinterScene.shared().penguinPhase() == Penguin.WAVE, 120)) return;
-				shot(mc, "title-penguin");
 				winter("light");
 				phase++;
 				wait = 20;
 				return;
-			case 4:
+			case 3:
 				shot(mc, "title-day");
 				winter("dark");
 				mc.displayGuiScreen(new CubiqMenuScreen(new CubiqTitleScreen()).select(modules.menuStyle));
 				phase++;
 				wait = 25;
 				return;
-			case 5:
+			case 4:
 				shot(mc, "cubiqmenu");
 				mc.displayGuiScreen(new GuiMultiplayer(new CubiqTitleScreen()));
 				phase++;
 				wait = 40;
 				return;
-			case 6:
+			case 5:
 				shot(mc, "multiplayer");
 				if (mc.getSaveLoader().canLoadWorld(world)) {
 					mc.launchIntegratedServer(world, world, null);
@@ -148,25 +143,25 @@ public final class WinterTest {
 				}
 				phase++;
 				return;
-			case 7:
+			case 6:
 				if (!waitFor(Mc.world() != null && Mc.player() != null && mc.currentScreen == null, 600)) return;
 				phase++;
 				wait = 40;
 				return;
-			case 8: {
+			case 7: {
 				GuiScreen terrain = terrainScreen(mc);
 				if (terrain != null) mc.displayGuiScreen(terrain);
 				phase++;
 				wait = 10;
 				return;
 			}
-			case 9:
+			case 8:
 				if (screen != null && screen.getClass().getSimpleName().contains("DownloadTerrain")) shot(mc, "loading");
 				mc.displayGuiScreen(new GuiIngameMenu());
 				phase++;
 				wait = 15;
 				return;
-			case 10:
+			case 9:
 				if (!(screen instanceof GuiIngameMenu) && waited++ < 5) {
 					mc.displayGuiScreen(new GuiIngameMenu());
 					wait = 15;
@@ -178,9 +173,9 @@ public final class WinterTest {
 				phase++;
 				wait = 25;
 				return;
-			case 11:
+			case 10:
 				shot(mc, "cubiqmenu-ingame");
-				Theme.set(Theme.of("dark", "redstone", null));
+				Theme.set(Theme.of("dark", "cubiq", null));
 				Theme.loadFrom(new java.io.File(Mc.gameDir(), "config").toPath());
 				CubiqClient.LOGGER.info("[Autotest] Winter: fertig");
 				phase++;

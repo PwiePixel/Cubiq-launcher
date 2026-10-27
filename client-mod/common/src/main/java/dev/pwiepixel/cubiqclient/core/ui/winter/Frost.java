@@ -2,225 +2,149 @@ package dev.pwiepixel.cubiqclient.core.ui.winter;
 
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.CubiqMark;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
+import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 /**
- * Bausteine des Designs „Winternacht“ – das Gegenstück zu den flachen Flächen von {@link Paint} (das bei
- * {@link Theme#winter} hierher verzweigt): Eislaternen statt leuchtender Knöpfe (gefrorenes Glas, Reif in den Ecken,
- * eisblaues Licht), Frostlinien mit Eiskristallen statt glatter Linien, die Pixel-Schneeflocke des Launchers und der
- * Eisbalken, der beim Laden von links zufriert. Alles aus Rechtecken im GUI-Raster.
+ * Die Details des Designs „Polarlicht“ im Spiel – dieselben wie im Launcher ({@code app/assets/css/winter.css}): der Saum
+ * aus Pixel-Schnee oben auf Knöpfen, Karten und Fenstern, der Hauch Schnee auf allen oberen Kanten des Cubiq-Zeichens und
+ * der eisige Fortschrittsbalken mit wanderndem Schimmer. Alles aus Rechtecken im GUI-Raster; die Flächen selbst sind wie
+ * im Cubiq-Design aufgebaut, nur in den Farben von {@link Theme} (Zweig „winter“).
  */
 public final class Frost {
 	private Frost() {
 	}
 
-	private static final int WHITE = 0xFFFFFFFF;
+	/**
+	 * Profil des Schneesaums: Tiefe je Spalte (wiederholt sich alle 24 Spalten) – genau wie {@code --winter-lip} in
+	 * winter.css. Oberste Zeile hell, darunter Schnee, darunter ein Schatten.
+	 */
+	public static final int[] LIP = {2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 3, 4, 5, 3, 2, 2, 2, 2, 2, 3, 2, 2, 2};
+	/** Farben des Saums wie im Launcher: Kante, Schnee, Schatten – dunkel bzw. am hellen Morgen. */
+	private static final int TOP = 0xFFFFFFFF;
+	private static final int SNOW = 0xFFEEF6FF;
+	private static final int SHADE = 0xFF9DB9D9;
+	private static final int SNOW_LIGHT = 0xFFE6F1FB;
+	private static final int SHADE_LIGHT = 0xFFB3C9E1;
+	/** Eis für Schimmer und Schein ({@code --winter-ice}). */
+	public static final int ICE = 0xFF9FE7FF;
 
-	// --- Eislaterne ---
+	// --- Schneesaum ---
 
 	/**
-	 * Eislaterne als Knopf: dunkles, gefrorenes Glas in einem Metallrahmen, Reif oben links und unten rechts, feine
-	 * Risse; {@code lit} 1 = eisblaues Licht mit hellem Kern und Schein, {@code flash} = kurzes Aufblitzen beim Drücken.
-	 * Oben liegt eine dünne Schneekante.
+	 * Schneesaum entlang der Oberkante {@code y} von {@code x} bis {@code x + w} (ohne die abgerundeten Ecken – der Aufrufer
+	 * gibt die gerade Strecke an); {@code alpha} 0..1 blendet ihn ein.
 	 */
-	public static void lantern(Canvas c, int x, int y, int w, int h, float lit, float flash) {
+	public static void lip(Canvas c, int x, int y, int w, float alpha) {
+		float a = ColorMath.clamp01(alpha);
+		if (w <= 0 || a < 0.02f) return;
+		boolean day = Theme.get().light;
+		int snow = ColorMath.fade(day ? SNOW_LIGHT : SNOW, a);
+		int shade = ColorMath.withAlpha(day ? SHADE_LIGHT : SHADE, Math.round(200 * a));
+		int col = 0;
+		while (col < w) {
+			int depth = LIP[col % LIP.length];
+			int end = col + 1;
+			while (end < w && LIP[end % LIP.length] == depth) end++;
+			if (depth > 1) c.fill(x + col, y + 1, x + end, y + depth, snow);
+			c.fill(x + col, y + depth, x + end, y + depth + 1, shade);
+			col = end;
+		}
+		c.fill(x, y, x + w, y + 1, ColorMath.fade(TOP, a));
+	}
+
+	/** Schneesaum auf einer abgerundeten Fläche (Knopf, Karte): nur auf der geraden Oberkante. */
+	public static void lipOn(Canvas c, int x, int y, int w, int h, float alpha) {
+		if (h < 8 || w < 12) return;
+		int r = Paint.radius(w, h);
+		lip(c, x + Math.max(1, r), y + 1, w - 2 * Math.max(1, r), alpha);
+	}
+
+	// --- Cubiq-Zeichen mit Schnee ---
+
+	/** Das Cubiq-Zeichen mit Schnee auf allen oberen Kanten ({@code cells}×{@code cells} Punkte zu {@code px} Pixeln). */
+	public static void mark(Canvas c, int x, int y, int cells, int px, float alpha) {
 		Theme t = Theme.get();
-		float l = ColorMath.clamp01(lit);
-		if (l > 0.02f) Paint.glow(c, x, y, w, h, t.faceGlow, l);
-		Paint.block(c, x, y, w, h, ColorMath.lerp(t.faceOffEdge, t.faceOnEdge, l));
-		int face = ColorMath.lerp(t.faceOff, t.faceOn, l);
-		if (w < 8 || h < 8) {
-			c.fill(x + 1, y + 1, x + w - 1, y + h - 1, face);
-			return;
-		}
-		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, face);
-		// Licht von innen: der Kern ist heller als der Rand.
-		if (l > 0.02f) c.fill(x + 4, y + 4, x + w - 4, y + h - 4, ColorMath.withAlpha(t.faceHot, Math.round(110 * l)));
-		// Innenrahmen aus bereiftem Metall, Stege oben und unten.
-		int lattice = ColorMath.lerp(0xFF243A5C, 0xFFBFE8FF, l);
-		Paint.frame(c, x + 2, y + 2, w - 4, h - 4, lattice);
-		int panes = Math.max(1, (w - 8) / 44);
-		for (int i = 1; i < panes + 1 && w > 30; i++) {
-			int px = x + i * w / (panes + 1);
-			c.fill(px, y + 2, px + 1, y + 4, lattice);
-			c.fill(px, y + h - 4, px + 1, y + h - 2, lattice);
-		}
-		// Glaskante oben (Licht), dunkle Kante unten.
-		c.fill(x + 1, y + 1, x + w - 1, y + 2, ColorMath.lerp(0xFF2E4668, 0xFFF2FBFF, l));
-		c.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, ColorMath.lerp(0xFF0A1220, 0xFF2F86BD, l));
-		// Reif in den Ecken: von der Ecke aus kürzer werdende Zeilen.
-		int rime = ColorMath.withAlpha(WHITE, Math.round(70 + 90 * l));
-		int rows = Math.min(5, (h - 4) / 2);
-		for (int i = 0; i < rows; i++) {
-			int len = Math.max(1, 6 - i - (i > 1 ? 1 : 0));
-			c.fill(x + 2, y + 2 + i, x + 2 + len, y + 3 + i, rime);
-			c.fill(x + w - 2 - len, y + h - 3 - i, x + w - 2, y + h - 2 - i, rime);
-		}
-		// Feine Risse im Eis (fest je Breite, damit sie nicht flackern).
-		int crack = ColorMath.withAlpha(WHITE, Math.round(40 + 40 * l));
-		if (w >= 40 && h >= 14) {
-			int cx = x + w * 3 / 10;
-			int cy = y + h - 4;
-			for (int k = 0; k < Math.min(5, h - 8); k++) c.fill(cx + k, cy - k, cx + k + 1, cy - k + 1, crack);
-			int dx = x + w * 7 / 10;
-			for (int k = 0; k < Math.min(4, h - 9); k++) c.fill(dx - k, y + 4 + k, dx - k + 1, y + 5 + k, crack);
-		}
-		// Schnee auf der Oberkante.
-		int snow = ColorMath.lerp(0xFFC9DCF5, WHITE, 0.4f + 0.4f * l);
-		c.fill(x + 2, y, x + w - 2, y + 1, snow);
-		for (int sx = x + 5; sx < x + w - 6; sx += 13 + ((sx * 7) & 7)) c.fill(sx, y - 1, sx + 2, y, ColorMath.withAlpha(snow, 0xB0));
-		float f = ColorMath.clamp01(flash);
-		if (f > 0.02f) c.fill(x + 1, y + 1, x + w - 1, y + h - 1, ColorMath.withAlpha(0xFFEAF9FF, Math.round(170 * f)));
+		// Farbe wie --winter-dust in winter.css (dunkel bzw. am hellen Morgen).
+		int dust = t.light ? 0xE678A0CD : 0xCCF4FAFF;
+		CubiqMark.silhouette(c, x, y - px, cells, px, ColorMath.fade(dust, alpha));
+		CubiqMark.draw(c, x, y, cells, px, alpha);
 	}
 
-	// --- Frostlinien ---
-
-	/** Waagerechte Frostlinie (2 px) mit Eiskristallen; leuchtet bei Signal. */
-	public static void lineH(Canvas c, int x1, int x2, int y, int argb, float glow) {
-		if (x2 <= x1) return;
-		c.fill(x1, y, x2, y + 2, argb);
-		int crystal = ColorMath.lerp(argb, WHITE, 0.55f);
-		for (int x = x1 + 3 - Math.floorMod(x1, 8) % 8; x < x2 - 1; x += 8) {
-			if (x >= x1) c.fill(x, y, x + 1, y + 1, crystal);
-		}
-		if (glow > 0.02f) {
-			int g = ColorMath.withAlpha(Theme.get().glow, Math.round(40 * ColorMath.clamp01(glow)));
-			c.fill(x1, y - 1, x2, y, g);
-			c.fill(x1, y + 2, x2, y + 3, g);
-		}
+	/** Wie {@link CubiqMark#lockup}: Zeichen (mit Schnee) und „CUBIQ“ in der Akzentfarbe; liefert die Breite. */
+	public static int lockup(Canvas c, int x, int y, int scale, float alpha) {
+		Theme t = Theme.get();
+		int px = Math.max(1, scale / 3);
+		int cells = CubiqMark.markSize(scale) / px;
+		mark(c, x, y + (PixelFont.HEIGHT * scale - cells * px) / 2, cells, px, alpha);
+		int tx = x + CubiqMark.textOffset(scale);
+		int color = ColorMath.fade(t.accent, alpha);
+		for (int[] r : PixelFont.rects("CUBIQ")) c.fill(tx + r[0] * scale, y + r[1] * scale, tx + r[2] * scale, y + r[3] * scale, color);
+		return CubiqMark.textOffset(scale) + PixelFont.width("CUBIQ") * scale;
 	}
 
-	/** Senkrechte Frostlinie (2 px) mit Eiskristallen. */
-	public static void lineV(Canvas c, int x, int y1, int y2, int argb, float glow) {
-		if (y2 <= y1) return;
-		c.fill(x, y1, x + 2, y2, argb);
-		int crystal = ColorMath.lerp(argb, WHITE, 0.55f);
-		for (int y = y1 + 3 - Math.floorMod(y1, 8) % 8; y < y2 - 1; y += 8) {
-			if (y >= y1) c.fill(x, y, x + 1, y + 1, crystal);
-		}
-		if (glow > 0.02f) {
-			int g = ColorMath.withAlpha(Theme.get().glow, Math.round(40 * ColorMath.clamp01(glow)));
-			c.fill(x - 1, y1, x, y2, g);
-			c.fill(x + 2, y1, x + 3, y2, g);
-		}
-	}
-
-	// --- Schneeflocke (wie neben dem Logo im Launcher) ---
+	// --- Fortschritt ---
 
 	/**
-	 * Pixel-Schneeflocke 9 × 9 Punkte ({@code px} GUI-Pixel je Punkt). {@code glint} 0..1 lässt die Spitzen und die
-	 * Mitte weiß aufleuchten.
-	 */
-	public static void snowflake(Canvas c, int x, int y, int px, int argb, float glint) {
-		c.fill(x + 4 * px, y, x + 5 * px, y + 9 * px, argb);
-		c.fill(x, y + 4 * px, x + 9 * px, y + 5 * px, argb);
-		c.fill(x + 3 * px, y + 3 * px, x + 6 * px, y + 6 * px, argb);
-		int[][] diag = {{1, 1}, {7, 1}, {1, 7}, {7, 7}, {2, 2}, {6, 2}, {2, 6}, {6, 6}};
-		for (int[] d : diag) c.fill(x + d[0] * px, y + d[1] * px, x + (d[0] + 1) * px, y + (d[1] + 1) * px, argb);
-		int g = ColorMath.withAlpha(WHITE, Math.round(255 * (0.55f + 0.45f * ColorMath.clamp01(glint))));
-		int[][] tips = {{4, 4}, {4, 0}, {0, 4}, {8, 4}, {4, 8}};
-		for (int[] d : tips) c.fill(x + d[0] * px, y + d[1] * px, x + (d[0] + 1) * px, y + (d[1] + 1) * px, g);
-	}
-
-	/** Glitzern der Schneeflocke: alle 5 s kurz an (wie im Launcher). */
-	public static float glint(float seconds) {
-		float p = (seconds % 5f) / 5f;
-		return p >= 0.9f && p < 0.96f ? 1f : 0f;
-	}
-
-	// --- Eisbalken (Fortschritt) ---
-
-	/**
-	 * Fortschritt als Eisbalken, der von links zufriert (Launcher: FrostProgress): Spur aus dunklem Eis mit Fugen,
-	 * Füllung eisblau mit heller Oberkante und wanderndem Glitzern, an der Gefrierkante ein Eiskristall.
-	 * {@code progress} &lt; 0 = unbekannt (ein Frostschimmer läuft durch). {@code animated} = false → ruhig: das Glitzern
-	 * steht, unbekannter Fortschritt liegt als gleichmäßiger, halb heller Schimmer auf dem ganzen Balken.
+	 * Eisiger Fortschrittsbalken mittig um {@code cx} (wie {@code .progress} im Launcher): schlanke Pille, gefüllt von der
+	 * Akzentfarbe über ihr Helles zu Eis-Weiß, mit weichem Schein und einem hellen Schimmer, der alle 2,2 s darüber wandert.
+	 * {@code progress} &lt; 0 = unbekannt: ein Lichtstreifen läuft durch. {@code animated} = false → alles steht: der
+	 * Schimmer liegt fest bei drei Vierteln, unbekannter Fortschritt als ruhiger, halb heller Balken.
 	 */
 	public static void bar(Canvas c, int cx, int y, int maxWidth, float progress, float time, boolean animated) {
-		if (!animated) time = 0f;
 		Theme t = Theme.get();
 		int w = Math.max(24, Math.min(maxWidth, 200));
 		int h = 6;
+		int r = h / 2;
 		int x0 = cx - w / 2;
-		int a500 = t.accent;
-		int a400 = ColorMath.lerp(a500, WHITE, 0.38f);
-		int a300 = ColorMath.lerp(a500, WHITE, 0.62f);
-		int a600 = ColorMath.scaleRgb(a500, 0.75f);
-		int a900 = ColorMath.lerp(ColorMath.scaleRgb(a500, 0.22f), 0xFF000000, 0.25f);
-		Paint.block(c, x0 - 1, y - 1, w + 2, h + 2, 0xFF050A14);
-		c.fill(x0, y, x0 + w, y + h, a900);
-		c.fill(x0, y + h - 1, x0 + w, y + h, 0x40000000);
-		int joint = ColorMath.withAlpha(a300, 0x24);
-		for (int jx = x0 + 13; jx < x0 + w; jx += 14) c.fill(jx, y, jx + 1, y + h, joint);
-		if (progress < 0 && !animated) {
-			c.fill(x0, y, x0 + w, y + h, ColorMath.withAlpha(a400, 0x70));
-			return;
-		}
+		int a600 = t.faceOnEdge;
+		int a400 = t.accentHover;
+		int frost = ColorMath.lerp(ICE, 0xFFFFFFFF, 0.3f);
+		Paint.roundRect(c, x0, y, w, h, r, ColorMath.lerp(t.surfaceHigh, ICE, 0.09f));
+		c.fill(x0 + r, y, x0 + w - r, y + 1, 0x40000000);
 		if (progress < 0) {
-			// Unbekannter Fortschritt: ein Frostschimmer läuft durch.
-			int band = Math.max(12, w * 35 / 100);
-			float phase = (time / 1.6f) % 1f;
-			int bx = x0 - band + Math.round(phase * band * 3.9f);
-			int[] cols = {a500, a400, WHITE, a400, a500};
-			int[] alpha = {0x50, 0xA0, 0xE0, 0xA0, 0x50};
-			int seg = Math.max(1, band / 5);
-			for (int i = 0; i < 5; i++) {
-				int sx = Math.max(x0, bx + i * seg);
-				int ex = Math.min(x0 + w, bx + (i + 1) * seg);
-				if (ex > sx) c.fill(sx, y, ex, y + h, ColorMath.withAlpha(cols[i], alpha[i]));
+			int streak = ColorMath.lerp(a400, 0xFFF2FBFF, 0.35f);
+			if (!animated) {
+				Paint.roundRect(c, x0, y, w, h, r, ColorMath.withAlpha(streak, 0x80));
+				return;
 			}
-			// Ein Eiskristall reitet auf dem Schimmer.
-			int tip = bx + band / 2;
-			if (tip > x0 + 2 && tip < x0 + w - 2) {
-				diamond(c, tip, y + h / 2, 3, ColorMath.withAlpha(a300, 0xD0));
-				diamond(c, tip, y + h / 2, 1, 0xFFF2FAFF);
+			// Ein Streifen (35 % der Breite) läuft von links außerhalb nach rechts außerhalb, in der Mitte am hellsten.
+			float p = (time % 1.3f) / 1.3f;
+			int sw = Math.max(h * 2, Math.round(w * 0.35f));
+			int sx = x0 - sw + Math.round((w + sw) * p);
+			int[] colors = {a400, streak, 0xFFF2FBFF, streak, a400};
+			for (int i = 0; i < 5; i++) {
+				int a = Math.max(x0 + 1, sx + sw * i / 5);
+				int b = Math.min(x0 + w - 1, sx + sw * (i + 1) / 5);
+				if (b > a) c.fill(a, y + 1, b, y + h - 1, ColorMath.withAlpha(colors[i], i == 2 ? 0xF0 : 0xB0));
 			}
 			return;
 		}
-		float p = ColorMath.clamp01(progress);
-		int fw = Math.round(w * p);
+		int fw = Math.round(w * ColorMath.clamp01(progress));
 		if (fw <= 0) return;
-		// Schein um das Eis.
-		c.fill(x0, y - 2, x0 + fw, y - 1, ColorMath.withAlpha(a400, 0x30));
-		c.fill(x0, y + h + 1, x0 + fw, y + h + 2, ColorMath.withAlpha(a400, 0x30));
-		// Verlauf a600 → a500 (40 %) → a400 in flächigen Stufen.
+		Paint.glow(c, x0, y, fw, h, ICE, 0.45f);
+		// Verlauf in flächigen Stufen: Akzent (600) → Akzent hell (400, bei 70 %) → Eis-Weiß.
+		Paint.roundRect(c, x0, y, fw, h, r, a600);
 		int steps = Math.max(1, Math.min(10, fw / 8));
 		for (int i = 0; i < steps; i++) {
-			int sx = x0 + fw * i / steps;
-			int ex = x0 + fw * (i + 1) / steps;
-			float u = (sx - x0 + (ex - sx) / 2f) / (float) w;
-			int col = u < 0.4f ? ColorMath.lerp(a600, a500, u / 0.4f) : ColorMath.lerp(a500, a400, (u - 0.4f) / 0.6f);
-			c.fill(sx, y, ex, y + h, col);
+			int sx = Math.max(x0 + r, x0 + fw * i / steps);
+			int ex = Math.min(x0 + fw - r, x0 + fw * (i + 1) / steps);
+			if (ex <= sx) continue;
+			float u = (i + 0.5f) / steps;
+			c.fill(sx, y, ex, y + h, u < 0.7f ? ColorMath.lerp(a600, a400, u / 0.7f) : ColorMath.lerp(a400, frost, (u - 0.7f) / 0.3f));
 		}
-		c.fill(x0, y, x0 + fw, y + 1, ColorMath.lerp(WHITE, a300, 0.3f));
-		int ice = ColorMath.withAlpha(WHITE, 0x70);
-		for (int jx = x0 + 13; jx < x0 + fw; jx += 14) c.fill(jx, y + 1, jx + 1, y + h, ice);
-		// Glitzer: einzelne helle Pixel wandern über das Eis.
-		int shift = Math.round(time * 25f);
-		int[][] glitter = {{5, 2, 2}, {54, 1, 2}, {31, 3, 1}, {43, 2, 1}};
-		for (int[] g : glitter) {
-			for (int base = 0; base < fw; base += 60) {
-				int gx = x0 + base + Math.floorMod(g[0] + shift, 60);
-				if (gx + g[2] > x0 + fw || gx < x0) continue;
-				c.fill(gx, y + g[1], gx + g[2], y + g[1] + g[2], ColorMath.withAlpha(WHITE, g[2] == 2 ? 0xE0 : 0xB0));
-			}
-		}
-		// Eiskristall an der Gefrierkante.
-		if (p < 1f) {
-			int tx = x0 + fw;
-			int ty = y + h / 2;
-			c.fill(tx - 6, ty - 6, tx + 6, ty + 6, ColorMath.withAlpha(a400, 0x22));
-			diamond(c, tx, ty, 4, a300);
-			diamond(c, tx, ty, 2, 0xFFF2FAFF);
-		}
-	}
-
-	/** Rhombus mit „Radius“ {@code r} um (cx, cy). */
-	private static void diamond(Canvas c, int cx, int cy, int r, int argb) {
-		for (int i = -r; i <= r; i++) {
-			int half = r - Math.abs(i);
-			c.fill(cx - half, cy + i, cx + half + 1, cy + i + 1, argb);
+		if (fw >= 2 * r) Paint.roundRect(c, x0 + fw - 2 * r, y, 2 * r, h, r, steps > 1 ? frost : a400);
+		c.fill(x0 + r, y, x0 + fw - r, y + 1, ColorMath.withAlpha(0xFFFFFFFF, 0x60));
+		// Schimmer: ein heller Streifen wandert von links nach rechts über die Füllung (ruhig: fest bei drei Vierteln).
+		float s = animated ? (time % 2.2f) / 2.2f : 0.64f;
+		int center = x0 - Math.round(fw * 0.4f) + Math.round(fw * 1.8f * s);
+		int half = Math.max(2, fw / 8);
+		for (int k = 2; k >= 1; k--) {
+			int a = Math.max(x0 + r, center - half * k);
+			int b = Math.min(x0 + fw - r, center + half * k);
+			if (b > a) c.fill(a, y + 1, b, y + h - 1, ColorMath.withAlpha(0xFFFFFFFF, k == 1 ? 0x70 : 0x30));
 		}
 	}
 }

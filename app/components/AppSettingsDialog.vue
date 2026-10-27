@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { messeRestricted } from '~/utils/messe'
-import type { Accent, AppInfo, ClientModStatus, Settings, SharedFolder, StorageStats, Theme } from '~/types'
+import type { Accent, AppInfo, ClientModStatus, Design, Settings, SharedFolder, StorageStats, Theme } from '~/types'
+import { documentVariant, type WinterVariant } from '~/utils/winter/palette'
+import { winterPreviewUrl } from '~/utils/winter/preview'
 import type { ShellSection } from '~/components/SettingsShell.vue'
 import type { Locale } from '~/utils/i18n'
 
@@ -81,6 +83,7 @@ watch(
     form.value.ui.theme = ui.theme
     form.value.ui.accent = ui.accent
     form.value.ui.language = ui.language
+    form.value.ui.design = ui.design
     if (unchanged) lastSaved = JSON.stringify(form.value)
   },
 )
@@ -144,16 +147,48 @@ async function openBigPicture() {
 }
 
 // --- Aussehen -----------------------------------------------------------------
-// Namen kommen beim Rendern aus settings.appearance.themes/accents. Die Vorschau zeigt Rahmen, Leinwand,
-// Karte, Kanten und Platzhalter-Schrift des Schemas (Werte aus main.css); „Wie System“ halb dunkel, halb hell.
-const darkLook = { frame: '#04061a', canvas: '#070a1d', card: '#0c1028', line: '#1e2550', ink: '#283062' }
-const lightLook = { frame: '#e1e5f1', canvas: '#edf0f8', card: '#ffffff', line: '#dde1ef', ink: '#d2d7e8' }
-const themes: { key: Theme; look: typeof darkLook; split?: typeof darkLook }[] = [
-  { key: 'dark', look: darkLook },
-  { key: 'oled', look: { frame: '#000000', canvas: '#000000', card: '#05060f', line: '#151937', ink: '#1f2447' } },
-  { key: 'light', look: lightLook },
-  { key: 'system', look: darkLook, split: lightLook },
-]
+// Namen kommen beim Rendern aus settings.appearance.look/themes/accents.
+const currentDesign = computed(() => normalizeDesign(form.value?.ui.design))
+/** Wechselt das Design; trägt der Launcher noch die Farbe eines Designs, kommt die des neuen mit. */
+function chooseDesign(design: Design) {
+  if (!form.value) return
+  form.value.ui.design = design
+  form.value.ui.accent = accentAfterSwitch(design, form.value.ui.accent)
+}
+/** Vorschau des Polarlichts – nachts oder am Morgen, wie das gerade angezeigte Farbschema. */
+const winterVariant = ref<WinterVariant>('dark')
+watch(
+  () => form.value?.ui.theme,
+  () => nextTick(() => (winterVariant.value = documentVariant())),
+  { immediate: true },
+)
+const winterPicture = computed(() => winterPreviewUrl(winterVariant.value))
+/**
+ * Farbschema-Karten je Design: Rahmen, Leinwand, Karte, Kanten und Platzhalter-Schrift des Schemas (Werte aus main.css
+ * bzw. winter.css: frame, base-950, base-900, line, base-700); „Wie System“ halb dunkel, halb hell.
+ */
+type SchemeLook = { frame: string; canvas: string; card: string; line: string; ink: string }
+const schemeLooks: Record<Design, Record<Exclude<Theme, 'system'>, SchemeLook>> = {
+  cubiq: {
+    dark: { frame: '#04061a', canvas: '#070a1d', card: '#0c1028', line: '#1e2550', ink: '#283062' },
+    oled: { frame: '#000000', canvas: '#000000', card: '#05060f', line: '#151937', ink: '#1f2447' },
+    light: { frame: '#e1e5f1', canvas: '#edf0f8', card: '#ffffff', line: '#dde1ef', ink: '#d2d7e8' },
+  },
+  winter: {
+    dark: { frame: '#050913', canvas: '#070c18', card: '#0a1222', line: '#182840', ink: '#1e2e4a' },
+    oled: { frame: '#000000', canvas: '#000000', card: '#04070e', line: '#101a2c', ink: '#18233a' },
+    light: { frame: '#dde8f2', canvas: '#eaf2f9', card: '#ffffff', line: '#d9e4ef', ink: '#cfdbe8' },
+  },
+}
+const themes = computed<{ key: Theme; look: SchemeLook; split?: SchemeLook }[]>(() => {
+  const looks = schemeLooks[currentDesign.value]
+  return [
+    { key: 'dark', look: looks.dark },
+    { key: 'oled', look: looks.oled },
+    { key: 'light', look: looks.light },
+    { key: 'system', look: looks.dark, split: looks.light },
+  ]
+})
 const accents: { key: Accent; color: string }[] = [
   { key: 'cubiq', color: '#71a330' },
   { key: 'emerald', color: '#17a34a' },
@@ -356,6 +391,36 @@ async function allowFirewall() {
 
     <!-- Aussehen --------------------------------------------------------------- -->
     <div v-else-if="active === 'appearance'">
+      <!-- Design: das ganze Aussehen; die Vorschau zeigt die echte Szene (Polarlicht als kleines Standbild). -->
+      <section class="mb-5 border-b border-base-800 pb-5" data-testid="look-picker">
+        <h3 class="section-heading">{{ t('settings.appearance.look.title') }}</h3>
+        <p class="-mt-1 mb-3 text-xs text-base-400">{{ t('settings.appearance.look.text') }}</p>
+        <div class="grid grid-cols-2 gap-3 mobile:grid-cols-1" role="radiogroup" :aria-label="t('settings.appearance.look.title')">
+          <button
+            v-for="d in designs"
+            :key="d"
+            type="button"
+            role="radio"
+            class="look"
+            :class="{ 'look-on': currentDesign === d }"
+            :aria-checked="currentDesign === d"
+            :aria-label="t('settings.appearance.look.choose', { name: t(`settings.appearance.look.options.${d}.name`) })"
+            :data-look="d"
+            @click="chooseDesign(d)"
+          >
+            <span class="look-picture">
+              <img v-if="d === 'winter' && winterPicture" :src="winterPicture" alt="" draggable="false" />
+              <span v-else-if="d === 'cubiq'" class="look-cubiq"><CubiqScene fill still :seed="0x51" /></span>
+            </span>
+            <span class="look-caption">
+              <span class="block text-sm font-medium text-base-50">{{ t(`settings.appearance.look.options.${d}.name`) }}</span>
+              <span class="line-clamp-2 block text-xs text-base-400">{{ t(`settings.appearance.look.options.${d}.text`) }}</span>
+            </span>
+            <svg v-if="currentDesign === d" class="look-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+          </button>
+        </div>
+      </section>
+
       <h3 class="section-heading">{{ t('settings.appearance.colorScheme') }}</h3>
       <div class="grid grid-cols-4 gap-3 border-b border-base-800 pb-5 mobile:grid-cols-2">
         <button
@@ -802,5 +867,77 @@ async function allowFirewall() {
 
 .section-heading {
   @apply mb-2 text-base font-semibold text-base-50;
+}
+/* Design-Wahl: Vorschau oben, Name darunter; die gewählte Karte trägt Rahmen und Haken in der Akzentfarbe. */
+.look {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 2px solid var(--color-line);
+  background: var(--color-base-850);
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+@supports (corner-shape: squircle) {
+  .look {
+    corner-shape: squircle;
+  }
+}
+.look:hover {
+  border-color: var(--color-line-strong);
+}
+.look.look-on {
+  border-color: var(--color-primary-500);
+}
+.look-picture {
+  position: relative;
+  display: block;
+  height: 7rem;
+  overflow: hidden;
+  background: var(--color-base-950);
+}
+.look-picture img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+.look-caption {
+  display: block;
+  padding: 0.5rem 0.75rem;
+}
+.look-mark {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--color-primary-500);
+  color: var(--color-on-primary);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+}
+/* Die Cubiq-Vorschau zeigt immer Cubiqs eigene Farben (Navy, Grün) – auch während das Polarlicht aktiv ist. */
+.look-cubiq {
+  position: absolute;
+  inset: 0;
+  --color-base-950: #070a1d;
+  --color-base-900: #0c1028;
+  --color-primary-400: #88bb45;
+  --color-primary-500: #71a330;
+  background: #070a1d;
+}
+:root[data-theme="oled"] .look-cubiq {
+  --color-base-950: #000000;
+  --color-base-900: #05060f;
+  background: #000000;
+}
+:root[data-theme="light"] .look-cubiq {
+  --color-base-950: #edf0f8;
+  --color-base-900: #ffffff;
+  background: #edf0f8;
 }
 </style>

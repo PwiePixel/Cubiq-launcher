@@ -4,8 +4,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Textures;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
-import dev.pwiepixel.cubiqclient.core.ui.winter.Snow;
-import dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath;
 
 /**
  * Hintergrund im Design „Fuchsbau“ (Gegenstück zu {@code app/components/FoxScene.vue}): ein Minecraft-Wald in der
@@ -14,7 +12,7 @@ import dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath;
  * atmet ruhig; Blütenteppiche, Glühwürmchen, treibende Kirschblüten und ein paar Herbstblätter. Im hellen Farbschema die
  * goldene Stunde.
  *
- * <p>Wie die Winternacht: gemalt wird in Texeln (ein Texel = 1 GUI-Pixel, bei sehr großen Fenstern mehr) in einen
+ * <p>Wie die Polarlicht-Szene: gemalt wird in Texeln (ein Texel = 1 GUI-Pixel, bei sehr großen Fenstern mehr) in einen
  * eigenen Puffer, der als Textur hochgeladen und pixelig hochskaliert gezeichnet wird. Eigener Takt von 80 ms – nur dann
  * wird das Bild neu zusammengesetzt; die Szene tickt nur, solange sie gezeichnet wird. Ohne Animation ein ruhiges
  * Standbild (Feuer brennt ruhig, Glühwürmchen stehen, der Fuchs atmet nicht sichtbar).
@@ -40,11 +38,11 @@ public final class FoxScene {
 	}
 
 	private final String textureName;
-	private final WinterMath.Rng rand = new WinterMath.Rng((int) System.nanoTime() ^ 0xf0);
+	private final FoxMath.Rng rand = new FoxMath.Rng((int) System.nanoTime() ^ 0xf0);
 	private FoxLandscape land;
 	private FoxPainter painter;
 	private FoxParticles.Leaves leaves;
-	private Snow.Smoke smoke;
+	private Smoke smoke;
 	private FoxParticles.Sparks sparks;
 	private final FoxPainter.Frame state = new FoxPainter.Frame();
 	private int[] frame;
@@ -189,7 +187,7 @@ public final class FoxScene {
 		builtRows = rows;
 		land = FoxLandscape.build(cols, rows, SEED, true, SUN_X);
 		leaves = new FoxParticles.Leaves(land.w, land.h, rand, 1);
-		smoke = new Snow.Smoke(rand);
+		smoke = new Smoke(rand);
 		sparks = new FoxParticles.Sparks(rand);
 		// Etwas Rauch schon da, damit er nicht erst aus dem Nichts aufsteigt.
 		double[] o = origin();

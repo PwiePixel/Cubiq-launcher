@@ -353,15 +353,16 @@ public final class IntroUi extends UiScreen {
 		Paint.windowHeader(c, px, py, pw, HEADER_H, t.surfaceHigh, t.border);
 		int lx = px + PAD;
 		int ly = py + (HEADER_H - PixelFont.HEIGHT * 2) / 2;
-		boolean seasonal = t.halloween || t.winter || t.fox;
+		boolean seasonal = t.halloween || t.fox;
 		int textX;
 		if (seasonal) {
 			List<int[]> rects = PixelFont.rects("CUBIQ");
 			int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
 			for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
-			if (t.winter) dev.pwiepixel.cubiqclient.core.ui.title.TitleUi.snowCaps(c, rects, lx, ly, 2);
 			if (t.fox) dev.pwiepixel.cubiqclient.core.ui.fox.Ember.leafCaps(c, rects, lx, ly, 2);
 			textX = lx + PixelFont.width("CUBIQ") * 2 + 6;
+		} else if (t.winter) {
+			textX = lx + dev.pwiepixel.cubiqclient.core.ui.winter.Frost.lockup(c, lx, ly, 2, 1f) + 6;
 		} else {
 			textX = lx + CubiqMark.lockup(c, lx, ly, 2, 1f) + 6;
 		}
@@ -512,7 +513,7 @@ public final class IntroUi extends UiScreen {
 				}
 			});
 		}
-		// Design (Cubiq | Winternacht | Fuchsbau) neben den Akzenten, sonst in einer eigenen Zeile.
+		// Design (Cubiq | Polarlicht | Fuchsbau) neben den Akzenten, sonst in einer eigenen Zeile.
 		int dx = ax + ACCENTS.length * (size + 4) + 10;
 		int dw = x + w - dx;
 		if (dw < 270) {
@@ -545,7 +546,7 @@ public final class IntroUi extends UiScreen {
 		if (selected) {
 			Paint.accentButton(c, x, y, w, h, c.clip(label, w - 8), 1f, 0f);
 		} else {
-			boolean seasonal = t.halloween || t.winter || t.fox;
+			boolean seasonal = t.halloween || t.fox;
 			if (seasonal) Paint.panel(c, x, y, w, h, hover ? t.surfaceHover : t.surfaceHigh, hover ? Paint.hoverEdge(t) : t.border);
 			else Paint.secondaryFace(c, x, y, w, h, hover ? 1f : 0f);
 			String s = c.clip(label, w - 6);

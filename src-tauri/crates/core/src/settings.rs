@@ -201,19 +201,25 @@ fn lenient_accent<'de, D: serde::Deserializer<'de>>(deserializer: D) -> std::res
 }
 
 /// Gesamtes Aussehen des Launchers: Hintergrund-Szene, Muster und Farben.
-/// Akzent und Farbschema bleiben eigene Einstellungen. Bisher gibt es ein Design.
+/// Akzent und Farbschema bleiben eigene Einstellungen. Der Cubiq Client bekommt
+/// das Design über `launcher-theme.json` und sieht im Spiel gleich aus.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Design {
     /// Schlichte, dunkle Flächen mit dem Grün aus dem Logo (Standard).
     #[default]
     Cubiq,
+    /// „Polarlicht“: Nachthimmel mit Polarlicht, schwebende Schnee-Inseln, Eisblau.
+    Winter,
 }
 
 impl Design {
+    pub const ALL: [Design; 2] = [Self::Cubiq, Self::Winter];
+
     pub fn code(self) -> &'static str {
         match self {
             Self::Cubiq => "cubiq",
+            Self::Winter => "winter",
         }
     }
 }
@@ -307,7 +313,7 @@ pub struct UiSettings {
     pub theme: Theme,
     #[serde(deserialize_with = "lenient_accent")]
     pub accent: Accent,
-    /// Gesamtes Aussehen (derzeit nur „Cubiq“).
+    /// Gesamtes Aussehen („Cubiq“ oder „Polarlicht“).
     #[serde(deserialize_with = "lenient_design")]
     pub design: Design,
     /// Unschärfe-Effekte (Backdrop-Blur) – aus spart GPU auf schwachen Rechnern.
@@ -849,6 +855,32 @@ mod tests {
         s.save(&file).await.unwrap();
         let back = Settings::load(&file).await.unwrap();
         assert_eq!((back.ui.design, back.ui.accent), (Design::Cubiq, Accent::Orange));
+    }
+
+    #[tokio::test]
+    async fn winter_design_round_trips() {
+        // Jeder Wert serialisiert als sein Code – den liest auch der Cubiq Client.
+        for design in Design::ALL {
+            assert_eq!(serde_json::to_value(design).unwrap(), design.code());
+            assert_eq!(serde_json::from_value::<Design>(serde_json::json!(design.code())).unwrap(), design);
+        }
+        assert_eq!(Design::Winter.code(), "winter");
+        let ui: UiSettings = serde_json::from_value(serde_json::json!({ "design": "winter", "accent": "ice", "theme": "oled" })).unwrap();
+        assert_eq!((ui.design, ui.accent, ui.theme), (Design::Winter, Accent::Ice, Theme::Oled));
+        let json = serde_json::to_value(&ui).unwrap();
+        assert_eq!((json["design"].as_str(), json["accent"].as_str()), (Some("winter"), Some("ice")));
+        // Groß geschrieben oder anders getippt ist es kein bekanntes Design → Cubiq, der Rest bleibt.
+        let ui: UiSettings = serde_json::from_value(serde_json::json!({ "design": "Winter", "accent": "lapis" })).unwrap();
+        assert_eq!((ui.design, ui.accent), (Design::Cubiq, Accent::Lapis));
+        let ui: UiSettings = serde_json::from_value(serde_json::json!({ "design": 7, "accent": "amber" })).unwrap();
+        assert_eq!((ui.design, ui.accent), (Design::Cubiq, Accent::Amber));
+
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("settings.json");
+        let s = Settings { ui: UiSettings { design: Design::Winter, accent: Accent::Ice, theme: Theme::Light, ..Default::default() }, ..Default::default() };
+        s.save(&file).await.unwrap();
+        let back = Settings::load(&file).await.unwrap();
+        assert_eq!((back.ui.design, back.ui.accent, back.ui.theme), (Design::Winter, Accent::Ice, Theme::Light));
     }
 
     #[tokio::test]

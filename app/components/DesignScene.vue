@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Hintergrund-Szene des Launchers (Startseite, Seiten-Hintergrund, Leer-Zustände, Big Picture).
+// Hintergrund-Szene des gewählten Designs (Startseite, Seiten-Hintergrund, Leer-Zustände, Big Picture):
+// die Würfel-Szene im Design „Cubiq“, der Polarlicht-Himmel im Design „Polarlicht“ (Winter).
 // Solange Halloween läuft, überall die Mondnacht – das Event geht vor dem Design.
 // `noEvent` behält das Design (z. B. Update-Titelbilder).
 const props = defineProps<{
@@ -16,6 +17,7 @@ const props = defineProps<{
   noEvent?: boolean
 }>()
 
+const design = useDesign()
 const events = useEventsStore()
 const moonnight = computed(() => events.lookHalloween && !props.noEvent)
 </script>
@@ -24,6 +26,9 @@ const moonnight = computed(() => events.lookHalloween && !props.noEvent)
   <MoonnightScene v-if="moonnight" :seed="seed" :still="still" :bolts="bolts">
     <slot />
   </MoonnightScene>
+  <WinterScene v-else-if="design === 'winter'" :mode="mode" :progress="progress" :anchor="anchor" :fill="fill" :seed="seed" :still="still">
+    <slot />
+  </WinterScene>
   <CubiqScene v-else :mode="mode" :progress="progress" :anchor="anchor" :fill="fill" :seed="seed" :still="still">
     <slot />
   </CubiqScene>
