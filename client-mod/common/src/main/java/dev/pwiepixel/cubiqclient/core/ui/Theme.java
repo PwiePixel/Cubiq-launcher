@@ -12,7 +12,7 @@ import java.util.Locale;
 /**
  * Farben des Cubiq-Menüs. Der Launcher schreibt vor dem Start seine Oberflächen-Einstellungen nach
  * {@code config/cubiqclient/launcher-theme.json}; fehlt die Datei oder ist sie ungültig, gilt das
- * dunkle Standard-Thema mit Redstone-Rot. Alle Werte werden geprüft und begrenzt.
+ * dunkle Cubiq-Design mit Cubiq-Grün. Alle Werte werden geprüft und begrenzt.
  */
 public final class Theme {
 	/** Datei, die der Launcher schreibt (relativ zum Config-Ordner der Instanz). */
@@ -26,7 +26,7 @@ public final class Theme {
 		String theme;
 		String accent;
 		String accentColor;
-		/** "redstone", "winter" (ab Launcher 0.20) oder "fox"; fehlt/unbekannt = Redstone. */
+		/** "cubiq" (der Launcher kennt nur noch dieses Design); "winter"/"fox" wählt man im Spiel, alles andere = Cubiq. */
 		String design;
 		/** Aktives Cubiq-Event für dieses Konto ({@code "halloween"}) – fehlt sonst. */
 		String event;
@@ -55,29 +55,47 @@ public final class Theme {
 	 */
 	private static volatile boolean launcherReducedMotion;
 
-	/** Design „Redstone“ (Standard), „Winternacht“ und „Fuchsbau“. */
-	public static final String REDSTONE = "redstone";
+	/** Design „Cubiq“ (Standard, wie der Launcher), „Winternacht“ und „Fuchsbau“. */
+	public static final String CUBIQ = "cubiq";
 	public static final String WINTER = "winter";
 	public static final String FOX = "fox";
 
-	private static Theme current = new Theme("dark", "cubiq", 0xFF71A330, REDSTONE);
+	/**
+	 * Akzent-Skalen des Launchers ({@code app/assets/css/main.css}, {@code --color-primary-300/400/500/600}), erkannt am
+	 * Grundton (500). Eigene Farben bekommen eine abgeleitete Skala.
+	 */
+	private static final int[][] SCALES = {
+			{0xFFA9D46B, 0xFF88BB45, 0xFF71A330, 0xFF5C8726},
+			{0xFFFFD48A, 0xFFFFB84D, 0xFFE0900C, 0xFFB06E00},
+			{0xFF86EFAC, 0xFF4ADE80, 0xFF17A34A, 0xFF15803D},
+			{0xFF9DBAFF, 0xFF6B95FF, 0xFF3563E9, 0xFF2447B8},
+			{0xFFDCBCFF, 0xFFC38CFB, 0xFF9B4DDF, 0xFF7A2FC0},
+			{0xFFB8E7FF, 0xFF7FD3FF, 0xFF2B97D6, 0xFF1C74AD},
+			{0xFFFFC89A, 0xFFFF9A52, 0xFFE8702A, 0xFFB8521C}};
+	/** Schrift auf der Akzentfarbe, wenn sie hell genug ist ({@code --color-on-primary}); sonst Weiß. */
+	private static final int ON_LIGHT_ACCENT = 0xFF0B1405;
+	/** Hinweise, Warnungen, „ausstehend“ ({@code --color-caution-300}, dunkel/hell). */
+	private static final int CAUTION_DARK = 0xFFF8CD7A;
+	private static final int CAUTION_LIGHT = 0xFF8A5A00;
+	/** Fehler, Löschen, Sperren – rot, egal welche Akzentfarbe ({@code --color-danger-300}, dunkel/hell). */
+	private static final int DANGER_DARK = 0xFFFDA4A4;
+	private static final int DANGER_LIGHT = 0xFFB42318;
+
+	private static Theme current = new Theme("dark", "cubiq", 0xFF71A330, CUBIQ);
 	/** Halloween-Variante des aktuellen Themas (zwischengespeichert, solange {@link #current} gleich bleibt). */
 	private static volatile Theme spooky;
 
 	public final String themeName;
 	public final String accentName;
-	/** Design: {@link #REDSTONE}, {@link #WINTER} oder {@link #FOX}. */
+	/** Design: {@link #CUBIQ}, {@link #WINTER} oder {@link #FOX}. */
 	public final String designName;
-	/** Winternacht? (Nachtblau, Eis statt Stein, Eislaternen statt Redstone-Lampen, Frost statt Staub.) */
+	/** Winternacht? (Nachtblau, Eislaternen statt leuchtender Flächen, Frost-Linien.) */
 	public final boolean winter;
-	/**
-	 * Fuchsbau? (Warme Abenddämmerung: Pflaume und Kastanie statt Deepslate, Laternen mit Glut statt Redstone-Lampen,
-	 * glimmende Äste statt Staub.)
-	 */
+	/** Fuchsbau? (Warme Abenddämmerung: Pflaume und Kastanie, Laternen mit Glut, glimmende Äste als Linien.) */
 	public final boolean fox;
 	/**
 	 * Halloween 2026 „Mondnacht“ (Event aktiv, siehe {@code core.halloween.Halloween}): Nacht, Pflaume, Violett und
-	 * Mondsilber – liegt über Redstone und Winternacht, immer dunkel.
+	 * Mondsilber – liegt über allen Designs, immer dunkel.
 	 */
 	public final boolean halloween;
 	/** Thema, aus dem die Halloween-Variante entstand (sonst null). */
@@ -87,45 +105,49 @@ public final class Theme {
 	public final int accent;
 	/** Hellere Akzentvariante (Hover). */
 	public final int accentHover;
-	/** Hintergrund des Menüs. */
+	/** Akzent für Schrift, Symbole, Schreibmarken und feine Linien – gut lesbar auf den Flächen des Themas. */
+	public final int accentText;
+	/** Hintergrund des Menüs (Fensterfläche). */
 	public final int background;
 	/** Flächen/Kacheln. */
 	public final int surface;
 	public final int surfaceHover;
-	/** Flächen einer Ebene höher (Kopfzeile, Eingabefelder). */
+	/** Flächen einer Ebene höher (Kopfzeile, Knöpfe, Tastenkappen). */
 	public final int surfaceHigh;
 	public final int border;
 	public final int text;
 	public final int textDim;
-	/** „Unter Strom“ – aktive Anzeige (Lampen-Bernstein). */
-	public final int on;
-	public final int off;
+	/** Hinweise, Warnungen und „ausstehend“ (warmes Bernstein). */
+	public final int caution;
+	/** Fehler, Löschen, Sperren (rot, unabhängig vom Akzent). */
+	public final int danger;
 	/** Abdunkelung hinter dem Menü. */
 	public final int scrim;
 	/** Heller Grundton? (Licht-Thema – Texte sind dann dunkel.) */
 	public final boolean light;
 
-	// --- Redstone-Stil ---
-	/** Tiefste Fläche (Mulden: Eingabefelder, Schalter-Schiene, Symbol-Nischen). */
+	/** Tiefste Fläche (Mulden: Eingabefelder, Listen, Symbol-Nischen). */
 	public final int deep;
-	/** Pixel-Kante oben/links (Licht) und unten/rechts (Schatten) von Steinflächen. */
+	/** Hellere und dunklere Kante (Ränder kleiner Elemente, Vorschaubilder). */
 	public final int bevelLight;
 	public final int bevelDark;
-	/** Redstone-Staub ohne Signal und mit voller Signalstärke (in Akzentfarbe getönt). */
-	public final int dustOff;
-	public final int dustOn;
-	/** Leuchten um aktive Elemente (Akzent, deckend – Deckkraft setzt der Aufrufer). */
+	/** Linie ohne Hervorhebung: Trennlinien, Schiene von Schalter und Schieberegler. */
+	public final int track;
+	/** Schein um aktive Elemente (deckend – Deckkraft setzt der Aufrufer). */
 	public final int glow;
-	/** Redstone-Lampe: aus (Fläche/Kante), an (Fläche/heißer Kern/Kante), Leuchten. */
-	public final int lampOff;
-	public final int lampOffEdge;
-	public final int lampOn;
-	public final int lampHot;
-	public final int lampOnEdge;
-	public final int lampGlow;
-	/** Schrift auf der Lampe: aus (hell) und an (dunkel, damit sie auf dem Licht lesbar bleibt). */
-	public final int lampText;
-	public final int lampTextLit;
+	/**
+	 * Fläche, die mit der Auswahl aufleuchtet ({@link Paint#accentFace}): aus (Fläche/Kante), an (Fläche/hellere
+	 * Fläche/Kante), Schein. Im Cubiq-Design wird sie zur Akzentfarbe, in Winternacht/Fuchsbau ist sie eine Laterne.
+	 */
+	public final int faceOff;
+	public final int faceOffEdge;
+	public final int faceOn;
+	public final int faceHot;
+	public final int faceOnEdge;
+	public final int faceGlow;
+	/** Schrift auf dieser Fläche: aus (hell) und an (lesbar auf der leuchtenden Fläche). */
+	public final int faceText;
+	public final int faceTextOn;
 
 	private Theme(String themeName, String accentName, int accent, String design) {
 		this.halloween = false;
@@ -136,23 +158,24 @@ public final class Theme {
 		this.winter = WINTER.equals(designName);
 		this.fox = FOX.equals(designName);
 		this.accent = accent;
-		this.accentHover = ColorMath.lerp(accent, 0xFFFFFFFF, 0.22f);
 		this.light = "light".equals(themeName);
+		this.caution = light ? CAUTION_LIGHT : CAUTION_DARK;
+		this.danger = light ? DANGER_LIGHT : DANGER_DARK;
 		boolean oled = "oled".equals(themeName);
 		if (winter) {
-			// Winternacht (Launcher: [data-design="winter"]): Nachtblau, Eis statt Stein. Die Lampen sind Eislaternen –
-			// eisblau unabhängig vom Akzent, wie im Launcher; Frost-Linien statt Staub in Akzentfarbe.
-			this.dustOff = ColorMath.lerp(ColorMath.scaleRgb(accent, 0.42f), oled ? 0xFF070C17 : 0xFF101A2E, 0.3f);
-			this.dustOn = ColorMath.lerp(accent, 0xFFFFFFFF, 0.3f);
+			// Winternacht: Nachtblau. Die Laternen sind Eis – eisblau unabhängig vom Akzent; Frost-Linien in Akzentfarbe.
+			this.accentHover = ColorMath.lerp(accent, 0xFFFFFFFF, 0.22f);
+			this.track = ColorMath.lerp(ColorMath.scaleRgb(accent, 0.42f), oled ? 0xFF070C17 : 0xFF101A2E, 0.3f);
+			this.accentText = ColorMath.lerp(accent, 0xFFFFFFFF, 0.3f);
 			this.glow = accent;
-			this.lampOff = 0xFF172338;
-			this.lampOffEdge = 0xFF0A111F;
-			this.lampOn = 0xFF8FDCFF;
-			this.lampHot = 0xFFEAF9FF;
-			this.lampOnEdge = 0xFF2A6E9E;
-			this.lampGlow = 0xFF8FDCFF;
-			this.lampText = 0xFFDBE8F8;
-			this.lampTextLit = 0xFF06263B;
+			this.faceOff = 0xFF172338;
+			this.faceOffEdge = 0xFF0A111F;
+			this.faceOn = 0xFF8FDCFF;
+			this.faceHot = 0xFFEAF9FF;
+			this.faceOnEdge = 0xFF2A6E9E;
+			this.faceGlow = 0xFF8FDCFF;
+			this.faceText = 0xFFDBE8F8;
+			this.faceTextOn = 0xFF06263B;
 			if (light) {
 				background = 0xFFE8EFF7;
 				surface = 0xFFFFFFFF;
@@ -161,8 +184,6 @@ public final class Theme {
 				border = 0xFFC3D2E4;
 				text = 0xFF0B1426;
 				textDim = 0xFF55698B;
-				on = 0xFF1C74AD;
-				off = 0xFFCBD8E7;
 				scrim = 0x500B1426;
 				deep = 0xFFD5E1EE;
 				bevelLight = 0xFFFFFFFF;
@@ -175,8 +196,6 @@ public final class Theme {
 				border = oled ? 0xFF19243A : 0xFF283A5E;
 				text = 0xFFEAF4FF;
 				textDim = oled ? 0xFF7D8FB3 : 0xFF889BC2;
-				on = 0xFF8FDCFF;
-				off = oled ? 0xFF0E1626 : 0xFF1C2A48;
 				scrim = oled ? 0xB0000000 : 0xA8060A14;
 				deep = oled ? 0xFF02040A : 0xFF080D19;
 				bevelLight = oled ? 0xFF1F2C47 : 0xFF31476F;
@@ -185,19 +204,20 @@ public final class Theme {
 			return;
 		}
 		if (fox) {
-			// Fuchsbau (Launcher: [data-design="fox"]): warme Dämmerung. Die Lampen sind Laternen mit warmem Glutlicht –
-			// golden unabhängig vom Akzent wie „unter Strom“ im Launcher; glimmende Äste in Akzentfarbe statt Staub.
-			this.dustOff = ColorMath.lerp(ColorMath.scaleRgb(accent, 0.36f), oled ? 0xFF0E080D : 0xFF241620, 0.32f);
-			this.dustOn = ColorMath.lerp(accent, 0xFFFFE1A6, 0.22f);
+			// Fuchsbau: warme Dämmerung. Die Laternen haben warmes Glutlicht – golden unabhängig vom Akzent; glimmende Äste
+			// in Akzentfarbe als Linien.
+			this.accentHover = ColorMath.lerp(accent, 0xFFFFFFFF, 0.22f);
+			this.track = ColorMath.lerp(ColorMath.scaleRgb(accent, 0.36f), oled ? 0xFF0E080D : 0xFF241620, 0.32f);
+			this.accentText = ColorMath.lerp(accent, 0xFFFFE1A6, 0.22f);
 			this.glow = accent;
-			this.lampOff = 0xFF3A2428;
-			this.lampOffEdge = 0xFF1E1416;
-			this.lampOn = 0xFFFFC362;
-			this.lampHot = 0xFFFFF6D8;
-			this.lampOnEdge = 0xFF9A4A1C;
-			this.lampGlow = 0xFFFFB050;
-			this.lampText = 0xFFF3E2D8;
-			this.lampTextLit = 0xFF2E1404;
+			this.faceOff = 0xFF3A2428;
+			this.faceOffEdge = 0xFF1E1416;
+			this.faceOn = 0xFFFFC362;
+			this.faceHot = 0xFFFFF6D8;
+			this.faceOnEdge = 0xFF9A4A1C;
+			this.faceGlow = 0xFFFFB050;
+			this.faceText = 0xFFF3E2D8;
+			this.faceTextOn = 0xFF2E1404;
 			if (light) {
 				// Goldene Stunde.
 				background = 0xFFF6EBE0;
@@ -207,8 +227,6 @@ public final class Theme {
 				border = 0xFFE3CDB9;
 				text = 0xFF1E130F;
 				textDim = 0xFF7D5E50;
-				on = 0xFFB8650F;
-				off = 0xFFEAD8C6;
 				scrim = 0x501E130F;
 				deep = 0xFFEAD6C2;
 				bevelLight = 0xFFFFFFFF;
@@ -221,8 +239,6 @@ public final class Theme {
 				border = oled ? 0xFF261A24 : 0xFF462F44;
 				text = 0xFFFFF3EA;
 				textDim = oled ? 0xFFA48C9A : 0xFFB398A8;
-				on = 0xFFFFC362;
-				off = oled ? 0xFF181017 : 0xFF332232;
 				scrim = oled ? 0xB0000000 : 0xA80E080D;
 				deep = oled ? 0xFF040204 : 0xFF100A10;
 				bevelLight = oled ? 0xFF33232F : 0xFF563A53;
@@ -230,54 +246,53 @@ public final class Theme {
 			}
 			return;
 		}
-		// Staub: dunkles, entsättigtes Akzent-Rot ohne Signal – kräftig und etwas heller mit Signal.
-		this.dustOff = ColorMath.lerp(ColorMath.scaleRgb(accent, 0.34f), 0xFF1A1414, 0.25f);
-		this.dustOn = ColorMath.lerp(accent, 0xFFFFFFFF, 0.12f);
+		// Cubiq (wie der Launcher): ruhige, dunkle Flächen mit einem Hauch Grün, die Akzentfarbe für Aktionen.
+		int[] scale = scale(accent);
+		this.accentHover = scale[1];
+		this.accentText = light ? ColorMath.lerp(scale[3], 0xFF000000, 0.18f) : scale[0];
 		this.glow = accent;
-		this.lampOff = 0xFF3B2A1D;
-		this.lampOffEdge = 0xFF22180F;
-		this.lampOn = 0xFFF2B454;
-		this.lampHot = 0xFFFFE7A6;
-		this.lampOnEdge = 0xFF8C4E1C;
-		this.lampGlow = 0xFFFFB347;
-		this.lampText = 0xFFE6DCD2;
-		this.lampTextLit = 0xFF2B1605;
+		this.faceOn = accent;
+		this.faceHot = scale[1];
+		this.faceOnEdge = scale[3];
+		this.faceGlow = accent;
+		this.faceTextOn = onAccent(accent);
 		if (light) {
-			background = 0xFFF3F3F8;
-			surface = 0xFFFFFFFF;
-			surfaceHover = 0xFFE9E9F2;
-			surfaceHigh = 0xFFE6E6EE;
-			border = 0xFFC9C9D8;
-			text = 0xFF15151C;
-			textDim = 0xFF5F5F75;
-			on = 0xFFE0900C;
-			off = 0xFFC2C2D0;
-			scrim = 0x50000000;
-			deep = 0xFFD9D9E0;
+			// Launcher „Hell“: base-900 als Fensterfläche, base-850/800/700 darüber.
+			background = 0xFFFFFFFF;
+			surface = 0xFFF5F8F6;
+			surfaceHover = 0xFFE5EBE6;
+			surfaceHigh = 0xFFEEF2EF;
+			border = 0xFFD2DBD4;
+			text = 0xFF0F1411;
+			textDim = 0xFF5D6B61;
+			scrim = 0x500F1411;
+			deep = 0xFFEEF2EF;
 			bevelLight = 0xFFFFFFFF;
-			bevelDark = 0xFFB4B4C2;
+			bevelDark = 0xFFA8B5AB;
 		} else {
-			// Tiefenschiefer: kühles, fast neutrales Grau – dunkel genug, dass Redstone leuchtet.
-			background = oled ? 0xFF000000 : 0xFF19191D;
-			surface = oled ? 0xFF0D0D10 : 0xFF222227;
-			surfaceHover = oled ? 0xFF18181C : 0xFF2B2B31;
-			surfaceHigh = oled ? 0xFF131317 : 0xFF26262B;
-			border = oled ? 0xFF26262C : 0xFF36363D;
-			text = 0xFFEDE9E4;
-			textDim = 0xFF8F8B89;
-			on = 0xFFFFB84D;
-			off = oled ? 0xFF1C1C21 : 0xFF2E2E34;
-			scrim = 0xA80B0B0E;
-			deep = oled ? 0xFF050506 : 0xFF121215;
-			bevelLight = oled ? 0xFF2A2A31 : 0xFF3B3B42;
-			bevelDark = oled ? 0xFF000000 : 0xFF141417;
+			// Launcher „Dunkel“/„OLED“: base-900 Fenster, base-850 Kacheln, base-800 Knöpfe, base-700 Kanten.
+			background = oled ? 0xFF050706 : 0xFF111613;
+			surface = oled ? 0xFF0A0D0B : 0xFF161C18;
+			surfaceHover = oled ? 0xFF181F1A : 0xFF242D27;
+			surfaceHigh = oled ? 0xFF121714 : 0xFF1D2520;
+			border = oled ? 0xFF1F2721 : 0xFF29332C;
+			text = 0xFFEEF4EF;
+			textDim = 0xFF869489;
+			scrim = oled ? 0xB0000000 : 0xA80C100E;
+			deep = oled ? 0xFF000000 : 0xFF0C100E;
+			bevelLight = oled ? 0xFF354038 : 0xFF3D4A41;
+			bevelDark = oled ? 0xFF000000 : 0xFF0C100E;
 		}
+		this.track = border;
+		this.faceOff = surfaceHigh;
+		this.faceOffEdge = border;
+		this.faceText = text;
 	}
 
 	/**
 	 * Halloween-Variante von {@code base} (Vertrag „Look“): Nacht #07060c, Nebelgrund #13101f, Pflaume #3a1f5c,
-	 * Violett #8e6cc9/#b9a2ea, Mondsilber #cfd5e3/#f3f5fb. Lampen sind mondbeschienenes Pflaumenglas mit Silberkante,
-	 * „Staub“ ist ein dünner violett-silberner Faden. Kein Orange als Fläche.
+	 * Violett #8e6cc9/#b9a2ea, Mondsilber #cfd5e3/#f3f5fb. Leuchtende Flächen sind mondbeschienenes Pflaumenglas mit
+	 * Silberkante, Linien sind ein dünner violett-silberner Faden. Kein Orange als Fläche.
 	 */
 	private Theme(Theme base) {
 		this.base = base;
@@ -290,17 +305,17 @@ public final class Theme {
 		this.light = false;
 		this.accent = 0xFF8E6CC9;
 		this.accentHover = 0xFFB9A2EA;
-		this.dustOff = 0xFF2E2648;
-		this.dustOn = 0xFFCFD5E3;
+		this.track = 0xFF2E2648;
+		this.accentText = 0xFFCFD5E3;
 		this.glow = 0xFFB9A2EA;
-		this.lampOff = 0xFF141020;
-		this.lampOffEdge = 0xFF5B5280;
-		this.lampOn = 0xFF4A2C78;
-		this.lampHot = 0xFFCFD5E3;
-		this.lampOnEdge = 0xFFF3F5FB;
-		this.lampGlow = 0xFFB9A2EA;
-		this.lampText = 0xFFE9E6F5;
-		this.lampTextLit = 0xFFF3F5FB;
+		this.faceOff = 0xFF141020;
+		this.faceOffEdge = 0xFF5B5280;
+		this.faceOn = 0xFF4A2C78;
+		this.faceHot = 0xFFCFD5E3;
+		this.faceOnEdge = 0xFFF3F5FB;
+		this.faceGlow = 0xFFB9A2EA;
+		this.faceText = 0xFFE9E6F5;
+		this.faceTextOn = 0xFFF3F5FB;
 		boolean oled = "oled".equals(base.themeName);
 		this.background = oled ? 0xFF000000 : 0xFF0A0812;
 		this.surface = oled ? 0xFF0A0812 : 0xFF13101F;
@@ -309,22 +324,42 @@ public final class Theme {
 		this.border = 0xFF3B3358;
 		this.text = 0xFFEDEAF7;
 		this.textDim = 0xFF9A94B4;
-		this.on = 0xFFCFD5E3;
-		this.off = 0xFF2A2440;
+		this.caution = CAUTION_DARK;
+		this.danger = DANGER_DARK;
 		this.scrim = 0xB007060C;
 		this.deep = oled ? 0xFF000000 : 0xFF07060C;
 		this.bevelLight = 0xFF4A4068;
 		this.bevelDark = 0xFF040308;
 	}
 
+	/** Skala {300, 400, 500, 600} zur Akzentfarbe – die des Launchers oder, bei eigenen Farben, abgeleitet. */
+	static int[] scale(int accent) {
+		for (int[] s : SCALES) {
+			if (s[2] == accent) return s;
+		}
+		return new int[]{ColorMath.lerp(accent, 0xFFFFFFFF, 0.42f), ColorMath.lerp(accent, 0xFFFFFFFF, 0.2f), accent,
+				ColorMath.scaleRgb(accent, 0.8f)};
+	}
+
 	/**
-	 * Farbe des Redstone-Staubs bei Signalstärke {@code level} (0..15). Wie im Spiel wird der Staub
-	 * mit sinkender Stärke dunkler – nie ganz aus, solange ein Signal anliegt.
+	 * Schrift auf der Akzentfarbe wie im Launcher: dunkel auf hellen Akzenten (Cubiq-Grün, Bernstein, Smaragd, Eis,
+	 * Orange), weiß auf dunklen (Lapis, Amethyst) – entschieden nach dem besseren Kontrast.
 	 */
-	public int dust(int level) {
-		if (level <= 0) return dustOff;
-		float f = Math.min(15, level) / 15f;
-		return ColorMath.lerp(ColorMath.lerp(dustOff, dustOn, 0.45f), dustOn, f);
+	static int onAccent(int accent) {
+		double l = luminance(accent);
+		double dark = (l + 0.05) / (luminance(ON_LIGHT_ACCENT) + 0.05);
+		double white = 1.05 / (l + 0.05);
+		return dark >= white ? ON_LIGHT_ACCENT : 0xFFFFFFFF;
+	}
+
+	/** Relative Leuchtdichte (WCAG) einer Farbe. */
+	private static double luminance(int argb) {
+		return 0.2126 * channel((argb >> 16) & 0xFF) + 0.7152 * channel((argb >> 8) & 0xFF) + 0.0722 * channel(argb & 0xFF);
+	}
+
+	private static double channel(int v) {
+		double c = v / 255.0;
+		return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 	}
 
 	/** Aktuelles Thema (nie null) – während Halloween (Look an) dessen Halloween-Variante. */
@@ -349,43 +384,55 @@ public final class Theme {
 		if (theme != null) current = theme;
 	}
 
-	/** Thema aus Namen bauen (Design Redstone); unbekannte Namen → Standard. */
+	/** Thema aus Namen bauen (Design Cubiq); unbekannte Namen → Standard. */
 	public static Theme of(String themeName, String accentName, String accentHex) {
-		return of(themeName, accentName, accentHex, REDSTONE);
+		return of(themeName, accentName, accentHex, CUBIQ);
 	}
 
-	/** Thema aus Namen bauen; unbekannte Namen → Standard, unbekanntes Design → Redstone. */
+	/** Thema aus Namen bauen; unbekannte Namen → Standard, unbekanntes Design → Cubiq. */
 	public static Theme of(String themeName, String accentName, String accentHex, String design) {
 		String t = normalize(themeName);
-		String a = normalize(accentName);
+		String a = canonicalAccent(normalize(accentName));
 		int accent = accentColor(a, accentHex);
 		if (!"dark".equals(t) && !"oled".equals(t) && !"light".equals(t)) t = "dark";
 		return new Theme(t, a.isEmpty() ? "cubiq" : a, accent, normalizeDesign(design));
 	}
 
-	/** "winter" → Winternacht, "fox" → Fuchsbau, alles andere (fehlt, ältere Launcher, Tippfehler) → Redstone. */
+	/** "winter" → Winternacht, "fox" → Fuchsbau, alles andere (fehlt, das frühere „redstone“, Tippfehler) → Cubiq. */
 	public static String normalizeDesign(String design) {
 		String d = normalize(design);
 		if (WINTER.equals(d)) return WINTER;
 		if (FOX.equals(d)) return FOX;
-		return REDSTONE;
+		return CUBIQ;
 	}
 
-	/** Akzent, den jedes Design ab Werk mitbringt (wie {@code DESIGN_ACCENTS} im Launcher). */
+	/** Akzent, den jedes Design ab Werk mitbringt. */
 	public static String designAccent(String design) {
 		String d = normalizeDesign(design);
 		if (WINTER.equals(d)) return "ice";
-		if (FOX.equals(d)) return "fox";
+		if (FOX.equals(d)) return "orange";
 		return "cubiq";
 	}
 
 	/**
-	 * Akzent beim Wechsel des Designs (wie der Launcher): ist noch der Akzent eines Designs gewählt (Redstone, Eisblau,
-	 * Fuchsorange), kommt der des neuen Designs – Winternacht mit Redstone wird Eisblau, Fuchsbau Fuchsorange, zurück zu
-	 * Redstone wieder Redstone. Jede andere (selbst gewählte) Farbe bleibt.
+	 * Akzent beim Wechsel des Designs: ist noch der Akzent eines Designs gewählt (Cubiq-Grün, Eisblau, Fuchsorange), kommt
+	 * der des neuen Designs – Winternacht wird Eisblau, Fuchsbau Orange, zurück zu Cubiq wieder Cubiq-Grün. Jede andere
+	 * (selbst gewählte) Farbe bleibt.
 	 */
 	public static String accentForDesign(String design, String accent) {
-		if ("cubiq".equals(accent) || "redstone".equals(accent) || "ice".equals(accent) || "fox".equals(accent)) return designAccent(design);
+		String a = canonicalAccent(accent);
+		if ("cubiq".equals(a) || "ice".equals(a) || "orange".equals(a)) return designAccent(design);
+		return a;
+	}
+
+	/**
+	 * Namen des Launchers für frühere Akzent-Namen: „redstone“ → Cubiq-Grün (der frühere Standard), „lamp“ →
+	 * Bernstein, „fox“ → Orange. Der Launcher kennt nur cubiq, amber, emerald, lapis, amethyst, ice und orange.
+	 */
+	public static String canonicalAccent(String accent) {
+		if ("redstone".equals(accent)) return "cubiq";
+		if ("lamp".equals(accent)) return "amber";
+		if ("fox".equals(accent)) return "orange";
 		return accent;
 	}
 
@@ -428,16 +475,16 @@ public final class Theme {
 		return launcherReducedMotion;
 	}
 
-	/** Akzentfarbe aus dem Namen des Launchers, sonst aus dem Hex-Wert, sonst Cubiq-Grün. */
+	/** Akzentfarbe aus dem Namen des Launchers (auch frühere Namen), sonst aus dem Hex-Wert, sonst Cubiq-Grün. */
 	static int accentColor(String name, String hex) {
-		if ("cubiq".equals(name)) return 0xFF71A330;
-		if ("amber".equals(name) || "lamp".equals(name)) return 0xFFE0900C;
-		if ("emerald".equals(name)) return 0xFF17A34A;
-		if ("lapis".equals(name)) return 0xFF3563E9;
-		if ("amethyst".equals(name)) return 0xFF9B4DDF;
-		if ("ice".equals(name)) return 0xFF2B97D6;
-		if ("orange".equals(name) || "fox".equals(name)) return 0xFFE8702A;
-		if ("redstone".equals(name)) return 0xFFE0281E;
+		String n = canonicalAccent(name);
+		if ("cubiq".equals(n)) return 0xFF71A330;
+		if ("amber".equals(n)) return 0xFFE0900C;
+		if ("emerald".equals(n)) return 0xFF17A34A;
+		if ("lapis".equals(n)) return 0xFF3563E9;
+		if ("amethyst".equals(n)) return 0xFF9B4DDF;
+		if ("ice".equals(n)) return 0xFF2B97D6;
+		if ("orange".equals(n)) return 0xFFE8702A;
 		int parsed = parseHex(hex);
 		return parsed != 0 ? parsed : 0xFF71A330;
 	}

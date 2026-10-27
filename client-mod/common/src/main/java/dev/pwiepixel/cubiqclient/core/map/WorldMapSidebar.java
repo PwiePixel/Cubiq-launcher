@@ -6,7 +6,7 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
+import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -85,7 +85,7 @@ final class WorldMapSidebar {
 		rect[3] = h;
 		hovered = null;
 		c.fill(x, y, x + w, y + h, 0xEC141217);
-		c.fill(x, y, x + 1, y + h, ColorMath.withAlpha(t.dustOn, 0xB0));
+		c.fill(x, y, x + 1, y + h, ColorMath.withAlpha(t.accentText, 0xB0));
 		// Klicks auf leere Flächen der Leiste nicht zur Karte durchlassen.
 		hits.add(x, y, w, h, () -> search.setFocused(false));
 
@@ -97,7 +97,7 @@ final class WorldMapSidebar {
 
 		// Suche.
 		int fx = x + 6, fy = y + 5, fw = w - 12;
-		Redstone.well(c, fx, fy, fw, 16, search.focused() ? t.accent : t.border);
+		Paint.well(c, fx, fy, fw, 16, search.focused() ? t.accent : t.border);
 		Icons.draw(c, "search", fx + 4, fy + 4, 1, t.textDim);
 		String text = search.text();
 		if (text.isEmpty() && !search.focused()) {
@@ -115,7 +115,7 @@ final class WorldMapSidebar {
 		int dy = fy + 20;
 		String label = WaypointFilter.ALL.equals(dimFilter) ? I18n.tr("map.list.allDims") : WorldMapUi.dimensionName(dimFilter);
 		boolean hovDim = inside(mx, my, fx, dy, fw, 14);
-		Redstone.button(c, fx, dy, fw, 14, "", false, hovDim);
+		Paint.button(c, fx, dy, fw, 14, "", false, hovDim);
 		c.text("‹", fx + 4, dy + 3, t.textDim, false);
 		c.text("›", fx + fw - 8, dy + 3, t.textDim, false);
 		String clipped = c.clip(label, fw - 24);
@@ -156,7 +156,7 @@ final class WorldMapSidebar {
 		if (maxScroll > 0) {
 			int bh = Math.max(12, lh * lh / (rows.size() * ROW_H));
 			int by = ly + Math.round((lh - bh) * (scroll / maxScroll));
-			c.fill(x + w - 3, by, x + w - 1, by + bh, ColorMath.withAlpha(t.dustOn, 0x90));
+			c.fill(x + w - 3, by, x + w - 1, by + bh, ColorMath.withAlpha(t.accentText, 0x90));
 		}
 
 		// Fuß: Anzahl + „Neu“.
@@ -166,7 +166,7 @@ final class WorldMapSidebar {
 		c.text(c.clip(count, w - 34), x + 6, footY + 5, t.textDim, false);
 		int bx = x + w - 22, byy = footY + 2;
 		boolean hovNew = inside(mx, my, bx, byy, 16, 14);
-		Redstone.button(c, bx, byy, 16, 14, "", false, hovNew);
+		Paint.button(c, bx, byy, 16, 14, "", false, hovNew);
 		Icons.draw(c, "plus", bx + 4, byy + 3, 1, t.text);
 		hits.add(bx, byy, 16, 14, () -> {
 			host.click();
@@ -181,7 +181,7 @@ final class WorldMapSidebar {
 		boolean inList = my >= ly && my < ly + lh;
 		boolean hov = inList && inside(mx, my, x, y, w, ROW_H);
 		if (hov) {
-			c.fill(x, y, x + w, y + ROW_H, ColorMath.withAlpha(t.dustOn, 0x38));
+			c.fill(x, y, x + w, y + ROW_H, ColorMath.withAlpha(t.accentText, 0x38));
 			hovered = wp;
 		}
 		MapSprites sprites = host.engine().sprites();

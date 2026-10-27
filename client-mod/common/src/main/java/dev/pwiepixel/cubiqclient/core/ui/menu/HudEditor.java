@@ -15,7 +15,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
 import dev.pwiepixel.cubiqclient.core.ui.UiScreen;
@@ -77,14 +76,14 @@ public final class HudEditor extends UiScreen {
 		// Hilfslinien: Bildschirmmitte immer dezent, aktive Einrastung in Akzentfarbe
 		c.fill(width / 2, 0, width / 2 + 1, height, ColorMath.withAlpha(t.text, 26));
 		c.fill(0, height / 2, width, height / 2 + 1, ColorMath.withAlpha(t.text, 26));
-		// Aktive Hilfslinie = bestromter Staub (mit Leuchten)
+		// Aktive Hilfslinie in der Akzentfarbe (mit Leuchten)
 		if (dragging != null && guideX != HudSnap.NO_GUIDE) {
 			c.fill(guideX - 1, 0, guideX + 2, height, ColorMath.withAlpha(t.glow, 50));
-			c.fill(guideX, 0, guideX + 1, height, t.dustOn);
+			c.fill(guideX, 0, guideX + 1, height, t.accentText);
 		}
 		if (dragging != null && guideY != HudSnap.NO_GUIDE) {
 			c.fill(0, guideY - 1, width, guideY + 2, ColorMath.withAlpha(t.glow, 50));
-			c.fill(0, guideY, width, guideY + 1, t.dustOn);
+			c.fill(0, guideY, width, guideY + 1, t.accentText);
 		}
 
 		if (TouchMode.enabled()) safeArea(c, t, width, height);
@@ -99,10 +98,10 @@ public final class HudEditor extends UiScreen {
 			c.scale(item.module().scale.getFloat());
 			item.draw(c);
 			c.pop();
-			int color = item == dragging ? t.dustOn : (item == selected ? t.lampOn : (item == hovered ? 0xE0FFFFFF : 0x60FFFFFF));
-			if (item == dragging || item == selected) Redstone.glow(c, b[0] - 2, b[1] - 2, b[2] + 4, b[3] + 4, item == dragging ? t.glow : t.lampGlow, 0.6f);
-			Redstone.frame(c, b[0] - 2, b[1] - 2, b[2] + 4, b[3] + 4, color);
-			if (TouchMode.enabled()) handles(c, b, item == dragging || item == selected ? t.dustOn : 0xA0FFFFFF);
+			int color = item == dragging ? t.accentText : (item == selected ? t.faceOn : (item == hovered ? 0xE0FFFFFF : 0x60FFFFFF));
+			if (item == dragging || item == selected) Paint.glow(c, b[0] - 2, b[1] - 2, b[2] + 4, b[3] + 4, item == dragging ? t.glow : t.faceGlow, 0.6f);
+			Paint.frame(c, b[0] - 2, b[1] - 2, b[2] + 4, b[3] + 4, color);
+			if (TouchMode.enabled()) handles(c, b, item == dragging || item == selected ? t.accentText : 0xA0FFFFFF);
 			if (item == hovered || item == selected) {
 				String label = item.module().name();
 				int ly = b[1] - 11 >= 0 ? b[1] - 11 : b[1] + b[3] + 3;
@@ -138,10 +137,10 @@ public final class HudEditor extends UiScreen {
 		c.fill(0, 0, width, h, ColorMath.withAlpha(t.surfaceHigh, 235));
 		c.fill(0, 0, width, 1, ColorMath.lerp(t.surfaceHigh, t.bevelLight, 0.6f));
 		c.fill(0, h - 1, width, h, t.border);
-		// Staubleitung unter der Leiste – ein Hinweis, dass hier "Strom" (Bearbeiten) anliegt.
-		c.fill(0, h, width, h + 1, ColorMath.withAlpha(t.dustOn, 160));
+		// Akzentlinie unter der Leiste – ein Hinweis, dass hier bearbeitet wird.
+		c.fill(0, h, width, h + 1, ColorMath.withAlpha(t.accentText, 160));
 		int ty = by + (bh - 8) / 2;
-		Redstone.pip(c, 8, ty, 8, 1f);
+		Paint.pip(c, 8, ty, 8, 1f);
 		String title = I18n.tr("editor.title");
 		c.text(title, 22, ty, t.text, false);
 
@@ -214,8 +213,8 @@ public final class HudEditor extends UiScreen {
 		int tw = c.textWidth(text);
 		int x = (width - tw) / 2 - 7;
 		int y = height - 20 - TouchMode.insetsGui().bottom;
-		Redstone.block(c, x, y, tw + 14, 15, ColorMath.withAlpha(t.surfaceHigh, 225));
-		Redstone.frame(c, x, y, tw + 14, 15, t.border);
+		Paint.block(c, x, y, tw + 14, 15, ColorMath.withAlpha(t.surfaceHigh, 225));
+		Paint.frame(c, x, y, tw + 14, 15, t.border);
 		c.text(text, x + 7, y + 4, t.textDim, false);
 	}
 
@@ -233,9 +232,9 @@ public final class HudEditor extends UiScreen {
 		int h = 40 + panel.height(settings) + 22;
 		int x = width - PANEL_W - 8 - TouchMode.insetsGui().right + Math.round((1 - Anim.easeOut(panelIn)) * 20);
 		int y = Math.min(barHeight + 12, Math.max(barHeight + 8, height - h - 8));
-		Redstone.window(c, x, y, PANEL_W, h);
+		Paint.window(c, x, y, PANEL_W, h);
 
-		Redstone.iconWell(c, x + 6, y + 5, 1, module.icon(), t.dustOn, 1f);
+		Paint.iconWell(c, x + 6, y + 5, 1, module.icon(), t.accentText, 1f);
 		Paint.textClipped(c, module.name(), x + 23, y + 8, PANEL_W - 48, t.text, false);
 		boolean closeHover = inside(mx, my, x + PANEL_W - 21, y + 5, 14, 14);
 		Paint.iconButton(c, x + PANEL_W - 21, y + 5, 14, "close", closeHover, false);
@@ -431,7 +430,7 @@ public final class HudEditor extends UiScreen {
 		return true;
 	}
 
-	/** Unsichere Ränder (Notch) abdunkeln und die sichere Fläche als Staublinie zeigen. */
+	/** Unsichere Ränder (Notch) abdunkeln und die sichere Fläche als feine Akzentlinie zeigen. */
 	private static void safeArea(Canvas c, Theme t, int width, int height) {
 		SafeArea.Insets in = TouchMode.insetsGui();
 		if (in.isZero()) return;
@@ -440,8 +439,8 @@ public final class HudEditor extends UiScreen {
 		if (in.right > 0) c.fill(width - in.right, 0, width, height, shade);
 		if (in.top > 0) c.fill(in.left, 0, width - in.right, in.top, shade);
 		if (in.bottom > 0) c.fill(in.left, height - in.bottom, width - in.right, height, shade);
-		Redstone.frame(c, in.left, in.top, width - in.left - in.right, height - in.top - in.bottom,
-				ColorMath.withAlpha(t.dustOff, 160));
+		Paint.frame(c, in.left, in.top, width - in.left - in.right, height - in.top - in.bottom,
+				ColorMath.withAlpha(t.track, 160));
 	}
 
 	/** Griffe an den Ecken (Finger-Ziel; das ganze Element bleibt greifbar). */

@@ -11,7 +11,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
@@ -158,7 +157,7 @@ public final class Dialogs {
 			kit.input(c, note, x, cy, w, 16, I18n.tr("social.report.noteHint"), null);
 			cy += 20;
 			if (error != null) {
-				Paint.textClipped(c, I18n.tr(error), x, cy, w, t.dustOn, false);
+				Paint.textClipped(c, I18n.tr(error), x, cy, w, t.danger, false);
 			} else {
 				Paint.textClipped(c, I18n.tr("social.report.privacy"), x, cy, w, t.textDim, false);
 			}
@@ -321,7 +320,7 @@ public final class Dialogs {
 			listRect[1] = cy;
 			listRect[2] = w;
 			listRect[3] = listH;
-			Redstone.well(c, x, cy, w, listH, t.border);
+			Paint.well(c, x, cy, w, listH, t.border);
 			c.scissor(x + 2, cy + 2, x + w - 2, cy + listH - 2);
 			kit.hits.clip(x + 2, cy + 2, w - 4, listH - 4);
 			int ry = cy + 3 - scroll;
@@ -332,7 +331,7 @@ public final class Dialogs {
 				for (final Chat.Member m : conv.members) {
 					Faces.draw(c, faces.face(m.uuid, null), m.uuid, m.name, x + 5, ry + 1, 1, false);
 					Paint.textClipped(c, m.name, x + 17, ry + 1, rowW - 70, t.text, false);
-					if (m.owner) Icons.draw(c, "crown", x + 19 + Math.min(rowW - 70, c.textWidth(m.name)), ry + 1, 1, t.lampOn);
+					if (m.owner) Icons.draw(c, "crown", x + 19 + Math.min(rowW - 70, c.textWidth(m.name)), ry + 1, 1, t.faceOn);
 					if (owner && !m.owner) {
 						int bx = x + w - 22;
 						if (m.uuid.equals(confirmRemove)) {

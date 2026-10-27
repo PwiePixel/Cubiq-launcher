@@ -51,7 +51,7 @@ class LauncherMotionTest {
 
 	private static void reset() {
 		Theme.motionFromLauncher(null);
-		Theme.set(Theme.of("dark", "redstone", null));
+		Theme.set(Theme.of("dark", "cubiq", null));
 		MenuStyle.install(null);
 		Halloween.reset();
 	}
@@ -100,6 +100,7 @@ class LauncherMotionTest {
 		Theme.motionFromLauncher(Theme.MOTION_REDUCED);
 		IntroUi intro = new IntroUi(new Host(new CubiqModules()));
 		assertTrue(intro.still());
+		assertFalse(intro.splashing(), "keine Start-Animation, obwohl „Animierter Hintergrund“ an ist");
 		assertEquals(1f, intro.alpha(), 0.0001f, "sofort ganz da – ohne Einblenden");
 		String first = frame(intro);
 		pause(120);
@@ -116,10 +117,11 @@ class LauncherMotionTest {
 		assertTrue(new IntroUi(new Host(own)).still());
 		IntroUi moving = new IntroUi(new Host(new CubiqModules()));
 		assertFalse(moving.still());
+		assertTrue(moving.splashing(), "mit Bewegung zuerst die Start-Animation");
 		assertEquals(0f, moving.alpha(), 0.0001f);
 		String opening = frame(moving);
 		pause(120);
-		assertNotEquals(opening, frame(moving), "mit Bewegung gleitet sie herein");
+		assertNotEquals(opening, frame(moving), "mit Bewegung läuft die Start-Animation");
 	}
 
 	@Test
@@ -141,16 +143,16 @@ class LauncherMotionTest {
 
 	@Test
 	void indeterminateProgressStandsStill() {
-		for (String design : new String[]{Theme.REDSTONE, Theme.WINTER, Theme.FOX, Halloween.ID}) {
+		for (String design : new String[]{Theme.CUBIQ, Theme.WINTER, Theme.FOX, Halloween.ID}) {
 			if (Halloween.ID.equals(design)) Halloween.force(true);
 			else Theme.set(Theme.of("dark", "cubiq", null, design));
 			Theme.motionFromLauncher(Theme.MOTION_REDUCED);
-			String still = lamps(-1f, 0.3f);
-			assertEquals(still, lamps(-1f, 1.7f), design);
-			assertEquals(still, lamps(-1f, 4.1f), design);
-			assertEquals(lamps(0.4f, 0.3f), lamps(0.4f, 1.7f), design + ": auch Glitzer und Glut stehen");
+			String still = bar(-1f, 0.3f);
+			assertEquals(still, bar(-1f, 1.7f), design);
+			assertEquals(still, bar(-1f, 4.1f), design);
+			assertEquals(bar(0.4f, 0.3f), bar(0.4f, 1.7f), design + ": auch Glitzer und Glut stehen");
 			Theme.motionFromLauncher(Theme.MOTION_FULL);
-			assertNotEquals(lamps(-1f, 0.3f), lamps(-1f, 1.7f), design + ": sonst läuft das Signal durch");
+			assertNotEquals(bar(-1f, 0.3f), bar(-1f, 1.7f), design + ": sonst läuft das Signal durch");
 		}
 	}
 
@@ -170,11 +172,22 @@ class LauncherMotionTest {
 		pause(200);
 		assertNotEquals(overlay, overlay());
 		assertNotEquals(loading, loading());
+
+		// Cubiq-Design: Szene und der unbestimmte Balken beim Welt laden.
+		Theme.set(Theme.of("dark", "cubiq", null, Theme.CUBIQ));
+		Theme.motionFromLauncher(Theme.MOTION_REDUCED);
+		loading = loading();
+		pause(200);
+		assertEquals(loading, loading(), "Cubiq: Würfel und Balken stehen");
+		Theme.motionFromLauncher(Theme.MOTION_FULL);
+		loading = loading();
+		pause(200);
+		assertNotEquals(loading, loading());
 	}
 
-	private static String lamps(float progress, float time) {
+	private static String bar(float progress, float time) {
 		RecordingCanvas c = new RecordingCanvas();
-		MenuSkin.lamps(c, W / 2, 40, 176, progress, time);
+		MenuSkin.progress(c, W / 2, 40, 176, progress, time);
 		return c.log.toString();
 	}
 

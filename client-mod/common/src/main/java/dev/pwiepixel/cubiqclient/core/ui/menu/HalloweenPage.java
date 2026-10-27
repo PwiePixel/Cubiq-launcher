@@ -10,7 +10,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.halloween.Sprites;
 
@@ -367,7 +366,7 @@ public final class HalloweenPage {
 			c.fill(x + w - 7, y + 1, x + w - 1, y + 2, web);
 			c.fill(x + w - 2, y + 1, x + w - 1, y + 7, web);
 		} else {
-			Redstone.stone(c, x, y, w, h, t.surface, t.border);
+			Paint.panel(c, x, y, w, h, t.surface, t.border);
 		}
 	}
 

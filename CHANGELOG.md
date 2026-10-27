@@ -31,6 +31,15 @@ How this file is written:
   "node --experimental-strip-types scripts/changelog.mjs set-contributors <version> <name1,name2>".
 -->
 
+## 0.1.1 – 2026-10-27
+<!-- banner: accent=#71a330 -->
+
+### English
+- Give the Cubiq Client mod the launcher's calm green look.
+
+### Deutsch
+- Give the Cubiq Client mod the launcher's calm green look.
+
 ## 0.1.0 – 2026-10-27 – Hello, Cubiq | Hallo, Cubiq
 <!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png -->
 <!-- shots:

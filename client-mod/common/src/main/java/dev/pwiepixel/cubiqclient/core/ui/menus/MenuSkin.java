@@ -2,19 +2,20 @@ package dev.pwiepixel.cubiqclient.core.ui.menus;
 
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.CubiqMark;
 import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
+import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.fox.Ember;
 import dev.pwiepixel.cubiqclient.core.ui.fox.FoxScene;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.halloween.HalloweenLook;
 import dev.pwiepixel.cubiqclient.core.ui.halloween.HalloweenPalette;
 import dev.pwiepixel.cubiqclient.core.ui.halloween.HorrorLayer;
 import dev.pwiepixel.cubiqclient.core.ui.halloween.MoonBar;
 import dev.pwiepixel.cubiqclient.core.ui.halloween.NightScene;
-import dev.pwiepixel.cubiqclient.core.ui.title.CircuitScene;
+import dev.pwiepixel.cubiqclient.core.ui.title.CubeScene;
 import dev.pwiepixel.cubiqclient.core.ui.title.TitleUi;
 import dev.pwiepixel.cubiqclient.core.ui.winter.Frost;
 import dev.pwiepixel.cubiqclient.core.ui.winter.WinterScene;
@@ -22,31 +23,40 @@ import dev.pwiepixel.cubiqclient.core.ui.winter.WinterScene;
 import java.util.List;
 
 /**
- * Redstone-Stil für Vanilla-Menüs (Pause, Serverliste, Ladebildschirme, Optionen, Weltenliste). Zeichnet nur
- * Flächen – Hintergrund, Kopf-/Fußleiste, Listen-Mulde, Knopfflächen, Serverkarten, Ping-Anzeige,
+ * Cubiq-Stil für Vanilla-Menüs (Pause, Serverliste, Ladebildschirme, Optionen, Weltenliste) – flach wie der Launcher.
+ * Zeichnet nur Flächen – Hintergrund, Kopf-/Fußleiste, Listen-Mulde, Knopfflächen, Serverkarten, Ping-Anzeige,
  * Ladeanzeige – die Beschriftungen und Bedienung bleiben die von Minecraft (und damit die anderer Mods).
  * Versionsunabhängig; die Loader-Varianten rufen es aus ihren Hooks auf.
  *
  * <p>Vanilla schreibt weiß auf die Knöpfe; darum sind die Flächen hier immer dunkel (auch im hellen Theme),
- * nur Akzent, Staub und Lampen kommen aus dem {@link Theme}.
+ * nur die Akzentfarbe kommt aus dem {@link Theme}. Winternacht, Fuchsbau und Halloween haben eigene Flächen.
  */
 public final class MenuSkin {
 	/** Höhe der Kopfleiste (Vanilla-Titel steht bei y = 15…20). */
 	public static final int HEADER = 32;
 
-	private static final CircuitScene SCENE = new CircuitScene();
+	/** Würfel-Szene des Startbildschirms – hier immer dunkel. */
+	private static final CubeScene SCENE = new CubeScene();
+
+	static {
+		SCENE.setAlwaysDark(true);
+	}
+
 	private static final long START = System.nanoTime();
 	/** Mittlere Zeichenzeit des Hintergrunds (µs, gleitend) – für den Selbsttest. */
 	private static float avgMicros;
 
-	private static final int STONE = 0xFF2E2B2E;
-	private static final int STONE_HOVER = 0xFF3B3437;
-	private static final int STONE_OFF = 0xFF201E20;
-	private static final int EDGE = 0xFF0E0C0D;
-	private static final int BEVEL_LIGHT = 0xFF57504F;
-	private static final int BEVEL_DARK = 0xFF151213;
+	// Cubiq: flache Flächen in den dunklen Farben des Launchers (base-800/850/700/600).
+	private static final int SURFACE = 0xFF1D2520;
+	private static final int SURFACE_HOVER = 0xFF242D27;
+	private static final int SURFACE_OFF = 0xFF141A16;
+	private static final int EDGE = 0xFF29332C;
+	private static final int BEVEL_LIGHT = 0xFF3D4A41;
+	private static final int BEVEL_DARK = 0xFF0C100E;
+	/** Tiefster Grund (base-950) für Schleier und Felder. */
+	private static final int DEEP = 0xFF0C100E;
 
-	// Winternacht: Eis- und Schneeplatten statt Stein (immer dunkel – Vanilla schreibt weiß).
+	// Winternacht: Eis- und Schneeplatten (immer dunkel – Vanilla schreibt weiß).
 	private static final int ICE = 0xFF1C2C48;
 	private static final int ICE_HOVER = 0xFF26406A;
 	private static final int ICE_OFF = 0xFF121B2D;
@@ -88,7 +98,7 @@ public final class MenuSkin {
 	private static int barFill(Theme t, boolean inWorld) {
 		if (t.winter) return inWorld ? 0x8C060B16 : 0xD80B1222;
 		if (t.fox) return inWorld ? 0x8C0E080D : 0xD8170E15;
-		return inWorld ? 0x8C0C0A0B : 0xD8141113;
+		return inWorld ? 0x8C0C100E : 0xD8111613;
 	}
 
 	private MenuSkin() {
@@ -123,8 +133,8 @@ public final class MenuSkin {
 	// --- Hintergrund ---
 
 	/**
-	 * Hintergrund eines Menüs. Ohne Welt: die Redstone-Schaltung des Startbildschirms; in der Welt: dunkler,
-	 * halbdurchsichtiger Schleier mit glimmender Staubkante (die Welt bleibt sichtbar).
+	 * Hintergrund eines Menüs. Ohne Welt: die Würfel-Szene des Startbildschirms; in der Welt: ein ruhiger, dunkler,
+	 * halbdurchsichtiger Schleier (die Welt bleibt sichtbar).
 	 *
 	 * @param headerH Höhe der Kopfleiste (0 = keine)
 	 * @param footerTop obere Kante der Fußleiste (≥ height = keine)
@@ -144,27 +154,23 @@ public final class MenuSkin {
 			for (int i = 0; i < 6; i++) {
 				int band = Math.max(4, height / 24);
 				int y2 = height - i * band;
-				c.fill(0, y2 - band, width, y2, ColorMath.withAlpha(t.lampGlow, Math.max(0, 18 - i * 3)));
+				c.fill(0, y2 - band, width, y2, ColorMath.withAlpha(t.faceGlow, Math.max(0, 18 - i * 3)));
 			}
-			Redstone.dustH(c, 0, width, height - 2, ColorMath.lerp(t.dustOff, t.dustOn, 0.55f + 0.2f * pulse(time)), 0.4f);
+			Paint.lineH(c, 0, width, height - 2, ColorMath.lerp(t.track, t.accentText, 0.55f + 0.2f * pulse(time)), 0.4f);
 		} else if (inWorld && t.fox) {
 			// Fuchsbau in der Welt: Schleier in später Dämmerung, unten warmer Feuerschein und ein glimmender Ast.
 			c.fill(0, 0, width, height, 0x9A100A10);
 			for (int i = 0; i < 6; i++) {
 				int band = Math.max(4, height / 24);
 				int y2 = height - i * band;
-				c.fill(0, y2 - band, width, y2, ColorMath.withAlpha(t.lampGlow, Math.max(0, 20 - i * 3)));
+				c.fill(0, y2 - band, width, y2, ColorMath.withAlpha(t.faceGlow, Math.max(0, 20 - i * 3)));
 			}
-			Redstone.dustH(c, 0, width, height - 2, ColorMath.lerp(t.dustOff, t.dustOn, 0.55f + 0.2f * pulse(time)), 0.4f);
+			Paint.lineH(c, 0, width, height - 2, ColorMath.lerp(t.track, t.accentText, 0.55f + 0.2f * pulse(time)), 0.4f);
 		} else if (inWorld) {
-			c.fill(0, 0, width, height, 0x9A0A0708);
-			// Glimmen von unten wie bei einer Redstone-Leitung am Boden.
-			for (int i = 0; i < 6; i++) {
-				int band = Math.max(4, height / 24);
-				int y2 = height - i * band;
-				c.fill(0, y2 - band, width, y2, ColorMath.withAlpha(t.glow, Math.max(0, 22 - i * 4)));
+			// Cubiq: Schleier in base-950, nach unten etwas dichter.
+			for (int i = 0; i < 8; i++) {
+				c.fill(0, height * i / 8, width, height * (i + 1) / 8, ColorMath.withAlpha(DEEP, 0x84 + i * 5));
 			}
-			Redstone.dustH(c, 0, width, height - 2, ColorMath.lerp(t.dustOff, t.dustOn, 0.55f + 0.2f * pulse(time)), 0.4f);
 		} else {
 			scene(c, width, height, time);
 		}
@@ -195,7 +201,7 @@ public final class MenuSkin {
 		HorrorLayer.draw(c, width, height, inWorld);
 	}
 
-	/** Redstone-Schaltung des Startbildschirms (ruhig, wenn der animierte Hintergrund aus ist). */
+	/** Szene des Startbildschirms (ruhig, wenn der animierte Hintergrund aus ist). */
 	private static void scene(Canvas c, int width, int height, float time) {
 		boolean animated = dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated();
 		if (Theme.get().halloween) {
@@ -211,7 +217,7 @@ public final class MenuSkin {
 			return;
 		}
 		if (sceneSimple == null || sceneSimple != !animated) {
-			// setSimple baut die Schaltung neu – nur beim Umschalten aufrufen.
+			// setSimple baut die Szene neu – nur beim Umschalten aufrufen.
 			sceneSimple = !animated;
 			SCENE.setSimple(!animated);
 		}
@@ -224,7 +230,7 @@ public final class MenuSkin {
 		return 0.5f + 0.5f * (float) Math.sin(time * 2.2);
 	}
 
-	/** Kopfleiste mit kleinem Cubiq-Schriftzug links und Staubleitung unten. */
+	/** Kopfleiste mit dem kleinen Cubiq-Zeichen und Schriftzug links, feine Linie unten. */
 	public static void header(Canvas c, int width, int h, boolean inWorld) {
 		Theme t = Theme.get();
 		if (t.halloween) {
@@ -238,8 +244,12 @@ public final class MenuSkin {
 			return;
 		}
 		c.fill(0, 0, width, h, barFill(t, inWorld));
-		c.fill(0, 0, width, 1, ColorMath.withAlpha(bevelLight(t), 0x60));
-		Redstone.dustH(c, 0, width, h - 2, ColorMath.lerp(t.dustOff, t.dustOn, 0.8f), 0.7f);
+		if (t.winter || t.fox) {
+			c.fill(0, 0, width, 1, ColorMath.withAlpha(bevelLight(t), 0x60));
+			Paint.lineH(c, 0, width, h - 2, ColorMath.lerp(t.track, t.accentText, 0.8f), 0.7f);
+		} else {
+			c.fill(0, h - 1, width, h, EDGE);
+		}
 		logo(c, 8, (h - PixelFont.HEIGHT * 2) / 2, 2, 1f);
 	}
 
@@ -252,14 +262,22 @@ public final class MenuSkin {
 			return;
 		}
 		c.fill(0, top, width, height, barFill(t, inWorld));
-		Redstone.dustH(c, 0, width, top, ColorMath.lerp(t.dustOff, t.dustOn, 0.8f), 0.7f);
+		if (t.winter || t.fox) Paint.lineH(c, 0, width, top, ColorMath.lerp(t.track, t.accentText, 0.8f), 0.7f);
+		else c.fill(0, top, width, top + 1, EDGE);
 	}
 
-	/** „Cubiq“ in der Pixelschrift, glühend; {@code scale} = Pixel je Schriftpunkt. */
+	/**
+	 * Cubiq-Zeichen mit „Cubiq“ in der Pixelschrift (Winternacht/Fuchsbau: glühender Schriftzug mit Schnee bzw. Blättern,
+	 * Halloween: Mondsilber); {@code scale} = Pixel je Schriftpunkt, (x, y) = linke obere Ecke. Breite: {@link #logoWidth}.
+	 */
 	public static void logo(Canvas c, int x, int y, int scale, float alpha) {
 		Theme t = Theme.get();
 		if (t.halloween) {
 			HalloweenLook.silverWord(c, "CUBIQ", x, y, scale, alpha, 1f);
+			return;
+		}
+		if (!t.winter && !t.fox) {
+			CubiqMark.lockup(c, x, y, scale, alpha);
 			return;
 		}
 		List<int[]> rects = PixelFont.rects("CUBIQ");
@@ -286,6 +304,13 @@ public final class MenuSkin {
 		}
 	}
 
+	/** Breite von {@link #logo} mit {@code scale}. */
+	public static int logoWidth(int scale) {
+		Theme t = Theme.get();
+		int word = PixelFont.width("CUBIQ") * scale;
+		return t.halloween || t.winter || t.fox ? word : CubiqMark.textOffset(scale) + word;
+	}
+
 	/** Eingelassene Mulde hinter einer Liste (Server, Welten, Optionen). */
 	public static void listWell(Canvas c, int x1, int y1, int x2, int y2, boolean inWorld) {
 		if (x2 - x1 < 4 || y2 - y1 < 4) return;
@@ -297,24 +322,29 @@ public final class MenuSkin {
 			return;
 		}
 		boolean f = fox();
-		c.fill(x1, y1, x2, y2, w ? (inWorld ? 0x70020610 : 0xA8050A16) : (f ? (inWorld ? 0x700A0408 : 0xA80E070C) : (inWorld ? 0x70000000 : 0xA8080607)));
+		c.fill(x1, y1, x2, y2, w ? (inWorld ? 0x70020610 : 0xA8050A16) : (f ? (inWorld ? 0x700A0408 : 0xA80E070C) : (inWorld ? 0x700C100E : 0xA80C100E)));
 		c.fill(x1, y1, x2, y1 + 1, 0x80000000);
 		c.fill(x1, y2 - 1, x2, y2, ColorMath.withAlpha(bevelLight(Theme.get()), 0x50));
 	}
 
-	/** Trennlinien einer Liste (oben/unten) als Staubleitungen. */
+	/** Trennlinien einer Liste (oben/unten): feine Linien; Winternacht/Fuchsbau/Halloween mit Frost, Ast bzw. Faden. */
 	public static void listSeparators(Canvas c, int x1, int y1, int x2, int y2) {
 		Theme t = Theme.get();
-		int dust = ColorMath.lerp(t.dustOff, t.dustOn, 0.6f);
-		Redstone.dustH(c, x1, x2, y1 - 2, dust, 0.3f);
-		Redstone.dustH(c, x1, x2, y2, dust, 0.3f);
+		if (t.halloween || t.winter || t.fox) {
+			int line = ColorMath.lerp(t.track, t.accentText, 0.6f);
+			Paint.lineH(c, x1, x2, y1 - 2, line, 0.3f);
+			Paint.lineH(c, x1, x2, y2, line, 0.3f);
+			return;
+		}
+		c.fill(x1, y1 - 1, x2, y1, EDGE);
+		c.fill(x1, y2, x2, y2 + 1, EDGE);
 	}
 
 	// --- Knöpfe ---
 
 	/**
-	 * Fläche eines Vanilla-Knopfs (die Beschriftung zeichnet Minecraft darüber): Stein mit Lichtkante, beim
-	 * Überfahren glimmt eine Staubleitung, gesperrte Knöpfe sind dunkler.
+	 * Fläche eines Vanilla-Knopfs (die Beschriftung zeichnet Minecraft darüber): flache, abgerundete Fläche mit feiner
+	 * Kante; beim Überfahren heller mit Kante und weichem Schein in der Akzentfarbe, gesperrte Knöpfe sind dunkler.
 	 */
 	public static void button(Canvas c, int x, int y, int w, int h, boolean hover, boolean active) {
 		if (w < 3 || h < 3) return;
@@ -332,19 +362,13 @@ public final class MenuSkin {
 			woodButton(c, t, x, y, w, h, hot, active);
 			return;
 		}
-		int fill = !active ? STONE_OFF : (hot ? STONE_HOVER : STONE);
-		if (hot) Redstone.glow(c, x, y, w, h, t.glow, 0.55f);
-		Redstone.block(c, x, y, w, h, hot ? ColorMath.lerp(EDGE, t.accent, 0.55f) : EDGE);
+		int fill = !active ? SURFACE_OFF : (hot ? SURFACE_HOVER : SURFACE);
+		int r = Paint.radius(w, h);
+		if (hot) Paint.glow(c, x, y, w, h, t.glow, 0.4f);
+		Paint.roundRect(c, x, y, w, h, r, hot ? ColorMath.lerp(EDGE, t.accent, 0.75f) : (active ? EDGE : ColorMath.lerp(EDGE, SURFACE_OFF, 0.5f)));
 		if (h < 5) return;
-		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
-		c.fill(x + 1, y + 1, x + w - 1, y + 2, active ? ColorMath.lerp(fill, BEVEL_LIGHT, 0.8f) : ColorMath.lerp(fill, BEVEL_LIGHT, 0.3f));
-		c.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, BEVEL_DARK);
-		if (hot) {
-			Redstone.dustH(c, x + 3, x + w - 3, y + h - 4, t.dustOn, 0f);
-		} else if (active && w > 12) {
-			// Unbestromter Staub: dunkles Rot, zeigt den Redstone-Stil auch ohne Maus.
-			c.fill(x + 3, y + h - 4, x + w - 3, y + h - 3, ColorMath.withAlpha(t.dustOff, 0x90));
-		}
+		Paint.roundRect(c, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill);
+		if (active) c.fill(x + Math.max(2, r), y + 1, x + w - Math.max(2, r), y + 2, hot ? 0x18FFFFFF : 0x0CFFFFFF);
 	}
 
 	/**
@@ -353,8 +377,8 @@ public final class MenuSkin {
 	 */
 	private static void iceButton(Canvas c, Theme t, int x, int y, int w, int h, boolean hot, boolean active) {
 		int fill = !active ? ICE_OFF : (hot ? ICE_HOVER : ICE);
-		if (hot) Redstone.glow(c, x, y, w, h, t.lampGlow, 0.55f);
-		Redstone.block(c, x, y, w, h, hot ? ColorMath.lerp(ICE_EDGE, t.lampGlow, 0.6f) : ICE_EDGE);
+		if (hot) Paint.glow(c, x, y, w, h, t.faceGlow, 0.55f);
+		Paint.block(c, x, y, w, h, hot ? ColorMath.lerp(ICE_EDGE, t.faceGlow, 0.6f) : ICE_EDGE);
 		if (h < 5) return;
 		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
 		// Schnee auf der Oberkante, an ein paar Stellen etwas dicker.
@@ -373,9 +397,9 @@ public final class MenuSkin {
 			c.fill(x + w - 3, y + h - 5, x + w - 2, y + h - 3, rime);
 		}
 		if (hot) {
-			Redstone.dustH(c, x + 3, x + w - 3, y + h - 4, t.lampOn, 0f);
+			Paint.lineH(c, x + 3, x + w - 3, y + h - 4, t.faceOn, 0f);
 		} else if (active && w > 12) {
-			c.fill(x + 3, y + h - 4, x + w - 3, y + h - 3, ColorMath.withAlpha(t.dustOff, 0x90));
+			c.fill(x + 3, y + h - 4, x + w - 3, y + h - 3, ColorMath.withAlpha(t.track, 0x90));
 		}
 	}
 
@@ -385,14 +409,14 @@ public final class MenuSkin {
 	 */
 	private static void woodButton(Canvas c, Theme t, int x, int y, int w, int h, boolean hot, boolean active) {
 		int fill = !active ? WOOD_OFF : (hot ? WOOD_HOVER : WOOD);
-		if (hot) Redstone.glow(c, x, y, w, h, t.lampGlow, 0.55f);
-		Redstone.block(c, x, y, w, h, hot ? ColorMath.lerp(WOOD_EDGE, t.lampGlow, 0.6f) : WOOD_EDGE);
+		if (hot) Paint.glow(c, x, y, w, h, t.faceGlow, 0.55f);
+		Paint.block(c, x, y, w, h, hot ? ColorMath.lerp(WOOD_EDGE, t.faceGlow, 0.6f) : WOOD_EDGE);
 		if (h < 5) return;
 		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
 		// Abendlicht auf der Oberkante.
 		int rim = active ? (hot ? 0xFFFFD49A : 0xFF8A5A5E) : 0xFF3E2A36;
 		c.fill(x + 1, y + 1, x + w - 1, y + 2, rim);
-		if (hot) c.fill(x + 1, y + 2, x + w - 1, y + h - 2, ColorMath.withAlpha(t.lampGlow, 0x1C));
+		if (hot) c.fill(x + 1, y + 2, x + w - 1, y + h - 2, ColorMath.withAlpha(t.faceGlow, 0x1C));
 		if (active && w > 24) {
 			// Ein Blatt auf der Kante (fest je Lage), selten eine Kirschblüte.
 			int lx = x + 5 + Math.floorMod(x * 5 + y * 3, Math.max(1, w - 14));
@@ -407,53 +431,59 @@ public final class MenuSkin {
 			c.fill(x + 1, y + 2, x + 2, y + 4, sun);
 		}
 		if (hot) {
-			Redstone.dustH(c, x + 3, x + w - 3, y + h - 4, t.lampOn, 0f);
+			Paint.lineH(c, x + 3, x + w - 3, y + h - 4, t.faceOn, 0f);
 		} else if (active && w > 12) {
-			c.fill(x + 3, y + h - 4, x + w - 3, y + h - 3, ColorMath.withAlpha(t.dustOff, 0x90));
+			c.fill(x + 3, y + h - 4, x + w - 3, y + h - 3, ColorMath.withAlpha(t.track, 0x90));
 		}
 	}
 
 	/**
-	 * Fläche eines Vanilla-Textfelds (Text und Schreibmarke zeichnet Minecraft darüber): eingelassene Mulde wie
-	 * die Cubiq-Eingabefelder, mit Akzentkante und bestromter Staubleitung, solange das Feld den Fokus hat.
+	 * Fläche eines Vanilla-Textfelds (Text und Schreibmarke zeichnet Minecraft darüber): eingelassenes Feld wie die
+	 * Cubiq-Eingabefelder, mit Kante und weichem Schein in der Akzentfarbe, solange das Feld den Fokus hat.
 	 * Wie bei den Knöpfen immer dunkel – Vanilla schreibt hellgrau.
 	 */
 	public static void textField(Canvas c, int x, int y, int w, int h, boolean focused, boolean hover, boolean active) {
 		if (w < 3 || h < 3) return;
 		Theme t = Theme.get();
-		if (focused && active) Redstone.glow(c, x, y, w, h, t.glow, 0.45f);
+		if (focused && active) Paint.glow(c, x, y, w, h, t.glow, 0.45f);
 		int fieldEdge = t.halloween ? HalloweenPalette.BUTTON_EDGE : (t.winter ? ICE_FIELD_EDGE : (t.fox ? FOX_FIELD_EDGE : FIELD_EDGE));
 		int edge = focused && active ? t.accent : (hover && active ? ColorMath.lerp(fieldEdge, t.accent, 0.4f) : fieldEdge);
-		Redstone.block(c, x, y, w, h, edge);
+		int r = Paint.radius(w, h);
+		Paint.roundRect(c, x, y, w, h, r, edge);
 		if (h < 5) return;
 		int fill = t.halloween ? (active ? HalloweenPalette.NIGHT : 0xFF0B0912)
-				: (active ? (t.winter ? ICE_FIELD : (t.fox ? FOX_FIELD : FIELD)) : (t.winter ? ICE_OFF : (t.fox ? WOOD_OFF : STONE_OFF)));
-		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
+				: (active ? (t.winter ? ICE_FIELD : (t.fox ? FOX_FIELD : FIELD)) : (t.winter ? ICE_OFF : (t.fox ? WOOD_OFF : SURFACE_OFF)));
+		Paint.roundRect(c, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill);
+		if (!t.halloween && !t.winter && !t.fox) return;
 		c.fill(x + 1, y + 1, x + w - 1, y + 2, bevelDark(t));
 		c.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, ColorMath.lerp(fill, bevelLight(t), 0.35f));
-		if (focused && active && w > 8) Redstone.dustH(c, x + 2, x + w - 2, y + h - 1, t.dustOn, 0f);
+		if (focused && active && w > 8) Paint.lineH(c, x + 2, x + w - 2, y + h - 1, t.accentText, 0f);
 	}
 
-	private static final int FIELD = 0xFF0C0A0B;
-	private static final int FIELD_EDGE = 0xFF4A4244;
+	private static final int FIELD = DEEP;
+	private static final int FIELD_EDGE = BEVEL_LIGHT;
 
 	/**
 	 * Fläche hinter einem Formular (Direkt verbinden, Server hinzufügen/bearbeiten): Mulde wie hinter den Listen,
-	 * oben und unten eine Staubleitung – Beschriftungen und Felder stehen lesbar auf ruhigem Grund.
+	 * oben und unten eine feine Linie – Beschriftungen und Felder stehen lesbar auf ruhigem Grund.
 	 */
 	public static void formPanel(Canvas c, int x1, int y1, int x2, int y2, boolean inWorld) {
 		if (x2 - x1 < 8 || y2 - y1 < 8) return;
 		listWell(c, x1, y1, x2, y2, inWorld);
 		Theme t = Theme.get();
-		int dust = ColorMath.lerp(t.dustOff, t.dustOn, 0.6f);
-		Redstone.dustH(c, x1, x2, y1, dust, 0.3f);
-		Redstone.dustH(c, x1, x2, y2 - 2, ColorMath.withAlpha(t.dustOff, 0xC0), 0f);
+		if (t.halloween || t.winter || t.fox) {
+			Paint.lineH(c, x1, x2, y1, ColorMath.lerp(t.track, t.accentText, 0.6f), 0.3f);
+			Paint.lineH(c, x1, x2, y2 - 2, ColorMath.withAlpha(t.track, 0xC0), 0f);
+			return;
+		}
+		c.fill(x1, y1, x2, y1 + 1, EDGE);
+		c.fill(x1, y2 - 1, x2, y2, EDGE);
 	}
 
 	/** Symbol links auf einem Knopf (Cubiq-Knöpfe im Pausenmenü). */
 	public static void buttonIcon(Canvas c, int x, int y, int h, String icon, boolean active) {
 		Theme t = Theme.get();
-		Icons.draw(c, icon, x + 5, y + (h - 8) / 2, 1, active ? t.dustOn : ColorMath.fade(t.textDim, 0.8f));
+		Icons.draw(c, icon, x + 5, y + (h - 8) / 2, 1, active ? t.accentText : ColorMath.fade(t.textDim, 0.8f));
 	}
 
 	/** Zähler-Abzeichen (z. B. offene Freundschaftsanfragen) oben rechts an einem Knopf. */
@@ -464,10 +494,16 @@ public final class MenuSkin {
 		int w = Math.max(9, c.textWidth(s) + 5);
 		int x = right - w + 3;
 		int y = top - 3;
-		Redstone.glow(c, x, y, w, 10, t.lampGlow, 0.6f);
-		Redstone.block(c, x, y, w, 10, t.lampOnEdge);
-		c.fill(x + 1, y + 1, x + w - 1, y + 9, t.lampOn);
-		c.text(s, x + (w - c.textWidth(s)) / 2 + 1, y + 1, t.lampTextLit, false);
+		if (t.halloween || t.winter || t.fox) {
+			Paint.glow(c, x, y, w, 10, t.faceGlow, 0.6f);
+			Paint.block(c, x, y, w, 10, t.faceOnEdge);
+			c.fill(x + 1, y + 1, x + w - 1, y + 9, t.faceOn);
+		} else {
+			// Zähler wie im Launcher: Pille in der Akzentfarbe, mit dunklem Rand vom Knopf abgesetzt.
+			Paint.roundRect(c, x - 1, y - 1, w + 2, 12, 6, DEEP);
+			Paint.roundRect(c, x, y, w, 10, 5, t.accent);
+		}
+		c.text(s, x + (w - c.textWidth(s)) / 2 + 1, y + 1, t.faceTextOn, false);
 	}
 
 	// --- Serverliste ---
@@ -476,13 +512,16 @@ public final class MenuSkin {
 	public static void card(Canvas c, int x, int y, int w, int h, boolean selected, boolean hover, boolean pinned) {
 		Theme t = Theme.get();
 		if (w < 4 || h < 4) return;
-		if (selected) Redstone.glow(c, x, y, w, h, t.glow, 0.5f);
+		if (selected) Paint.glow(c, x, y, w, h, t.glow, 0.5f);
 		int e0 = t.halloween ? HalloweenPalette.LINE : (t.winter ? ICE_EDGE : (t.fox ? WOOD_EDGE : EDGE));
 		int edge = selected ? ColorMath.lerp(e0, t.accent, 0.8f) : (hover ? ColorMath.lerp(e0, t.accent, 0.35f) : e0);
-		Redstone.block(c, x, y, w, h, edge);
+		int r = Paint.radius(w, h);
+		Paint.roundRect(c, x, y, w, h, r, edge);
 		int fill = cardFill(selected, hover);
-		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
-		c.fill(x + 1, y + 1, x + w - 1, y + 2, ColorMath.withAlpha(t.halloween ? HalloweenPalette.SILVER : bevelLight(t), t.halloween ? 0x18 : 0x70));
+		Paint.roundRect(c, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill);
+		if (t.halloween || t.winter || t.fox) {
+			c.fill(x + 2, y + 1, x + w - 2, y + 2, ColorMath.withAlpha(t.halloween ? HalloweenPalette.SILVER : bevelLight(t), t.halloween ? 0x18 : 0x70));
+		}
 		if (t.halloween && w >= 24 && h >= 16) HalloweenLook.cobweb(c, x + w - 2, y + 1, Math.min(9, h / 2), 1, 0x30CFD5E3);
 		if (t.winter && w >= 12 && h >= 10) {
 			int rime = ColorMath.withAlpha(0xFFFFFFFF, selected ? 0x60 : 0x30);
@@ -495,8 +534,8 @@ public final class MenuSkin {
 			c.fill(x + 1, y + 3, x + 2, y + 5, sun);
 		}
 		if (pinned) {
-			// Angeheftet: Staubleitung an der linken Kante, bestromt.
-			Redstone.dustV(c, x + 1, y + 2, y + h - 2, t.dustOn, 0.8f);
+			// Angeheftet: kräftige Linie in der Akzentfarbe an der linken Kante.
+			Paint.lineV(c, x + 1, y + 2, y + h - 2, t.accentText, 0.8f);
 		}
 	}
 
@@ -505,17 +544,19 @@ public final class MenuSkin {
 		if (Theme.get().halloween) return selected ? 0xFF261B3B : (hover ? 0xFF1C1630 : 0xFF13101F);
 		if (winter()) return selected ? 0xFF1F3354 : (hover ? 0xFF18284A : 0xFF111B31);
 		if (fox()) return selected ? 0xFF3A2434 : (hover ? 0xFF2F1E2B : 0xFF221620);
-		return selected ? 0xFF33292B : (hover ? 0xFF2B2628 : 0xFF1F1C1E);
+		// Cubiq: base-850, unter der Maus etwas heller, gewählt mit einem Hauch Akzent.
+		return selected ? 0xFF1E2A20 : (hover ? 0xFF1A221C : 0xFF141A16);
 	}
 
-	/** Markierung „angeheftet“: kleine Redstone-Fackel. */
+	/** Markierung „angeheftet“: Stecknadel in der Akzentfarbe (Feld 8×12 ab x, y). */
 	public static void pin(Canvas c, int x, int y) {
-		Redstone.torch(c, x + 4, y + 12, 1f, pulse(seconds() * 1.7f));
+		Theme t = Theme.get();
+		Icons.draw(c, "pin", x, y + 3, 1, t.halloween || t.winter || t.fox ? t.faceOn : t.accentText);
 	}
 
 	/**
-	 * Ping als fünf Staub-Balken (wie die Vanilla-Balken, aber bestromter Redstone); deckt die Vanilla-Anzeige
-	 * (10×8 bei x, y) ab. {@code ping} &lt; 0 = keine Antwort, {@code pinging} = läuft noch.
+	 * Ping als fünf Balken (wie die Vanilla-Balken, in der Akzentfarbe); deckt die Vanilla-Anzeige (10×8 bei x, y) ab.
+	 * {@code ping} &lt; 0 = keine Antwort (rotes Kreuz), {@code pinging} = läuft noch (ein Licht läuft durch).
 	 */
 	public static void pingBars(Canvas c, int x, int y, long ping, boolean pinging, int coverColor) {
 		Theme t = Theme.get();
@@ -537,32 +578,35 @@ public final class MenuSkin {
 			lit = 1;
 		}
 		int running = (int) (seconds() * 8) % 8;
+		boolean seasonal = t.halloween || t.winter || t.fox;
+		int on = seasonal ? t.accentText : t.accent;
+		int off = seasonal ? t.track : EDGE;
 		for (int i = 0; i < 5; i++) {
 			int bh = 2 + i * 1 + (i > 2 ? 1 : 0) + 1;
 			int bx = x + i * 2;
 			int by = y + 8 - bh;
 			int color;
-			if (lit < 0) color = (i == running || i == running - 1) ? t.dustOn : t.dustOff;
-			else if (lit == 0) color = 0xFF3A3A3A;
-			else color = i < lit ? t.dust(9 + lit + (i == lit - 1 ? 1 : 0)) : t.dustOff;
+			if (lit < 0) color = (i == running || i == running - 1) ? on : off;
+			else if (lit == 0) color = off;
+			else color = i < lit ? on : off;
 			c.fill(bx, by, bx + 1, y + 8, color);
 		}
 		if (lit == 0) {
 			// Kein Signal: kleines rotes Kreuz.
-			c.fill(x + 3, y + 2, x + 4, y + 3, t.dustOn);
-			c.fill(x + 6, y + 2, x + 7, y + 3, t.dustOn);
-			c.fill(x + 4, y + 3, x + 6, y + 5, t.dustOn);
-			c.fill(x + 3, y + 5, x + 4, y + 6, t.dustOn);
-			c.fill(x + 6, y + 5, x + 7, y + 6, t.dustOn);
+			c.fill(x + 3, y + 2, x + 4, y + 3, t.danger);
+			c.fill(x + 6, y + 2, x + 7, y + 3, t.danger);
+			c.fill(x + 4, y + 3, x + 6, y + 5, t.danger);
+			c.fill(x + 3, y + 5, x + 4, y + 6, t.danger);
+			c.fill(x + 6, y + 5, x + 7, y + 6, t.danger);
 		}
 	}
 
 	// --- Laden ---
 
 	/**
-	 * Vollständiger Ladebildschirm (Welt laden, verbinden, speichern …): Schaltung, Cubiq-Schriftzug, Titel,
-	 * eine Reihe Redstone-Lampen als Fortschritt ({@code progress} 0..1, &lt; 0 = unbestimmt: ein Signal läuft
-	 * durch) und eine Zeile darunter.
+	 * Vollständiger Ladebildschirm (Welt laden, verbinden, speichern …): Szene, Cubiq-Zeichen mit Schriftzug, Titel,
+	 * ein Fortschrittsbalken ({@code progress} 0..1, &lt; 0 = unbestimmt: ein Lichtstreifen läuft durch) und eine Zeile
+	 * darunter.
 	 */
 	public static void loading(Canvas c, int width, int height, String title, String detail, float progress, boolean inWorld) {
 		loading(c, width, height, title, detail, progress, inWorld, -1, -1);
@@ -571,7 +615,7 @@ public final class MenuSkin {
 	/** Abstand zwischen Inhalt (Panel) und den Knöpfen des Bildschirms. */
 	private static final int LOADING_GAP = 6;
 
-	/** Höhe des Inhalts (Logo, Titel, Lampen, Zeile) bei Logo-Maßstab {@code scale}. */
+	/** Höhe des Inhalts (Logo, Titel, Fortschritt, Zeile) bei Logo-Maßstab {@code scale}. */
 	static int loadingBlockHeight(int scale) {
 		return PixelFont.HEIGHT * scale + 14 + 12 + 22 + 12;
 	}
@@ -600,7 +644,7 @@ public final class MenuSkin {
 	/**
 	 * Wie {@link #loading(Canvas, int, int, String, String, float, boolean)}; {@code avoidTop}/{@code avoidBottom}
 	 * = senkrechter Bereich der Knöpfe des Bildschirms (−1 = keine). Reihenfolge von oben: Logo, Titel,
-	 * Lampen, Zeile, darunter die Knöpfe.
+	 * Fortschritt, Zeile, darunter die Knöpfe.
 	 */
 	public static void loading(Canvas c, int width, int height, String title, String detail, float progress, boolean inWorld,
 			int avoidTop, int avoidBottom) {
@@ -618,29 +662,29 @@ public final class MenuSkin {
 			scene(c, width, height, time);
 			c.fill(0, 0, width, height, 0x8C07060C);
 		} else if (inWorld) {
-			c.fill(0, 0, width, height, t.winter ? 0xE0060B16 : (t.fox ? 0xE00E080D : 0xE00A0708));
+			c.fill(0, 0, width, height, t.winter ? 0xE0060B16 : (t.fox ? 0xE00E080D : 0xE00C100E));
 		} else {
 			scene(c, width, height, time);
-			c.fill(0, 0, width, height, t.winter ? (t.light ? 0x30000000 : 0x50030814) : (t.fox ? (t.light ? 0x30000000 : 0x500E0610) : 0x60000000));
+			c.fill(0, 0, width, height, t.winter ? (t.light ? 0x30000000 : 0x50030814) : (t.fox ? (t.light ? 0x30000000 : 0x500E0610) : 0x400C100E));
 		}
 		int cx = width / 2;
 		int[] layout = loadingLayout(height, avoidTop, avoidBottom);
 		int top = layout[0];
 		int scale = layout[1];
-		int logoW = PixelFont.width("CUBIQ") * scale;
+		int logoW = logoWidth(scale);
 		int blockH = loadingBlockHeight(scale);
-		// Panel hinter dem Inhalt, damit Text auf der Schaltung lesbar bleibt.
+		// Panel hinter dem Inhalt, damit Text auf der Szene lesbar bleibt.
 		int pw = Math.min(width - 16, Math.max(220, Math.max(c.textWidth(title), c.textWidth(detail == null ? "" : detail)) + 40));
 		int ph = blockH + 20;
-		Redstone.window(c, cx - pw / 2, top - 10, pw, ph);
+		Paint.window(c, cx - pw / 2, top - 10, pw, ph);
 		logo(c, cx - logoW / 2, top, scale, 1f);
 		int y = top + PixelFont.HEIGHT * scale + 12;
 		if (title != null && !title.isEmpty()) {
 			String s = c.clip(title, pw - 16);
-			c.text(s, cx - c.textWidth(s) / 2, y, t.text, true);
+			c.text(s, cx - c.textWidth(s) / 2, y, t.text, t.halloween || t.winter || t.fox);
 		}
 		y += 16;
-		lamps(c, cx, y, Math.min(pw - 24, 176), progress, time);
+		progress(c, cx, y, Math.min(pw - 24, 176), progress, time);
 		y += 22;
 		if (detail != null && !detail.isEmpty()) {
 			String s = c.clip(detail, pw - 16);
@@ -655,12 +699,13 @@ public final class MenuSkin {
 	}
 
 	/**
-	 * Reihe Redstone-Lampen, mittig um {@code cx}. {@code progress} 0..1 = so viele leuchten; &lt; 0 = ein
-	 * Signal läuft durch die Reihe (Staub dazwischen leuchtet mit). Ohne Bewegung
-	 * ({@link dev.pwiepixel.cubiqclient.core.menus.MenuStyle#animated()}) steht die Anzeige still – unbestimmt glimmen
-	 * dann alle Lampen gleich halb, wie der Ladebalken des Launchers bei reduzierter Bewegung.
+	 * Fortschritt mittig um {@code cx} (Höhe 12 ab {@code y}): im Cubiq-Design ein schlanker Balken wie im Launcher
+	 * ({@link Paint#progress}), in Winternacht ein Eisbalken, im Fuchsbau ein glimmender Ast, zu Halloween der Mondlauf.
+	 * {@code progress} 0..1, &lt; 0 = unbestimmt. Ohne Bewegung ({@link dev.pwiepixel.cubiqclient.core.menus.MenuStyle#animated()})
+	 * steht die Anzeige still – unbestimmt liegt dann ein gleichmäßiger, halb heller Schimmer auf dem ganzen Balken, wie im
+	 * Launcher bei reduzierter Bewegung.
 	 */
-	public static void lamps(Canvas c, int cx, int y, int maxWidth, float progress, float time) {
+	public static void progress(Canvas c, int cx, int y, int maxWidth, float progress, float time) {
 		Theme t = Theme.get();
 		boolean animated = dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated();
 		if (t.halloween) {
@@ -670,7 +715,7 @@ public final class MenuSkin {
 			return;
 		}
 		if (t.winter) {
-			// Winternacht: ein Eisbalken, der von links zufriert, statt der Lampenreihe.
+			// Winternacht: ein Eisbalken, der von links zufriert.
 			Frost.bar(c, cx, y + 3, maxWidth, progress, time, animated);
 			return;
 		}
@@ -679,31 +724,8 @@ public final class MenuSkin {
 			Ember.bar(c, cx, y + 3, maxWidth, progress, time, animated);
 			return;
 		}
-		int n = 10;
-		int size = 12;
-		int gap = Math.max(2, Math.min(6, (maxWidth - n * size) / (n - 1)));
-		int total = n * size + (n - 1) * gap;
-		int x0 = cx - total / 2;
-		float lit = progress < 0 ? -1 : Math.max(0f, Math.min(1f, progress)) * n;
-		boolean still = lit < 0 && !animated;
-		float head = (time * 6f) % (n + 3) - 1.5f;
-		for (int i = 0; i < n; i++) {
-			int x = x0 + i * (size + gap);
-			float l;
-			if (still) {
-				l = 0.5f;
-			} else if (lit < 0) {
-				float d = Math.abs(i - head);
-				l = d < 1f ? 1f - d * 0.6f : (d < 2f ? 0.4f * (2f - d) : 0f);
-			} else {
-				l = Math.max(0f, Math.min(1f, lit - i));
-			}
-			if (i < n - 1) {
-				int dust = still ? ColorMath.lerp(t.dustOff, t.dustOn, 0.5f) : (l > 0.5f ? t.dustOn : t.dustOff);
-				c.fill(x + size, y + size / 2 - 1, x + size + gap, y + size / 2 + 1, dust);
-			}
-			Redstone.lamp(c, x, y, size, size, l, 0f);
-		}
+		int w = Math.max(40, maxWidth - 16);
+		Paint.progress(c, cx - w / 2, y + 3, w, 6, progress, time, animated);
 	}
 
 	/**
@@ -755,10 +777,8 @@ public final class MenuSkin {
 		} else if (t.fox) {
 			foxResources(c, width, height);
 		} else {
-			c.fill(0, 0, width, height, 0xFF120D0E);
-			// Gitter aus unbestromtem Staub, sehr dezent.
-			for (int x = cell / 2; x < width; x += cell) c.fill(x, 0, x + 1, height, 0x10FF3020);
-			for (int y = cell / 2; y < height; y += cell) c.fill(0, y, width, y + 1, 0x10FF3020);
+			cubiqResources(c, t, width, height, progress);
+			return;
 		}
 		int scale = Math.max(2, Math.min(6, width / 110));
 		String word = "Cubiq CLIENT";
@@ -772,7 +792,34 @@ public final class MenuSkin {
 		for (int[] r : rects) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, r[1] == 0 ? light : t.accent);
 		if (t.winter) TitleUi.snowCaps(c, rects, x, y, scale);
 		if (t.fox) Ember.leafCaps(c, rects, x, y, scale);
-		lamps(c, width / 2, height / 2 + 14, Math.min(width - 40, 220), progress, seconds());
+		progress(c, width / 2, height / 2 + 14, Math.min(width - 40, 220), progress, seconds());
+	}
+
+	/**
+	 * Cubiq beim Laden der Ressourcen – wie die Start-Animation des Launchers: tiefster Grund, ein weicher Schein in der
+	 * Akzentfarbe, das Cubiq-Zeichen, darunter „CUBIQ CLIENT“ und der Fortschritt. Immer dunkel, nur Rechtecke.
+	 */
+	private static void cubiqResources(Canvas c, Theme t, int width, int height, float progress) {
+		c.fill(0, 0, width, height, DEEP);
+		int scale = Math.max(2, Math.min(5, width / 150));
+		int px = Math.min(width, height) >= 360 ? 2 : 1;
+		int cells = Math.max(24, Math.min(60, Math.min(width, height) / (3 * px)));
+		int mark = cells * px;
+		int wordH = PixelFont.HEIGHT * scale;
+		int top = Math.max(8, (height - (mark + 14 + wordH + 18 + 12)) / 2);
+		int cx = width / 2;
+		Paint.radialGlow(c, cx, top + mark / 2, mark * 3 / 2, mark * 3 / 2, t.accent, 54, width, height);
+		CubiqMark.draw(c, cx - mark / 2, top, cells, px, 1f);
+		// „CUBIQ“ hell, „CLIENT“ in der Akzentfarbe (wie „Cubiq Launcher“ in der Start-Animation).
+		int gap = scale * 4;
+		int wCubiq = PixelFont.width("CUBIQ") * scale;
+		int wClient = PixelFont.width("CLIENT") * scale;
+		int x = cx - (wCubiq + gap + wClient) / 2;
+		int y = top + mark + 14;
+		for (int[] r : PixelFont.rects("CUBIQ")) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, 0xFFEEF4EF);
+		x += wCubiq + gap;
+		for (int[] r : PixelFont.rects("CLIENT")) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, t.accentHover);
+		progress(c, cx, y + wordH + 14, Math.min(width - 40, 200), progress, seconds());
 	}
 
 	/**

@@ -5,7 +5,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel;
 
@@ -51,13 +50,13 @@ public final class ShieldPreview implements ModulePanel {
 		for (int i = 0; i < 2; i++) {
 			boolean block = i == 1;
 			int bx = x + i * (bw + gap);
-			Redstone.well(c, bx, y, bw, bh, t.border);
+			Paint.well(c, bx, y, bw, bh, t.border);
 			c.fill(bx + 1, y + 1, bx + bw - 1, y + bh - 1, ColorMath.withAlpha(t.deep, 235));
 			double[][] ghost = silhouette(block ? ShieldPosition.vanillaDelta(true) : ShieldMath.identity(), true, aspect);
 			double[][] shape = silhouette(ShieldPosition.offset(block ? blocking : normal, true, block), true, aspect);
 			fillPolygon(c, ghost, bx + 1, y + 1, bw - 2, bh - 2, ColorMath.withAlpha(t.textDim, 70));
 			int alpha = block && transparent ? Math.round(255 * position.opacityFraction()) : 230;
-			fillPolygon(c, shape, bx + 1, y + 1, bw - 2, bh - 2, ColorMath.withAlpha(t.dustOn, Math.max(40, alpha)));
+			fillPolygon(c, shape, bx + 1, y + 1, bw - 2, bh - 2, ColorMath.withAlpha(t.accentText, Math.max(40, alpha)));
 			// Fadenkreuz
 			int cx = bx + bw / 2, cy = y + bh / 2;
 			c.fill(cx - 3, cy, cx + 4, cy + 1, t.text);

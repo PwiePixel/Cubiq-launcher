@@ -11,7 +11,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
@@ -22,7 +21,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Linke Spalte des Chat-Reiters: Unterhaltungen (neueste zuerst) mit Gesicht, Vorschau, Zeit, Ungelesen-Lampe und
+ * Linke Spalte des Chat-Reiters: Unterhaltungen (neueste zuerst) mit Gesicht, Vorschau, Zeit, Ungelesen-Punkt und
  * Stumm-Symbol; darunter Freunde ohne Unterhaltung („Nachricht schreiben“). Suche filtert beides.
  */
 final class ConversationList {
@@ -94,7 +93,7 @@ final class ConversationList {
 		rect[2] = w;
 		rect[3] = y + h - cy;
 		int lh = y + h - cy;
-		Redstone.well(c, x, cy, w, lh, t.border);
+		Paint.well(c, x, cy, w, lh, t.border);
 		if (s == null) return;
 		ChatStore store = s.store();
 		if (!store.listLoaded()) {
@@ -147,11 +146,11 @@ final class ConversationList {
 		Theme t = Theme.get();
 		boolean hover = Kit.inside(mx, my, x, y, w, ROW_H - 2) && my >= top && my < bottom;
 		int bg = selected ? ColorMath.lerp(t.surface, t.accent, 0.28f) : hover ? t.surfaceHover : t.surface;
-		Redstone.stone(c, x, y, w, ROW_H - 2, bg, selected ? t.accent : t.border);
+		Paint.panel(c, x, y, w, ROW_H - 2, bg, selected ? t.accent : t.border);
 		String faceId = conv.faceUuid();
 		Faces.draw(c, ctx.faces().face(faceId, null), faceId, conv.title(), x + 4, y + 4, 2, true);
 		if (conv.group) {
-			Redstone.block(c, x + 13, y + 13, 10, 10, t.bevelDark);
+			Paint.block(c, x + 13, y + 13, 10, 10, t.bevelDark);
 			Icons.draw(c, "friends", x + 14, y + 14, 1, t.text);
 		}
 		int tx = x + 25;
@@ -204,9 +203,9 @@ final class ConversationList {
 			int bottom) {
 		Theme t = Theme.get();
 		boolean hover = Kit.inside(mx, my, x, y, w, ROW_H - 2) && my >= top && my < bottom;
-		Redstone.stone(c, x, y, w, ROW_H - 2, hover ? t.surfaceHover : ColorMath.withAlpha(t.surface, 160), t.border);
+		Paint.panel(c, x, y, w, ROW_H - 2, hover ? t.surfaceHover : ColorMath.withAlpha(t.surface, 160), t.border);
 		Faces.draw(c, ctx.faces().face(f.uuid, null), f.uuid, f.name, x + 4, y + 4, 2, true);
-		Redstone.pip(c, x + 15, y + 15, 6, f.inGame() ? 1f : f.online() ? 0.45f : 0f);
+		Paint.pip(c, x + 15, y + 15, 6, f.inGame() ? 1f : f.online() ? 0.45f : 0f);
 		Paint.textClipped(c, f.name, x + 25, y + 3, w - 30, t.text, false);
 		Paint.textClipped(c, I18n.tr("social.list.clickToWrite"), x + 25, y + 14, w - 30, t.textDim, false);
 		kit.quiet(x, y, w, ROW_H - 2, () -> openDm(f.uuid));

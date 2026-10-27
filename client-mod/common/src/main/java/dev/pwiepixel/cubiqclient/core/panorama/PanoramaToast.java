@@ -5,7 +5,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 /**
@@ -63,24 +62,24 @@ public final class PanoramaToast {
 		c.push();
 		c.raise(200f);
 		Paint.shadow(c, x, y, w, h, 3, 0.35f * vis);
-		Redstone.stone(c, x, y, w, h, t.surface, d.error ? t.dustOn : ColorMath.lerp(t.border, t.accent, 0.6f));
-		Redstone.iconWell(c, x + 5, y + 6, 1, d.error ? "info" : "image", d.error ? t.dustOn : t.accent, d.saving ? 0.6f : 0.25f);
+		Paint.panel(c, x, y, w, h, t.surface, d.error ? t.danger : ColorMath.lerp(t.border, t.accent, 0.6f));
+		Paint.iconWell(c, x + 5, y + 6, 1, d.error ? "info" : "image", d.error ? t.danger : t.accent, d.saving ? 0.6f : 0.25f);
 		int tx = x + 26;
 		int tw = w - 30;
 		Paint.textClipped(c, d.title, tx, y + 6, tw, t.text, false);
-		Paint.textClipped(c, d.text == null ? "" : d.text, tx, y + 18, tw, d.error ? t.dustOn : t.textDim, false);
+		Paint.textClipped(c, d.text == null ? "" : d.text, tx, y + 18, tw, d.error ? t.danger : t.textDim, false);
 		if (d.saving) {
-			// Unbestimmter Fortschritt: laufender Staub-Balken.
+			// Unbestimmter Fortschritt: laufender Balken.
 			int bx = tx, bw = tw - 2, by = y + h - 5;
-			c.fill(bx, by, bx + bw, by + 2, t.dustOff);
+			c.fill(bx, by, bx + bw, by + 2, t.track);
 			int seg = Math.max(12, bw / 4);
 			int pos = (int) ((d.age / 6) % (bw + seg)) - seg;
-			c.fill(bx + Math.max(0, pos), by, bx + Math.min(bw, pos + seg), by + 2, t.dustOn);
+			c.fill(bx + Math.max(0, pos), by, bx + Math.min(bw, pos + seg), by + 2, t.accentText);
 		}
 		if (hint) {
 			int hy = y + 30;
 			if (keyLabel != null && !keyLabel.isEmpty()) {
-				int kw = Redstone.keycap(c, tx, hy - 1, keyLabel, 60);
+				int kw = Paint.keycap(c, tx, hy - 1, keyLabel, 60);
 				Paint.textClipped(c, I18n.tr("panorama.openFolder"), tx + kw + 4, hy + 1, tw - kw - 4, t.text, false);
 			} else {
 				Icons.draw(c, "folder", tx, hy + 1, 1, t.textDim);

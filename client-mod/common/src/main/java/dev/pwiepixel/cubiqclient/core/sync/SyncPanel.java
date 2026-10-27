@@ -4,7 +4,6 @@ import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel;
 
@@ -53,7 +52,7 @@ public final class SyncPanel implements ModulePanel {
 				lit = 0f;
 				break;
 		}
-		Redstone.pip(c, x, y + 2, 7, lit);
+		Paint.pip(c, x, y + 2, 7, lit);
 		boolean button = s == ClientSync.Status.SYNCED || s == ClientSync.Status.OFFLINE;
 		String label = I18n.tr("sync.now");
 		int bw = button ? c.textWidth(label) + 16 : 0;

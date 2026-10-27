@@ -8,7 +8,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.social.Dialog;
 import dev.pwiepixel.cubiqclient.core.ui.social.Kit;
@@ -47,7 +46,7 @@ public final class WorldsPanel {
 		final Hosting hosting = Hosting.current();
 		area = new int[] { x, y, w, h };
 		if (hosting == null || !hosting.signedIn()) {
-			Redstone.well(c, x, y, w, h, t.border);
+			Paint.well(c, x, y, w, h, t.border);
 			Paint.textCentered(c, I18n.tr("hosting.worlds.offline"), x + w / 2, y + h / 2 - 4, t.textDim, false);
 			return;
 		}
@@ -55,7 +54,7 @@ public final class WorldsPanel {
 		int top = y;
 		int status = drawStatus(c, kit, hosting, x, y, w, mx, my);
 		top += status;
-		Redstone.well(c, x, top, w, y + h - top, t.border);
+		Paint.well(c, x, top, w, y + h - top, t.border);
 		List<Rooms.Room> rooms = hosting.friendsRooms();
 		int listY = top + 2;
 		int listH = y + h - top - 4;
@@ -88,9 +87,9 @@ public final class WorldsPanel {
 		String text = st == Hosting.GuestState.WAITING ? I18n.tr("hosting.join.waiting", host)
 				: st == Hosting.GuestState.CONNECTING ? I18n.tr("hosting.join.connecting", host)
 				: st == Hosting.GuestState.NEEDS_MODS ? I18n.tr("hosting.join.needsMods", host) : I18n.tr("hosting.join.joining");
-		Redstone.stone(c, x, y, w, 22, ColorMath.withAlpha(t.accent, 40), t.accent);
+		Paint.panel(c, x, y, w, 22, ColorMath.withAlpha(t.accent, 40), t.accent);
 		float pulse = (float) (0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 180.0));
-		Redstone.pip(c, x + 6, y + 7, 8, pulse);
+		Paint.pip(c, x + 6, y + 7, 8, pulse);
 		Paint.textClipped(c, text, x + 18, y + 7, w - 100, t.text, false);
 		kit.button(c, x + w - 76, y + 2, 72, 18, I18n.tr("social.cancel"), false, true, mx, my, new Runnable() {
 			@Override
@@ -105,7 +104,7 @@ public final class WorldsPanel {
 			int clipY, int clipH) {
 		Theme t = Theme.get();
 		boolean hov = Kit.inside(mx, my, x, y, w, ROW_H) && my >= clipY && my < clipY + clipH;
-		Redstone.stone(c, x, y, w, ROW_H, hov ? t.surfaceHover : t.surface, t.border);
+		Paint.panel(c, x, y, w, ROW_H, hov ? t.surfaceHover : t.surface, t.border);
 		int[] face = faces.face(r.hostUuid, null);
 		Faces.draw(c, face, r.hostUuid, r.hostName, x + 5, y + 7, 2, true);
 		int tx = x + 26;
@@ -117,8 +116,8 @@ public final class WorldsPanel {
 				r.maxPlayers) + state;
 		String mods = modsTag(r);
 		if (mods != null) {
-			// „Mit Mods (12, 5 Pflicht)“ rechts neben dem Namen – in Lampenfarbe, damit man es vor dem Beitreten sieht.
-			Paint.textRight(c, mods, right, y + 5, t.lampOn, false);
+			// „Mit Mods (12, 5 Pflicht)“ rechts neben dem Namen – hervorgehoben, damit man es vor dem Beitreten sieht.
+			Paint.textRight(c, mods, right, y + 5, t.caution, false);
 		}
 		Paint.textClipped(c, info, tx, y + 17, right - tx, t.textDim, false);
 		String compat = hosting.compatibility(r);
