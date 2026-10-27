@@ -3532,7 +3532,7 @@
       "button": "Learn more & turn on",
       "shares": "To share screenshots as links, the launcher signs in to the Cubiq server. That only happens once you agree.",
       "achievements": "To show your achievements, the launcher signs in to the Cubiq server. That only happens once you agree.",
-      "cosmetics": "To show Cubiq head cosmetics, the launcher signs in to the Cubiq server. That only happens once you agree.",
+      "cosmetics": "To show Cubiq cosmetics, the launcher signs in to the Cubiq server. That only happens once you agree.",
       "remote": "To control your PC from this phone, the launcher signs in to the Cubiq server. That only happens once you agree.",
       "creator": "The creator programme (codes, fan symbols, fan capes) needs the Cubiq services."
     },
@@ -3985,7 +3985,7 @@
     },
     "companion": {
       "title": "Companions",
-      "intro": "Flies around your head in addition to a hat. The preview shows hat, companion and cape together.",
+      "intro": "Flies around your head. The preview shows companion and cape together.",
       "wearing": "Companion: {name}",
       "selectedWorn": "Flying with you – everyone with the Cubiq Client sees it.",
       "toasts": {
@@ -3995,7 +3995,7 @@
     },
     "wings": {
       "title": "Wings",
-      "intro": "Sit on your back in addition to hat and companion. Preview them standing, in the air and sneaking.",
+      "intro": "Sit on your back in addition to a companion. Preview them standing, in the air and sneaking.",
       "wearing": "Wings: {name}",
       "selectedWorn": "On your back – everyone with the Cubiq Client sees them.",
       "toasts": {
@@ -8144,7 +8144,6 @@
         "other": "Reward"
       },
       "pool": {
-        "cape": "Mondnacht cape – random colour, only one each",
         "emotes": "4 emotes",
         "stickers": "6 chat stickers",
         "sour": "Trick ≈ 1 in 4"
@@ -8154,10 +8153,10 @@
       "title": "Pumpkin hunt",
       "text": "13 pumpkins are hidden in the launcher, on the website and in the Cubiq Client. Every find counts for your account (the server checks each pumpkin, doubles don’t count).",
       "found": "Pumpkin found! {n}/{total}",
-      "complete": "All 13! Badge “Pumpkin Hunter 2026” and cape unlocked.",
+      "complete": "All 13! Badge “Pumpkin Hunter 2026” unlocked, plus Halloween wings of your choice.",
       "pumpkinLabel": "A hidden pumpkin",
       "rewardLabel": "Reward for all 13:",
-      "rewardCape": "+ cape “Pumpkin Hunter” and one of 4 Halloween wings of your choice",
+      "rewardWings": "+ one of 4 Halloween wings of your choice",
       "logLine": "[🎃] Something is grinning between these lines …"
     },
     "badges": {

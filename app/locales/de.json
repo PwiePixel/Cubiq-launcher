@@ -3532,7 +3532,7 @@
       "button": "Mehr erfahren & einschalten",
       "shares": "Um Screenshots als Link zu teilen, meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
       "achievements": "Um deine Erfolge zu zeigen, meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
-      "cosmetics": "Für Cubiq-Kopf-Kosmetik meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
+      "cosmetics": "Für Cubiq-Kosmetik meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
       "remote": "Um deinen PC vom Handy aus zu steuern, meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
       "creator": "Das Creator-Programm (Codes, Fan-Symbole, Fan-Umhänge) braucht die Cubiq-Dienste."
     },
@@ -3985,7 +3985,7 @@
     },
     "companion": {
       "title": "Begleiter",
-      "intro": "Fliegt zusätzlich zum Hut um deinen Kopf. Die Vorschau zeigt Hut, Begleiter und Umhang zusammen.",
+      "intro": "Fliegt um deinen Kopf. Die Vorschau zeigt Begleiter und Umhang zusammen.",
       "wearing": "Begleiter: {name}",
       "selectedWorn": "Fliegt mit – alle mit Cubiq Client sehen ihn.",
       "toasts": {
@@ -3995,7 +3995,7 @@
     },
     "wings": {
       "title": "Flügel",
-      "intro": "Sitzen zusätzlich zu Hut und Begleiter auf deinem Rücken. Die Vorschau zeigt sie am Boden, in der Luft und beim Schleichen.",
+      "intro": "Sitzen zusätzlich zu einem Begleiter auf deinem Rücken. Die Vorschau zeigt sie am Boden, in der Luft und beim Schleichen.",
       "wearing": "Flügel: {name}",
       "selectedWorn": "Auf deinem Rücken – alle mit Cubiq Client sehen sie.",
       "toasts": {
@@ -8144,7 +8144,6 @@
         "other": "Belohnung"
       },
       "pool": {
-        "cape": "Mondnacht-Umhang – zufällige Farbe, jeder nur einen",
         "emotes": "4 Emotes",
         "stickers": "6 Chat-Sticker",
         "sour": "Saures ≈ 1 von 4"
@@ -8154,10 +8153,10 @@
       "title": "Kürbis-Suche",
       "text": "13 Kürbisse, versteckt in Launcher, Website und Cubiq Client. Jeder Fund zählt fürs Konto (der Server prüft jeden Kürbis, doppelt zählt nicht).",
       "found": "Kürbis gefunden! {n}/{total}",
-      "complete": "Alle 13! Abzeichen „Kürbisjäger 2026“ und Umhang freigeschaltet.",
+      "complete": "Alle 13! Abzeichen „Kürbisjäger 2026“ freigeschaltet, dazu Halloween-Flügel deiner Wahl.",
       "pumpkinLabel": "Ein versteckter Kürbis",
       "rewardLabel": "Belohnung für alle 13:",
-      "rewardCape": "+ Umhang „Kürbisjäger“ und eine von 4 Halloween-Flügeln zur Wahl",
+      "rewardWings": "+ eine von 4 Halloween-Flügeln zur Wahl",
       "logLine": "[🎃] Zwischen diesen Zeilen grinst etwas …"
     },
     "badges": {

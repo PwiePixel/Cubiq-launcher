@@ -3485,7 +3485,7 @@
       "button": "Meer info & inschakelen",
       "shares": "Om screenshots als link te delen, meldt de launcher zich aan bij de Cubiq-server. Dat gebeurt pas als je toestemming geeft.",
       "achievements": "Om je prestaties te tonen, meldt de launcher zich aan bij de Cubiq-server. Dat gebeurt pas als je akkoord gaat.",
-      "cosmetics": "Om Cubiq-hoofdcosmetica te tonen, logt de launcher in bij de Cubiq-server. Dat gebeurt pas als je akkoord gaat.",
+      "cosmetics": "Om Cubiq-cosmetica te tonen, logt de launcher in bij de Cubiq-server. Dat gebeurt pas als je akkoord gaat.",
       "remote": "Om je pc vanaf deze telefoon te bedienen, meldt de launcher zich aan bij de Cubiq-server. Dat gebeurt pas als je toestemming geeft."
     },
     "account": {
@@ -3934,7 +3934,7 @@
     },
     "companion": {
       "title": "Metgezellen",
-      "intro": "Vliegt om je hoofd, naast een hoed. De preview toont hoed, metgezel en cape samen.",
+      "intro": "Vliegt om je hoofd. De preview toont metgezel en cape samen.",
       "wearing": "Metgezel: {name}",
       "selectedWorn": "Vliegt mee – iedereen met de Cubiq Client ziet het.",
       "toasts": {

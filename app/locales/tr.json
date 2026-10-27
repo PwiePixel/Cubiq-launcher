@@ -3485,7 +3485,7 @@
       "button": "Daha fazla bilgi ve aç",
       "shares": "Ekran görüntülerini bağlantı olarak paylaşmak için başlatıcı Cubiq sunucusuna giriş yapar. Bu yalnızca onay verdiğinde olur.",
       "achievements": "Başarımlarını göstermek için launcher Cubiq sunucusuna giriş yapar. Bu yalnızca onay verdiğinde olur.",
-      "cosmetics": "Cubiq kafa kozmetiklerini göstermek için launcher Cubiq sunucusuna giriş yapar. Bu yalnızca sen onay verdikten sonra olur.",
+      "cosmetics": "Cubiq kozmetiklerini göstermek için launcher Cubiq sunucusuna giriş yapar. Bu yalnızca sen onay verdikten sonra olur.",
       "remote": "Bilgisayarını bu telefondan kontrol etmek için başlatıcı Cubiq sunucusunda oturum açar. Bu yalnızca sen onay verdikten sonra olur."
     },
     "account": {
@@ -3934,7 +3934,7 @@
     },
     "companion": {
       "title": "Yoldaşlar",
-      "intro": "Şapkanın yanında başının etrafında uçar. Önizleme şapkayı, yoldaşı ve pelerini birlikte gösterir.",
+      "intro": "Başının etrafında uçar. Önizleme yoldaşı ve pelerini birlikte gösterir.",
       "wearing": "Yoldaş: {name}",
       "selectedWorn": "Seninle uçuyor – Cubiq Client kullanan herkes görür.",
       "toasts": {

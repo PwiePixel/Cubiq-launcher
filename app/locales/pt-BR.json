@@ -3485,7 +3485,7 @@
       "button": "Saiba mais e ative",
       "shares": "Para compartilhar capturas como link, o launcher entra no servidor Cubiq. Isso só acontece depois que você concordar.",
       "achievements": "Para mostrar suas conquistas, o launcher entra no servidor Cubiq. Isso só acontece depois que você concordar.",
-      "cosmetics": "Para mostrar os cosméticos de cabeça Cubiq, o launcher entra no servidor Cubiq. Isso só acontece depois que você concordar.",
+      "cosmetics": "Para mostrar os cosméticos Cubiq, o launcher entra no servidor Cubiq. Isso só acontece depois que você concordar.",
       "remote": "Para controlar seu PC por este celular, o launcher faz login no servidor Cubiq. Isso só acontece depois que você concordar."
     },
     "account": {
@@ -3934,7 +3934,7 @@
     },
     "companion": {
       "title": "Companheiros",
-      "intro": "Voa em volta da sua cabeça além do chapéu. A prévia mostra chapéu, companheiro e capa juntos.",
+      "intro": "Voa em volta da sua cabeça. A prévia mostra companheiro e capa juntos.",
       "wearing": "Companheiro: {name}",
       "selectedWorn": "Voando com você – todo mundo com o Cubiq Client vê.",
       "toasts": {

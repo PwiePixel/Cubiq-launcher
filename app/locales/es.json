@@ -3532,7 +3532,7 @@
       "button": "Más información y activar",
       "shares": "Para compartir capturas como enlace, el launcher inicia sesión en el servidor Cubiq. Eso solo ocurre cuando aceptas.",
       "achievements": "Para mostrar tus logros, el launcher inicia sesión en el servidor Cubiq. Eso solo ocurre cuando aceptas.",
-      "cosmetics": "Para los cosméticos de cabeza de Cubiq, el launcher inicia sesión en el servidor de Cubiq. Solo ocurre si das tu consentimiento.",
+      "cosmetics": "Para los cosméticos de Cubiq, el launcher inicia sesión en el servidor de Cubiq. Solo ocurre si das tu consentimiento.",
       "remote": "Para controlar tu PC desde este móvil, el launcher inicia sesión en el servidor de Cubiq. Eso solo ocurre cuando aceptas.",
       "creator": "El programa de creadores (códigos, símbolos de fan, capas de fan) necesita los servicios Cubiq."
     },
@@ -3985,7 +3985,7 @@
     },
     "companion": {
       "title": "Compañeros",
-      "intro": "Vuela alrededor de tu cabeza además del sombrero. La vista previa muestra sombrero, compañero y capa juntos.",
+      "intro": "Vuela alrededor de tu cabeza. La vista previa muestra compañero y capa juntos.",
       "wearing": "Compañero: {name}",
       "selectedWorn": "Vuela contigo: todos con Cubiq Client lo ven.",
       "toasts": {
@@ -3995,7 +3995,7 @@
     },
     "wings": {
       "title": "Alas",
-      "intro": "Van en tu espalda además del sombrero y el acompañante. La vista previa las muestra en el suelo, en el aire y agachado.",
+      "intro": "Van en tu espalda además del acompañante. La vista previa las muestra en el suelo, en el aire y agachado.",
       "wearing": "Alas: {name}",
       "selectedWorn": "En tu espalda: todos con Cubiq Client las ven.",
       "toasts": {
@@ -8144,7 +8144,6 @@
         "other": "Recompensa"
       },
       "pool": {
-        "cape": "Capa Mondnacht – color aleatorio, solo una por jugador",
         "emotes": "4 emotes",
         "stickers": "6 stickers de chat",
         "sour": "Truco ≈ 1 de cada 4"
@@ -8154,10 +8153,10 @@
       "title": "Caza de calabazas",
       "text": "13 calabazas escondidas en el launcher, la web y el Cubiq Client. Cada hallazgo cuenta para tu cuenta (el servidor comprueba cada calabaza, las repetidas no cuentan).",
       "found": "¡Calabaza encontrada! {n}/{total}",
-      "complete": "¡Las 13! Insignia «Cazador de calabazas 2026» y capa desbloqueadas.",
+      "complete": "¡Las 13! Insignia «Cazador de calabazas 2026» desbloqueada, más unas alas de Halloween a elegir.",
       "pumpkinLabel": "Una calabaza escondida",
       "rewardLabel": "Recompensa por las 13:",
-      "rewardCape": "+ capa «Cazador de calabazas» y unas de 4 alas de Halloween a elegir",
+      "rewardWings": "+ unas de 4 alas de Halloween a elegir",
       "logLine": "[🎃] Algo sonríe entre estas líneas …"
     },
     "badges": {
