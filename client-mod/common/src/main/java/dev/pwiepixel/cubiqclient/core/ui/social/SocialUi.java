@@ -11,7 +11,6 @@ import dev.pwiepixel.cubiqclient.core.social.Social;
 import dev.pwiepixel.cubiqclient.core.social.SocialOverlay;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
 import dev.pwiepixel.cubiqclient.core.ui.UiScreen;
@@ -21,7 +20,7 @@ import dev.pwiepixel.cubiqclient.core.ui.menus.WindowUi;
 import java.util.List;
 
 /**
- * Sozial-Bildschirm im Spiel, im Redstone-Stil: Reiter <b>Chat</b> (Unterhaltungen links, Unterhaltung rechts) und
+ * Sozial-Bildschirm im Spiel, im Cubiq-Stil: Reiter <b>Chat</b> (Unterhaltungen links, Unterhaltung rechts) und
  * <b>Freunde</b> (Liste, Anfragen samt Umhang-Angeboten, Blockiert). Alles aktualisiert sich live über den
  * Konto-Stream (API.md §19); Aktionen laufen über {@link Social}.
  */
@@ -214,8 +213,8 @@ public final class SocialUi extends WindowUi implements SocialContext {
 	protected int headerExtras(Canvas c, int right, int y, int mx, int my) {
 		Social s = social();
 		if (s == null || !s.signedIn()) return right;
-		// Live-Lampe: leuchtet, solange der Echtzeit-Stream steht.
-		Redstone.pip(c, right - 8, y + 5, 6, s.live() ? 1f : 0.15f);
+		// Live-Punkt: leuchtet, solange der Echtzeit-Stream steht.
+		Paint.pip(c, right - 8, y + 5, 6, s.live() ? 1f : 0.15f);
 		return right - 12;
 	}
 
@@ -271,7 +270,7 @@ public final class SocialUi extends WindowUi implements SocialContext {
 		Social.Notice n = s == null ? null : s.notice(now);
 		int noteX = x + tabW * 3 + 16;
 		if (n != null && ix - noteX > 30) {
-			Paint.textClipped(c, I18n.tr(n.key, n.args), noteX, y + 4, ix - noteX - 4, n.error ? t.dustOn : t.text, false);
+			Paint.textClipped(c, I18n.tr(n.key, n.args), noteX, y + 4, ix - noteX - 4, n.error ? t.danger : t.text, false);
 		}
 		int cy = y + 20;
 		int ch = h - 20;
@@ -295,7 +294,7 @@ public final class SocialUi extends WindowUi implements SocialContext {
 		} else {
 			String status = FriendsPanel.statusText(online);
 			if (status != null || s == null) {
-				Redstone.well(c, x, cy, w, ch, t.border);
+				Paint.well(c, x, cy, w, ch, t.border);
 				List<String> lines = Paint.wrap(c, status == null ? I18n.tr("friends.status.unavailable") : status, w - 20);
 				int ty = cy + ch / 2 - lines.size() * 5;
 				for (String l : lines) {

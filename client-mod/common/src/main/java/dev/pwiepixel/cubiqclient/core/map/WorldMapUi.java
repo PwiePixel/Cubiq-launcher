@@ -7,7 +7,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -483,7 +482,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 				toScreen(px * f, pz * f);
 				float yawRad = (float) Math.toRadians(e.yaw());
 				sprites.draw(c, MapSprites.ARROW, (float) point[0], (float) point[1], 13f, yawRad + (float) Math.PI,
-						0x90000000 | (Theme.get().dustOn & 0xFFFFFF), s);
+						0x90000000 | (Theme.get().accentText & 0xFFFFFF), s);
 			}
 			return;
 		}
@@ -529,7 +528,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		toScreen(px, pz);
 		float yawRad = (float) Math.toRadians(e.yaw());
 		sprites.draw(c, MapSprites.ARROW, (float) point[0], (float) point[1], 13f, yawRad + (float) Math.PI,
-				0xFF000000 | (Theme.get().dustOn & 0xFFFFFF), s);
+				0xFF000000 | (Theme.get().accentText & 0xFFFFFF), s);
 	}
 
 	// --- Leisten ---
@@ -556,8 +555,8 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 
 		// Oben: Titel, Dimension (Knopf), Knöpfe.
 		c.fill(0, 0, w, BAR_H, 0xE0141217);
-		c.fill(0, BAR_H - 1, w, BAR_H, ColorMath.withAlpha(t.dustOn, 0xB0));
-		Icons.draw(c, "map", 8, 7, 1, 0xFF000000 | (t.dustOn & 0xFFFFFF));
+		c.fill(0, BAR_H - 1, w, BAR_H, ColorMath.withAlpha(t.accentText, 0xB0));
+		Icons.draw(c, "map", 8, 7, 1, 0xFF000000 | (t.accentText & 0xFFFFFF));
 		String title = I18n.tr("map.title");
 		c.text(title, 20, 7, t.text, false);
 		int x = 26 + c.textWidth(title);
@@ -594,8 +593,8 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		int dw = c.textWidth(shown);
 		if (canSwitch) {
 			boolean hov = mx >= x - 3 && mx < x + dw + 13 && my >= 3 && my < 19;
-			if (hov || dimMenuOpen) c.fill(x - 3, 3, x + dw + 13, 19, ColorMath.withAlpha(t.dustOn, hov ? 0x50 : 0x30));
-			c.text(shown, x, 7, viewingOther() ? (0xFF000000 | (t.dustOn & 0xFFFFFF)) : t.textDim, false);
+			if (hov || dimMenuOpen) c.fill(x - 3, 3, x + dw + 13, 19, ColorMath.withAlpha(t.accentText, hov ? 0x50 : 0x30));
+			c.text(shown, x, 7, viewingOther() ? (0xFF000000 | (t.accentText & 0xFFFFFF)) : t.textDim, false);
 			c.text("▾", x + dw + 4, 7, t.textDim, false);
 			final int ax = x - 3;
 			hits.add(x - 3, 3, dw + 16, 16, () -> {
@@ -633,7 +632,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 			leftEnd = Math.max(leftEnd, 8 + c.textWidth(pos) + 12);
 		}
 		int rw = c.textWidth(right);
-		c.text(right, w - 8 - rw, h - BAR_H + 7, fp.active() && right != zoom ? (0xFF000000 | (t.dustOn & 0xFFFFFF)) : t.textDim, false);
+		c.text(right, w - 8 - rw, h - BAR_H + 7, fp.active() && right != zoom ? (0xFF000000 | (t.accentText & 0xFFFFFF)) : t.textDim, false);
 		// Mitte: nur die Bedienhilfe, wenn Platz ist – Meldungen erscheinen als eigener Hinweis darüber (toast).
 		String hint = I18n.tr("map.hint");
 		int hw = c.textWidth(hint);
@@ -694,7 +693,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		if (MapExport.running()) {
 			progress = MapExport.current().progress();
 			title = I18n.tr("map.export.running", Math.round(progress * 100));
-			accent = 0xFF000000 | (t.dustOn & 0xFFFFFF);
+			accent = 0xFF000000 | (t.accentText & 0xFFFFFF);
 		} else if (toastTitle != null && now < toastUntil) {
 			title = toastTitle;
 			detail = toastDetail;
@@ -713,8 +712,8 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		int x = free / 2 - bw / 2, y = h - BAR_H - bh - 6;
 		c.push();
 		c.raise(250);
-		Redstone.block(c, x, y, bw, bh, 0xF0141217);
-		Redstone.frame(c, x, y, bw, bh, ColorMath.withAlpha(accent, 0xC0));
+		Paint.block(c, x, y, bw, bh, 0xF0141217);
+		Paint.frame(c, x, y, bw, bh, ColorMath.withAlpha(accent, 0xC0));
 		c.fill(x + 1, y + 1, x + 3, y + bh - 1, accent);
 		c.text(line1, x + 8, y + 5, accent, false);
 		if (line2 != null) c.text(line2, x + 8, y + 15, t.text, false);
@@ -754,7 +753,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 	private int button(Canvas c, int right, String icon, String tip, int mx, int my, Runnable action) {
 		int x = right - 16, y = 3;
 		boolean hov = mx >= x && mx < x + 16 && my >= y && my < y + 16;
-		Redstone.iconButton(c, x, y, 16, icon, hov, false);
+		Paint.iconButton(c, x, y, 16, icon, hov, false);
 		hits.add(x, y, 16, 16, () -> {
 			host.playClick();
 			action.run();
@@ -766,7 +765,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 	private int textButton(Canvas c, int right, String label, String tip, int mx, int my, Theme t, Runnable action) {
 		int x = right - 16, y = 3;
 		boolean hov = mx >= x && mx < x + 16 && my >= y && my < y + 16;
-		Redstone.button(c, x, y, 16, 16, "", false, hov);
+		Paint.button(c, x, y, 16, 16, "", false, hov);
 		Paint.textCentered(c, label, x + 8, y + 4, t.text, false);
 		hits.add(x, y, 16, 16, () -> {
 			host.playClick();
@@ -791,8 +790,8 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		for (String s : hover) w = Math.max(w, c.textWidth(s));
 		int h = hover.size() * 10 + 4;
 		int x = Math.min(mx + 10, width - w - 10), y = Math.min(my + 10, height - h - 4);
-		Redstone.block(c, x - 3, y - 2, w + 6, h, 0xF0141217);
-		Redstone.frame(c, x - 3, y - 2, w + 6, h, ColorMath.withAlpha(t.dustOn, 0xA0));
+		Paint.block(c, x - 3, y - 2, w + 6, h, 0xF0141217);
+		Paint.frame(c, x - 3, y - 2, w + 6, h, ColorMath.withAlpha(t.accentText, 0xA0));
 		for (int i = 0; i < hover.size(); i++) c.text(hover.get(i), x, y + 1 + i * 10, i == 0 ? t.text : t.textDim, false);
 	}
 
@@ -843,18 +842,18 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		int h = choices.size() * 14 + 6;
 		int x = Math.max(4, Math.min(popupAnchorX, width - w - 4)), y = BAR_H + 2;
 		setPopup(x, y, w, h);
-		Redstone.window(c, x, y, w, h);
+		Paint.window(c, x, y, w, h);
 		String view = viewDimension();
 		for (int i = 0; i < choices.size(); i++) {
 			final String id = choices.get(i);
 			int iy = y + 3 + i * 14;
 			boolean hov = mx >= x && mx < x + w && my >= iy && my < iy + 14;
 			boolean sel = id.equals(view);
-			if (hov || sel) c.fill(x + 1, iy, x + w - 1, iy + 14, ColorMath.withAlpha(t.dustOn, sel ? 0x40 : 0x50));
+			if (hov || sel) c.fill(x + 1, iy, x + w - 1, iy + 14, ColorMath.withAlpha(t.accentText, sel ? 0x40 : 0x50));
 			c.text(dimensionName(id), x + 8, iy + 3, sel ? t.text : t.textDim, false);
 			if (id.equals(e.dimension())) {
 				// Hier ist man gerade.
-				e.sprites().draw(c, MapSprites.ARROW, x + w - 9, iy + 7, 8f, (float) Math.PI, 0xFF000000 | (t.dustOn & 0xFFFFFF), guiScale());
+				e.sprites().draw(c, MapSprites.ARROW, x + w - 9, iy + 7, 8f, (float) Math.PI, 0xFF000000 | (t.accentText & 0xFFFFFF), guiScale());
 			}
 			hits.add(x, iy, w, 14, () -> {
 				host.playClick();
@@ -872,13 +871,13 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		int h = ids.length * 14 + 20;
 		int x = Math.max(4, Math.min(popupAnchorX - w, width - w - 4)), y = BAR_H + 2;
 		setPopup(x, y, w, h);
-		Redstone.window(c, x, y, w, h);
+		Paint.window(c, x, y, w, h);
 		c.text(c.clip(I18n.tr("map.export"), w - 8), x + 4, y + 3, t.textDim, false);
 		for (int i = 0; i < ids.length; i++) {
 			final String id = ids[i];
 			int iy = y + 14 + i * 14;
 			boolean hov = mx >= x && mx < x + w && my >= iy && my < iy + 14;
-			if (hov) c.fill(x + 1, iy, x + w - 1, iy + 14, ColorMath.withAlpha(t.dustOn, 0x50));
+			if (hov) c.fill(x + 1, iy, x + w - 1, iy + 14, ColorMath.withAlpha(t.accentText, 0x50));
 			c.text(I18n.tr("map.export." + id), x + 8, iy + 3, t.text, false);
 			hits.add(x, iy, w, 14, () -> {
 				host.playClick();
@@ -961,14 +960,14 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		menuRect[1] = y;
 		menuRect[2] = w;
 		menuRect[3] = h;
-		Redstone.window(c, x, y, w, h);
+		Paint.window(c, x, y, w, h);
 		String head = menuWaypoint != null ? menuWaypoint.name : menuBlockX + " / " + menuBlockZ;
 		c.text(c.clip(head, w - 8), x + 4, y + 3, t.textDim, false);
 		for (int i = 0; i < items.size(); i++) {
 			final String id = items.get(i);
 			int iy = y + 14 + i * 14;
 			boolean hov = mx >= x && mx < x + w && my >= iy && my < iy + 14;
-			if (hov) c.fill(x + 1, iy, x + w - 1, iy + 14, ColorMath.withAlpha(t.dustOn, 0x50));
+			if (hov) c.fill(x + 1, iy, x + w - 1, iy + 14, ColorMath.withAlpha(t.accentText, 0x50));
 			c.text(I18n.tr("map.menu." + id), x + 8, iy + 3, id.equals("delete") ? 0xFFFF6B5E : t.text, false);
 			hits.add(x, iy, w, 14, () -> {
 				host.playClick();
@@ -1149,7 +1148,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		c.flush();
 		c.push();
 		c.raise(100);
-		Redstone.window(c, x, y, dw, dh);
+		Paint.window(c, x, y, dw, dh);
 		String title = I18n.tr(editing == null ? "map.newWaypoint" : "map.editWaypoint");
 		c.text(title, x + 10, y + 8, t.text, false);
 		if (dialogDim != null && !dialogDim.isEmpty() && !dialogDim.equals(e.dimension())) {
@@ -1174,8 +1173,8 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 			final int col = COLORS[i];
 			int sx = x + 10 + i * sw;
 			boolean sel = (color & 0xFFFFFF) == col;
-			Redstone.block(c, sx + 1, fy, sw - 2, 12, 0xFF000000 | col);
-			if (sel) Redstone.frame(c, sx, fy - 1, sw, 14, 0xFFFFFFFF);
+			Paint.block(c, sx + 1, fy, sw - 2, 12, 0xFF000000 | col);
+			if (sel) Paint.frame(c, sx, fy - 1, sw, 14, 0xFFFFFFFF);
 			hits.add(sx, fy - 1, sw, 14, () -> {
 				color = col;
 				host.playClick();
@@ -1185,17 +1184,17 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		int bw = 64;
 		int by = y + dh - 24;
 		boolean hovSave = inside(mx, my, x + dw - 10 - bw, by, bw, 16);
-		Redstone.button(c, x + dw - 10 - bw, by, bw, 16, I18n.tr("map.save"), true, hovSave);
+		Paint.button(c, x + dw - 10 - bw, by, bw, 16, I18n.tr("map.save"), true, hovSave);
 		hits.add(x + dw - 10 - bw, by, bw, 16, this::saveDialog);
 		boolean hovCancel = inside(mx, my, x + dw - 14 - 2 * bw, by, bw, 16);
-		Redstone.button(c, x + dw - 14 - 2 * bw, by, bw, 16, I18n.tr("map.cancel"), false, hovCancel);
+		Paint.button(c, x + dw - 14 - 2 * bw, by, bw, 16, I18n.tr("map.cancel"), false, hovCancel);
 		hits.add(x + dw - 14 - 2 * bw, by, bw, 16, () -> {
 			host.playClick();
 			dialogOpen = false;
 		});
 		if (editing != null) {
 			boolean hovDel = inside(mx, my, x + 10, by, bw, 16);
-			Redstone.button(c, x + 10, by, bw, 16, I18n.tr("map.menu.delete"), false, hovDel);
+			Paint.button(c, x + 10, by, bw, 16, I18n.tr("map.menu.delete"), false, hovDel);
 			hits.add(x + 10, by, bw, 16, () -> {
 				host.playClick();
 				e.removeWaypoint(editing);
@@ -1206,7 +1205,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 	}
 
 	private void field(Canvas c, final TextInput input, int x, int y, int w, Theme t) {
-		Redstone.well(c, x, y, w, 16, input.focused() ? t.accent : t.border);
+		Paint.well(c, x, y, w, 16, input.focused() ? t.accent : t.border);
 		String clipped = c.clip(input.text(), w - 8);
 		c.text(clipped, x + 4, y + 4, t.text, false);
 		if (input.focused() && (System.currentTimeMillis() / 500) % 2 == 0) {

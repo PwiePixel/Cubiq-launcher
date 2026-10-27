@@ -16,7 +16,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -338,10 +337,10 @@ public final class ClipsUi extends WindowUi {
 		boolean localNotice = notice != null && now - noticeAt < 5_000L;
 		if (clipNotice != null && clipNotice.type != ClipNotice.Type.OFFER && (!localNotice || clipNoticeAt >= noticeAt)) {
 			line = clipNotice.text();
-			lineColor = clipNotice.success() ? t.text : t.dustOn;
+			lineColor = clipNotice.success() ? t.text : t.accentText;
 		} else if (localNotice) {
 			line = notice;
-			lineColor = noticeError ? t.dustOn : t.text;
+			lineColor = noticeError ? t.danger : t.text;
 		} else if (st.offersEnable()) {
 			line = I18n.tr("clips.enable.text", ClipNotice.what(st.audio, st.mic));
 			lineColor = t.text;
@@ -352,7 +351,7 @@ public final class ClipsUi extends WindowUi {
 			line = I18n.tr("clips.hint.disabled");
 		} else if (st.recording) {
 			line = I18n.tr("clips.link.recording", clock(st.recordingMillis(now)));
-			lineColor = t.dustOn;
+			lineColor = t.accentText;
 		} else if (st.available) {
 			line = st.buffer && st.clipSeconds > 0 ? I18n.tr("clips.link.ready", st.clipSeconds) : I18n.tr("clips.link.readyNoBuffer");
 		} else {
@@ -372,7 +371,7 @@ public final class ClipsUi extends WindowUi {
 		gridRect[1] = cy;
 		gridRect[2] = w;
 		gridRect[3] = gh;
-		Redstone.well(c, x, cy, w, gh, t.border);
+		Paint.well(c, x, cy, w, gh, t.border);
 		int gx = x + 4;
 		int gy = cy + 4;
 		int gw = w - 12;
@@ -406,16 +405,16 @@ public final class ClipsUi extends WindowUi {
 		boolean hov = enabled && inside(mx, my, x, y, w, h);
 		if (recording) {
 			float pulse = (float) (0.75 + 0.25 * Math.sin(now / 200.0));
-			Redstone.lamp(c, x, y, w, h, pulse, 0f);
-			c.fill(x + 6, y + 5, x + 12, y + 11, t.dustOn);
-			Paint.textClipped(c, label, x + 16, y + 4, w - 18, Redstone.lampTextColor(1f), false);
+			Paint.accentFace(c, x, y, w, h, pulse, 0f);
+			c.fill(x + 6, y + 5, x + 12, y + 11, t.accentText);
+			Paint.textClipped(c, label, x + 16, y + 4, w - 18, Paint.accentFaceText(1f), false);
 		} else if (enabled) {
-			Redstone.button(c, x, y, w, h, "", false, hov);
-			Redstone.pip(c, x + 5, y + 5, 6, hov ? 1f : 0.3f);
+			Paint.button(c, x, y, w, h, "", false, hov);
+			Paint.pip(c, x + 5, y + 5, 6, hov ? 1f : 0.3f);
 			Paint.textClipped(c, label, x + 15, y + 4 - (hov ? 1 : 0), w - 17, t.text, false);
 		} else {
-			Redstone.stone(c, x, y, w, h, t.surface, t.border);
-			Redstone.pip(c, x + 5, y + 5, 6, 0f);
+			Paint.panel(c, x, y, w, h, t.surface, t.border);
+			Paint.pip(c, x + 5, y + 5, 6, 0f);
 			Paint.textClipped(c, label, x + 15, y + 4, w - 17, t.textDim, false);
 		}
 		// Auch ohne Verbindung klickbar – dann erklärt die Meldung, warum nichts aufgenommen wird.
@@ -449,8 +448,8 @@ public final class ClipsUi extends WindowUi {
 			visibleCache.add(e);
 			final int index = i;
 			boolean hover = !overlay && inside(mx, my, tx, ty, tileW, tileH) && inside(mx, my, x, y, w, h);
-			if (hover) Redstone.glow(c, tx, ty, tileW, tileH, t.glow, 0.45f);
-			Redstone.stone(c, tx, ty, tileW, tileH, hover ? t.surfaceHover : t.surface, hover ? ColorMath.lerp(t.border, t.accent, 0.5f) : t.border);
+			if (hover) Paint.glow(c, tx, ty, tileW, tileH, t.glow, 0.45f);
+			Paint.panel(c, tx, ty, tileW, tileH, hover ? t.surfaceHover : t.surface, hover ? ColorMath.lerp(t.border, t.accent, 0.5f) : t.border);
 			int ix = tx + 3;
 			int iy = ty + 3;
 			int iw = tileW - 6;
@@ -464,16 +463,16 @@ public final class ClipsUi extends WindowUi {
 					Icons.draw(c, "image", ix + iw / 2 - 8, iy + ih / 2 - 8, 2, t.textDim);
 				}
 			} else {
-				Icons.draw(c, "film", ix + iw / 2 - 8, iy + ih / 2 - 8, 2, ColorMath.lerp(t.textDim, t.dustOn, hover ? 0.8f : 0.3f));
+				Icons.draw(c, "film", ix + iw / 2 - 8, iy + ih / 2 - 8, 2, ColorMath.lerp(t.textDim, t.accentText, hover ? 0.8f : 0.3f));
 				if (e.durationMs >= 0) {
 					String d = clock(e.durationMs);
 					int dw = c.textWidth(d) + 6;
 					c.fill(ix + iw - dw - 2, iy + ih - 12, ix + iw - 2, iy + ih - 2, 0xC0000000);
 					c.text(d, ix + iw - dw + 1, iy + ih - 11, 0xFFFFFFFF, false);
 				}
-				c.fill(ix + 2, iy + 2, ix + 8, iy + 8, t.dustOn);
+				c.fill(ix + 2, iy + 2, ix + 8, iy + 8, t.accentText);
 			}
-			if (favorite(e)) Icons.draw(c, "heart", ix + iw - 11, iy + 3, 1, t.dustOn);
+			if (favorite(e)) Icons.draw(c, "heart", ix + iw - 11, iy + 3, 1, t.accentText);
 			Paint.textClipped(c, stem(e.name), tx + 4, ty + thumbH + 3, tileW - 8, t.text, false);
 			Paint.textClipped(c, meta(e), tx + 4, ty + thumbH + 13, tileW - 8, t.textDim, false);
 			if (hover) {
@@ -548,7 +547,7 @@ public final class ClipsUi extends WindowUi {
 		}
 		int by = py + ph - barH;
 		c.fill(px, by, px + pw, py + ph, 0xFF151112);
-		Redstone.dustH(c, px, px + pw, by, t.dustOff, 0f);
+		Paint.lineH(c, px, px + pw, by, t.track, 0f);
 		int bx = px + 6;
 		iconButton(c, bx, by + 4, 14, "back", false, mx, my, new Runnable() {
 			@Override
@@ -624,7 +623,7 @@ public final class ClipsUi extends WindowUi {
 		if (notice != null && System.currentTimeMillis() - noticeAt < 5_000L) {
 			int nw = Math.min(pw - 20, c.textWidth(notice) + 12);
 			c.fill(px + (pw - nw) / 2, by - 16, px + (pw + nw) / 2, by - 3, 0xD0000000);
-			Paint.textClipped(c, notice, px + (pw - nw) / 2 + 6, by - 13, nw - 12, noticeError ? t.dustOn : t.text, false);
+			Paint.textClipped(c, notice, px + (pw - nw) / 2 + 6, by - 13, nw - 12, noticeError ? t.danger : t.text, false);
 		}
 		Paint.textClipped(c, e.name + "  ·  " + meta(e), bx, by + 7, open - 6 - bx, t.text, false);
 		// Klick daneben bleibt im Overlay (keine Kacheln darunter auslösen).
@@ -714,7 +713,7 @@ public final class ClipsUi extends WindowUi {
 			ClipPreview.State state = clipPreview.state();
 			boolean waiting = state == ClipPreview.State.LOADING || state == ClipPreview.State.IDLE;
 			String text = waiting ? I18n.tr("clips.preview.loading") : previewError(clipPreview.code(), false);
-			Icons.draw(c, "film", ix + iw / 2 - 8, iy + ih / 2 - 30, 2, waiting ? ColorMath.lerp(t.textDim, t.dustOn,
+			Icons.draw(c, "film", ix + iw / 2 - 8, iy + ih / 2 - 30, 2, waiting ? ColorMath.lerp(t.textDim, t.accentText,
 					(float) (0.5 + 0.5 * Math.sin(now / 250.0))) : t.textDim);
 			List<String> lines = Paint.wrap(c, text, Math.min(iw - 20, 300));
 			int ty = iy + ih / 2 - 6;
@@ -744,8 +743,8 @@ public final class ClipsUi extends WindowUi {
 		c.fill(trackX, ty + 4, trackX + trackW, ty + 7, 0xFF2A2224);
 		if (sheet != null) {
 			int filled = Math.round(trackW * anim.progress());
-			c.fill(trackX, ty + 4, trackX + filled, ty + 7, t.dustOn);
-			c.fill(trackX + filled - 1, ty + 2, trackX + filled + 2, ty + 9, t.dustOn);
+			c.fill(trackX, ty + 4, trackX + filled, ty + 7, t.accentText);
+			c.fill(trackX + filled - 1, ty + 2, trackX + filled + 2, ty + 9, t.accentText);
 			final int clickX = mx;
 			hits.add(trackX, ty, trackW, timeH - 2, new Runnable() {
 				@Override
@@ -759,7 +758,7 @@ public final class ClipsUi extends WindowUi {
 		// Leiste unten: blättern, abspielen, Name – rechts „Im Launcher öffnen“, System-Player, Löschen, Schließen.
 		int by = py + ph - barH;
 		c.fill(px, by, px + pw, py + ph, 0xFF151112);
-		Redstone.dustH(c, px, px + pw, by, t.dustOff, 0f);
+		Paint.lineH(c, px, px + pw, by, t.track, 0f);
 		int bx = px + 6;
 		iconButton(c, bx, by + 4, 14, "back", false, mx, my, new Runnable() {
 			@Override
@@ -830,7 +829,7 @@ public final class ClipsUi extends WindowUi {
 		// Meldung (z. B. „Im Launcher geöffnet“) statt Name, solange sie frisch ist.
 		boolean fresh = notice != null && now - noticeAt < 4_000L;
 		Paint.textClipped(c, fresh ? notice : stem(e.name) + "  ·  " + meta(e), bx, by + 7, ox - 6 - bx,
-				fresh ? (noticeError ? t.dustOn : t.text) : t.text, false);
+				fresh ? (noticeError ? t.danger : t.text) : t.text, false);
 	}
 
 	/** Verständlicher Text zu einem Code der Vorschau bzw. von „Im Launcher öffnen“. */
@@ -908,7 +907,7 @@ public final class ClipsUi extends WindowUi {
 		if (sharesError != null) info = sharesError;
 		else if (shares == null) info = I18n.tr("clips.loading");
 		else info = I18n.tr("clips.shared.limits", shares.active, shares.maxActive, shares.uploadsToday, shares.maxPerDay);
-		Paint.textClipped(c, info, x + 2, y + 1, w - 4, sharesError != null ? t.dustOn : t.textDim, false);
+		Paint.textClipped(c, info, x + 2, y + 1, w - 4, sharesError != null ? t.danger : t.textDim, false);
 		int top = y + 13;
 		int lh = h - 13;
 		long now = System.currentTimeMillis();
@@ -942,7 +941,7 @@ public final class ClipsUi extends WindowUi {
 			if (ty + tileH < top || ty > top + lh) continue;
 			final dev.pwiepixel.cubiqclient.core.social.SharedImage si = list.get(i);
 			boolean hover = !overlay && inside(mx, my, tx, ty, tileW, tileH) && inside(mx, my, x, top, w, lh);
-			Redstone.stone(c, tx, ty, tileW, tileH, hover ? t.surfaceHover : t.surface, hover ? ColorMath.lerp(t.border, t.accent, 0.5f) : t.border);
+			Paint.panel(c, tx, ty, tileW, tileH, hover ? t.surfaceHover : t.surface, hover ? ColorMath.lerp(t.border, t.accent, 0.5f) : t.border);
 			int ix = tx + 3, iy = ty + 3, iw = tileW - 6, ih = thumbH - 2;
 			c.fill(ix, iy, ix + iw, iy + ih, 0xFF0B0909);
 			TextureRef ref = s == null ? null : s.shareThumb(si);
@@ -973,9 +972,9 @@ public final class ClipsUi extends WindowUi {
 		int x = window[0] + (window[2] - w) / 2;
 		int y = window[1] + (window[3] - h) / 2;
 		c.fill(window[0] + 1, window[1] + HEADER_H, window[0] + window[2] - 1, window[1] + window[3] - 1, 0x90000000);
-		Redstone.window(c, x, y, w, h);
+		Paint.window(c, x, y, w, h);
 		Paint.textClipped(c, I18n.tr("clips.shared.deleteTitle"), x + 10, y + 9, w - 20, t.text, false);
-		Paint.textClipped(c, si.url, x + 10, y + 22, w - 20, t.dustOn, false);
+		Paint.textClipped(c, si.url, x + 10, y + 22, w - 20, t.accentText, false);
 		Paint.textClipped(c, I18n.tr("clips.shared.deleteHint"), x + 10, y + 35, w - 20, t.textDim, false);
 		int bw = (w - 30) / 2;
 		button(c, x + 10, y + h - 26, bw, 18, I18n.tr("common.cancel"), false, true, mx, my, () -> confirmShare = null);
@@ -1068,9 +1067,9 @@ public final class ClipsUi extends WindowUi {
 		int x = window[0] + (window[2] - w) / 2;
 		int y = window[1] + (window[3] - h) / 2;
 		c.fill(window[0] + 1, window[1] + HEADER_H, window[0] + window[2] - 1, window[1] + window[3] - 1, 0x90000000);
-		Redstone.window(c, x, y, w, h);
+		Paint.window(c, x, y, w, h);
 		Paint.textClipped(c, I18n.tr(e.type == ClipLibrary.Type.CLIP ? "clips.delete.clip" : "clips.delete.image"), x + 10, y + 9, w - 20, t.text, false);
-		Paint.textClipped(c, e.name, x + 10, y + 22, w - 20, t.dustOn, false);
+		Paint.textClipped(c, e.name, x + 10, y + 22, w - 20, t.accentText, false);
 		Paint.textClipped(c, I18n.tr("clips.delete.hint"), x + 10, y + 35, w - 20, t.textDim, false);
 		int bw = (w - 30) / 2;
 		button(c, x + 10, y + h - 26, bw, 18, I18n.tr("common.cancel"), false, true, mx, my, new Runnable() {

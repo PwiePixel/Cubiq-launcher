@@ -8,14 +8,13 @@ import dev.pwiepixel.cubiqclient.core.online.CubiqOnline;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * „Server-Info“ aus dem Pausenmenü: Name, Adresse (kopierbar), Server-Software, Version, Ping als Staub-Balken,
+ * „Server-Info“ aus dem Pausenmenü: Name, Adresse (kopierbar), Server-Software, Version, Ping als Balken,
  * Spielerzahl, Dimension, Position und – falls bekannt – Cubiq-Freunde auf demselben Server.
  */
 public final class ServerInfoUi extends WindowUi {
@@ -81,7 +80,7 @@ public final class ServerInfoUi extends WindowUi {
 		for (String[] r : rows) labelW = Math.max(labelW, c.textWidth(r[0]));
 		labelW = Math.min(labelW + 8, w / 2);
 		int cy = y;
-		Redstone.well(c, x, cy, w, rows.size() * 13 + (info.singleplayer ? 8 : 22), t.border);
+		Paint.well(c, x, cy, w, rows.size() * 13 + (info.singleplayer ? 8 : 22), t.border);
 		cy += 5;
 		for (String[] r : rows) {
 			Paint.textClipped(c, r[0], x + 6, cy, labelW - 6, t.textDim, false);
@@ -89,7 +88,7 @@ public final class ServerInfoUi extends WindowUi {
 			cy += 13;
 		}
 		if (!info.singleplayer) {
-			// Ping als Staub-Balken + Zahl
+			// Ping als Balken + Zahl
 			Paint.textClipped(c, I18n.tr("menus.serverInfo.ping"), x + 6, cy, labelW - 6, t.textDim, false);
 			MenuSkin.pingBars(c, x + labelW, cy - 1, info.ping, false, t.deep);
 			Paint.textClipped(c, info.ping >= 0 ? info.ping + " ms" : "?", x + labelW + 16, cy, w - labelW - 24, t.text, false);

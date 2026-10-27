@@ -9,7 +9,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -117,9 +116,9 @@ public final class ServerProfilesPage {
 			boolean isSelected = i == selected;
 			boolean rowHover = inside(mx, my, x, ry, w, rowH - 2);
 			int fill = isSelected ? ColorMath.lerp(t.surface, t.accent, 0.12f) : rowHover ? t.surfaceHover : t.surface;
-			if (isActive) Redstone.glow(c, x, ry, w, rowH - 2, t.glow, 0.35f);
-			Redstone.stone(c, x, ry, w, rowH - 2, fill, isSelected ? ColorMath.lerp(t.border, t.accent, 0.75f) : t.border);
-			Redstone.pip(c, x + 6, ry + 5, 7, isActive ? 1f : 0f);
+			if (isActive) Paint.glow(c, x, ry, w, rowH - 2, t.glow, 0.35f);
+			Paint.panel(c, x, ry, w, rowH - 2, fill, isSelected ? ColorMath.lerp(t.border, t.accent, 0.75f) : t.border);
+			Paint.pip(c, x + 6, ry + 5, 7, isActive ? 1f : 0f);
 			if (editingName == index) {
 				drawInput(c, hits, nameInput, x + 18, ry + 2, w - 60, mx, my);
 			} else {
@@ -186,7 +185,7 @@ public final class ServerProfilesPage {
 			int bw = Math.min(w, c.textWidth(label) + 30);
 			boolean hover = inside(mx, my, x, ry, bw, 17);
 			Paint.button(c, x, ry, bw, 17, "", false, hover);
-			Icons.draw(c, "plus", x + 7, ry + 4, 1, hover ? t.dustOn : t.text);
+			Icons.draw(c, "plus", x + 7, ry + 4, 1, hover ? t.accentText : t.text);
 			Paint.textClipped(c, label, x + 20, ry + 4 - (hover ? 1 : 0), bw - 24, t.text, false);
 			hits.add(x, ry, bw, 17, new Runnable() {
 				@Override
@@ -215,7 +214,7 @@ public final class ServerProfilesPage {
 		int show = Math.max(1, Math.min(room, lines.size()));
 		int ly = y + h - 9 - (show - 1) * 10;
 		for (int i = 0; i < show; i++) {
-			Paint.textClipped(c, lines.get(i), x + 2, ly + i * 10, w - 4, error != null ? t.dustOn : t.textDim, false);
+			Paint.textClipped(c, lines.get(i), x + 2, ly + i * 10, w - 4, error != null ? t.danger : t.textDim, false);
 		}
 	}
 
@@ -226,7 +225,7 @@ public final class ServerProfilesPage {
 		Theme t = Theme.get();
 		final int index = selected;
 		ServerProfiles.Profile p = profiles.get(index);
-		Redstone.dustH(c, x, x + w, y, t.dustOff, 0f);
+		Paint.lineH(c, x, x + w, y, t.track, 0f);
 		int ly = y + 5;
 		String patternsLabel = I18n.tr("serverProfiles.patterns");
 		int lw = Math.min(90, c.textWidth(patternsLabel) + 6);
@@ -238,7 +237,7 @@ public final class ServerProfilesPage {
 			drawInput(c, hits, patternInput, fx, ly, fw, mx, my);
 		} else {
 			boolean hover = inside(mx, my, fx, ly, fw, 15);
-			Redstone.well(c, fx, ly, fw, 15, hover ? t.accent : t.border);
+			Paint.well(c, fx, ly, fw, 15, hover ? t.accent : t.border);
 			String text = p.patterns().isEmpty() ? I18n.tr("serverProfiles.patternsHint") : patternsDisplay(p);
 			Paint.textClipped(c, text, fx + 4, ly + 4, fw - 8, p.patterns().isEmpty() ? t.textDim : t.text, false);
 			hits.add(fx, ly, fw, 15, new Runnable() {
@@ -326,7 +325,7 @@ public final class ServerProfilesPage {
 
 	private void drawInput(Canvas c, Hits hits, final TextInput input, int x, int y, int w, int mx, int my) {
 		Theme t = Theme.get();
-		Redstone.well(c, x, y, w, 15, t.accent);
+		Paint.well(c, x, y, w, 15, t.accent);
 		String text = input.text();
 		int avail = w - 8;
 		// Lange Muster: das Ende (mit Cursor) sichtbar halten.
@@ -334,7 +333,7 @@ public final class ServerProfilesPage {
 		c.text(text, x + 4, y + 4, t.text, false);
 		if (input.focused() && (System.currentTimeMillis() / 500) % 2 == 0) {
 			int caret = x + 4 + c.textWidth(text);
-			c.fill(Math.min(caret, x + w - 3), y + 4, Math.min(caret + 1, x + w - 2), y + 12, t.dustOn);
+			c.fill(Math.min(caret, x + w - 3), y + 4, Math.min(caret + 1, x + w - 2), y + 12, t.accentText);
 		}
 		hits.add(x, y, w, 15, new Runnable() {
 			@Override

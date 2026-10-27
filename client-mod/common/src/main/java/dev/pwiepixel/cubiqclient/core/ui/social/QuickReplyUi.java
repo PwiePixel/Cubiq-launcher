@@ -14,7 +14,6 @@ import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -79,7 +78,7 @@ public final class QuickReplyUi extends UiScreen {
 		c.push();
 		c.raise(300f);
 		Paint.shadow(c, x, y, w, h, 2, 0.6f);
-		Redstone.stone(c, x, y, w, h, ColorMath.withAlpha(t.surface, 240), t.accent);
+		Paint.panel(c, x, y, w, h, ColorMath.withAlpha(t.surface, 240), t.accent);
 		// Kopf
 		String title = conv != null ? conv.title() : action.title == null ? "?" : action.title;
 		String faceId = conv != null ? conv.faceUuid() : null;
@@ -123,7 +122,7 @@ public final class QuickReplyUi extends UiScreen {
 		}
 		// Eingabe
 		boolean canWrite = conv != null && conv.canWrite && s != null && !s.moderation().active(now);
-		Redstone.well(c, x + 6, cy, w - 30, 18, canWrite ? t.accent : t.border);
+		Paint.well(c, x + 6, cy, w - 30, 18, canWrite ? t.accent : t.border);
 		String text = input.text();
 		if (!canWrite) {
 			Paint.textClipped(c, I18n.tr(conv == null ? "social.loading" : "social.moderation.cantWrite"), x + 11, cy + 5, w - 40,
@@ -181,7 +180,7 @@ public final class QuickReplyUi extends UiScreen {
 	private void inviteCard(Canvas c, Social s, int x, int y, int w, int mx, int my) {
 		Theme t = Theme.get();
 		final Chat.Invite inv = action.invite;
-		Redstone.stone(c, x, y, w, ChatLayout.INVITE_H, t.deep, ColorMath.lerp(t.border, t.lampOn, 0.4f));
+		Paint.panel(c, x, y, w, ChatLayout.INVITE_H, t.deep, ColorMath.lerp(t.border, t.faceOn, 0.4f));
 		Chat.ServerStatus st = s == null ? null : s.serverStatus(inv.address, System.currentTimeMillis());
 		TextureRef icon = s == null ? null : s.serverIcon(st);
 		if (icon != null && c.images()) {
@@ -191,8 +190,8 @@ public final class QuickReplyUi extends UiScreen {
 			c.image(icon, 0, 0, icon.width, icon.height, 0xFFFFFFFF);
 			c.pop();
 		} else {
-			Redstone.block(c, x + 4, y + 4, 28, 28, t.bevelDark);
-			Icons.draw(c, "globe", x + 10, y + 10, 2, t.lampOn);
+			Paint.block(c, x + 4, y + 4, 28, 28, t.bevelDark);
+			Icons.draw(c, "globe", x + 10, y + 10, 2, t.faceOn);
 		}
 		int bw = 60;
 		int bx = x + w - bw - 4;
@@ -200,7 +199,7 @@ public final class QuickReplyUi extends UiScreen {
 		String line2 = st == null ? I18n.tr("social.invite.checking") : st.online ? I18n.tr("social.invite.players", st.players,
 				st.max) : I18n.tr("social.invite.offline");
 		Paint.textClipped(c, confirmJoin ? I18n.tr(host.currentServer() != null ? "social.quickReply.leaveServer"
-				: "social.quickReply.leaveWorld") : line2, x + 37, y + 18, bx - x - 40, confirmJoin ? t.dustOn : t.textDim, false);
+				: "social.quickReply.leaveWorld") : line2, x + 37, y + 18, bx - x - 40, confirmJoin ? t.caution : t.textDim, false);
 		String label = I18n.tr(confirmJoin ? "social.invite.joinNow" : "social.invite.join");
 		kit.button(c, bx, y + 10, bw, 16, label, true, true, mx, my, () -> {
 			if (host.inWorld() && !confirmJoin) {

@@ -2,14 +2,14 @@ package dev.pwiepixel.cubiqclient.core.ui.winter;
 
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
+import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 /**
- * Bausteine des Designs „Winternacht“ – das Gegenstück zu {@link Redstone} (das bei {@link Theme#winter} hierher
- * verzweigt): Eislaternen statt Redstone-Lampen (gefrorenes Glas, Reif in den Ecken, eisblaues Licht), Frostlinien
- * mit Eiskristallen statt Staub, ein Eiskristall statt der Fackel, die Pixel-Schneeflocke des Launchers und der
- * Eisbalken, der beim Laden von links zufriert. Alles aus Rechtecken im GUI-Raster wie im Redstone-Stil.
+ * Bausteine des Designs „Winternacht“ – das Gegenstück zu den flachen Flächen von {@link Paint} (das bei
+ * {@link Theme#winter} hierher verzweigt): Eislaternen statt leuchtender Knöpfe (gefrorenes Glas, Reif in den Ecken,
+ * eisblaues Licht), Frostlinien mit Eiskristallen statt glatter Linien, die Pixel-Schneeflocke des Launchers und der
+ * Eisbalken, der beim Laden von links zufriert. Alles aus Rechtecken im GUI-Raster.
  */
 public final class Frost {
 	private Frost() {
@@ -27,19 +27,19 @@ public final class Frost {
 	public static void lantern(Canvas c, int x, int y, int w, int h, float lit, float flash) {
 		Theme t = Theme.get();
 		float l = ColorMath.clamp01(lit);
-		if (l > 0.02f) Redstone.glow(c, x, y, w, h, t.lampGlow, l);
-		Redstone.block(c, x, y, w, h, ColorMath.lerp(t.lampOffEdge, t.lampOnEdge, l));
-		int face = ColorMath.lerp(t.lampOff, t.lampOn, l);
+		if (l > 0.02f) Paint.glow(c, x, y, w, h, t.faceGlow, l);
+		Paint.block(c, x, y, w, h, ColorMath.lerp(t.faceOffEdge, t.faceOnEdge, l));
+		int face = ColorMath.lerp(t.faceOff, t.faceOn, l);
 		if (w < 8 || h < 8) {
 			c.fill(x + 1, y + 1, x + w - 1, y + h - 1, face);
 			return;
 		}
 		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, face);
 		// Licht von innen: der Kern ist heller als der Rand.
-		if (l > 0.02f) c.fill(x + 4, y + 4, x + w - 4, y + h - 4, ColorMath.withAlpha(t.lampHot, Math.round(110 * l)));
+		if (l > 0.02f) c.fill(x + 4, y + 4, x + w - 4, y + h - 4, ColorMath.withAlpha(t.faceHot, Math.round(110 * l)));
 		// Innenrahmen aus bereiftem Metall, Stege oben und unten.
 		int lattice = ColorMath.lerp(0xFF243A5C, 0xFFBFE8FF, l);
-		Redstone.frame(c, x + 2, y + 2, w - 4, h - 4, lattice);
+		Paint.frame(c, x + 2, y + 2, w - 4, h - 4, lattice);
 		int panes = Math.max(1, (w - 8) / 44);
 		for (int i = 1; i < panes + 1 && w > 30; i++) {
 			int px = x + i * w / (panes + 1);
@@ -74,7 +74,7 @@ public final class Frost {
 		if (f > 0.02f) c.fill(x + 1, y + 1, x + w - 1, y + h - 1, ColorMath.withAlpha(0xFFEAF9FF, Math.round(170 * f)));
 	}
 
-	// --- Frost statt Staub ---
+	// --- Frostlinien ---
 
 	/** Waagerechte Frostlinie (2 px) mit Eiskristallen; leuchtet bei Signal. */
 	public static void lineH(Canvas c, int x1, int x2, int y, int argb, float glow) {
@@ -103,31 +103,6 @@ public final class Frost {
 			int g = ColorMath.withAlpha(Theme.get().glow, Math.round(40 * ColorMath.clamp01(glow)));
 			c.fill(x - 1, y1, x, y2, g);
 			c.fill(x + 2, y1, x + 3, y2, g);
-		}
-	}
-
-	/**
-	 * Eiskristall auf einem Eiszapfen-Stiel (statt der Redstone-Fackel); (x, y) = Mitte des Fußes. {@code lit} 0..1,
-	 * {@code flicker} 0..1 lässt den Kristall leicht funkeln.
-	 */
-	public static void crystal(Canvas c, int x, int y, float lit, float flicker) {
-		Theme t = Theme.get();
-		float l = ColorMath.clamp01(lit);
-		c.fill(x - 1, y - 6, x + 1, y, 0xFF5D7FA8);
-		c.fill(x - 1, y - 6, x, y, 0xFF8EB0D6);
-		int head = ColorMath.lerp(0xFF2B4A6E, t.dustOn, l * (0.82f + 0.18f * flicker));
-		if (l > 0.05f) {
-			c.fill(x - 3, y - 12, x + 3, y - 5, ColorMath.withAlpha(t.glow, Math.round(32 * l)));
-			c.fill(x - 4, y - 11, x + 4, y - 6, ColorMath.withAlpha(t.glow, Math.round(18 * l)));
-		}
-		// Rhombus: 2 – 4 – 4 – 4 – 2 Pixel breit.
-		c.fill(x - 1, y - 11, x + 1, y - 10, head);
-		c.fill(x - 2, y - 10, x + 2, y - 7, head);
-		c.fill(x - 1, y - 7, x + 1, y - 6, head);
-		if (l > 0.05f) {
-			int hi = ColorMath.lerp(head, WHITE, 0.65f * l);
-			c.fill(x - 1, y - 10, x, y - 8, hi);
-			c.fill(x - 1, y - 11, x, y - 10, ColorMath.lerp(head, WHITE, 0.85f * l));
 		}
 	}
 
@@ -171,7 +146,7 @@ public final class Frost {
 		int a300 = ColorMath.lerp(a500, WHITE, 0.62f);
 		int a600 = ColorMath.scaleRgb(a500, 0.75f);
 		int a900 = ColorMath.lerp(ColorMath.scaleRgb(a500, 0.22f), 0xFF000000, 0.25f);
-		Redstone.block(c, x0 - 1, y - 1, w + 2, h + 2, 0xFF050A14);
+		Paint.block(c, x0 - 1, y - 1, w + 2, h + 2, 0xFF050A14);
 		c.fill(x0, y, x0 + w, y + h, a900);
 		c.fill(x0, y + h - 1, x0 + w, y + h, 0x40000000);
 		int joint = ColorMath.withAlpha(a300, 0x24);

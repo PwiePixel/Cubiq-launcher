@@ -5,19 +5,21 @@ import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
 import dev.pwiepixel.cubiqclient.core.sync.ClientSync;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.CubiqMark;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
+import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 /**
- * Aussehen im Client wählen (Einführung und Cubiq-Menü): Farbschema, Akzent und Design (Redstone | Winternacht | Fuchsbau). Die Wahl
+ * Aussehen im Client wählen (Einführung und Cubiq-Menü): Farbschema, Akzent und Design (Cubiq | Winternacht | Fuchsbau). Die Wahl
  * gilt sofort, wird lokal gemerkt und – Thema, Akzent, Sprache – mit dem Cubiq-Konto synchronisiert; das Design bleibt
- * auf diesem PC (die Konto-Einstellungen kennen es nicht), der Launcher übergibt beim Start sein eigenes.
+ * auf diesem PC (die Konto-Einstellungen kennen es nicht), der Launcher übergibt beim Start sein eigenes. Die Akzente
+ * heißen wie im Launcher, damit die Wahl dort ankommt.
  */
 public final class LookPicker {
 	public static final String[] THEMES = {"dark", "oled", "light"};
-	public static final String[] ACCENTS = {"redstone", "lamp", "emerald", "lapis", "amethyst", "ice", "fox"};
-	public static final String[] DESIGNS = {Theme.REDSTONE, Theme.WINTER, Theme.FOX};
+	public static final String[] ACCENTS = {"cubiq", "amber", "emerald", "lapis", "amethyst", "ice", "orange"};
+	public static final String[] DESIGNS = {Theme.CUBIQ, Theme.WINTER, Theme.FOX};
 	/** Breite der Design-Wahl (drei Knöpfe). */
 	public static final int DESIGNS_WIDTH = 456;
 
@@ -25,13 +27,13 @@ public final class LookPicker {
 	}
 
 	/**
-	 * Übernimmt eine Wahl (null = unverändert). Beim Designwechsel folgt der Akzent wie im Launcher (Redstone-Rot,
-	 * Eisblau, Fuchsorange), eine selbst gewählte Farbe bleibt.
+	 * Übernimmt eine Wahl (null = unverändert). Beim Designwechsel folgt der Akzent (Cubiq-Grün, Eisblau, Orange), eine
+	 * selbst gewählte Farbe bleibt.
 	 */
 	public static void choose(CubiqModules modules, String theme, String accent, String language, String design) {
 		Theme cur = Theme.get();
 		String th = theme != null ? theme : cur.themeName;
-		String ac = accent != null ? accent : cur.accentName;
+		String ac = accent != null ? Theme.canonicalAccent(accent) : cur.accentName;
 		String la = language != null ? language : I18n.code();
 		String de = design != null ? Theme.normalizeDesign(design) : cur.designName;
 		if (design != null && accent == null && !de.equals(cur.designName)) ac = Theme.accentForDesign(de, ac);
@@ -54,28 +56,28 @@ public final class LookPicker {
 	}
 
 	/**
-	 * Wahl-Knopf eines Designs: kleines Vorschaubild und Name; gewählt = leuchtende Lampe bzw. Eislaterne.
+	 * Wahl-Knopf eines Designs: kleines Vorschaubild und Name; gewählt = in der Akzentfarbe (Winternacht: Eislaterne).
 	 * Liefert nichts – die Klickfläche registriert der Aufrufer.
 	 */
 	public static void designChip(Canvas c, int x, int y, int w, int h, String design, boolean selected, boolean hover) {
 		Theme t = Theme.get();
 		if (selected) {
-			Redstone.lamp(c, x, y, w, h, 1f, 0f);
+			Paint.accentFace(c, x, y, w, h, 1f, 0f);
 		} else {
-			Redstone.stone(c, x, y, w, h, hover ? t.surfaceHover : t.surfaceHigh, hover ? ColorMath.lerp(t.border, t.textDim, 0.5f) : t.border);
+			Paint.panel(c, x, y, w, h, hover ? t.surfaceHover : t.surfaceHigh, hover ? Paint.hoverEdge(t) : t.border);
 		}
 		int ph = h - 6;
 		int pw = Math.min(w / 3, Math.round(ph * 1.5f));
 		preview(c, x + 3, y + 3, pw, ph, design);
 		String label = c.clip(designName(design), w - pw - 10);
-		int color = selected ? Redstone.lampTextColor(1f) : t.text;
+		int color = selected ? Paint.accentFaceText(1f) : t.text;
 		int room = w - pw - 6;
 		c.text(label, x + pw + 6 + Math.max(0, (room - 4 - c.textWidth(label)) / 2), y + (h - 8) / 2, color, false);
 	}
 
 	/**
-	 * Kleines Vorschaubild eines Designs (nur Rechtecke): Schiefer mit Staub und Lampe, Nacht mit Bergen, Schnee und
-	 * Hütte, oder Dämmerung mit Sonne, Fichten und Lagerfeuer.
+	 * Kleines Vorschaubild eines Designs (nur Rechtecke): dunkler Grund mit dem Cubiq-Zeichen, Nacht mit Bergen, Schnee
+	 * und Hütte, oder Dämmerung mit Sonne, Fichten und Lagerfeuer.
 	 */
 	public static void preview(Canvas c, int x, int y, int w, int h, String design) {
 		if (w < 6 || h < 6) return;
@@ -105,7 +107,7 @@ public final class LookPicker {
 			c.fill(fx, y + h - 5, fx + 1, y + h - 4, 0xFFFFF2A8);
 			c.fill(fx + 3, y + h - 3, fx + 6, y + h - 2, 0xFFE47C3A);
 			c.fill(fx + 3, y + h - 4, fx + 4, y + h - 3, 0xFFE47C3A);
-			Redstone.frame(c, x - 1, y - 1, w + 2, h + 2, 0x60FF9A52);
+			Paint.frame(c, x - 1, y - 1, w + 2, h + 2, 0x60FF9A52);
 			return;
 		}
 		if (Theme.WINTER.equals(Theme.normalizeDesign(design))) {
@@ -134,17 +136,29 @@ public final class LookPicker {
 			c.fill(hx + 1, y + h - 3, hx + 2, y + h - 2, 0xFFFFC66B);
 			c.fill(x + 2, y + 2, x + 3, y + 3, 0xFFF4F9FF);
 			c.fill(x + w / 2, y + 4, x + w / 2 + 1, y + 5, 0xFFF4F9FF);
-			Redstone.frame(c, x - 1, y - 1, w + 2, h + 2, 0x60B8E7FF);
+			Paint.frame(c, x - 1, y - 1, w + 2, h + 2, 0x60B8E7FF);
 			return;
 		}
-		c.fill(x, y, x + w, y + h, 0xFF18181C);
-		c.fill(x, y + h / 2, x + w, y + h / 2 + 1, 0xFF121215);
-		int mid = y + h / 2 - 1;
-		c.fill(x + 1, mid, x + w - 5, mid + 2, 0xFFE0281E);
-		c.fill(x + w - 5, y + 2, x + w - 1, y + h - 2, 0xFFF2B454);
-		c.fill(x + w - 4, y + 3, x + w - 2, y + h - 3, 0xFFFFE7A6);
-		c.fill(x + 1, mid - 3, x + 3, mid, 0xFFFF5040);
-		Redstone.frame(c, x - 1, y - 1, w + 2, h + 2, 0x60E0281E);
+		// Cubiq: dunkler Verlauf mit einem Hauch Grün, Schein oben rechts, das Zeichen in der Mitte.
+		int accent = Theme.of("dark", "cubiq", null).accent;
+		c.fill(x, y, x + w, y + h / 2, 0xFF111613);
+		c.fill(x, y + h / 2, x + w, y + h, 0xFF0C100E);
+		c.fill(x + w / 2, y, x + w, y + h / 3, ColorMath.withAlpha(accent, 0x22));
+		int cells = Math.min(h, w);
+		CubiqMark.draw(c, x + (w - cells) / 2, y + (h - cells) / 2, cells, 1, accent, 1f);
+		Paint.frame(c, x - 1, y - 1, w + 2, h + 2, ColorMath.withAlpha(accent, 0x60));
+	}
+
+	/**
+	 * Akzent-Farbfeld wie im Launcher: ein runder Punkt; gewählt mit hellem Ring im Abstand, beim Überfahren mit einem
+	 * gedämpften. Füllt {@code size}×{@code size} (Ring außen, Punkt mit 2 Pixeln Abstand).
+	 */
+	public static void swatch(Canvas c, int x, int y, int size, int color, boolean selected, boolean hover) {
+		Theme t = Theme.get();
+		if (selected || hover) {
+			Paint.roundOutline(c, x, y, size, size, size / 2, selected ? t.text : ColorMath.withAlpha(t.textDim, 0xA0));
+		}
+		Paint.roundRect(c, x + 2, y + 2, size - 4, size - 4, (size - 4) / 2, color);
 	}
 
 	/**

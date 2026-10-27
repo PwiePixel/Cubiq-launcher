@@ -13,103 +13,73 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Redstone-Startbildschirm: Schaltung, Signal-Timing, Tastatur-Bedienung. */
-class RedstoneUiTest {
+/** Cubiq-Startbildschirm: Würfel-Szene, Farben, Tastatur-Bedienung, Seitenleiste, Sockel. */
+class TitleUiTest {
 	private static final int W = 480;
 	private static final int H = 270;
 	private static final int[][] RESERVED = {{140, 40, 340, 220}, {0, 256, 480, 270}};
 
 	@Test
-	void circuitIsDeterministicAndKeepsTheContentFree() {
-		CircuitScene a = new CircuitScene();
+	void sceneIsDeterministicAndKeepsTheContentFree() {
+		CubeScene a = new CubeScene();
 		a.build(W, H, RESERVED, false);
-		CircuitScene b = new CircuitScene();
+		CubeScene b = new CubeScene();
 		b.build(W, H, RESERVED, false);
-		assertTrue(a.circuitCount() >= 3, "zu wenige Leitungen: " + a.circuitCount());
-		assertEquals(a.circuitCount(), b.circuitCount());
-		for (int i = 0; i < a.circuitCount(); i++) {
-			assertEquals(a.circuits().get(i).nodes.size(), b.circuits().get(i).nodes.size());
+		assertTrue(a.cubes().size() >= 3, "zu wenige Würfel: " + a.cubes().size());
+		assertEquals(a.cubes().size(), b.cubes().size());
+		for (int i = 0; i < a.cubes().size(); i++) {
+			CubeScene.Cube x = a.cubes().get(i);
+			CubeScene.Cube y = b.cubes().get(i);
+			assertEquals(x.x, y.x);
+			assertEquals(x.y, y.y);
+			assertEquals(x.size, y.size);
 		}
-		for (CircuitScene.Circuit c : a.circuits()) {
-			for (CircuitScene.Node n : c.nodes) {
-				int px = n.cx * CircuitScene.CELL;
-				int py = n.cy * CircuitScene.CELL;
-				for (int[] r : RESERVED) {
-					boolean overlaps = px + CircuitScene.CELL > r[0] && px < r[2] && py + CircuitScene.CELL > r[1] && py < r[3];
-					assertFalse(overlaps, "Leitung im freien Bereich bei " + n.cx + "," + n.cy);
-				}
+		for (CubeScene.Cube c : a.cubes()) {
+			assertTrue(c.opacity >= 0.1f && c.opacity <= 0.24f, "Deckkraft wie im Launcher: " + c.opacity);
+			assertTrue(c.period >= 16f && c.period <= 26f);
+			int half = c.size / 2;
+			for (int[] r : RESERVED) {
+				boolean overlaps = c.x + half > r[0] && c.x - half < r[2] && c.y + half > r[1] && c.y - half < r[3];
+				assertFalse(overlaps, "Würfel im freien Bereich bei " + c.x + "," + c.y);
 			}
 		}
-	}
-
-	@Test
-	void signalFadesAndRepeatersRefreshIt() {
-		CircuitScene scene = new CircuitScene();
-		scene.build(W, H, RESERVED, false);
-		int repeaters = 0;
-		for (CircuitScene.Circuit c : scene.circuits()) {
-			List<CircuitScene.Node> nodes = c.nodes;
-			assertEquals(CircuitScene.TORCH, nodes.get(0).kind);
-			int last = nodes.get(nodes.size() - 1).kind;
-			assertTrue(last == CircuitScene.LAMP || last == CircuitScene.PISTON);
-			float previousArrival = -1f;
-			for (int i = 0; i < nodes.size(); i++) {
-				CircuitScene.Node n = nodes.get(i);
-				assertTrue(n.level >= 1 && n.level <= 15, "Signalstärke " + n.level);
-				assertTrue(n.arrival > previousArrival, "Signal läuft rückwärts");
-				previousArrival = n.arrival;
-				if (i > 0 && n.kind == CircuitScene.DUST) {
-					CircuitScene.Node prev = nodes.get(i - 1);
-					int expected = prev.kind == CircuitScene.DUST ? prev.level - 1 : 15;
-					assertEquals(Math.max(1, expected), n.level);
-				}
-				if (n.kind == CircuitScene.REPEATER) {
-					repeaters++;
-					assertTrue(n.delay >= 1 && n.delay <= 4);
-					assertEquals(n.arrival + n.delay * CircuitScene.TICK, n.outArrival, 0.0001f);
-					assertEquals(n.dirIn, n.dirOut, "Verstärker nur auf geraden Stücken");
-				}
-			}
-			assertTrue(c.pulse < c.period);
-		}
-		assertTrue(repeaters > 0);
-	}
-
-	@Test
-	void powerFollowsThePulse() {
-		CircuitScene.Circuit c = new CircuitScene.Circuit();
-		c.period = 3f;
-		c.pulse = 1f;
-		c.phase = 0f;
-		assertEquals(1f, CircuitScene.power(c, 0f, 0.5f, 0f, 0f, 0f), 0.0001f);
-		assertEquals(0f, CircuitScene.power(c, 0f, 1.5f, 0f, 0f, 0f), 0.0001f);
-		// Später ankommend = später an
-		assertEquals(0f, CircuitScene.power(c, 0.8f, 0.5f, 0f, 0f, 0f), 0.0001f);
-		assertEquals(1f, CircuitScene.power(c, 0.8f, 1.5f, 0f, 0f, 0f), 0.0001f);
-		// Periodisch
-		assertEquals(1f, CircuitScene.power(c, 0f, 6.5f, 0f, 0f, 0f), 0.0001f);
-		// Weiches Einblenden
-		float rising = CircuitScene.power(c, 0f, 0.05f, 0f, 0.1f, 0f);
-		assertTrue(rising > 0.3f && rising < 0.7f);
 	}
 
 	@Test
 	void sceneDrawsWithinBudgetOfRectangles() {
 		CountingCanvas canvas = new CountingCanvas();
-		CircuitScene scene = new CircuitScene();
+		CubeScene scene = new CubeScene();
 		scene.draw(canvas, 960, 540, 1.3f, new int[][]{{380, 60, 580, 400}});
 		int full = canvas.fills;
-		assertTrue(full > 100 && full < 4000, "Rechtecke: " + full);
+		assertTrue(full > 100 && full < 3000, "Rechtecke: " + full);
 		CountingCanvas lite = new CountingCanvas();
-		CircuitScene simple = new CircuitScene();
+		CubeScene simple = new CubeScene();
 		simple.setSimple(true);
 		simple.draw(lite, 960, 540, 1.3f, new int[][]{{380, 60, 580, 400}});
 		assertTrue(lite.fills < full, "sparsam " + lite.fills + " / voll " + full);
+		assertTrue(simple.isSimple());
+	}
+
+	@Test
+	void titleDrawsNoRedstone() {
+		Theme.set(Theme.of("dark", "cubiq", null));
+		RecordingColors canvas = new RecordingColors();
+		TitleUi ui = new TitleUi(new FakeHost());
+		long until = System.nanoTime() + 2_000_000_000L;
+		while (ui.alpha() < 0.999f && System.nanoTime() < until) {
+			ui.render(new RecordingColors(), 854, 480, -1, -1);
+			sleep();
+		}
+		ui.render(canvas, 854, 480, -1, -1);
+		// Redstone-Block, Staub, Fackel, Lampe, Tiefenschiefer und Redstone-Rot der früheren Szene.
+		int[] old = {0xFFA3170F, 0xFF6E0B06, 0xFFD8321F, 0xFF4A1410, 0xFFF2B454, 0xFF3B2A1D, 0xFF18181C, 0xFFE0281E, 0xFF4C3726};
+		for (int c : old) assertFalse(canvas.colors.contains(c), String.format("Redstone-Farbe %08X gezeichnet", c));
+		assertTrue(canvas.colors.contains(0xFF71A330), "Hauptknopf in Cubiq-Grün");
 	}
 
 	@Test
 	void keyboardFocusCyclesAndActivatesAfterTheFlash() {
-		Theme.set(Theme.of("dark", "redstone", null));
+		Theme.set(Theme.of("dark", "cubiq", null));
 		FakeHost host = new FakeHost();
 		TitleUi ui = new TitleUi(host);
 		CountingCanvas canvas = new CountingCanvas();
@@ -272,6 +242,25 @@ class RedstoneUiTest {
 		@Override public void narrate(String text) { narrated.add(text); }
 		@Override public boolean animated() { return true; }
 		@Override public boolean simpleAnimation() { return false; }
+	}
+
+	/** Merkt sich alle deckenden Füllfarben. */
+	private static final class RecordingColors implements Canvas {
+		final java.util.Set<Integer> colors = new java.util.HashSet<Integer>();
+
+		@Override public void fill(int x1, int y1, int x2, int y2, int argb) { colors.add(argb); }
+		@Override public void text(String text, int x, int y, int argb, boolean shadow) { }
+		@Override public int textWidth(String text) { return text.length() * 6; }
+		@Override public int lineHeight() { return 9; }
+		@Override public String clip(String text, int maxWidth) { return text.substring(0, Math.max(0, Math.min(text.length(), maxWidth / 6))); }
+		@Override public void flush() { }
+		@Override public void scissor(int x1, int y1, int x2, int y2) { }
+		@Override public void noScissor() { }
+		@Override public void raise(float z) { }
+		@Override public void push() { }
+		@Override public void translate(float x, float y) { }
+		@Override public void scale(float factor) { }
+		@Override public void pop() { }
 	}
 
 	private static final class CountingCanvas implements Canvas {

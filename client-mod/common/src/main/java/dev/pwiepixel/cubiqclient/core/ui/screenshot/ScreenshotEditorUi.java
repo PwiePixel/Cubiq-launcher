@@ -17,7 +17,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Textures;
@@ -56,7 +55,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 		}
 	}
 
-	/** Voreingestellte Farben: Redstone-Rot, Orange, Gelb, Grün, Blau, Lila, Weiß, Schwarz. */
+	/** Voreingestellte Farben: Rot, Orange, Gelb, Grün, Blau, Lila, Weiß, Schwarz. */
 	static final int[] COLORS = {0xFFE0312B, 0xFFFF9A1F, 0xFFFFE03A, 0xFF3FBF4A, 0xFF2F8CF0, 0xFF9B4DE0, 0xFFFFFFFF, 0xFF111111};
 	static final float[] STROKE = {1f, 2f, 3.5f};
 	static final float[] TEXT = {0.75f, 1f, 1.6f};
@@ -327,8 +326,8 @@ public final class ScreenshotEditorUi extends UiScreen {
 			c.flush();
 			c.push();
 			c.raise(30f);
-			Redstone.stone(c, nx, ny, nw, 15, ColorMath.withAlpha(t.surface, 235), noticeError ? t.dustOn : t.accent);
-			Paint.textClipped(c, notice, nx + 7, ny + 4, nw - 14, noticeError ? t.dustOn : t.text, false);
+			Paint.panel(c, nx, ny, nw, 15, ColorMath.withAlpha(t.surface, 235), noticeError ? t.danger : t.accent);
+			Paint.textClipped(c, notice, nx + 7, ny + 4, nw - 14, noticeError ? t.danger : t.text, false);
 			c.flush();
 			c.pop();
 		}
@@ -341,7 +340,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 			int ty = HEADER_H + TOOLS_H + 2;
 			c.push();
 			c.raise(80f);
-			Redstone.stone(c, tx, ty, tw, 13, t.surfaceHigh, t.border);
+			Paint.panel(c, tx, ty, tw, 13, t.surfaceHigh, t.border);
 			c.text(tooltip, tx + 4, ty + 3, t.text, false);
 			c.flush();
 			c.pop();
@@ -356,7 +355,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 		String back = I18n.tr("screenshots.editor.back");
 		int bw = c.textWidth(back) + 22;
 		boolean hb = inside(mx, my, 5, 5, bw, 16);
-		Redstone.button(c, 5, 5, bw, 16, "", false, hb);
+		Paint.button(c, 5, 5, bw, 16, "", false, hb);
 		Icons.draw(c, "back", 9, 9 - (hb ? 1 : 0), 1, t.text);
 		c.text(back, 19, 9 - (hb ? 1 : 0), t.text, false);
 		hits.add(5, 5, bw, 16, new Runnable() {
@@ -372,7 +371,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 		int sw = c.textWidth(share) + 26;
 		int sx = right - sw;
 		boolean hs = inside(mx, my, sx, 5, sw, 16);
-		Redstone.button(c, sx, 5, sw, 16, "", false, hs || shareMenu);
+		Paint.button(c, sx, 5, sw, 16, "", false, hs || shareMenu);
 		Icons.draw(c, "send", sx + 4, 9 - (hs ? 1 : 0), 1, t.accent);
 		c.text(share, sx + 14, 9 - (hs ? 1 : 0), t.text, false);
 		Icons.draw(c, "chevronDown", sx + sw - 11, 9, 1, t.textDim);
@@ -389,12 +388,12 @@ public final class ScreenshotEditorUi extends UiScreen {
 		boolean canSave = history != null && !saving && dirty();
 		boolean hv = canSave && inside(mx, my, vx, 5, vw, 16);
 		if (canSave) {
-			Redstone.button(c, vx, 5, vw, 16, "", true, hv);
+			Paint.button(c, vx, 5, vw, 16, "", true, hv);
 		} else {
-			Redstone.stone(c, vx, 5, vw, 16, t.surface, t.border);
+			Paint.panel(c, vx, 5, vw, 16, t.surface, t.border);
 		}
-		Icons.draw(c, "save", vx + 5, 9 - (hv ? 1 : 0), 1, canSave ? Redstone.lampTextColor(1f) : t.textDim);
-		c.text(saveLabel, vx + 16, 9 - (hv ? 1 : 0), canSave ? Redstone.lampTextColor(1f) : t.textDim, false);
+		Icons.draw(c, "save", vx + 5, 9 - (hv ? 1 : 0), 1, canSave ? Paint.accentFaceText(1f) : t.textDim);
+		c.text(saveLabel, vx + 16, 9 - (hv ? 1 : 0), canSave ? Paint.accentFaceText(1f) : t.textDim, false);
 		if (canSave) {
 			hits.add(vx, 5, vw, 16, new Runnable() {
 				@Override
@@ -422,7 +421,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 		int x = 6;
 		for (final Tool tl : Tool.values()) {
 			boolean hov = inside(mx, my, x, y, size, size);
-			Redstone.iconButton(c, x, y, size, tl.icon, hov, tool == tl);
+			Paint.iconButton(c, x, y, size, tl.icon, hov, tool == tl);
 			if (hov) tooltip = I18n.tr(tl.label);
 			hits.add(x, y, size, size, new Runnable() {
 				@Override
@@ -436,7 +435,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 				// Halloween: Filter „Rauschen“ (Schalter, kein Werkzeug) gleich neben dem Verpixeln.
 				final boolean on = history.current().grain;
 				boolean hg = inside(mx, my, x, y, size, size);
-				Redstone.iconButton(c, x, y, size, "grain", hg, on);
+				Paint.iconButton(c, x, y, size, "grain", hg, on);
 				if (hg) tooltip = I18n.tr(on ? "screenshots.tool.grainOff" : "screenshots.tool.grain");
 				hits.add(x, y, size, size, new Runnable() {
 					@Override
@@ -450,7 +449,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 			if (tl == Tool.CROP) {
 				// Drehen gleich neben dem Zuschneiden
 				boolean hr = inside(mx, my, x, y, size, size);
-				Redstone.iconButton(c, x, y, size, "rotate", hr, false);
+				Paint.iconButton(c, x, y, size, "rotate", hr, false);
 				if (hr) tooltip = I18n.tr("screenshots.tool.rotate");
 				hits.add(x, y, size, size, new Runnable() {
 					@Override
@@ -491,10 +490,10 @@ public final class ScreenshotEditorUi extends UiScreen {
 		for (int i = 0; i < 3; i++) {
 			final int lv = i;
 			boolean hov = inside(mx, my, x, y, size, size);
-			Redstone.button(c, x, y, size, size, "", level == lv, hov);
+			Paint.button(c, x, y, size, size, "", level == lv, hov);
 			int d = 2 + i * 2;
 			int cx = x + size / 2, cy = y + size / 2 - (hov ? 1 : 0);
-			c.fill(cx - d / 2, cy - d / 2, cx - d / 2 + d, cy - d / 2 + d, level == lv ? Redstone.lampTextColor(1f) : t.text);
+			c.fill(cx - d / 2, cy - d / 2, cx - d / 2 + d, cy - d / 2 + d, level == lv ? Paint.accentFaceText(1f) : t.text);
 			if (hov) tooltip = i == 0 ? I18n.tr("screenshots.tool.size1") : i == 1 ? I18n.tr("screenshots.tool.size2") : I18n.tr("screenshots.tool.size3");
 			hits.add(x, y, size, size, new Runnable() {
 				@Override
@@ -529,7 +528,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 			final Runnable action) {
 		boolean hov = enabled && inside(mx, my, x, y, size, size);
 		if (enabled) {
-			Redstone.iconButton(c, x, y, size, icon, hov, false);
+			Paint.iconButton(c, x, y, size, icon, hov, false);
 			hits.add(x, y, size, size, new Runnable() {
 				@Override
 				public void run() {
@@ -538,7 +537,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 				}
 			});
 		} else {
-			Redstone.stone(c, x, y, size, size, t.surface, t.border);
+			Paint.panel(c, x, y, size, size, t.surface, t.border);
 			Icons.draw(c, icon, x + (size - 8) / 2, y + (size - 8) / 2, 1, t.textDim);
 		}
 		if (inside(mx, my, x, y, size, size)) tooltip = I18n.tr(tip);
@@ -548,7 +547,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 		EditState s = state();
 		if (s == null) {
 			String text = loadError != null ? loadError : I18n.tr("clips.loading");
-			Paint.textCentered(c, text, areaX + areaW / 2, areaY + areaH / 2 - 4, loadError != null ? t.dustOn : t.textDim, false);
+			Paint.textCentered(c, text, areaX + areaW / 2, areaY + areaH / 2 - 4, loadError != null ? t.danger : t.textDim, false);
 			return;
 		}
 		if (!c.images()) {
@@ -564,7 +563,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 		float dw = srcW * scale, dh = srcH * scale;
 		viewX = areaX + (areaW - dw) / 2f;
 		viewY = areaY + (areaH - dh) / 2f;
-		Redstone.well(c, Math.round(viewX) - 3, Math.round(viewY) - 3, Math.round(dw) + 6, Math.round(dh) + 6, t.border);
+		Paint.well(c, Math.round(viewX) - 3, Math.round(viewY) - 3, Math.round(dw) + 6, Math.round(dh) + 6, t.border);
 		EditState ts = textureState;
 		if (texture != null && ts != null && ts.rotation == s.rotation) {
 			float k = texture.width / (float) ts.width();
@@ -757,7 +756,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 		c.push();
 		c.raise(40f);
 		Paint.shadow(c, x, y, w, h, 3, 0.4f);
-		Redstone.stone(c, x, y, w, h, t.surfaceHigh, t.border);
+		Paint.panel(c, x, y, w, h, t.surfaceHigh, t.border);
 		boolean online = owner.platform().online();
 		for (int i = 0; i < labels.length; i++) {
 			final Screenshots.Action a = actions[i];
@@ -793,7 +792,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 		int y = (height - h) / 2;
 		c.push();
 		c.raise(60f);
-		Redstone.window(c, x, y, w, h);
+		Paint.window(c, x, y, w, h);
 		Paint.textClipped(c, I18n.tr("screenshots.editor.unsavedTitle"), x + 10, y + 10, w - 20, t.text, false);
 		Paint.textClipped(c, I18n.tr("screenshots.editor.unsavedHint"), x + 10, y + 23, w - 20, t.textDim, false);
 		int bw = (w - 40) / 3;
@@ -827,7 +826,7 @@ public final class ScreenshotEditorUi extends UiScreen {
 	}
 
 	private void button(Canvas c, Theme t, int x, int y, int w, int h, String label, boolean primary, int mx, int my, final Runnable r) {
-		Redstone.button(c, x, y, w, h, c.clip(label, w - 6), primary, inside(mx, my, x, y, w, h));
+		Paint.button(c, x, y, w, h, c.clip(label, w - 6), primary, inside(mx, my, x, y, w, h));
 		hits.add(x, y, w, h, new Runnable() {
 			@Override
 			public void run() {

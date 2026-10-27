@@ -11,7 +11,6 @@ import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
 import dev.pwiepixel.cubiqclient.core.ui.UiScreen;
@@ -19,8 +18,8 @@ import dev.pwiepixel.cubiqclient.core.ui.UiScreen;
 import java.util.List;
 
 /**
- * Der Kontobildschirm im Redstone-Stil: Liste mit Gesicht, Name und Herkunft, das aktive Konto mit
- * leuchtender Lampe; Klick wechselt (nur ohne Welt), Mülleimer entfernt im Spiel hinzugefügte Konten,
+ * Der Kontobildschirm im Cubiq-Stil: Liste mit Gesicht, Name und Herkunft, das aktive Konto mit
+ * leuchtendem Punkt; Klick wechselt (nur ohne Welt), Mülleimer entfernt im Spiel hinzugefügte Konten,
  * unten „Konto hinzufügen“ (mit Launcher: dort im Browser, ohne: hier im Browser oder per Code).
  * Versionsunabhängig – Minecraft kommt nur über {@link AccountsHost} und den {@link AccountManager} ins Spiel.
  */
@@ -66,7 +65,7 @@ public final class AccountsUi extends UiScreen {
 
 		c.push();
 		c.raise(300f);
-		Redstone.window(c, px, py, pw, ph);
+		Paint.window(c, px, py, pw, ph);
 		header(c, px, py, pw, mouseX, mouseY);
 
 		AccountManager.State s = manager == null ? null : manager.state();
@@ -74,7 +73,7 @@ public final class AccountsUi extends UiScreen {
 		int w = pw - PAD * 2;
 		int y = py + HEADER_H + 6;
 		if (s == null) {
-			Paint.textClipped(c, I18n.tr("accounts.error.error"), x, y, w, t.dustOn, false);
+			Paint.textClipped(c, I18n.tr("accounts.error.error"), x, y, w, t.danger, false);
 			c.pop();
 			return;
 		}
@@ -83,7 +82,7 @@ public final class AccountsUi extends UiScreen {
 		String modeKey = s.mode == AccountManager.Mode.LAUNCHER ? "accounts.mode.launcher"
 				: s.mode == AccountManager.Mode.CONNECTING ? "accounts.mode.connecting" : "accounts.mode.local";
 		Icons.draw(c, s.mode == AccountManager.Mode.LOCAL ? "home" : "signal", x + 1, y, 1,
-				s.mode == AccountManager.Mode.LAUNCHER ? t.dustOn : t.textDim);
+				s.mode == AccountManager.Mode.LAUNCHER ? t.accentText : t.textDim);
 		Paint.textClipped(c, I18n.tr(modeKey), x + 13, y, w - 13, t.textDim, false);
 		y += 13;
 
@@ -97,8 +96,7 @@ public final class AccountsUi extends UiScreen {
 
 	private void header(Canvas c, int px, int py, int pw, int mx, int my) {
 		Theme t = Theme.get();
-		c.fill(px + 1, py + 2, px + pw - 1, py + HEADER_H, t.surfaceHigh);
-		c.fill(px + 1, py + HEADER_H - 1, px + pw - 1, py + HEADER_H, t.border);
+		Paint.windowHeader(c, px, py, pw, HEADER_H, t.surfaceHigh, t.border);
 		int lx = px + PAD;
 		int ly = py + (HEADER_H - PixelFont.HEIGHT * 2) / 2;
 		List<int[]> rects = PixelFont.rects("CUBIQ");
@@ -144,16 +142,16 @@ public final class AccountsUi extends UiScreen {
 			boolean rowHover = inside(mx, my, x, ry, w, ROW_H - 3) && inside(mx, my, x, y, w, h);
 			int rh = ROW_H - 3;
 			if (active) {
-				Redstone.glow(c, x, ry, w, rh, t.glow, 0.35f);
-				Redstone.stone(c, x, ry, w, rh, ColorMath.lerp(t.surface, t.accent, 0.1f), ColorMath.lerp(t.border, t.accent, 0.75f));
+				Paint.glow(c, x, ry, w, rh, t.glow, 0.35f);
+				Paint.panel(c, x, ry, w, rh, ColorMath.lerp(t.surface, t.accent, 0.1f), ColorMath.lerp(t.border, t.accent, 0.75f));
 			} else {
-				Redstone.stone(c, x, ry, w, rh, rowHover && canSwitch ? t.surfaceHover : t.surface, t.border);
+				Paint.panel(c, x, ry, w, rh, rowHover && canSwitch ? t.surfaceHover : t.surface, t.border);
 			}
 			// Gesicht in einer Mulde
 			drawFace(c, a, x + 4, ry + 3, 2);
 			int tx = x + 26;
 			int right = x + w - 6;
-			// Rechts: Lampe (aktiv) bzw. Mülleimer
+			// Rechts: Punkt (aktiv) bzw. Mülleimer
 			if (a.removable() && !active) {
 				int bx = right - 15;
 				boolean delHover = inside(mx, my, bx, ry + 3, 15, 15);
@@ -170,7 +168,7 @@ public final class AccountsUi extends UiScreen {
 			int statusColor;
 			if (switching) {
 				status = I18n.tr("accounts.switching");
-				statusColor = t.dustOn;
+				statusColor = t.accentText;
 			} else if (active) {
 				status = I18n.tr("accounts.active");
 				statusColor = t.text;
@@ -179,10 +177,10 @@ public final class AccountsUi extends UiScreen {
 				statusColor = t.textDim;
 			} else {
 				status = rowHover && canSwitch ? I18n.tr("accounts.switch") : "";
-				statusColor = t.dustOn;
+				statusColor = t.accentText;
 			}
 			if (active || switching) {
-				Redstone.pip(c, right - 7, ry + 7, 7, active ? 1f : (float) (0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 120.0)));
+				Paint.pip(c, right - 7, ry + 7, 7, active ? 1f : (float) (0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 120.0)));
 				right -= 11;
 			}
 			if (!status.isEmpty()) {
@@ -227,7 +225,7 @@ public final class AccountsUi extends UiScreen {
 	private void drawFace(Canvas c, GameAccount a, int x, int y, int px) {
 		Theme t = Theme.get();
 		int size = 8 * px;
-		Redstone.block(c, x - 1, y - 1, size + 2, size + 2, t.bevelDark);
+		Paint.block(c, x - 1, y - 1, size + 2, size + 2, t.bevelDark);
 		int[] f = faces.face(a.uuid, a.skinUrl);
 		if (f == null) {
 			int base = 0xFF000000 | (a.uuid.hashCode() & 0x3F3F3F) | 0x202020;
@@ -260,7 +258,7 @@ public final class AccountsUi extends UiScreen {
 		int noteColor = t.textDim;
 		if (s.message != null) {
 			note = I18n.tr(s.message, s.messageArgs);
-			noteColor = s.error ? t.dustOn : t.text;
+			noteColor = s.error ? t.danger : t.text;
 		} else if (!manager.canSwitch()) {
 			note = I18n.tr("accounts.leaveWorld");
 		}
@@ -270,17 +268,17 @@ public final class AccountsUi extends UiScreen {
 		}
 		// Anmeldecode
 		if (s.task == AccountManager.Task.ADDING_CODE && s.userCode != null) {
-			Redstone.well(c, x, cy, w, 30, t.accent);
+			Paint.well(c, x, cy, w, 30, t.accent);
 			String code = s.userCode;
 			c.push();
 			c.translate(x + 8, cy + 6);
 			c.scale(2f);
-			c.text(c.clip(code, (w - 110) / 2), 0, 0, t.dustOn, false);
+			c.text(c.clip(code, (w - 110) / 2), 0, 0, t.accentText, false);
 			c.pop();
 			int bw = Math.min(90, w / 3);
 			int bx = x + w - bw - 5;
 			boolean hov = inside(mx, my, bx, cy + 7, bw, 16);
-			Redstone.button(c, bx, cy + 7, bw, 16, I18n.tr("accounts.openPage"), false, hov);
+			Paint.button(c, bx, cy + 7, bw, 16, I18n.tr("accounts.openPage"), false, hov);
 			hits.add(bx, cy + 7, bw, 16, () -> {
 				host.playClick();
 				manager.openVerificationPage();
@@ -294,7 +292,7 @@ public final class AccountsUi extends UiScreen {
 		if (adding) {
 			int bw = Math.min(120, w / 2);
 			boolean hov = inside(mx, my, x, by, bw, 18);
-			Redstone.button(c, x, by, bw, 18, I18n.tr("common.cancel"), false, hov);
+			Paint.button(c, x, by, bw, 18, I18n.tr("common.cancel"), false, hov);
 			hits.add(x, by, bw, 18, () -> {
 				host.playClick();
 				manager.cancel();
@@ -304,7 +302,7 @@ public final class AccountsUi extends UiScreen {
 				int cw = Math.min(w - bw - 6, c.textWidth(codeLabel) + 16);
 				int cx = x + w - cw;
 				boolean chov = inside(mx, my, cx, by, cw, 18);
-				Redstone.button(c, cx, by, cw, 18, codeLabel, false, chov);
+				Paint.button(c, cx, by, cw, 18, codeLabel, false, chov);
 				hits.add(cx, by, cw, 18, () -> {
 					host.playClick();
 					manager.addWithCode();
@@ -316,9 +314,9 @@ public final class AccountsUi extends UiScreen {
 		String addLabel = I18n.tr("accounts.add");
 		int aw = Math.min(w, c.textWidth(addLabel) + 30);
 		boolean hov = enabled && inside(mx, my, x, by, aw, 18);
-		Redstone.button(c, x, by, aw, 18, "", enabled, hov);
-		Icons.draw(c, "plus", x + 7, by + 5, 1, enabled ? t.lampTextLit : t.textDim);
-		Paint.textClipped(c, addLabel, x + 19, by + 5, aw - 22, enabled ? Redstone.lampTextColor(1f) : t.textDim, false);
+		Paint.button(c, x, by, aw, 18, "", enabled, hov);
+		Icons.draw(c, "plus", x + 7, by + 5, 1, enabled ? t.faceTextOn : t.textDim);
+		Paint.textClipped(c, addLabel, x + 19, by + 5, aw - 22, enabled ? Paint.accentFaceText(1f) : t.textDim, false);
 		if (enabled) {
 			hits.add(x, by, aw, 18, () -> {
 				host.playClick();
@@ -331,7 +329,7 @@ public final class AccountsUi extends UiScreen {
 			if (cw > 40) {
 				int cx = x + w - cw;
 				boolean chov = inside(mx, my, cx, by, cw, 18);
-				Redstone.button(c, cx, by, cw, 18, codeLabel, false, chov);
+				Paint.button(c, cx, by, cw, 18, codeLabel, false, chov);
 				hits.add(cx, by, cw, 18, () -> {
 					host.playClick();
 					manager.addWithCode();

@@ -7,7 +7,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.waypoint.WaypointShare;
 
@@ -31,10 +30,10 @@ public final class WaypointCard {
 			final Hint hint) {
 		Theme t = Theme.get();
 		int color = 0xFF000000 | (wp.color >= 0 ? wp.color : DEFAULT_COLOR);
-		Redstone.stone(c, x, y, w, ChatLayout.INVITE_H, t.deep, ColorMath.lerp(t.border, color, 0.45f));
+		Paint.panel(c, x, y, w, ChatLayout.INVITE_H, t.deep, ColorMath.lerp(t.border, color, 0.45f));
 		int ix = x + 4;
 		int iy = y + 4;
-		Redstone.block(c, ix, iy, 28, 28, t.bevelDark);
+		Paint.block(c, ix, iy, 28, 28, t.bevelDark);
 		Icons.draw(c, "pin", ix + 6, iy + 6, 2, color);
 		String take = I18n.tr("waypoint.card.take");
 		String show = I18n.tr("waypoint.card.show");
