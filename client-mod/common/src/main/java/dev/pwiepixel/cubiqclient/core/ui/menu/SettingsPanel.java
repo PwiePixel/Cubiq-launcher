@@ -15,7 +15,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -91,7 +90,7 @@ public final class SettingsPanel {
 			int rh = rowHeight(s);
 			boolean rowHover = inside(mouseX, mouseY, x - 2, y, w + 4, s instanceof NumberSetting ? ROW_NUMBER : ROW_BOOL);
 			// Die Zeile unter der Maus liegt leicht erhöht – so ist klar, wozu ein Regler gehört.
-			if (rowHover) Redstone.block(c, x - 2, y, w + 4, (s instanceof NumberSetting ? ROW_NUMBER : ROW_BOOL) - 1, ColorMath.withAlpha(Theme.get().surfaceHover, 150));
+			if (rowHover) Paint.block(c, x - 2, y, w + 4, (s instanceof NumberSetting ? ROW_NUMBER : ROW_BOOL) - 1, ColorMath.withAlpha(Theme.get().surfaceHover, 150));
 			row(c, hits, s, x, y, w, rh, mouseX, mouseY);
 			if (i < settings.size() - 1) c.fill(x, y + rh - 1, x + w, y + rh, line);
 			y += rh;
@@ -143,7 +142,7 @@ public final class SettingsPanel {
 	private void number(Canvas c, Hits hits, final NumberSetting n, int x, int y, int w, int mx, int my, String hint) {
 		Theme t = Theme.get();
 		String value = n.display();
-		Paint.textRight(c, value, x + w, y + 6, t.dustOn, false);
+		Paint.textRight(c, value, x + w, y + 6, t.accentText, false);
 		if (hint != null) Paint.textRight(c, hint, x + w - c.textWidth(value) - 6, y + 6, t.textDim, false);
 		final int sliderX = x + 2;
 		final int sliderW = Math.max(20, w - 4);
@@ -155,14 +154,14 @@ public final class SettingsPanel {
 			// Wert vom Server festgelegt: Regler ausgegraut.
 			c.fill(sliderX, sliderY - 4, sliderX + sliderW, sliderY + 6, ColorMath.withAlpha(t.surface, 150));
 		} else if (n.serverLocked()) {
-			// Grenzen vom Server: der erlaubte Bereich als Staubspur unter dem Regler.
+			// Grenzen vom Server: der erlaubte Bereich als Linie unter dem Regler.
 			double lo = Double.isNaN(n.serverMin()) ? n.min() : n.serverMin();
 			double hi = Double.isNaN(n.serverMax()) ? n.max() : n.serverMax();
 			double span = n.max() - n.min();
 			if (span > 0) {
 				int ax = sliderX + (int) Math.round((lo - n.min()) / span * sliderW);
 				int bx = sliderX + (int) Math.round((hi - n.min()) / span * sliderW);
-				c.fill(ax, sliderY + 7, Math.max(ax + 1, bx), sliderY + 8, ColorMath.withAlpha(t.dustOn, 200));
+				c.fill(ax, sliderY + 7, Math.max(ax + 1, bx), sliderY + 8, ColorMath.withAlpha(t.accentText, 200));
 			}
 		}
 		if (BypassPrompt.available(n)) {
@@ -186,10 +185,10 @@ public final class SettingsPanel {
 		int bx = x + w - bw;
 		boolean hover = inside(mx, my, bx, y + 2, bw, 14);
 		if (capturing == k) {
-			Redstone.lamp(c, bx, y + 2, bw, 15, 1f, 0f);
-			Paint.textCentered(c, label, bx + bw / 2, y + 6, t.lampTextLit, false);
+			Paint.accentFace(c, bx, y + 2, bw, 15, 1f, 0f);
+			Paint.textCentered(c, label, bx + bw / 2, y + 6, t.faceTextOn, false);
 		} else {
-			Redstone.keycap(c, bx, y + 2, bw, label, hover);
+			Paint.keycap(c, bx, y + 2, bw, label, hover);
 		}
 		hits.add(bx, y + 2, bw, 14, new Runnable() {
 			@Override
@@ -213,15 +212,15 @@ public final class SettingsPanel {
 		int bw = textFieldWidth(c, s, w);
 		int bx = x + w - bw;
 		boolean hover = inside(mx, my, bx, y + 2, bw, 14);
-		Redstone.well(c, bx, y + 2, bw, 15, editing ? t.accent : (hover ? t.textDim : t.border));
-		if (editing) Redstone.glow(c, bx, y + 2, bw, 15, t.glow, 0.5f);
+		Paint.well(c, bx, y + 2, bw, 15, editing ? t.accent : (hover ? t.textDim : t.border));
+		if (editing) Paint.glow(c, bx, y + 2, bw, 15, t.glow, 0.5f);
 		String shown = editing ? textInput.text() : s.get();
 		boolean placeholder = shown.isEmpty();
 		if (placeholder) shown = s.placeholder();
 		c.text(c.clip(shown, bw - 8), bx + 4, y + 6, placeholder ? t.textDim : t.text, false);
 		if (editing && (System.currentTimeMillis() / 500) % 2 == 0) {
 			int cursorX = bx + 4 + Math.min(bw - 8, c.textWidth(textInput.text()));
-			c.fill(cursorX, y + 5, cursorX + 1, y + 14, t.dustOn);
+			c.fill(cursorX, y + 5, cursorX + 1, y + 14, t.accentText);
 		}
 		hits.add(bx, y + 2, bw, 14, new Runnable() {
 			@Override
@@ -319,7 +318,7 @@ public final class SettingsPanel {
 		if (locked) {
 			// Vom Server festgelegt: ausgegraut, keine Liste (Cubiq-Team: Nachfrage, danach klappt sie auf).
 			if (expanded == choice) expanded = null;
-			Redstone.stone(c, bx, y + 2, bw, 15, t.surface, t.border);
+			Paint.panel(c, bx, y + 2, bw, 15, t.surface, t.border);
 			Paint.textCentered(c, c.clip(label, bw - 6), bx + bw / 2, y + 6, t.textDim, false);
 			if (hint != null) Paint.textRight(c, hint, bx - 4, y + 6, t.textDim, false);
 			if (BypassPrompt.available(choice)) {
@@ -334,7 +333,7 @@ public final class SettingsPanel {
 		}
 		boolean hover = inside(mx, my, bx, y + 2, bw, 14);
 		boolean open = expanded == choice;
-		Redstone.stone(c, bx, y + 2, bw, 15, hover || open ? t.surfaceHover : t.surfaceHigh, open ? t.accent : (hover ? t.textDim : t.border));
+		Paint.panel(c, bx, y + 2, bw, 15, hover || open ? t.surfaceHover : t.surfaceHigh, open ? t.accent : (hover ? t.textDim : t.border));
 		Paint.textCentered(c, c.clip(label, bw - 6), bx + bw / 2, y + 6, t.text, false);
 		hits.add(bx, y + 2, bw, 14, new Runnable() {
 			@Override
@@ -346,7 +345,7 @@ public final class SettingsPanel {
 		c.flush();
 		int listY = y + ROW_BOOL;
 		int listH = choice.size() * CHOICE_ITEM + 4;
-		Redstone.block(c, bx - 2, listY, bw + 4, listH, t.border);
+		Paint.block(c, bx - 2, listY, bw + 4, listH, t.border);
 		c.fill(bx - 1, listY + 1, bx + bw + 1, listY + listH - 1, t.background);
 		for (int i = 0; i < choice.size(); i++) {
 			final int index = i;
@@ -354,10 +353,10 @@ public final class SettingsPanel {
 			boolean itemHover = inside(mx, my, bx - 2, iy, bw + 4, CHOICE_ITEM);
 			boolean active = choice.index() == i;
 			if (itemHover || active) {
-				Redstone.block(c, bx - 1, iy, bw + 2, CHOICE_ITEM, active ? ColorMath.withAlpha(t.accent, 60) : t.surfaceHover);
-				if (active) c.fill(bx - 1, iy + 2, bx + 1, iy + CHOICE_ITEM - 2, t.dustOn);
+				Paint.block(c, bx - 1, iy, bw + 2, CHOICE_ITEM, active ? ColorMath.withAlpha(t.accent, 60) : t.surfaceHover);
+				if (active) c.fill(bx - 1, iy + 2, bx + 1, iy + CHOICE_ITEM - 2, t.accentText);
 			}
-			c.text(c.clip(choice.optionLabel(i), bw - 8), bx + 4, iy + 3, active ? t.dustOn : t.text, false);
+			c.text(c.clip(choice.optionLabel(i), bw - 8), bx + 4, iy + 3, active ? t.accentText : t.text, false);
 			hits.add(bx - 2, iy, bw + 4, CHOICE_ITEM, new Runnable() {
 				@Override
 				public void run() {
@@ -374,7 +373,7 @@ public final class SettingsPanel {
 		int sx = x + w - sw;
 		boolean hover = inside(mx, my, sx, y + 2, sw, 14);
 		boolean open = expanded == color;
-		Redstone.block(c, sx, y + 2, sw, 15, open || hover ? t.accent : t.border);
+		Paint.block(c, sx, y + 2, sw, 15, open || hover ? t.accent : t.border);
 		checker(c, sx + 1, y + 3, sw - 2, 13);
 		c.fill(sx + 1, y + 3, sx + sw - 1, y + 16, color.argb());
 		if (color.chroma()) Paint.textCentered(c, "RGB", sx + sw / 2, y + 6, ColorMath.contrastText(color.argb()), false);
@@ -401,7 +400,7 @@ public final class SettingsPanel {
 	/** Farbwähler: Sättigungs-/Helligkeitsfeld, Farbtonleiste, Deckkraft, Chroma und Palette. */
 	private void picker(Canvas c, Hits hits, final ColorSetting color, int x, int y, int w, int mx, int my) {
 		Theme t = Theme.get();
-		Redstone.block(c, x, y, w, PICKER_HEIGHT - 4, t.border);
+		Paint.block(c, x, y, w, PICKER_HEIGHT - 4, t.border);
 		c.fill(x + 1, y + 1, x + w - 1, y + PICKER_HEIGHT - 5, t.deep);
 
 		final int fieldX = x + 6;
@@ -493,7 +492,7 @@ public final class SettingsPanel {
 		for (int i = 0; i < ColorSetting.PALETTE.length; i++) {
 			final int rgb = ColorSetting.PALETTE[i];
 			if (px + 10 > controlsX + controlsW) break;
-			Redstone.block(c, px, cy, 9, 9, inside(mx, my, px, cy, 9, 9) ? t.text : t.border);
+			Paint.block(c, px, cy, 9, 9, inside(mx, my, px, cy, 9, 9) ? t.text : t.border);
 			c.fill(px + 1, cy + 1, px + 8, cy + 8, 0xFF000000 | rgb);
 			hits.add(px, cy, 9, 9, new Runnable() {
 				@Override

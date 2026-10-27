@@ -194,7 +194,7 @@ public final class MapSprites {
 		Theme t = Theme.get();
 		float outer = radius + RING_OUT;
 		int px = density(scale, outer * 2f, 1024);
-		String key = "ring_" + px + "_" + Math.round(radius * 4) + "_" + t.dustOn + "_" + t.bevelLight;
+		String key = "ring_" + px + "_" + Math.round(radius * 4) + "_" + t.accentText + "_" + t.bevelLight;
 		if (!key.equals(ringKey) || ring == null) {
 			Entry made = makeRing(px, radius, outer, t);
 			if (made == null) return false;
@@ -251,8 +251,8 @@ public final class MapSprites {
 		float center = px / 2f;
 		int stoneLight = ColorMath.lerp(0xFF6E6A70, t.bevelLight, 0.35f);
 		int stoneDark = ColorMath.lerp(0xFF232126, t.bevelDark, 0.35f);
-		int dust = t.dustOn;
-		int dustDark = ColorMath.scaleRgb(t.dustOn, 0.55f);
+		int dust = t.accentText;
+		int dustDark = ColorMath.scaleRgb(t.accentText, 0.55f);
 		for (int y = 0; y < px; y++) {
 			for (int x = 0; x < px; x++) {
 				float a = 0f, r = 0f, g = 0f, b = 0f;

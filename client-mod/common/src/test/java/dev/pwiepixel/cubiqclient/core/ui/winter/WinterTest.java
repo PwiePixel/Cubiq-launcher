@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class WinterTest {
 	@AfterEach
 	void reset() {
-		Theme.set(Theme.of("dark", "redstone", null));
+		Theme.set(Theme.of("dark", "cubiq", null));
 	}
 
 	// --- Design im Theme ---
@@ -34,11 +34,12 @@ class WinterTest {
 	void designParsing() {
 		assertTrue(Theme.of("dark", "ice", null, "winter").winter);
 		assertEquals(Theme.WINTER, Theme.of("dark", "ice", null, " Winter ").designName);
-		assertFalse(Theme.of("dark", "redstone", null).winter, "ohne Design: Redstone");
-		assertEquals(Theme.REDSTONE, Theme.of("dark", "redstone", null, null).designName);
-		assertEquals(Theme.REDSTONE, Theme.of("dark", "redstone", null, "neon").designName);
-		assertEquals(Theme.REDSTONE, Theme.of("dark", "redstone", null, "wïnter").designName);
-		assertEquals(Theme.REDSTONE, Theme.normalizeDesign("winterwinterwinterwinterwinter"));
+		assertFalse(Theme.of("dark", "cubiq", null).winter, "ohne Design: Cubiq");
+		assertEquals(Theme.CUBIQ, Theme.of("dark", "cubiq", null, null).designName);
+		assertEquals(Theme.CUBIQ, Theme.of("dark", "cubiq", null, "neon").designName);
+		assertEquals(Theme.CUBIQ, Theme.of("dark", "cubiq", null, "wïnter").designName);
+		assertEquals(Theme.CUBIQ, Theme.of("dark", "cubiq", null, "redstone").designName, "das frühere Redstone-Design wird Cubiq");
+		assertEquals(Theme.CUBIQ, Theme.normalizeDesign("winterwinterwinterwinterwinter"));
 		assertEquals(0xFF2B97D6, Theme.of("dark", "ice", null, "winter").accent);
 		assertEquals(0xFF2B97D6, Theme.of("dark", "ice", "#000000").accent, "Eis ist ein bekannter Akzent");
 	}
@@ -49,7 +50,7 @@ class WinterTest {
 		assertEquals(0xFF0D1424, w.background);
 		assertEquals(0xFF15203A, w.surface);
 		assertEquals(0xFFEAF4FF, w.text);
-		assertEquals(0xFF8FDCFF, w.lampOn, "Lampen sind Eis, nicht Bernstein");
+		assertEquals(0xFF8FDCFF, w.faceOn, "Lampen sind Eis, nicht Bernstein");
 		assertEquals(0xFF000000, Theme.of("oled", "ice", null, "winter").background);
 		Theme day = Theme.of("light", "ice", null, "winter");
 		assertTrue(day.light);
@@ -81,14 +82,14 @@ class WinterTest {
 		assertEquals("oled", Theme.plain().themeName);
 		assertEquals(0xFF2B97D6, Theme.plain().accent);
 		dev.pwiepixel.cubiqclient.core.halloween.Halloween.reset();
-		// Ältere Launcher ohne Design-Feld → Redstone.
+		// Ältere Launcher ohne Design-Feld → Cubiq.
 		Files.write(file, "{\"version\":1,\"theme\":\"dark\",\"accent\":\"lapis\"}".getBytes(StandardCharsets.UTF_8));
 		assertTrue(Theme.loadFrom(dir));
 		assertFalse(Theme.get().winter);
-		// Unbekanntes Design → Redstone.
+		// Unbekanntes Design → Cubiq.
 		Files.write(file, "{\"version\":1,\"theme\":\"dark\",\"accent\":\"lapis\",\"design\":\"neon\"}".getBytes(StandardCharsets.UTF_8));
 		assertTrue(Theme.loadFrom(dir));
-		assertEquals(Theme.REDSTONE, Theme.get().designName);
+		assertEquals(Theme.CUBIQ, Theme.get().designName);
 	}
 
 	@Test

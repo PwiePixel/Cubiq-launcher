@@ -5,7 +5,6 @@ import dev.pwiepixel.cubiqclient.core.module.BoolSetting;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel;
 
@@ -35,9 +34,9 @@ public final class MapPanel implements ModulePanel {
 		if (showSwitch) {
 			int h = 30;
 			boolean hov = mx >= x && mx < x + w && my >= y && my < y + h;
-			Redstone.stone(c, x, y, w, h, hov ? t.surfaceHover : t.surface, t.border);
-			Redstone.toggle(c, x + w - 34, y + 9, 26, 12, fair.get() ? 1f : 0f, hov);
-			c.text(I18n.tr("map.panel.fairPlay"), x + 6, y + 5, fair.get() ? (0xFF000000 | (t.dustOn & 0xFFFFFF)) : t.text, false);
+			Paint.panel(c, x, y, w, h, hov ? t.surfaceHover : t.surface, t.border);
+			Paint.toggle(c, x + w - 34, y + 9, 26, 12, fair.get() ? 1f : 0f, hov);
+			c.text(I18n.tr("map.panel.fairPlay"), x + 6, y + 5, fair.get() ? (0xFF000000 | (t.accentText & 0xFFFFFF)) : t.text, false);
 			Paint.textClipped(c, I18n.tr(fair.get() ? "map.panel.fairPlayOn" : "map.panel.fairPlayOff"), x + 6, y + 16,
 					w - 46, t.textDim, false);
 			hits.add(x, y, w, h, () -> {
@@ -47,10 +46,10 @@ public final class MapPanel implements ModulePanel {
 			y += h + 4;
 		}
 		if (fp.serverFair()) {
-			y = Paint.paragraph(c, I18n.tr("map.panel.server"), x, y, textW, LINE, 0xFF000000 | (t.dustOn & 0xFFFFFF)) + 2;
+			y = Paint.paragraph(c, I18n.tr("map.panel.server"), x, y, textW, LINE, 0xFF000000 | (t.accentText & 0xFFFFFF)) + 2;
 		}
 		if (fp.serverNoMinimap()) {
-			y = Paint.paragraph(c, I18n.tr("map.panel.noMinimap"), x, y, textW, LINE, 0xFF000000 | (t.dustOn & 0xFFFFFF)) + 2;
+			y = Paint.paragraph(c, I18n.tr("map.panel.noMinimap"), x, y, textW, LINE, 0xFF000000 | (t.accentText & 0xFFFFFF)) + 2;
 		}
 		return y;
 	}

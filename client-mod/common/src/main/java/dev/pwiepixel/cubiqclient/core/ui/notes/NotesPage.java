@@ -17,7 +17,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -248,11 +247,11 @@ public final class NotesPage {
 		int color = t.textDim;
 		if (message != null && now < messageUntil) {
 			text = message;
-			color = messageBad ? t.dustOn : t.text;
+			color = messageBad ? t.accentText : t.text;
 		} else if (view == View.NOTE && editing) {
 			int used = Note.length(body.text());
 			text = I18n.tr("notes.chars", used, Note.MAX_TEXT);
-			if (used > Note.MAX_TEXT * 9 / 10) color = t.dustOn;
+			if (used > Note.MAX_TEXT * 9 / 10) color = t.accentText;
 		} else {
 			NotesSync sync = NotesSync.get();
 			text = I18n.tr("notes.sync.label", NotesModulePanel.statusText(sync));
@@ -274,7 +273,7 @@ public final class NotesPage {
 		boolean canNew = book != null;
 		boolean newHover = canNew && inside(mx, my, nx, y, nw, 17);
 		Paint.button(c, nx, y, nw, 17, "", canNew, newHover);
-		Icons.draw(c, "plus", nx + 6, y + 4, 1, canNew ? (newHover ? t.dustOn : t.text) : t.textDim);
+		Icons.draw(c, "plus", nx + 6, y + 4, 1, canNew ? (newHover ? t.accentText : t.text) : t.textDim);
 		Paint.textClipped(c, newLabel, nx + 18, y + 4 - (newHover ? 1 : 0), nw - 22, canNew ? t.text : t.textDim, false);
 		if (canNew) {
 			hits.add(nx, y, nw, 17, new Runnable() {
@@ -289,12 +288,12 @@ public final class NotesPage {
 		String worldLabel = book == null ? I18n.tr("notes.noWorld") : book.world.label();
 		String here = book != null && isCurrent(book) ? I18n.tr("notes.thisWorld") : book != null ? I18n.tr("notes.otherWorld") : null;
 		boolean wHover = inside(mx, my, x, y, ww, 17);
-		Redstone.stone(c, x, y, ww, 17, wHover ? t.surfaceHover : t.surface, t.border);
-		Icons.draw(c, book != null && book.world.server() ? "globe" : "home", x + 5, y + 4, 1, t.dustOn);
+		Paint.panel(c, x, y, ww, 17, wHover ? t.surfaceHover : t.surface, t.border);
+		Icons.draw(c, book != null && book.world.server() ? "globe" : "home", x + 5, y + 4, 1, t.accentText);
 		int hereW = here == null ? 0 : Math.min(ww / 3, c.textWidth(here) + 6);
 		Paint.textClipped(c, worldLabel, x + 17, y + 4, ww - 30 - hereW, t.text, false);
 		if (here != null) Paint.textRight(c, c.clip(here, hereW), x + ww - 16, y + 4, t.textDim, false);
-		Icons.draw(c, "next", x + ww - 11, y + 4, 1, wHover ? t.dustOn : t.textDim);
+		Icons.draw(c, "next", x + ww - 11, y + 4, 1, wHover ? t.accentText : t.textDim);
 		hits.add(x, y, ww, 17, new Runnable() {
 			@Override
 			public void run() {
@@ -308,8 +307,8 @@ public final class NotesPage {
 		// Suche
 		int sy = y + 21;
 		boolean sHover = inside(mx, my, x, sy, w, 16);
-		Redstone.well(c, x, sy, w, 16, search.focused() ? t.accent : (sHover ? t.textDim : t.border));
-		Icons.draw(c, "search", x + 5, sy + 4, 1, search.focused() ? t.dustOn : t.textDim);
+		Paint.well(c, x, sy, w, 16, search.focused() ? t.accent : (sHover ? t.textDim : t.border));
+		Icons.draw(c, "search", x + 5, sy + 4, 1, search.focused() ? t.accentText : t.textDim);
 		boolean hint = search.isEmpty() && !search.focused();
 		Paint.textClipped(c, hint ? I18n.tr("notes.search") : search.text(), x + 16, sy + 4, w - 22, hint ? t.textDim : t.text, false);
 		if (search.focused()) caret(c, x + 16 + c.textWidth(search.text()), sy + 4, x + w - 3);
@@ -356,10 +355,10 @@ public final class NotesPage {
 		for (final Note note : list) {
 			if (ry + ROW_H >= top && ry <= top + listH) {
 				boolean hover = inside(mx, my, x, ry, w - 4, ROW_H - 3) && inside(mx, my, x, top, w, listH);
-				Redstone.stone(c, x, ry, w - 4, ROW_H - 3, hover ? t.surfaceHover : t.surface, note == pinned ? ColorMath.lerp(t.border, t.accent, 0.7f) : t.border);
+				Paint.panel(c, x, ry, w - 4, ROW_H - 3, hover ? t.surfaceHover : t.surface, note == pinned ? ColorMath.lerp(t.border, t.accent, 0.7f) : t.border);
 				int right = x + w - 10;
 				if (note == pinned) {
-					Icons.draw(c, "pin", right - 8, ry + 4, 1, t.dustOn);
+					Icons.draw(c, "pin", right - 8, ry + 4, 1, t.accentText);
 					right -= 12;
 				}
 				int[] p = NoteText.progress(note.text);
@@ -484,8 +483,8 @@ public final class NotesPage {
 			boolean current, int mx, int my, final String key) {
 		Theme t = Theme.get();
 		boolean hover = inside(mx, my, x, y, w - 4, h - 2);
-		Redstone.stone(c, x, y, w - 4, h - 2, hover ? t.surfaceHover : t.surface, current ? ColorMath.lerp(t.border, t.accent, 0.7f) : t.border);
-		Icons.draw(c, server ? "globe" : "home", x + 5, y + 5, 1, current ? t.dustOn : t.textDim);
+		Paint.panel(c, x, y, w - 4, h - 2, hover ? t.surfaceHover : t.surface, current ? ColorMath.lerp(t.border, t.accent, 0.7f) : t.border);
+		Icons.draw(c, server ? "globe" : "home", x + 5, y + 5, 1, current ? t.accentText : t.textDim);
 		String right = count > 0 ? I18n.tr("notes.worlds.count", count) : "";
 		if (current) right = right.isEmpty() ? I18n.tr("notes.thisWorld") : right + " · " + I18n.tr("notes.thisWorld");
 		int rw = c.textWidth(right);
@@ -564,7 +563,7 @@ public final class NotesPage {
 		int tw = bx - 6 - tx;
 		if (editing) {
 			boolean focused = titleInput.focused();
-			Redstone.well(c, tx, y + 1, tw, 16, focused ? t.accent : t.border);
+			Paint.well(c, tx, y + 1, tw, 16, focused ? t.accent : t.border);
 			boolean empty = titleInput.isEmpty();
 			Paint.textClipped(c, empty && !focused ? I18n.tr("notes.titleHint") : titleInput.text(), tx + 4, y + 5, tw - 8,
 					empty && !focused ? t.textDim : t.text, false);
@@ -635,7 +634,7 @@ public final class NotesPage {
 		int cw = Math.min(w / 2 - 3, c.textWidth(check) + 24);
 		boolean ch = inside(mx, my, x, y, cw, 16);
 		Paint.button(c, x, y, cw, 16, "", false, ch);
-		NotePanel.box(c, x + 6, y + 4, false, ch ? t.dustOn : t.text);
+		NotePanel.box(c, x + 6, y + 4, false, ch ? t.accentText : t.text);
 		Paint.textClipped(c, check, x + 17, y + 4 - (ch ? 1 : 0), cw - 20, t.text, false);
 		hits.add(x, y, cw, 16, new Runnable() {
 			@Override
@@ -653,7 +652,7 @@ public final class NotesPage {
 		int pw = Math.min(x + w - px, c.textWidth(pos) + 24);
 		boolean ph = here && inside(mx, my, px, y, pw, 16);
 		Paint.button(c, px, y, pw, 16, "", false, ph);
-		Icons.draw(c, "pin", px + 6, y + 4, 1, here ? (ph ? t.dustOn : t.text) : t.textDim);
+		Icons.draw(c, "pin", px + 6, y + 4, 1, here ? (ph ? t.accentText : t.text) : t.textDim);
 		Paint.textClipped(c, pos, px + 17, y + 4 - (ph ? 1 : 0), pw - 20, here ? t.text : t.textDim, false);
 		hits.add(px, y, pw, 16, new Runnable() {
 			@Override
@@ -720,7 +719,7 @@ public final class NotesPage {
 		editFirst = first;
 		editTextX = x + 5;
 		editTextY = y + 4;
-		Redstone.well(c, x, y, w, h, body.focused() ? t.accent : t.border);
+		Paint.well(c, x, y, w, h, body.focused() ? t.accent : t.border);
 		if (text.isEmpty() && !body.focused()) {
 			Paint.paragraph(c, I18n.tr("notes.bodyHint"), x + 5, y + 4, w - 12, LH, ColorMath.withAlpha(t.textDim, 170));
 		}
@@ -733,7 +732,7 @@ public final class NotesPage {
 			if (body.focused() && i == cursorRow && blink) {
 				int col = Math.max(r[0], Math.min(body.cursor(), r[1]));
 				int cx = x + 5 + c.textWidth(text.substring(r[0], col));
-				c.fill(cx, ty - 1, cx + 1, ty + 9, t.dustOn);
+				c.fill(cx, ty - 1, cx + 1, ty + 9, t.accentText);
 			}
 			ty += LH;
 		}
@@ -824,7 +823,7 @@ public final class NotesPage {
 			layoutWidth = w - 14;
 			layoutRows = rows;
 		}
-		Redstone.well(c, x, y, w, h, t.border);
+		Paint.well(c, x, y, w, h, t.border);
 		setScrollRect(x, y, w, h);
 		if (text.trim().isEmpty()) {
 			Paint.paragraph(c, I18n.tr("notes.emptyNote"), x + 5, y + 4, w - 12, LH, t.textDim);
@@ -852,7 +851,7 @@ public final class NotesPage {
 			int tx = x + 5;
 			if (r.check >= 0) {
 				boolean bh = inside(mx, my, tx - 2, ty - 2, 11, 11);
-				NotePanel.box(c, tx, ty, r.check == 1, bh ? t.dustOn : t.text);
+				NotePanel.box(c, tx, ty, r.check == 1, bh ? t.accentText : t.text);
 				hits.add(tx - 2, ty - 2, r.indent + 2, 11, new Runnable() {
 					@Override
 					public void run() {
@@ -873,8 +872,8 @@ public final class NotesPage {
 				String link = text.substring(hit.start, hit.end);
 				int lw = c.textWidth(link);
 				boolean lh = inside(mx, my, px, ty - 1, lw, LH);
-				c.text(link, px, ty, lh ? t.dustOn : linkColor, false);
-				c.fill(px, ty + 8, px + lw, ty + 9, ColorMath.withAlpha(lh ? t.dustOn : linkColor, 160));
+				c.text(link, px, ty, lh ? t.accentText : linkColor, false);
+				c.fill(px, ty + 8, px + lw, ty + 9, ColorMath.withAlpha(lh ? t.accentText : linkColor, 160));
 				final int ax = px, ay = ty;
 				hits.add(px, ty - 1, lw, LH, new Runnable() {
 					@Override
@@ -925,8 +924,8 @@ public final class NotesPage {
 		});
 		c.push();
 		c.raise(20f);
-		Redstone.glow(c, ox, oy, bw, bh, t.glow, 0.3f);
-		Redstone.stone(c, ox, oy, bw, bh, t.surfaceHigh, ColorMath.lerp(t.border, t.accent, 0.6f));
+		Paint.glow(c, ox, oy, bw, bh, t.glow, 0.3f);
+		Paint.panel(c, ox, oy, bw, bh, t.surfaceHigh, ColorMath.lerp(t.border, t.accent, 0.6f));
 		Paint.textClipped(c, head, ox + 6, oy + 4, bw - 12, t.textDim, false);
 		int by = oy + 14;
 		for (int i = 0; i < labels.length; i++) {
@@ -1134,15 +1133,15 @@ public final class NotesPage {
 	private static void caret(Canvas c, int x, int y, int maxX) {
 		if ((System.currentTimeMillis() / 500) % 2 != 0) return;
 		int cx = Math.min(x, maxX);
-		c.fill(cx, y, cx + 1, y + 8, Theme.get().dustOn);
+		c.fill(cx, y, cx + 1, y + 8, Theme.get().accentText);
 	}
 
 	private static void scrollbar(Canvas c, int x, int y, int h, int scroll, int max) {
 		Theme t = Theme.get();
 		int barH = Math.max(12, h * h / (h + max));
 		int barY = y + (h - barH) * scroll / Math.max(1, max);
-		c.fill(x, y, x + 2, y + h, t.dustOff);
-		c.fill(x, barY, x + 2, barY + barH, t.dustOn);
+		c.fill(x, y, x + 2, y + h, t.track);
+		c.fill(x, barY, x + 2, barY + barH, t.accentText);
 	}
 
 	/** „vor 5 Min.“ usw. */

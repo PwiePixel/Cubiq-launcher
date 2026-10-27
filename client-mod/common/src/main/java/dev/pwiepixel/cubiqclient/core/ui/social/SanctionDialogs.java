@@ -12,7 +12,6 @@ import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
 
@@ -40,10 +39,10 @@ public final class SanctionDialogs {
 		return "lock";
 	}
 
-	/** Farbe einer Strafe: Verwarnung gelb (Lampe), sonst rot (Redstone). */
+	/** Farbe einer Strafe: Verwarnung bernsteinfarben (Hinweis), sonst rot. */
 	static int tint(Sanction s) {
 		Theme t = Theme.get();
-		return "warn".equals(s.kind) ? t.lampOn : t.dustOn;
+		return "warn".equals(s.kind) ? t.caution : t.danger;
 	}
 
 	/**
@@ -69,7 +68,8 @@ public final class SanctionDialogs {
 			cy += Dialogs.paragraph(c, SanctionText.effect(s.kind), x + 12, cy, w - 12, ColorMath.lerp(t.textDim, t.accent, 0.3f));
 		}
 		if (s.appeal != null) {
-			int color = s.appeal.open() ? t.lampOn : "upheld".equals(s.appeal.status) ? t.textDim : t.on;
+			// Offen = ausstehend (bernsteinfarben), bestätigt = gedämpft, stattgegeben = Akzent.
+			int color = s.appeal.open() ? t.caution : "upheld".equals(s.appeal.status) ? t.textDim : t.accentText;
 			cy += Dialogs.paragraph(c, SanctionText.appealStatus(s.appeal), x + 12, cy, w - 12, color);
 			if (full && s.appeal.response != null) {
 				cy += Dialogs.paragraph(c, I18n.tr("sanction.appeal.response", s.appeal.response), x + 12, cy, w - 12, t.text);
@@ -115,7 +115,7 @@ public final class SanctionDialogs {
 			listRect[1] = y;
 			listRect[2] = w;
 			listRect[3] = listH;
-			Redstone.well(c, x, y, w, listH, t.border);
+			Paint.well(c, x, y, w, listH, t.border);
 			c.scissor(x + 2, y + 2, x + w - 2, y + listH - 2);
 			kit.hits.clip(x + 2, y + 2, w - 4, listH - 4);
 			int ry = y + 5 - scroll;
@@ -142,7 +142,7 @@ public final class SanctionDialogs {
 			int by = y + h - 18;
 			String state = social.sanctionsLoading() ? I18n.tr("sanction.loading")
 					: social.sanctionsError() != null ? I18n.tr(social.sanctionsError()) : I18n.tr("sanction.privacy");
-			Paint.textClipped(c, state, x, by + 5, w - 110, social.sanctionsError() != null ? t.dustOn : t.textDim, false);
+			Paint.textClipped(c, state, x, by + 5, w - 110, social.sanctionsError() != null ? t.danger : t.textDim, false);
 			int bw = Math.min(96, w / 3);
 			kit.button(c, x + w - bw, by, bw, 18, I18n.tr("sanction.refresh"), false, !social.sanctionsLoading(), mx, my,
 					new Runnable() {
@@ -254,7 +254,7 @@ public final class SanctionDialogs {
 			cy += 3;
 			// Textfeld
 			int fieldH = Math.max(30, Math.min(VISIBLE_LINES * ChatLayout.LINE_H + 8, y + h - 44 - cy));
-			Redstone.well(c, x, cy, w, fieldH, input.focused() ? t.accent : t.border);
+			Paint.well(c, x, cy, w, fieldH, input.focused() ? t.accent : t.border);
 			final Canvas canvas = c;
 			String text = input.text();
 			List<int[]> lines = ChatLayout.wrap(new ChatLayout.Measure() {
@@ -301,11 +301,11 @@ public final class SanctionDialogs {
 			int n = Sanctions.appealLength(text);
 			String problem = Sanctions.appealProblem(text);
 			String count = I18n.tr("sanction.appeal.count", n, Sanctions.APPEAL_MAX);
-			Paint.textRight(c, count, x + w, cy, problem != null && n > 0 ? t.dustOn : t.textDim, false);
+			Paint.textRight(c, count, x + w, cy, problem != null && n > 0 ? t.accentText : t.textDim, false);
 			String left = error != null ? I18n.tr(error)
 					: "sanction.appeal.tooShort".equals(problem) ? I18n.tr(problem, Sanctions.APPEAL_MIN - n)
 					: problem != null ? I18n.tr(problem, Sanctions.APPEAL_MAX) : I18n.tr("sanction.appeal.once");
-			Paint.textClipped(c, left, x, cy, w - c.textWidth(count) - 8, error != null ? t.dustOn : t.textDim, false);
+			Paint.textClipped(c, left, x, cy, w - c.textWidth(count) - 8, error != null ? t.danger : t.textDim, false);
 			// Knöpfe
 			int bw = Math.min(110, (w - 6) / 2);
 			int by = y + h - 18;
@@ -480,11 +480,11 @@ public final class SanctionDialogs {
 			int my, final Opener opener) {
 		Theme t = Theme.get();
 		long now = System.currentTimeMillis();
-		Redstone.well(c, x, y, w, h, t.border);
+		Paint.well(c, x, y, w, h, t.border);
 		int pw = Math.min(w - 20, 320);
 		int px = x + (w - pw) / 2;
 		int cy = y + 12;
-		Icons.draw(c, "lock", px, cy, 2, t.dustOn);
+		Icons.draw(c, "lock", px, cy, 2, t.accentText);
 		cy += Math.max(18, Dialogs.paragraph(c, I18n.tr("sanction.banned.title"), px + 22, cy + 3, pw - 22, t.text) + 6);
 		SanctionError err = social == null ? null : social.banned();
 		Sanction s = err == null || err.sanction == null ? null : social.sanctions().find(err.sanction.id);

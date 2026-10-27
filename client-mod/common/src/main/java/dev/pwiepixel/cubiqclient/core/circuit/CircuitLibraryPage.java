@@ -6,7 +6,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -170,7 +169,7 @@ public final class CircuitLibraryPage {
 		String toggle = I18n.tr("circuits.myVersion");
 		int tw = c.textWidth(toggle) + 22;
 		int sw = w - tw - 6;
-		Redstone.well(c, x, y, sw, 16, search.focused() ? t.accent : t.border);
+		Paint.well(c, x, y, sw, 16, search.focused() ? t.accent : t.border);
 		String q = search.text();
 		if (q.isEmpty() && !search.focused()) {
 			Paint.textClipped(c, I18n.tr("circuits.search"), x + 5, y + 4, sw - 10, t.textDim, false);
@@ -180,7 +179,7 @@ public final class CircuitLibraryPage {
 			c.text(shown, x + 5, y + 4, t.text, false);
 			if (search.focused() && (System.currentTimeMillis() / 500) % 2 == 0) {
 				int caret = x + 5 + c.textWidth(shown);
-				c.fill(caret, y + 4, caret + 1, y + 12, t.dustOn);
+				c.fill(caret, y + 4, caret + 1, y + 12, t.accentText);
 			}
 		}
 		hits.add(x, y, sw, 16, new Runnable() {
@@ -191,8 +190,8 @@ public final class CircuitLibraryPage {
 		});
 		int bx = x + sw + 6;
 		boolean th = inside(mx, my, bx, y, tw, 16);
-		Redstone.stone(c, bx, y, tw, 16, th ? t.surfaceHover : t.surface, myVersion ? t.accent : t.border);
-		Redstone.pip(c, bx + 5, y + 4, 8, myVersion ? 1f : 0f);
+		Paint.panel(c, bx, y, tw, 16, th ? t.surfaceHover : t.surface, myVersion ? t.accent : t.border);
+		Paint.pip(c, bx + 5, y + 4, 8, myVersion ? 1f : 0f);
 		c.text(toggle, bx + 17, y + 4, myVersion ? t.text : t.textDim, false);
 		hits.add(bx, y, tw, 16, new Runnable() {
 			@Override
@@ -245,7 +244,7 @@ public final class CircuitLibraryPage {
 		for (final Circuit circuit : list) {
 			if (ry + rowH >= top && ry < top + areaH) {
 				boolean hover = inside(mx, my, x, ry, w - 6, rowH - 2) && my >= top && my < top + areaH;
-				Redstone.stone(c, x, ry, w - 6, rowH - 2, hover ? t.surfaceHover : t.surface,
+				Paint.panel(c, x, ry, w - 6, rowH - 2, hover ? t.surfaceHover : t.surface,
 						circuit == active ? t.accent : t.border);
 				Icons.draw(c, iconOf(circuit.category), x + 5, ry + 7, 1, circuit == active ? t.accent : t.textDim);
 				int nameW = w - 60;
@@ -305,7 +304,7 @@ public final class CircuitLibraryPage {
 		}
 		boolean selected = category == cat;
 		boolean hover = inside(mx, my, cx, cy, cw, 14);
-		Redstone.stone(c, cx, cy, cw, 14, selected ? ColorMath.lerp(t.surface, t.accent, 0.3f) : hover ? t.surfaceHover : t.surface,
+		Paint.panel(c, cx, cy, cw, 14, selected ? ColorMath.lerp(t.surface, t.accent, 0.3f) : hover ? t.surfaceHover : t.surface,
 				selected ? t.accent : t.border);
 		c.text(label, cx + 5, cy + 3, selected ? t.text : t.textDim, false);
 		hits.add(cx, cy, cw, 14, new Runnable() {
@@ -343,7 +342,7 @@ public final class CircuitLibraryPage {
 
 	private static void difficulty(Canvas c, int level, int x, int y) {
 		Theme t = Theme.get();
-		for (int i = 0; i < 3; i++) Redstone.pip(c, x + i * 9, y, 7, i < level ? 1f : 0f);
+		for (int i = 0; i < 3; i++) Paint.pip(c, x + i * 9, y, 7, i < level ? 1f : 0f);
 		if (level <= 0) c.fill(x, y, x, y, t.border);
 	}
 
@@ -371,7 +370,7 @@ public final class CircuitLibraryPage {
 		int pw = wide ? Math.max(120, (int) (w * 0.44f)) : w;
 		int ph = wide ? bodyH - 20 : Math.min(110, bodyH / 2);
 		// Vorschau
-		Redstone.well(c, x, by, pw, ph, t.border);
+		Paint.well(c, x, by, pw, ph, t.border);
 		final int prx = x, pry = by, prw = pw, prh = ph;
 		c.scissor(x + 1, by + 1, x + pw - 1, by + ph - 1);
 		preview.draw(c, circuit, mirror, x + 2, by + 2, pw - 4, ph - 4, dt);
@@ -543,7 +542,7 @@ public final class CircuitLibraryPage {
 				}
 			});
 		} else {
-			Redstone.stone(c, x, y, w, 17, t.surface, t.border);
+			Paint.panel(c, x, y, w, 17, t.surface, t.border);
 			Paint.textCentered(c, c.clip(label, w - 10), x + w / 2, y + 5, ColorMath.withAlpha(t.textDim, 140), false);
 		}
 		return y + 21;

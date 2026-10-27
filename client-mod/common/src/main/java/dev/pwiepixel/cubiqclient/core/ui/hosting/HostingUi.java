@@ -14,7 +14,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextInput;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -122,7 +121,7 @@ public final class HostingUi extends WindowUi {
 		int screenW = window[0] * 2 + window[2];
 		int screenH = window[1] * 2 + window[3];
 		if (hosting == null || !hosting.signedIn()) {
-			Redstone.well(c, x, y, w, h, t.border);
+			Paint.well(c, x, y, w, h, t.border);
 			List<String> lines = Paint.wrap(c, I18n.tr("hosting.error.offline"), w - 20);
 			int ty = y + h / 2 - lines.size() * 5;
 			for (String l : lines) {
@@ -154,8 +153,8 @@ public final class HostingUi extends WindowUi {
 		String status = busy ? I18n.tr(hosting.hostState() == Hosting.HostState.BACKUP ? "hosting.state.backup" : "hosting.state.opening")
 				: n != null ? n.text() : !hosting.canHost() ? I18n.tr("hosting.error.no_world") : null;
 		if (status != null) {
-			if (busy) Redstone.pip(c, x, by + 5, 8, (float) (0.5 + 0.5 * Math.sin(now / 160.0)));
-			Paint.textClipped(c, status, x + (busy ? 12 : 0), by + 5, w - 110, n != null && n.error && !busy ? t.dustOn : t.text,
+			if (busy) Paint.pip(c, x, by + 5, 8, (float) (0.5 + 0.5 * Math.sin(now / 160.0)));
+			Paint.textClipped(c, status, x + (busy ? 12 : 0), by + 5, w - 110, n != null && n.error && !busy ? t.danger : t.text,
 					false);
 		} else if (bottom < by) {
 			Paint.textClipped(c, I18n.tr("hosting.directNote"), x, by + 5, w - 110, t.textDim, false);
@@ -280,7 +279,7 @@ public final class HostingUi extends WindowUi {
 		final ShareModel m = share();
 		if (m == null) return y;
 		m.poll();
-		Redstone.dustH(c, x, x + w, y, t.dustOff, 0f);
+		Paint.lineH(c, x, x + w, y, t.track, 0f);
 		y += 4;
 		int bx = two ? x + colW + 12 : x + w / 2 + 6;
 		int bw = two ? colW : w - (bx - x);
@@ -309,7 +308,7 @@ public final class HostingUi extends WindowUi {
 					m.setDirect(!m.direct());
 				}
 			});
-			if (m.direct()) Paint.textClipped(c, I18n.tr("hosting.share.directShort"), bx, y + 3, bw, t.dustOn, false);
+			if (m.direct()) Paint.textClipped(c, I18n.tr("hosting.share.directShort"), bx, y + 3, bw, t.accentText, false);
 			y += 15;
 		} else {
 			y += 17;
@@ -359,15 +358,15 @@ public final class HostingUi extends WindowUi {
 	private void manage(Canvas c, final Hosting hosting, final Rooms.Room r, int x, int y, int w, int h, int mx, int my) {
 		Theme t = Theme.get();
 		long now = System.currentTimeMillis();
-		// Kopf: Name, Code, Kopieren, Relay-Lampe
+		// Kopf: Name, Code, Kopieren, Relay-Punkt
 		final String code = r.prettyCode();
 		String codeText = I18n.tr("hosting.code", code == null ? "?" : code);
 		int cw = c.textWidth(codeText);
-		Redstone.well(c, x, y, w, 20, t.accent);
+		Paint.well(c, x, y, w, 20, t.accent);
 		boolean relayOk = hosting.relayProblem() == null;
-		Redstone.pip(c, x + 5, y + 6, 8, relayOk ? 1f : 0.2f);
+		Paint.pip(c, x + 5, y + 6, 8, relayOk ? 1f : 0.2f);
 		Paint.textClipped(c, r.name, x + 17, y + 6, w - cw - 100, t.text, false);
-		c.text(codeText, x + w - 70 - cw, y + 6, ColorMath.lerp(t.text, t.lampOn, 0.6f), false);
+		c.text(codeText, x + w - 70 - cw, y + 6, ColorMath.lerp(t.text, t.faceOn, 0.6f), false);
 		kit.button(c, x + w - 64, y + 2, 62, 16, I18n.tr("hosting.copy"), false, code != null, mx, my, new Runnable() {
 			@Override
 			public void run() {
@@ -412,7 +411,7 @@ public final class HostingUi extends WindowUi {
 		int by = y + h - bottomH;
 		Hosting.Notice n = hosting.notice(now);
 		String line = n != null ? n.text() : !relayOk ? I18n.tr(hosting.relayProblem()) : null;
-		if (line != null) Paint.textClipped(c, line, x, by + 2, w, n != null && n.error || n == null ? t.dustOn : t.text, false);
+		if (line != null) Paint.textClipped(c, line, x, by + 2, w, n != null && n.error ? t.danger : n == null ? t.caution : t.text, false);
 		publicLinkRow(c, hosting, x, by + 20, w - 110, mx, my);
 		kit.button(c, x + w - 104, by + 20, 104, 18, I18n.tr("hosting.stop"), false, true, mx, my, new Runnable() {
 			@Override
@@ -461,7 +460,7 @@ public final class HostingUi extends WindowUi {
 			return;
 		}
 		String err = link.error();
-		if (err != null) Paint.textClipped(c, I18n.tr(err), x + 104, y + 5, w - 104, t.dustOn, false);
+		if (err != null) Paint.textClipped(c, I18n.tr(err), x + 104, y + 5, w - 104, t.danger, false);
 		kit.button(c, x, y, Math.min(100, w), 18, I18n.tr("hosting.link.enable"), false, true, mx, my, new Runnable() {
 			@Override
 			public void run() {
@@ -470,8 +469,7 @@ public final class HostingUi extends WindowUi {
 		});
 	}
 
-	/** Rotes Abzeichen „Öffentlicher Link aktiv“. */
-	/** Dezenter Hinweis im Cubiq-Stil (Pausemenü): dunkle Fläche, feiner Rand, Link-Symbol in Lampenfarbe, heller Text. */
+	/** Dezenter Hinweis „Öffentlicher Link aktiv“ (Pausemenü): dunkle Fläche, feiner Rand, Link-Symbol, heller Text. */
 	public static void linkHint(Canvas c, int x, int y, int w, int h, String label) {
 		Theme t = Theme.get();
 		c.fill(x, y, x + w, y + h, ColorMath.withAlpha(t.deep, 210));
@@ -479,14 +477,14 @@ public final class HostingUi extends WindowUi {
 		c.fill(x, y + h - 1, x + w, y + h, t.border);
 		c.fill(x, y, x + 1, y + h, t.border);
 		c.fill(x + w - 1, y, x + w, y + h, t.border);
-		Icons.draw(c, "link", x + 4, y + (h - 8) / 2, 1, t.lampOn);
+		Icons.draw(c, "link", x + 4, y + (h - 8) / 2, 1, t.faceOn);
 		Paint.textClipped(c, label, x + 16, y + (h - 8) / 2, w - 18, t.text, false);
 	}
 
 	public static void badge(Canvas c, int x, int y, int w, int h, String label) {
 		int red = 0xFFD02020;
-		Redstone.glow(c, x, y, w, h, red, 0.35f);
-		Redstone.block(c, x, y, w, h, 0xFF7A0E0E);
+		Paint.glow(c, x, y, w, h, red, 0.35f);
+		Paint.block(c, x, y, w, h, 0xFF7A0E0E);
 		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, red);
 		float pulse = (float) (0.6 + 0.4 * Math.sin(System.currentTimeMillis() / 250.0));
 		c.fill(x + 4, y + h / 2 - 2, x + 8, y + h / 2 + 2, ColorMath.withAlpha(0xFFFFFFFF, Math.round(255 * pulse)));
@@ -496,7 +494,7 @@ public final class HostingUi extends WindowUi {
 	private void playersTab(Canvas c, final Hosting hosting, List<Hosting.Guest> guests, int x, int y, int w, int h,
 			int mx, int my) {
 		Theme t = Theme.get();
-		Redstone.well(c, x, y, w, h, t.border);
+		Paint.well(c, x, y, w, h, t.border);
 		listArea = new int[] { x, y, w, h };
 		int rowH = 24;
 		int content = guests.size() * rowH;
@@ -514,7 +512,7 @@ public final class HostingUi extends WindowUi {
 				String path = g.host ? I18n.tr("hosting.path.host") : pathLabel(g.path);
 				// Verbindungsweg mit Ping (vom Spiel-Server gemessen), z. B. „Direkt · 23 ms“.
 				if (!g.host && g.latency > 0) path = I18n.tr("hosting.path.ping", path, g.latency);
-				int pathColor = g.path == PeerStream.Path.PUBLIC ? 0xFFE04040 : g.path == PeerStream.Path.DIRECT ? t.lampOn
+				int pathColor = g.path == PeerStream.Path.PUBLIC ? 0xFFE04040 : g.path == PeerStream.Path.DIRECT ? t.faceOn
 						: t.textDim;
 				Paint.textClipped(c, path, tx, ry + 13, narrow ? 80 : 110, g.host ? t.textDim : pathColor, false);
 				if (!g.host) {
@@ -598,7 +596,7 @@ public final class HostingUi extends WindowUi {
 
 	private void requestsTab(Canvas c, final Hosting hosting, Rooms.Room r, int x, int y, int w, int h, int mx, int my) {
 		Theme t = Theme.get();
-		Redstone.well(c, x, y, w, h, t.border);
+		Paint.well(c, x, y, w, h, t.border);
 		listArea = new int[] { x, y, w, h };
 		List<Rooms.Member> req = r.members("requested");
 		List<Rooms.Member> inv = r.members("invited");
@@ -665,7 +663,7 @@ public final class HostingUi extends WindowUi {
 	private void inviteTab(Canvas c, final Hosting hosting, Rooms.Room r, int x, int y, int w, int h, int mx, int my) {
 		Theme t = Theme.get();
 		hosting.refreshFriendsRooms(false);
-		Redstone.well(c, x, y, w, h, t.border);
+		Paint.well(c, x, y, w, h, t.border);
 		listArea = new int[] { x, y, w, h };
 		List<Hosting.Friend> friends = hosting.friendsForInvite();
 		if (friends.isEmpty()) {
@@ -682,7 +680,7 @@ public final class HostingUi extends WindowUi {
 			if (ry + rowH > y && ry < y + h) {
 				int[] face = faces.face(f.uuid, null);
 				Faces.draw(c, face, f.uuid, f.name, x + 5, ry + 3, 2, true);
-				Redstone.pip(c, x + 17, ry + 13, 5, f.inGame ? 1f : f.online ? 0.55f : 0f);
+				Paint.pip(c, x + 17, ry + 13, 5, f.inGame ? 1f : f.online ? 0.55f : 0f);
 				Paint.textClipped(c, f.name, x + 26, ry + 2, w - 140, t.text, false);
 				Paint.textClipped(c, I18n.tr(f.inGame ? "hosting.invite.inGame" : f.online ? "hosting.invite.online"
 						: "hosting.invite.offline"), x + 26, ry + 11, w - 140, t.textDim, false);

@@ -48,7 +48,7 @@ public final class LatencyPanels {
 			int textW = Math.min(w, 420);
 			int start = y;
 			if (perf != null) y = new PerfPanel.Notice(perf, module).draw(c, hits, x, y, w, mx, my, click);
-			int good = ColorMath.lerp(t.text, t.dustOn, 0.5f);
+			int good = ColorMath.lerp(t.text, t.accentText, 0.5f);
 			NetStats s = NetBoost.STATS;
 			if (NetBoost.channel() == null) {
 				y = Paint.paragraph(c, I18n.tr("net.panel.offline"), x, y, textW, LINE, t.textDim);
@@ -123,7 +123,7 @@ public final class LatencyPanels {
 			if (ll != null) {
 				String raw = ll.rawMouse < 0 ? I18n.tr("latency.panel.raw.none") : ll.rawMouse == 1 ? I18n.tr("latency.panel.raw.on")
 						: I18n.tr("latency.panel.raw.off");
-				y = Paint.paragraph(c, raw, x, y, textW, LINE, ll.rawMouse == 0 ? t.dustOn : t.textDim);
+				y = Paint.paragraph(c, raw, x, y, textW, LINE, ll.rawMouse == 0 ? t.accentText : t.textDim);
 				if (!ll.latePollSupported) {
 					y = Paint.paragraph(c, I18n.tr("latency.panel.latePoll.none"), x, y, textW, LINE, t.textDim);
 				}

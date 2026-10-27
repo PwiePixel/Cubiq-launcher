@@ -5,7 +5,6 @@ import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
 import dev.pwiepixel.cubiqclient.core.ui.social.Dialog;
@@ -44,7 +43,7 @@ public final class PublicLinkDialog extends Dialog {
 		Theme t = Theme.get();
 		// Warnung mit Symbol, gut sichtbar.
 		int boxH = 46;
-		Redstone.stone(c, x, y, w, boxH, 0xFF8E1616, 0xFFE04040);
+		Paint.panel(c, x, y, w, boxH, 0xFF8E1616, 0xFFE04040);
 		Icons.draw(c, "lock", x + 6, y + 6, 2, 0xFFFFFFFF);
 		Paint.paragraph(c, I18n.tr("hosting.link.warning"), x + 26, y + 6, w - 32, 10, 0xFFFFFFFF);
 		int ty = y + boxH + 5;

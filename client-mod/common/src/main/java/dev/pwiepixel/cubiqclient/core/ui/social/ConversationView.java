@@ -23,7 +23,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
@@ -115,7 +114,7 @@ final class ConversationView {
 		Social s = ctx.social();
 		Chat.Conversation conv = conversation();
 		if (s == null || conv == null) {
-			Redstone.well(c, x, y, w, h, t.border);
+			Paint.well(c, x, y, w, h, t.border);
 			List<String> lines = Paint.wrap(c, I18n.tr(conversationId == null ? "social.pickConversation" : "social.loading"),
 					w - 20);
 			int ty = y + h / 2 - lines.size() * 5;
@@ -143,8 +142,8 @@ final class ConversationView {
 						Times.dateTime(mod.until));
 				if (mod.reason != null) text += " – " + mod.reason;
 			}
-			c.fill(x, cy, x + w, cy + 12, ColorMath.withAlpha(t.dustOn, 60));
-			Icons.draw(c, "lock", x + 3, cy + 2, 1, t.dustOn);
+			c.fill(x, cy, x + w, cy + 12, ColorMath.withAlpha(t.accentText, 60));
+			Icons.draw(c, "lock", x + 3, cy + 2, 1, t.accentText);
 			Paint.textClipped(c, text, x + 14, cy + 2, w - 16, t.text, false);
 			cy += 13;
 		}
@@ -327,13 +326,13 @@ final class ConversationView {
 			fill = t.surfaceHigh;
 			edge = t.border;
 		}
-		Redstone.stone(c, bx, by, it.bubbleW, it.bubbleH, fill, m.failed != null ? t.dustOn : edge);
+		Paint.panel(c, bx, by, it.bubbleW, it.bubbleH, fill, m.failed != null ? t.danger : edge);
 		boolean hover = visibleMouse && Kit.inside(mx, my, bx, by, it.bubbleW, it.bubbleH);
 		int inner = bx + ChatLayout.PAD;
 		// Antwort-Vorschau
 		if (it.replyY >= 0 && m.reply != null) {
 			int ry = baseY + it.replyY;
-			c.fill(inner, ry, inner + 2, ry + 9, t.dustOn);
+			c.fill(inner, ry, inner + 2, ry + 9, t.accentText);
 			Paint.textClipped(c, ChatLayout.replyText(m.reply), inner + 5, ry + 1, it.bubbleW - ChatLayout.PAD * 2 - 5,
 					ColorMath.lerp(t.textDim, t.text, 0.3f), false);
 		}
@@ -396,7 +395,7 @@ final class ConversationView {
 				int cx = it.own ? rx - (col + 1) * (ChatLayout.CHIP_W + 2) + 2 : rx + col * (ChatLayout.CHIP_W + 2);
 				int cyy = ry + row * (ChatLayout.CHIP_H + 2);
 				boolean mine = r.by(s.self());
-				Redstone.block(c, cx, cyy, ChatLayout.CHIP_W, ChatLayout.CHIP_H, mine ? ColorMath.withAlpha(t.accent, 120) : t.surface);
+				Paint.block(c, cx, cyy, ChatLayout.CHIP_W, ChatLayout.CHIP_H, mine ? ColorMath.withAlpha(t.accent, 120) : t.surface);
 				Icons.draw(c, Reactions.icon(r.emoji), cx + 2, cyy + 2, 1, Reactions.color(r.emoji));
 				c.text(String.valueOf(Math.min(99, r.count)), cx + 12, cyy + 2, t.text, false);
 				if (conv.canWrite) kit.area(cx, cyy, ChatLayout.CHIP_W, ChatLayout.CHIP_H, () -> s.react(m, r.emoji));
@@ -406,7 +405,7 @@ final class ConversationView {
 		// Fußzeile
 		if (it.footerY >= 0 && it.footer != null) {
 			int fy = baseY + it.footerY;
-			int color = it.footerError ? t.dustOn : t.textDim;
+			int color = it.footerError ? t.danger : t.textDim;
 			String footer = it.footer;
 			Social.Upload up = m.pending ? s.upload(m.nonce) : null;
 			if (up != null) footer = I18n.tr("social.msg.uploading", up.done, up.total);
@@ -480,7 +479,7 @@ final class ConversationView {
 		}
 		Theme t = Theme.get();
 		Kit kit = ctx.kit();
-		Redstone.stone(c, x, y, w, ChatLayout.INVITE_H, t.deep, ColorMath.lerp(t.border, t.lampOn, 0.4f));
+		Paint.panel(c, x, y, w, ChatLayout.INVITE_H, t.deep, ColorMath.lerp(t.border, t.faceOn, 0.4f));
 		long now = System.currentTimeMillis();
 		Chat.ServerStatus st = s.serverStatus(inv.address, now);
 		TextureRef icon = s.serverIcon(st);
@@ -493,8 +492,8 @@ final class ConversationView {
 			c.image(icon, 0, 0, icon.width, icon.height, 0xFFFFFFFF);
 			c.pop();
 		} else {
-			Redstone.block(c, ix, iy, 28, 28, t.bevelDark);
-			Icons.draw(c, "globe", ix + 6, iy + 6, 2, st != null && st.online ? t.lampOn : t.textDim);
+			Paint.block(c, ix, iy, 28, 28, t.bevelDark);
+			Icons.draw(c, "globe", ix + 6, iy + 6, 2, st != null && st.online ? t.faceOn : t.textDim);
 		}
 		int bw = Math.min(58, Math.max(40, c.textWidth(I18n.tr("social.invite.join")) + 12));
 		int bx = x + w - bw - 4;
@@ -506,7 +505,7 @@ final class ConversationView {
 		else if (st.online) line2 = I18n.tr("social.invite.players", st.players, st.max);
 		else if ("private_address".equals(st.reason)) line2 = inv.name != null ? inv.address : I18n.tr("social.invite.private");
 		else line2 = I18n.tr("social.invite.offline");
-		Paint.textClipped(c, line2, tx, y + 15, bx - tx - 3, st != null && st.online ? t.lampOn : t.textDim, false);
+		Paint.textClipped(c, line2, tx, y + 15, bx - tx - 3, st != null && st.online ? t.faceOn : t.textDim, false);
 		if (inv.name != null && st != null && st.online) Paint.textClipped(c, inv.address, tx, y + 25, bx - tx - 3, t.textDim, false);
 		kit.button(c, bx, y + (ChatLayout.INVITE_H - 16) / 2, bw, 16, I18n.tr("social.invite.join"), true, true, mx, my,
 				() -> join(inv));
@@ -517,10 +516,10 @@ final class ConversationView {
 		Theme t = Theme.get();
 		Kit kit = ctx.kit();
 		Chat.World wd = inv.world;
-		Redstone.stone(c, x, y, w, ChatLayout.INVITE_H, t.deep, ColorMath.lerp(t.border, t.accent, 0.5f));
+		Paint.panel(c, x, y, w, ChatLayout.INVITE_H, t.deep, ColorMath.lerp(t.border, t.accent, 0.5f));
 		int ix = x + 4;
 		int iy = y + 4;
-		Redstone.block(c, ix, iy, 28, 28, t.bevelDark);
+		Paint.block(c, ix, iy, 28, 28, t.bevelDark);
 		Icons.draw(c, "globe", ix + 6, iy + 6, 2, t.accent);
 		int bw = Math.min(58, Math.max(40, c.textWidth(I18n.tr("social.invite.join")) + 12));
 		int bx = x + w - bw - 4;
@@ -668,7 +667,7 @@ final class ConversationView {
 		if (!conv.canWrite || muted) {
 			String text = muted ? I18n.tr("social.moderation.cantWrite") : "chat_muted".equals(conv.readOnlyReason)
 					? I18n.tr("social.moderation.cantWrite") : I18n.tr("social.readOnly.notFriends");
-			Redstone.well(c, x, y + 1, w, h - 1, t.border);
+			Paint.well(c, x, y + 1, w, h - 1, t.border);
 			Paint.textCentered(c, c.clip(text, w - 8), x + w / 2, y + 5, t.textDim, false);
 			return;
 		}
@@ -710,8 +709,8 @@ final class ConversationView {
 				if (iw > 40) {
 					boolean pin = invite.waypoint != null;
 					int accent = pin ? 0xFF000000 | (invite.waypoint.color >= 0 ? invite.waypoint.color : WaypointCard.DEFAULT_COLOR)
-							: t.lampOn;
-					Redstone.stone(c, sx, cy, iw, 20, t.deep, ColorMath.lerp(t.border, accent, 0.4f));
+							: t.faceOn;
+					Paint.panel(c, sx, cy, iw, 20, t.deep, ColorMath.lerp(t.border, accent, 0.4f));
 					Icons.draw(c, pin ? "pin" : "globe", sx + 3, cy + 6, 1, accent);
 					Paint.textClipped(c, pin ? WaypointCard.line(invite.waypoint) : invite.address, sx + 14, cy + 6, iw - 28, t.text,
 							false);
@@ -755,7 +754,7 @@ final class ConversationView {
 		}
 		int fx = bx + 1;
 		int fw = x + w - fx - 20;
-		Redstone.well(c, fx, cy, fw, fieldH, composer.focused() ? t.accent : t.border);
+		Paint.well(c, fx, cy, fw, fieldH, composer.focused() ? t.accent : t.border);
 		List<int[]> lines = wrapComposer(c, w);
 		String text = composer.text();
 		int visibleLines = Math.min(MAX_COMPOSER_LINES, lines.size());
@@ -793,7 +792,7 @@ final class ConversationView {
 		int count = SafeText.length(text);
 		if (count > SafeText.MAX_MESSAGE - 200) {
 			Paint.textRight(c, count + "/" + SafeText.MAX_MESSAGE, fx + fw - 3, cy - 9,
-					count > SafeText.MAX_MESSAGE ? t.dustOn : t.textDim, false);
+					count > SafeText.MAX_MESSAGE ? t.accentText : t.textDim, false);
 		}
 		boolean can = !composer.isEmpty() || !images.isEmpty() || invite != null;
 		if (can) kit.icon(c, x + w - 18, cy + 1, 16, "send", true, mx, my, this::send);
@@ -936,7 +935,7 @@ final class ConversationView {
 		});
 		int gy = y + 20;
 		int gh = h - 20;
-		Redstone.well(c, x, gy, w, gh, t.border);
+		Paint.well(c, x, gy, w, gh, t.border);
 		List<ClipLibrary.Entry> shots = screenshots();
 		if (shots.isEmpty()) {
 			String msg = library != null && library.scanning() ? I18n.tr("social.loading") : I18n.tr("social.picker.empty");
@@ -1124,7 +1123,7 @@ final class ConversationView {
 		if (py < y) py = y;
 		c.push();
 		c.raise(60f);
-		Redstone.stone(c, x, py, w, ph, t.surface, t.border);
+		Paint.panel(c, x, py, w, ph, t.surface, t.border);
 		String title = I18n.tr("social.stickers.title");
 		c.text(title, x + 5, py + 4, t.text, false);
 		kit.icon(c, x + w - 14, py + 2, 12, "close", false, mx, my, () -> stickersOpen = false);

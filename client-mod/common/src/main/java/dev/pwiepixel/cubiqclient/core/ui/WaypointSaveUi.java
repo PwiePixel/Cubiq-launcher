@@ -59,7 +59,7 @@ public final class WaypointSaveUi extends UiScreen {
 		c.push();
 		c.raise(300f);
 		Paint.shadow(c, px, py, w, h, 2, 0.6f);
-		Redstone.window(c, px, py, w, h);
+		Paint.window(c, px, py, w, h);
 		Icons.draw(c, "pin", px + 7, py + 7, 1, 0xFF000000 | color);
 		Paint.textClipped(c, I18n.tr("waypoint.save.title"), px + 19, py + 7, w - 40, t.text, false);
 		iconButton(c, px + w - 18, py + 4, "close", mx, my, this::requestClose);
@@ -90,7 +90,7 @@ public final class WaypointSaveUi extends UiScreen {
 	}
 
 	private void input(Canvas c, int ix, int iy, int w, int h, Theme t) {
-		Redstone.well(c, ix, iy, w, h, name.focused() ? t.accent : t.border);
+		Paint.well(c, ix, iy, w, h, name.focused() ? t.accent : t.border);
 		String text = name.text();
 		String visible = text;
 		while (c.textWidth(visible) > w - 10 && visible.length() > 1) visible = visible.substring(1);
@@ -104,7 +104,7 @@ public final class WaypointSaveUi extends UiScreen {
 	}
 
 	private void button(Canvas c, int bx, int by, int w, int h, String label, boolean primary, int mx, int my, final Runnable r) {
-		Redstone.button(c, bx, by, w, h, label, primary, mx >= bx && my >= by && mx < bx + w && my < by + h);
+		Paint.button(c, bx, by, w, h, label, primary, mx >= bx && my >= by && mx < bx + w && my < by + h);
 		hits.add(bx, by, w, h, () -> {
 			host.playClick();
 			r.run();

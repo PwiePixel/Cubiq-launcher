@@ -5,7 +5,6 @@ import dev.pwiepixel.cubiqclient.core.hosting.share.SharedContent;
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.social.Dialog;
 import dev.pwiepixel.cubiqclient.core.ui.social.Kit;
@@ -50,7 +49,7 @@ public final class ShareModsDialog extends Dialog {
 		});
 		int ty = y + 15;
 		Paint.textClipped(c, I18n.tr(model.direct() ? "hosting.share.directOn" : "hosting.share.directOff"), x + 16, ty, w - 16,
-				model.direct() ? t.dustOn : t.textDim, false);
+				model.direct() ? t.accentText : t.textDim, false);
 		ty += 12;
 		String status;
 		if (model.state() == ShareModel.State.SCANNING || model.state() == ShareModel.State.IDLE) {
@@ -64,7 +63,7 @@ public final class ShareModsDialog extends Dialog {
 		ty += 12;
 		int listH = y + h - 24 - ty;
 		list = new int[] { x, ty, w, listH };
-		Redstone.well(c, x, ty, w, listH, t.border);
+		Paint.well(c, x, ty, w, listH, t.border);
 		List<ShareModel.Row> rows = model.rows();
 		int content = rows.size() * ROW_H;
 		scroll = Math.max(0, Math.min(scroll, Math.max(0, content - listH + 4)));
@@ -110,8 +109,7 @@ public final class ShareModsDialog extends Dialog {
 		Paint.textClipped(c, kind, x + 16, y + 14, nameW, t.textDim, false);
 		SharedContent.Source src = r.source(model.direct());
 		int sx = x + nameW + 18;
-		Paint.textClipped(c, sourceLabel(src), sx, y + 7, srcW, src == SharedContent.Source.HOST ? t.dustOn
-				: src == SharedContent.Source.MANUAL ? t.textDim : t.lampOn, false);
+		Paint.textClipped(c, sourceLabel(src), sx, y + 7, srcW, sourceColor(src), false);
 		if (!r.on) return;
 		int rx = x + w - reqW;
 		boolean canChange = !r.locked();
@@ -126,6 +124,13 @@ public final class ShareModsDialog extends Dialog {
 
 	static String sourceLabel(SharedContent.Source s) {
 		return I18n.tr("hosting.mods.source." + s.id);
+	}
+
+	/** Farbe der Quelle: Store = Akzent (geprüft), vom Host = Warnung (ungeprüft), selbst besorgen = gedämpft. */
+	static int sourceColor(SharedContent.Source s) {
+		Theme t = Theme.get();
+		if (s == SharedContent.Source.HOST) return t.caution;
+		return s == SharedContent.Source.MANUAL ? t.textDim : t.accentText;
 	}
 
 	/** Größe kurz: „850 KB“ bzw. „12,3 MB“ (Dezimaltrenner der Sprache). */

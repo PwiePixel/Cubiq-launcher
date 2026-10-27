@@ -10,7 +10,6 @@ import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 import java.nio.file.Path;
@@ -122,7 +121,7 @@ public final class ShareTargetDialog extends Dialog {
 			cy += 12;
 		}
 		int listH = listBottom - cy;
-		Redstone.well(c, x, cy, w, listH, t.border);
+		Paint.well(c, x, cy, w, listH, t.border);
 		c.scissor(x + 2, cy + 2, x + w - 2, cy + listH - 2);
 		kit.hits.clip(x + 2, cy + 2, w - 4, listH - 4);
 		int ry = cy + 3 - scroll;
@@ -140,7 +139,7 @@ public final class ShareTargetDialog extends Dialog {
 			if (hover || checked) c.fill(x + 2, ry - 1, x + w - 6, ry + 15, ColorMath.withAlpha(t.accent, checked ? 0x60 : 0x40));
 			int lx = x + 5;
 			if (image != null) {
-				Redstone.well(c, lx, ry + 2, 10, 10, checked ? t.accent : t.border);
+				Paint.well(c, lx, ry + 2, 10, 10, checked ? t.accent : t.border);
 				if (checked) Icons.draw(c, "check", lx + 1, ry + 3, 1, t.text);
 				lx += 14;
 			}

@@ -10,11 +10,12 @@ import dev.pwiepixel.cubiqclient.core.skin.SkinModelSpec;
 import dev.pwiepixel.cubiqclient.core.ui.Anim;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.CubiqMark;
 import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
+import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.UiKey;
 import dev.pwiepixel.cubiqclient.core.ui.UiScreen;
@@ -32,15 +33,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Cubiq-Startbildschirm, versionsunabhängig: animierte Redstone-Schaltung als Hintergrund, der
- * Pixel-Schriftzug mit pulsierendem Leuchten und Knöpfe als Redstone-Lampen. Eine Lampe geht an,
- * sobald die Maus darauf liegt oder sie per Tastatur (Tab/Pfeile, Enter) ausgewählt ist – das Signal
- * läuft dabei sichtbar von einer Fackel über die Leitung in die Lampe.
+ * Cubiq-Startbildschirm, versionsunabhängig, im Stil des Launchers: ruhige Würfel-Szene als Hintergrund
+ * ({@link CubeScene}), oben das Cubiq-Zeichen mit dem Schriftzug, darunter flache Knöpfe – „Einzelspieler“ in der
+ * Akzentfarbe, die übrigen als ruhige Flächen, die beim Überfahren aufhellen. Per Tastatur (Tab/Pfeile, Enter) wählbar,
+ * die Auswahl zeigt einen Fokusrahmen.
  *
- * <p>Links steht die eigene Spielerfigur auf einer sich langsam drehenden Redstone-Drehscheibe (ziehen dreht sie),
- * darunter Name und „Konto“; rechts eine Leiste aus Lampen mit Symbolen (Garderobe, Konten, Freunde, Clips/Bilder,
- * Cubiq-Einstellungen). Bereiche, die es noch nicht gibt, melden „Kommt bald“. In schmalen Fenstern wird die Leiste
- * zu Symbolen (bzw. einer Zeile oben rechts) und die Figur entfällt.
+ * <p>Links steht die eigene Spielerfigur auf einem sich langsam drehenden Würfel-Sockel (ziehen dreht ihn), darunter
+ * Name und „Garderobe“; rechts eine Leiste mit Symbolen (Konten, Freunde, Clips/Bilder, Cubiq-Einstellungen). Bereiche,
+ * die es noch nicht gibt, melden „Kommt bald“. In schmalen Fenstern wird die Leiste zu Symbolen (bzw. einer Zeile oben
+ * rechts) und die Figur entfällt. Winternacht, Fuchsbau und Halloween behalten ihre Szenen und Laternen.
  */
 public final class TitleUi extends UiScreen {
 	/** Gemeinsamer Zeitbezug – die Animation läuft beim Zurückkehren weiter statt neu zu starten. */
@@ -49,22 +50,20 @@ public final class TitleUi extends UiScreen {
 	private static final int BTN_H = 20;
 	private static final int GAP = 5;
 	private static final int HALF = (BTN_W - 6) / 2;
-	/** Zeit, bis das Signal die Lampe erreicht (Sekunden). */
-	private static final float SIGNAL_IN = 0.11f;
-	private static final float SIGNAL_OUT = 0.08f;
+	/** Ein- und Ausblenden der Hervorhebung beim Überfahren (Sekunden). */
+	private static final float HOVER_IN = 0.09f;
+	private static final float HOVER_OUT = 0.14f;
 	/** Verzögerung zwischen Drücken und Aktion – so ist das Aufblitzen sichtbar. */
 	private static final float PRESS_DELAY = 0.07f;
 	/** Link unten rechts (Übersetzung beim Erstellen – der Startbildschirm wird je Öffnen neu gebaut). */
 	private final String classic;
 
-	/** Ein Lampen-Knopf. */
-	private static final class Lamp {
+	/** Ein Knopf (Mitte oder Seitenleiste). */
+	private static final class Button {
 		/** Feste ID für Selbsttest/Verknüpfungen ("singleplayer", "cubiqMenu" …). */
 		final String id;
 		final String label;
 		final Runnable action;
-		/** Wird von rechts gespeist (rechte Hälfte einer Zeile). */
-		final boolean right;
 		/** Symbol (Seitenleiste) oder null. */
 		String icon;
 		/** „NEU“-Eintrag des Bereichs ({@link NewSince}) oder null. */
@@ -73,14 +72,13 @@ public final class TitleUi extends UiScreen {
 		int y;
 		int w;
 		int h = BTN_H;
-		/** Signal auf dem Weg zur Lampe (0..1). */
-		float power;
+		/** Hervorhebung (0..1) – folgt Maus und Tastatur-Auswahl. */
+		float hover;
 		float flash;
 
-		Lamp(String id, boolean right, Runnable action) {
+		Button(String id, Runnable action) {
 			this.id = id;
 			this.label = I18n.tr("title." + id);
-			this.right = right;
 			this.action = action;
 		}
 	}
@@ -106,14 +104,14 @@ public final class TitleUi extends UiScreen {
 	static final int SIDE_FULL = 0;
 	static final int SIDE_ICONS = 1;
 	static final int SIDE_ROW = 2;
-	/** Kamera-Neigung der Figur und passende Stauchung der Drehscheibe. */
+	/** Kamera-Neigung der Figur und passende Stauchung des Sockels. */
 	private static final float FIGURE_PITCH = 14f;
 	private static final float TABLE_SQUASH = 0.26f;
 
 	private final List<Label> labels = new ArrayList<Label>();
 	private final TitleHost host;
-	/** Seitenleiste rechts (Lampen mit Symbol). */
-	private final List<Lamp> side = new ArrayList<Lamp>();
+	/** Seitenleiste rechts (Knöpfe mit Symbol). */
+	private final List<Button> side = new ArrayList<Button>();
 	private final Turntable turntable = new Turntable();
 	private final SkinModel model = new SkinModel();
 	private final SkinModelSpec spec = new SkinModelSpec();
@@ -124,7 +122,7 @@ public final class TitleUi extends UiScreen {
 	private int accX;
 	private int accY;
 	private int accW;
-	private float accPower;
+	private float accHover;
 	private float accFlash;
 	/** Figur sichtbar? (Fläche für das Ziehen) */
 	private boolean figureShown;
@@ -136,8 +134,8 @@ public final class TitleUi extends UiScreen {
 	private float toastTotal = 2.4f;
 	private float modelMicros;
 	private int modelFrames;
-	private final CircuitScene scene = new CircuitScene();
-	private final List<Lamp> lamps = new ArrayList<Lamp>();
+	private final CubeScene scene = new CubeScene();
+	private final List<Button> buttons = new ArrayList<Button>();
 	private final int[][] reserved = new int[4][4];
 	/**
 	 * Tastatur-Auswahl: 0.. Mitte, dann Seitenleiste, dann Garderobe-Knopf, zuletzt der Link ({@link #linkIndex()}),
@@ -160,64 +158,64 @@ public final class TitleUi extends UiScreen {
 		this.rotateHint = I18n.tr("title.rotateHint");
 		scene.setSimple(host.simpleAnimation());
 		final TitleHost h = host;
-		sideLamp("accounts", "profile", NewSince.MENU_ACCOUNTS, new Area() {
+		sideButton("accounts", "profile", NewSince.MENU_ACCOUNTS, new Area() {
 			@Override
 			public boolean open() {
 				return h.openAccounts();
 			}
 		});
-		sideLamp("friends", "friends", NewSince.MENU_SOCIAL, new Area() {
+		sideButton("friends", "friends", NewSince.MENU_SOCIAL, new Area() {
 			@Override
 			public boolean open() {
 				return h.openFriends();
 			}
 		});
-		sideLamp("clips", "image", NewSince.MENU_CLIPS, new Area() {
+		sideButton("clips", "image", NewSince.MENU_CLIPS, new Area() {
 			@Override
 			public boolean open() {
 				return h.openClips();
 			}
 		});
-		sideLamp("cubiqSettings", "gear", null, new Area() {
+		sideButton("cubiqSettings", "gear", null, new Area() {
 			@Override
 			public boolean open() {
 				h.cubiqMenu();
 				return true;
 			}
 		});
-		lamps.add(new Lamp("singleplayer", false, new Runnable() {
+		buttons.add(new Button("singleplayer", new Runnable() {
 			@Override
 			public void run() {
 				h.singleplayer();
 			}
 		}));
-		lamps.add(new Lamp("multiplayer", false, new Runnable() {
+		buttons.add(new Button("multiplayer", new Runnable() {
 			@Override
 			public void run() {
 				h.multiplayer();
 			}
 		}));
-		lamps.add(new Lamp("options", false, new Runnable() {
+		buttons.add(new Button("options", new Runnable() {
 			@Override
 			public void run() {
 				h.options();
 			}
 		}));
-		lamps.add(new Lamp("cubiqMenu", true, new Runnable() {
+		buttons.add(new Button("cubiqMenu", new Runnable() {
 			@Override
 			public void run() {
 				h.cubiqMenu();
 			}
 		}));
 		if (host.hasMods()) {
-			lamps.add(new Lamp("mods", false, new Runnable() {
+			buttons.add(new Button("mods", new Runnable() {
 				@Override
 				public void run() {
 					h.mods();
 				}
 			}));
 		}
-		lamps.add(new Lamp("quit", host.hasMods(), new Runnable() {
+		buttons.add(new Button("quit", new Runnable() {
 			@Override
 			public void run() {
 				h.quit();
@@ -230,19 +228,19 @@ public final class TitleUi extends UiScreen {
 		boolean open();
 	}
 
-	private void sideLamp(String id, String icon, final String newId, final Area area) {
+	private void sideButton(String id, String icon, final String newId, final Area area) {
 		final String[] label = new String[1];
-		Lamp l = new Lamp(id, false, new Runnable() {
+		Button b = new Button(id, new Runnable() {
 			@Override
 			public void run() {
 				if (area.open()) seen(newId);
 				else soon(label[0]);
 			}
 		});
-		label[0] = l.label;
-		l.icon = icon;
-		l.newId = newId;
-		side.add(l);
+		label[0] = b.label;
+		b.icon = icon;
+		b.newId = newId;
+		side.add(b);
 	}
 
 	/** Bereich neu seit dem letzten Update und noch nie geöffnet? */
@@ -313,20 +311,20 @@ public final class TitleUi extends UiScreen {
 
 	// --- Für den Selbsttest ---
 
-	/** Wählt eine Lampe wie per Tastatur aus (ohne Vorlesen); -1 = keine. */
+	/** Wählt einen Knopf wie per Tastatur aus (ohne Vorlesen); -1 = keiner. */
 	public void focus(int index) {
 		focus = index < -1 || index > linkIndex() ? -1 : index;
 	}
 
-	/** Lage einer Lampe {x, y, w, h} im letzten Bild oder null (Selbsttest: echte Klicks). */
+	/** Lage eines Knopfs {x, y, w, h} im letzten Bild oder null (Selbsttest: echte Klicks). */
 	public int[] buttonRect(String label) {
 		if (frames == 0) return null;
-		for (int i = 0; i < lamps.size(); i++) {
-			Lamp l = lamps.get(i);
-			if (l.id.equals(label) || l.label.equals(label)) return new int[]{l.x, l.y, l.w, BTN_H};
+		for (int i = 0; i < buttons.size(); i++) {
+			Button b = buttons.get(i);
+			if (b.id.equals(label) || b.label.equals(label)) return new int[]{b.x, b.y, b.w, BTN_H};
 		}
-		for (Lamp l : side) {
-			if (l.id.equals(label) || l.label.equals(label)) return new int[]{l.x, l.y, l.w, l.h};
+		for (Button b : side) {
+			if (b.id.equals(label) || b.label.equals(label)) return new int[]{b.x, b.y, b.w, b.h};
 		}
 		if (("wardrobe".equals(label) || accountLabel.equals(label)) && accW > 0) return new int[]{accX, accY, accW, 16};
 		return null;
@@ -347,7 +345,7 @@ public final class TitleUi extends UiScreen {
 		return figureShown;
 	}
 
-	/** Mittlere CPU-Zeit von Figur und Drehscheibe je Bild in Mikrosekunden. */
+	/** Mittlere CPU-Zeit von Figur und Sockel je Bild in Mikrosekunden. */
 	public float modelMicros() {
 		return modelMicros;
 	}
@@ -394,6 +392,7 @@ public final class TitleUi extends UiScreen {
 		introCheck();
 		offerCheck();
 		Theme t = Theme.get();
+		boolean seasonal = t.halloween || t.winter || t.fox;
 		boolean animated = host.animated();
 		float time = animated ? (System.nanoTime() - EPOCH) / 1_000_000_000f : 1.35f;
 		boolean compact = height < 300;
@@ -413,9 +412,10 @@ public final class TitleUi extends UiScreen {
 		int rowsY = top + logoH + gapA + subH + gapB;
 		layout(colX, rowsY);
 
-		reserved[0][0] = colX - 22;
+		int logoHalf = Math.max(BTN_W / 2 + 22, logoWidth(t, big) / 2 + 8);
+		reserved[0][0] = Math.min(colX - 22, width / 2 - logoHalf);
 		reserved[0][1] = top - 8;
-		reserved[0][2] = colX + BTN_W + 22;
+		reserved[0][2] = Math.max(colX + BTN_W + 22, width / 2 + logoHalf);
 		reserved[0][3] = rowsY + buttonsH + 6;
 		reserved[1][0] = 0;
 		reserved[1][1] = height - 14;
@@ -441,7 +441,7 @@ public final class TitleUi extends UiScreen {
 		} else if (sceneEnabled) {
 			scene.draw(bg, width, height, time, reserved);
 		} else {
-			bg.fill(0, 0, width, height, 0xFF18181C);
+			bg.fill(0, 0, width, height, t.deep);
 		}
 		int plate = plateColor(t);
 		readingPlate(bg, colX - 26, top - 6, BTN_W + 52, rowsY + buttonsH + 6 - (top - 6), plate);
@@ -457,16 +457,26 @@ public final class TitleUi extends UiScreen {
 		update(dt, mouseX, mouseY);
 		turntable.tick(dt, animated);
 		if (t.halloween) spider(c, width, top, time, animated);
-		else circuitry(c, t, colX, top, rowsY, time);
-		for (int i = 0; i < lamps.size(); i++) {
-			Lamp l = lamps.get(i);
-			float lit = lampLit(l);
-			int dy = l.flash > 0.45f ? 1 : 0;
-			Redstone.lamp(c, l.x, l.y + dy, l.w, BTN_H, lit, l.flash);
-			String s = c.textWidth(l.label) <= l.w - 10 ? l.label : c.clip(l.label, l.w - 10);
-			labels.add(new Label(s, l.x + (l.w - c.textWidth(s)) / 2, l.y + dy + (BTN_H - 8) / 2, Redstone.lampTextColor(lit), lit < 0.35f));
+		for (int i = 0; i < buttons.size(); i++) {
+			Button b = buttons.get(i);
+			int dy = b.flash > 0.45f ? 1 : 0;
+			String s = c.textWidth(b.label) <= b.w - 10 ? b.label : c.clip(b.label, b.w - 10);
+			int color;
+			if (seasonal) {
+				Paint.accentFace(c, b.x, b.y + dy, b.w, BTN_H, b.hover, b.flash);
+				color = Paint.accentFaceText(b.hover);
+			} else {
+				// „Einzelspieler“ ist der Hauptknopf (wie „Spielen“ im Launcher), die übrigen ruhige Flächen.
+				boolean primary = i == 0;
+				if (primary) Paint.primaryFace(c, b.x, b.y + dy, b.w, BTN_H, b.hover);
+				else Paint.secondaryFace(c, b.x, b.y + dy, b.w, BTN_H, b.hover);
+				press(c, b.x, b.y + dy, b.w, BTN_H, b.flash);
+				if (focus == i) Paint.focusRing(c, b.x, b.y + dy, b.w, BTN_H);
+				color = primary ? t.faceTextOn : Paint.secondaryText(b.hover);
+			}
+			labels.add(new Label(s, b.x + (b.w - c.textWidth(s)) / 2, b.y + dy + (BTN_H - 8) / 2, color, seasonal && b.hover < 0.35f));
 			final int index = i;
-			hits.add(l.x, l.y, l.w, BTN_H, new Runnable() {
+			hits.add(b.x, b.y, b.w, BTN_H, new Runnable() {
 				@Override
 				public void run() {
 					activate(index);
@@ -478,7 +488,7 @@ public final class TitleUi extends UiScreen {
 		float micros = (System.nanoTime() - modelStart) / 1000f;
 		modelFrames++;
 		modelMicros = modelFrames == 1 ? micros : modelMicros + (micros - modelMicros) * 0.05f;
-		drawSide(c, t, width, mouseX, mouseY, time);
+		drawSide(c, t, width, mouseX, mouseY);
 		logo(c, t, width, top, big, small, logoH, gapA, time, animated);
 		footer(c, t, width, height, mouseX, mouseY, dt);
 		for (int i = 0; i < labels.size(); i++) {
@@ -507,6 +517,12 @@ public final class TitleUi extends UiScreen {
 		frameMs = frames == 1 ? dt * 1000f : frameMs + (dt * 1000f - frameMs) * 0.05f;
 	}
 
+	/** Kurzes Aufhellen beim Drücken (vor der Aktion). */
+	private static void press(Canvas c, int x, int y, int w, int h, float flash) {
+		if (flash <= 0.02f) return;
+		Paint.roundRect(c, x + 1, y + 1, w - 2, h - 2, Paint.radius(w, h) - 1, ColorMath.withAlpha(0xFFFFFFFF, Math.round(90 * flash)));
+	}
+
 	private void setReserved(int index, int[] r) {
 		int[] out = reserved[index];
 		if (r == null) {
@@ -522,7 +538,7 @@ public final class TitleUi extends UiScreen {
 		out[3] = r[3];
 	}
 
-	// --- Linke Seite: Figur auf der Drehscheibe, Name, Konto ---
+	// --- Linke Seite: Figur auf dem Sockel, Name, Garderobe ---
 
 	/** Maße der linken Seite in diesem Bild (Figur-Maßstab ×100, Fußpunkt, Mitte, Namenszeile). */
 	private int panelScale100;
@@ -616,20 +632,25 @@ public final class TitleUi extends UiScreen {
 		// Name und Garderobe-Knopf
 		String n = c.clip(name == null ? "" : name, Math.max(10, accW + 20));
 		int nw = c.textWidth(n);
-		labels.add(new Label(n, panelCx - nw / 2, panelNameY, t.text, true));
-		final int focusIndex = lamps.size() + side.size();
+		boolean seasonal = t.halloween || t.winter || t.fox;
+		labels.add(new Label(n, panelCx - nw / 2, panelNameY, t.text, seasonal));
+		final int focusIndex = buttons.size() + side.size();
 		boolean hover = inside(mx, my, accX, accY, accW, 16);
 		boolean on = hover || focus == focusIndex || pending == focusIndex;
 		int dy = accFlash > 0.45f ? 1 : 0;
-		Redstone.stone(c, accX, accY + dy, accW, 16, on ? t.surfaceHover : t.surfaceHigh,
-				on ? ColorMath.lerp(t.border, t.textDim, 0.5f) : t.border);
-		if (on) Redstone.dustH(c, accX + 3, accX + accW - 3, accY + dy + 13, t.dustOn, 0f);
-		Icons.draw(c, "shirt", accX + 5, accY + dy + 4, 1, on ? t.dustOn : t.textDim);
+		if (seasonal) {
+			Paint.panel(c, accX, accY + dy, accW, 16, on ? t.surfaceHover : t.surfaceHigh, on ? Paint.hoverEdge(t) : t.border);
+			if (on) Paint.lineH(c, accX + 3, accX + accW - 3, accY + dy + 13, t.accentText, 0f);
+		} else {
+			Paint.secondaryFace(c, accX, accY + dy, accW, 16, accHover);
+			if (focus == focusIndex) Paint.focusRing(c, accX, accY + dy, accW, 16);
+		}
+		Icons.draw(c, "shirt", accX + 5, accY + dy + 4, 1, on ? t.accentText : t.textDim);
 		if (isNew(NewSince.MENU_WARDROBE) || isNew(NewSince.WARDROBE_COSMETICS) || isNew(NewSince.WARDROBE_COMPANION)
 				|| unseenOffers()) NewBadge.dot(c, accX + accW - 7, accY + dy + 2);
 		String lbl = c.clip(accountLabel, accW - 20);
-		labels.add(new Label(lbl, accX + 16 + (accW - 18 - c.textWidth(lbl)) / 2, accY + dy + 4 - (on ? 1 : 0), t.text, false));
-		if (accFlash > 0.02f) c.fill(accX + 1, accY + 1, accX + accW - 1, accY + 15, ColorMath.withAlpha(0xFFFFF6DC, Math.round(120 * accFlash)));
+		labels.add(new Label(lbl, accX + 16 + (accW - 18 - c.textWidth(lbl)) / 2, accY + dy + 4, seasonal ? t.text : Paint.secondaryText(accHover), false));
+		press(c, accX, accY, accW, 16, accFlash);
 		hits.add(accX, accY, accW, 16, new Runnable() {
 			@Override
 			public void run() {
@@ -661,7 +682,7 @@ public final class TitleUi extends UiScreen {
 	private void layoutSide(Canvas c, int width, int height, int colX) {
 		int n = side.size();
 		int maxLabel = 0;
-		for (Lamp l : side) maxLabel = Math.max(maxLabel, c.textWidth(l.label));
+		for (Button b : side) maxLabel = Math.max(maxLabel, c.textWidth(b.label));
 		int fullW = maxLabel + 34;
 		int room = width - (colX + BTN_W + 30) - 8;
 		if (room >= fullW + 14) {
@@ -673,11 +694,11 @@ public final class TitleUi extends UiScreen {
 			sideX = width - 14 - fullW;
 			sideY = Math.max(18, (height - 14 - sideH) / 2);
 			for (int i = 0; i < n; i++) {
-				Lamp l = side.get(i);
-				l.x = sideX;
-				l.y = sideY + i * (h + gap);
-				l.w = fullW;
-				l.h = h;
+				Button b = side.get(i);
+				b.x = sideX;
+				b.y = sideY + i * (h + gap);
+				b.w = fullW;
+				b.h = h;
 			}
 		} else if (room >= 36) {
 			sideMode = SIDE_ICONS;
@@ -688,11 +709,11 @@ public final class TitleUi extends UiScreen {
 			sideX = width - 14 - size;
 			sideY = Math.max(18, (height - 14 - sideH) / 2);
 			for (int i = 0; i < n; i++) {
-				Lamp l = side.get(i);
-				l.x = sideX;
-				l.y = sideY + i * (size + gap);
-				l.w = size;
-				l.h = size;
+				Button b = side.get(i);
+				b.x = sideX;
+				b.y = sideY + i * (size + gap);
+				b.w = size;
+				b.h = size;
 			}
 		} else {
 			// Kein Platz neben der Mitte: kleine Symbole in einer Zeile oben rechts.
@@ -704,89 +725,70 @@ public final class TitleUi extends UiScreen {
 			sideX = width - 4 - sideW;
 			sideY = 4;
 			for (int i = 0; i < n; i++) {
-				Lamp l = side.get(i);
-				l.x = sideX + i * (size + gap);
-				l.y = sideY;
-				l.w = size;
-				l.h = size;
+				Button b = side.get(i);
+				b.x = sideX + i * (size + gap);
+				b.y = sideY;
+				b.w = size;
+				b.h = size;
 			}
 		}
 	}
 
-	/** Umriss der Seitenleiste inkl. Leitung {x1, y1, x2, y2}. */
+	/** Umriss der Seitenleiste {x1, y1, x2, y2}. */
 	private int[] sideBounds() {
 		if (side.isEmpty()) return null;
 		if (sideMode == SIDE_ROW) return new int[]{sideX - 3, sideY - 3, sideX + sideW + 3, sideY + sideH + 3};
-		return new int[]{sideX - 8, sideY - 16, sideX + sideW + 14, sideY + sideH + 6};
+		return new int[]{sideX - 8, sideY - 8, sideX + sideW + 8, sideY + sideH + 8};
 	}
 
-	private void drawSide(Canvas c, Theme t, int width, int mx, int my, float time) {
-		int base = lamps.size();
-		if (sideMode != SIDE_ROW) {
-			// Leitung rechts neben der Leiste, gespeist von einer Fackel oben.
-			int busX = sideX + sideW + 6;
-			int busTop = sideY - 1;
-			Lamp lastLamp = side.get(side.size() - 1);
-			int busBottom = lastLamp.y + lastLamp.h / 2 + 1;
-			Redstone.dustV(c, busX, busTop, busBottom, t.dustOff, 0f);
-			for (Lamp l : side) Redstone.dustH(c, l.x + l.w, busX + 2, l.y + l.h / 2 - 1, t.dustOff, 0f);
-			for (Lamp l : side) {
-				if (l.power <= 0f) continue;
-				int cy = l.y + l.h / 2 - 1;
-				int vertical = Math.max(0, cy - busTop);
-				int horizontal = Math.max(0, busX + 2 - (l.x + l.w));
-				float lit = l.power * (vertical + horizontal);
-				float done = 0;
-				for (int s = 0; s < vertical && done < lit; s += 12) {
-					int len = (int) Math.min(Math.min(12, vertical - s), lit - done);
-					int level = 15 - (int) (done / 12);
-					Redstone.dustV(c, busX, busTop + s, busTop + s + len, t.dust(level), level / 15f);
-					done += len;
-				}
-				for (int s = 0; s < horizontal && done < lit; s += 12) {
-					int len = (int) Math.min(Math.min(12, horizontal - s), lit - done);
-					int level = 15 - (int) (done / 12);
-					Redstone.dustH(c, busX + 2 - s - len, busX + 2 - s, cy, t.dust(level), level / 15f);
-					done += len;
-				}
-			}
-			Redstone.torch(c, busX + 1, busTop, 1f, flicker(time, 5.3f));
-		}
+	private void drawSide(Canvas c, Theme t, int width, int mx, int my) {
+		int base = buttons.size();
+		boolean seasonal = t.halloween || t.winter || t.fox;
 		for (int i = 0; i < side.size(); i++) {
-			Lamp l = side.get(i);
-			float lit = lampLit(l);
-			int dy = l.flash > 0.45f ? 1 : 0;
-			Redstone.lamp(c, l.x, l.y + dy, l.w, l.h, lit, l.flash);
-			int iconColor = lit > 0.5f ? t.lampTextLit : t.lampText;
-			boolean isNew = isNew(l.newId)
-					|| ((NewSince.MENU_SOCIAL.equals(l.newId) || NewSince.MENU_WARDROBE.equals(l.newId)) && unseenOffers())
-					|| (NewSince.MENU_WARDROBE.equals(l.newId) && (isNew(NewSince.WARDROBE_COSMETICS) || isNew(NewSince.WARDROBE_COMPANION)));
+			Button b = side.get(i);
+			int dy = b.flash > 0.45f ? 1 : 0;
+			int iconColor;
+			int textColor;
+			if (seasonal) {
+				Paint.accentFace(c, b.x, b.y + dy, b.w, b.h, b.hover, b.flash);
+				iconColor = b.hover > 0.5f ? t.faceTextOn : t.faceText;
+				textColor = Paint.accentFaceText(b.hover);
+			} else {
+				Paint.secondaryFace(c, b.x, b.y + dy, b.w, b.h, b.hover);
+				press(c, b.x, b.y + dy, b.w, b.h, b.flash);
+				if (focus == base + i) Paint.focusRing(c, b.x, b.y + dy, b.w, b.h);
+				iconColor = ColorMath.lerp(t.textDim, t.accentText, b.hover);
+				textColor = Paint.secondaryText(b.hover);
+			}
+			boolean isNew = isNew(b.newId)
+					|| ((NewSince.MENU_SOCIAL.equals(b.newId) || NewSince.MENU_WARDROBE.equals(b.newId)) && unseenOffers())
+					|| (NewSince.MENU_WARDROBE.equals(b.newId) && (isNew(NewSince.WARDROBE_COSMETICS) || isNew(NewSince.WARDROBE_COMPANION)));
 			if (sideMode == SIDE_FULL) {
-				Icons.draw(c, l.icon, l.x + 7, l.y + dy + (l.h - 8) / 2, 1, iconColor);
-				int room = l.w - 24;
+				Icons.draw(c, b.icon, b.x + 7, b.y + dy + (b.h - 8) / 2, 1, iconColor);
+				int room = b.w - 24;
 				if (isNew) {
 					int badgeW = NewBadge.width(c);
-					if (room - badgeW - 6 >= c.textWidth(l.label) + 2) {
-						NewBadge.draw(c, l.x + l.w - badgeW - 4, l.y + dy + (l.h - NewBadge.HEIGHT) / 2);
+					if (room - badgeW - 6 >= c.textWidth(b.label) + 2) {
+						NewBadge.draw(c, b.x + b.w - badgeW - 4, b.y + dy + (b.h - NewBadge.HEIGHT) / 2);
 						room -= badgeW + 6;
 					} else {
-						NewBadge.dot(c, l.x + l.w - 8, l.y + dy + 3);
+						NewBadge.dot(c, b.x + b.w - 8, b.y + dy + 3);
 					}
 				}
-				String s = c.clip(l.label, room - 2);
-				labels.add(new Label(s, l.x + 20 + (room - c.textWidth(s)) / 2, l.y + dy + (l.h - 8) / 2,
-						Redstone.lampTextColor(lit), lit < 0.35f));
+				String s = c.clip(b.label, room - 2);
+				labels.add(new Label(s, b.x + 20 + (room - c.textWidth(s)) / 2, b.y + dy + (b.h - 8) / 2, textColor,
+						seasonal && b.hover < 0.35f));
 			} else {
-				if (isNew) NewBadge.dot(c, l.x + l.w - 7, l.y + dy + 2);
-				int px = l.w >= 20 ? 2 : 1;
+				if (isNew) NewBadge.dot(c, b.x + b.w - 7, b.y + dy + 2);
+				int px = b.w >= 20 ? 2 : 1;
 				int size = 8 * px;
-				Icons.draw(c, l.icon, l.x + (l.w - size) / 2, l.y + dy + (l.h - size) / 2, px, iconColor);
-				boolean hover = inside(mx, my, l.x, l.y, l.w, l.h);
+				Icons.draw(c, b.icon, b.x + (b.w - size) / 2, b.y + dy + (b.h - size) / 2, px, iconColor);
+				boolean hover = inside(mx, my, b.x, b.y, b.w, b.h);
 				// Beschriftung als Hinweis (zuletzt gezeichnet, über allem): x/y = Symbol, color/shadow = Größe/Zeile
-				if (hover || focus == base + i) tooltips.add(new Label(l.label, l.x, l.y, l.w, l.h > 0));
+				if (hover || focus == base + i) tooltips.add(new Label(b.label, b.x, b.y, b.w, b.h > 0));
 			}
 			final int index = base + i;
-			hits.add(l.x, l.y, l.w, l.h, new Runnable() {
+			hits.add(b.x, b.y, b.w, b.h, new Runnable() {
 				@Override
 				public void run() {
 					activate(index);
@@ -812,7 +814,7 @@ public final class TitleUi extends UiScreen {
 		}
 		c.push();
 		c.raise(150);
-		Redstone.stone(c, tx, ty, tw, 12, t.surfaceHigh, t.border);
+		Paint.panel(c, tx, ty, tw, 12, t.surfaceHigh, t.border);
 		c.text(text, tx + 4, ty + 2, t.text, false);
 		c.pop();
 	}
@@ -827,151 +829,89 @@ public final class TitleUi extends UiScreen {
 		Canvas f = FadeCanvas.of(c, a);
 		f.push();
 		f.raise(200);
-		Redstone.stone(f, x, y, tw, 16, t.surfaceHigh, t.border);
-		Redstone.pip(f, x + 5, y + 5, 6, 1f);
+		Paint.panel(f, x, y, tw, 16, t.surfaceHigh, t.border);
+		Paint.pip(f, x + 5, y + 5, 6, 1f);
 		f.text(toast, x + 15, y + 4, t.text, false);
 		f.pop();
 	}
 
 	private void update(float dt, int mx, int my) {
-		for (int i = 0; i < lamps.size(); i++) {
-			Lamp l = lamps.get(i);
-			boolean hover = inside(mx, my, l.x, l.y, l.w, BTN_H);
-			boolean on = hover || focus == i || pending == i;
-			l.power = on ? Math.min(1f, l.power + dt / SIGNAL_IN) : Math.max(0f, l.power - dt / SIGNAL_OUT);
-			l.flash = Math.max(0f, l.flash - dt / 0.25f);
+		for (int i = 0; i < buttons.size(); i++) {
+			Button b = buttons.get(i);
+			boolean hover = inside(mx, my, b.x, b.y, b.w, BTN_H);
+			b.hover = fade(b.hover, hover || focus == i || pending == i, dt);
+			b.flash = Math.max(0f, b.flash - dt / 0.25f);
 		}
 		for (int i = 0; i < side.size(); i++) {
-			Lamp l = side.get(i);
-			int index = lamps.size() + i;
-			boolean hover = inside(mx, my, l.x, l.y, l.w, l.h);
-			boolean on = hover || focus == index || pending == index;
-			l.power = on ? Math.min(1f, l.power + dt / SIGNAL_IN) : Math.max(0f, l.power - dt / SIGNAL_OUT);
-			l.flash = Math.max(0f, l.flash - dt / 0.25f);
+			Button b = side.get(i);
+			int index = buttons.size() + i;
+			boolean hover = inside(mx, my, b.x, b.y, b.w, b.h);
+			b.hover = fade(b.hover, hover || focus == index || pending == index, dt);
+			b.flash = Math.max(0f, b.flash - dt / 0.25f);
 		}
+		boolean acc = inside(mx, my, accX, accY, accW, 16) || focus == accountIndex() || pending == accountIndex();
+		accHover = fade(accHover, acc, dt);
 		accFlash = Math.max(0f, accFlash - dt / 0.25f);
+	}
+
+	/** Hervorhebung weich ein- und ausblenden. */
+	private static float fade(float value, boolean on, float dt) {
+		return on ? Math.min(1f, value + dt / HOVER_IN) : Math.max(0f, value - dt / HOVER_OUT);
 	}
 
 	private void layout(int colX, int rowsY) {
 		int row = 0;
 		int col = 0;
-		for (int i = 0; i < lamps.size(); i++) {
-			Lamp l = lamps.get(i);
+		for (int i = 0; i < buttons.size(); i++) {
+			Button b = buttons.get(i);
 			int y = rowsY + row * (BTN_H + GAP);
 			boolean full = i < 2;
 			if (full) {
-				l.x = colX;
-				l.w = BTN_W;
+				b.x = colX;
+				b.w = BTN_W;
 				row++;
 				continue;
 			}
-			boolean last = i == lamps.size() - 1;
+			boolean last = i == buttons.size() - 1;
 			if (col == 0 && last) {
 				// Allein in der Zeile (ohne Mod-Liste): mittig.
-				l.x = colX + (BTN_W - HALF) / 2;
-				l.w = HALF;
-				l.y = y;
+				b.x = colX + (BTN_W - HALF) / 2;
+				b.w = HALF;
+				b.y = y;
 				row++;
 				continue;
 			}
-			l.x = col == 0 ? colX : colX + BTN_W - HALF;
-			l.w = HALF;
-			l.y = y;
+			b.x = col == 0 ? colX : colX + BTN_W - HALF;
+			b.w = HALF;
+			b.y = y;
 			if (col == 1) row++;
 			col = 1 - col;
 		}
-		for (int i = 0; i < Math.min(2, lamps.size()); i++) lamps.get(i).y = rowsY + i * (BTN_H + GAP);
+		for (int i = 0; i < Math.min(2, buttons.size()); i++) buttons.get(i).y = rowsY + i * (BTN_H + GAP);
 	}
 
-	private static float lampLit(Lamp l) {
-		return ColorMath.clamp01((l.power - 0.75f) / 0.25f);
-	}
-
-	/** Dunkle, weich auslaufende Fläche hinter Schriftzug und Knöpfen – die Schrift bleibt lesbar. */
+	/** Weich auslaufende Fläche hinter Schriftzug und Knöpfen – die Schrift bleibt auf der Szene lesbar. */
 	private static void readingPlate(Canvas c, int x, int y, int w, int h, int color) {
 		for (int i = 0; i < 5; i++) {
 			int d = (4 - i) * 7;
-			Redstone.block(c, x - d, y - d, w + 2 * d, h + 2 * d, color);
+			Paint.block(c, x - d, y - d, w + 2 * d, h + 2 * d, color);
 		}
 	}
 
-	/** Farbe der Lese-Fläche: Schiefer-Schatten, im Winter Nachtblau bzw. am hellen Wintertag ein weißer Schleier. */
+	/** Farbe der Lese-Fläche: dunkler Schleier, im Winter Nachtblau bzw. am hellen Tag ein weißer Schleier. */
 	private static int plateColor(Theme t) {
 		if (t.halloween) return 0x2407060C;
 		if (t.fox) return t.light ? 0x1CFFFFFF : 0x12120810;
-		if (!t.winter) return 0x1E000000;
-		return t.light ? 0x26FFFFFF : 0x22030814;
+		if (t.winter) return t.light ? 0x26FFFFFF : 0x22030814;
+		return t.light ? 0x22FFFFFF : 0x160C100E;
 	}
 
 	/** Gedämpfte Schrift (Hinweise, Fußzeile) passend zum Design. */
 	private static int dimText(Theme t) {
 		if (t.halloween) return HalloweenPalette.MUTED_LIGHT;
 		if (t.fox) return t.light ? 0xFF5A3E34 : 0xFFC8AAB4;
-		if (!t.winter) return 0xFF8F8B89;
-		return t.light ? 0xFF26344D : 0xFFB4C4E0;
-	}
-
-	/** Leitungen neben den Knöpfen: Fackel oben, Bus nach unten, Abzweig in jede Lampe. */
-	private void circuitry(Canvas c, Theme t, int colX, int top, int rowsY, float time) {
-		int leftBus = colX - 14;
-		int rightBus = colX + BTN_W + 12;
-		int leftTop = rowsY - 1;
-		int rightTop = Integer.MAX_VALUE;
-		int leftBottom = leftTop;
-		int rightBottom = 0;
-		for (int i = 0; i < lamps.size(); i++) {
-			Lamp l = lamps.get(i);
-			int cy = l.y + BTN_H / 2 - 1;
-			if (l.right) {
-				rightTop = Math.min(rightTop, l.y - 1);
-				rightBottom = Math.max(rightBottom, cy + 2);
-			} else {
-				leftBottom = Math.max(leftBottom, cy + 2);
-			}
-		}
-		// Unbestromte Leitungen
-		Redstone.dustV(c, leftBus, leftTop, leftBottom, t.dustOff, 0f);
-		if (rightBottom > 0) Redstone.dustV(c, rightBus, rightTop, rightBottom, t.dustOff, 0f);
-		for (int i = 0; i < lamps.size(); i++) {
-			Lamp l = lamps.get(i);
-			int cy = l.y + BTN_H / 2 - 1;
-			if (l.right) Redstone.dustH(c, l.x + l.w, rightBus + 2, cy, t.dustOff, 0f);
-			else Redstone.dustH(c, leftBus, l.x, cy, t.dustOff, 0f);
-		}
-		// Signal zu den gewählten Lampen – die Stärke sinkt alle 12 Pixel um eins.
-		for (int i = 0; i < lamps.size(); i++) {
-			Lamp l = lamps.get(i);
-			if (l.power <= 0f) continue;
-			int cy = l.y + BTN_H / 2 - 1;
-			int busX = l.right ? rightBus : leftBus;
-			int busTop = l.right ? rightTop : leftTop;
-			int vertical = Math.max(0, cy - busTop);
-			int horizontal = l.right ? Math.max(0, rightBus + 2 - (l.x + l.w)) : Math.max(0, l.x - leftBus);
-			float lit = l.power * (vertical + horizontal);
-			float done = 0;
-			for (int s = 0; s < vertical && done < lit; s += 12) {
-				int len = (int) Math.min(Math.min(12, vertical - s), lit - done);
-				int level = 15 - (int) (done / 12);
-				Redstone.dustV(c, busX, busTop + s, busTop + s + len, t.dust(level), level / 15f);
-				done += len;
-			}
-			for (int s = 0; s < horizontal && done < lit; s += 12) {
-				int len = (int) Math.min(Math.min(12, horizontal - s), lit - done);
-				int level = 15 - (int) (done / 12);
-				if (l.right) Redstone.dustH(c, rightBus + 2 - s - len, rightBus + 2 - s, cy, t.dust(level), level / 15f);
-				else Redstone.dustH(c, busX + s, busX + s + len, cy, t.dust(level), level / 15f);
-				done += len;
-			}
-		}
-		// Fackeln als Quellen – immer an, sie flackern leicht.
-		float f1 = flicker(time, 0.7f);
-		Redstone.torch(c, leftBus + 1, leftTop, 1f, f1);
-		if (rightBottom > 0) Redstone.torch(c, rightBus + 1, rightTop, 1f, flicker(time, 3.1f));
-	}
-
-	private static float flicker(float time, float seed) {
-		double a = Math.sin(time * 8.3 + seed) * 0.6 + Math.sin(time * 21.1 + seed * 2.3) * 0.4;
-		return ColorMath.clamp01((float) (0.5 + a * 0.5));
+		if (t.winter) return t.light ? 0xFF26344D : 0xFFB4C4E0;
+		return t.textDim;
 	}
 
 	/** Halloween: hängende Spinne bei ~12 % von links (wie im Entwurf), Faden schwankt langsam. */
@@ -1028,11 +968,48 @@ public final class TitleUi extends UiScreen {
 		return lastHeight;
 	}
 
+	/** Breite des Schriftzugs (Cubiq: mit dem Zeichen davor). */
+	private static int logoWidth(Theme t, int big) {
+		int word = PixelFont.width("CUBIQ") * big;
+		return t.halloween || t.winter || t.fox ? word : CubiqMark.textOffset(big) + word;
+	}
+
 	private void logo(Canvas c, Theme t, int width, int top, int big, int small, int logoH, int gapA, float time, boolean animated) {
 		if (t.halloween) {
 			halloweenLogo(c, width, top, big, small, logoH, gapA, time, animated);
 			return;
 		}
+		if (t.winter || t.fox) {
+			seasonLogo(c, t, width, top, big, small, logoH, gapA, time, animated);
+			return;
+		}
+		// Cubiq: das Zeichen vor dem Schriftzug (wie im Launcher), flach in der Akzentfarbe mit weichem Schatten;
+		// „CLIENT“ ruhig darunter, unter dem Schriftzug mittig.
+		int x = (width - logoWidth(t, big)) / 2;
+		int px = Math.max(1, big / 3);
+		int cells = CubiqMark.markSize(big) / px;
+		int markY = top + (logoH - cells * px) / 2;
+		CubiqMark.draw(c, x + px, markY + px, cells, px, ColorMath.lerp(t.accent, 0xFF000000, 0.7f), 0.45f);
+		CubiqMark.draw(c, x, markY, cells, px, 1f);
+		int wx = x + CubiqMark.textOffset(big);
+		List<int[]> rects = PixelFont.rects("CUBIQ");
+		int off = Math.max(1, big / 4);
+		int shadow = ColorMath.withAlpha(ColorMath.lerp(t.accent, 0xFF000000, 0.75f), t.light ? 0x50 : 0xB0);
+		for (int[] r : rects) c.fill(wx + r[0] * big + off, top + r[1] * big + off, wx + r[2] * big + off, top + r[3] * big + off, shadow);
+		for (int[] r : rects) c.fill(wx + r[0] * big, top + r[1] * big, wx + r[2] * big, top + r[3] * big, t.accent);
+		int wordW = PixelFont.width("CUBIQ") * big;
+		int subW = PixelFont.width("CLIENT") * small;
+		int sx = wx + (wordW - subW) / 2;
+		int sy = top + logoH + gapA;
+		int sub = t.light ? 0xFF45514A : 0xFFA6B2A9;
+		for (int[] r : PixelFont.rects("CLIENT")) {
+			c.fill(sx + r[0] * small, sy + r[1] * small, sx + r[2] * small, sy + r[3] * small, sub);
+		}
+	}
+
+	/** Schriftzug in Winternacht und Fuchsbau: leuchtende Pixel, Schnee bzw. Blätter darauf, Zeichen neben „CLIENT“. */
+	private static void seasonLogo(Canvas c, Theme t, int width, int top, int big, int small, int logoH, int gapA, float time,
+			boolean animated) {
 		int logoW = PixelFont.width("CUBIQ") * big;
 		int x = (width - logoW) / 2;
 		int y = top;
@@ -1068,16 +1045,15 @@ public final class TitleUi extends UiScreen {
 		int sheen = ColorMath.withAlpha(0xFFFFFFFF, Math.round(90 * pulse));
 		c.fill(x, y, x + Math.max(1, big / 3), y + Math.max(1, big / 3), sheen);
 
-		// "CLIENT" mit einer kleinen Lampe daneben
 		int subW = PixelFont.width("CLIENT") * small;
 		int sx = (width - subW) / 2;
 		int sy = top + logoH + gapA;
-		int sub = t.winter ? (t.light ? 0xFF26344D : 0xFFDCE8F8) : (t.fox ? (t.light ? 0xFF3D2A24 : 0xFFF6DCC8) : 0xFFDAD3CC);
+		int sub = t.winter ? (t.light ? 0xFF26344D : 0xFFDCE8F8) : (t.light ? 0xFF3D2A24 : 0xFFF6DCC8);
 		for (int[] r : PixelFont.rects("CLIENT")) {
 			c.fill(sx + r[0] * small, sy + r[1] * small, sx + r[2] * small, sy + r[3] * small, sub);
 		}
 		if (t.winter) {
-			// Schneeflocke statt der Lampe (wie neben dem Logo im Launcher), die Spitzen glitzern ab und zu.
+			// Schneeflocke neben „CLIENT“ (wie neben dem Logo im Launcher), die Spitzen glitzern ab und zu.
 			int px = Math.max(1, small * 2 / 3);
 			int size = 9 * px;
 			int fx = sx + subW + small * 3;
@@ -1086,16 +1062,11 @@ public final class TitleUi extends UiScreen {
 			Frost.snowflake(c, fx, fy, px, t.light ? 0xFF2B97D6 : 0xFFB8E7FF, animated ? Frost.glint(time) : 0f);
 			return;
 		}
-		if (t.fox) {
-			// Das kleine Fuchsgesicht statt der Lampe (wie neben dem Logo im Launcher), blinzelt ab und zu.
-			int px = Math.max(1, small * 2 / 3);
-			int fx = sx + subW + small * 3;
-			int fy = sy + (PixelFont.HEIGHT * small - 7 * px) / 2;
-			Ember.foxMarkGlow(c, fx, fy, px, ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.2f), time, animated, pulse);
-			return;
-		}
-		int pip = small * 3 + 1;
-		Redstone.pip(c, sx + subW + small * 3, sy + (PixelFont.HEIGHT * small - pip) / 2, pip, pulse);
+		// Das kleine Fuchsgesicht neben „CLIENT“ (wie neben dem Logo im Launcher), blinzelt ab und zu.
+		int px = Math.max(1, small * 2 / 3);
+		int fx = sx + subW + small * 3;
+		int fy = sy + (PixelFont.HEIGHT * small - 7 * px) / 2;
+		Ember.foxMarkGlow(c, fx, fy, px, ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.2f), time, animated, pulse);
 	}
 
 	/**
@@ -1153,8 +1124,15 @@ public final class TitleUi extends UiScreen {
 		boolean hover = inside(mx, my, lx - 10, height - 12, cw + 10, 12);
 		boolean on = hover || focus == linkIndex();
 		linkLit = on ? Math.min(1f, linkLit + dt / 0.08f) : Math.max(0f, linkLit - dt / 0.08f);
-		Redstone.pip(c, lx - 9, height - 9, 5, linkLit);
-		labels.add(new Label(classic, lx, height - 10, ColorMath.lerp(dimText(t), t.halloween ? HalloweenPalette.SILVER_LIGHT : (t.light && (t.winter || t.fox) ? t.on : t.lampOn), linkLit), false));
+		if (t.halloween || t.winter || t.fox) {
+			Paint.pip(c, lx - 9, height - 9, 5, linkLit);
+			int lit = t.halloween ? HalloweenPalette.SILVER_LIGHT : (t.light ? t.accentText : t.faceOn);
+			labels.add(new Label(classic, lx, height - 10, ColorMath.lerp(dimText(t), lit, linkLit), false));
+		} else {
+			// Cubiq: ein schlichter Link – beim Überfahren in der Akzentfarbe und unterstrichen.
+			labels.add(new Label(classic, lx, height - 10, ColorMath.lerp(dimText(t), t.accentText, linkLit), false));
+			if (linkLit > 0.02f) c.fill(lx, height - 1, lx + cw, height, ColorMath.withAlpha(t.accentText, Math.round(200 * linkLit)));
+		}
 		hits.add(lx - 10, height - 12, cw + 14, 12, new Runnable() {
 			@Override
 			public void run() {
@@ -1167,18 +1145,18 @@ public final class TitleUi extends UiScreen {
 
 	/** Index des Links „Klassischer Titelbildschirm“ (immer der letzte). */
 	private int linkIndex() {
-		return lamps.size() + side.size() + 1;
+		return buttons.size() + side.size() + 1;
 	}
 
 	private int accountIndex() {
-		return lamps.size() + side.size();
+		return buttons.size() + side.size();
 	}
 
 	private void activate(int index) {
 		if (pending >= 0) return;
 		host.playClick();
-		if (index < lamps.size()) lamps.get(index).flash = 1f;
-		else if (index < accountIndex()) side.get(index - lamps.size()).flash = 1f;
+		if (index < buttons.size()) buttons.get(index).flash = 1f;
+		else if (index < accountIndex()) side.get(index - buttons.size()).flash = 1f;
 		else if (index == accountIndex()) accFlash = 1f;
 		pending = index;
 		pendingIn = PRESS_DELAY;
@@ -1186,10 +1164,10 @@ public final class TitleUi extends UiScreen {
 
 	/** Führt die Aktion nach dem Aufblitzen aus. */
 	private void run(int index) {
-		if (index < lamps.size()) {
-			lamps.get(index).action.run();
+		if (index < buttons.size()) {
+			buttons.get(index).action.run();
 		} else if (index < accountIndex()) {
-			side.get(index - lamps.size()).action.run();
+			side.get(index - buttons.size()).action.run();
 		} else if (index == accountIndex()) {
 			if (host.openWardrobe()) seen(NewSince.MENU_WARDROBE);
 			else soon(accountLabel);
@@ -1250,8 +1228,8 @@ public final class TitleUi extends UiScreen {
 	}
 
 	private String focusLabel(int index) {
-		if (index < lamps.size()) return lamps.get(index).label;
-		if (index < accountIndex()) return side.get(index - lamps.size()).label;
+		if (index < buttons.size()) return buttons.get(index).label;
+		if (index < accountIndex()) return side.get(index - buttons.size()).label;
 		if (index == accountIndex()) return accountLabel;
 		return classic;
 	}

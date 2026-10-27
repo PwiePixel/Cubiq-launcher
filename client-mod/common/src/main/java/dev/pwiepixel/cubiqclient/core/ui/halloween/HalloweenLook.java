@@ -2,15 +2,15 @@ package dev.pwiepixel.cubiqclient.core.ui.halloween;
 
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
-import dev.pwiepixel.cubiqclient.core.ui.Redstone;
 
 import java.util.List;
 
 /**
- * Bausteine des Halloween-Looks aus Rechtecken (wie {@code core.ui.Redstone}): Knöpfe aus dunklem Pflaumenglas mit
- * Silberkante ({@code .mcb}), Kerze statt Fackel, Silberfaden statt Staub, Schalter wie im Entwurf, Blut-Tropfen an
- * Kanten, Spinnennetz in Ecken, hängende Spinne, Schriftzug in Mondsilber mit Pflaumen-Schatten.
+ * Bausteine des Halloween-Looks aus Rechtecken (wie {@code core.ui.Paint}): Knöpfe aus dunklem Pflaumenglas mit
+ * Silberkante ({@code .mcb}), Kerzen, Silberfaden als Linie, Schalter wie im Entwurf, Blut-Tropfen an Kanten,
+ * Spinnennetz in Ecken, hängende Spinne, Schriftzug in Mondsilber mit Pflaumen-Schatten.
  */
 public final class HalloweenLook {
 	private HalloweenLook() {
@@ -19,15 +19,15 @@ public final class HalloweenLook {
 	// --- Knöpfe ---
 
 	/**
-	 * Knopf (Titel-Lampe, Cubiq-Knöpfe): {@code lit} 0 = ruhig (dunkles Pflaumenglas, Kante Violettgrau), 1 = vom Mond
+	 * Knopf (Titelbildschirm, Cubiq-Knöpfe): {@code lit} 0 = ruhig (dunkles Pflaumenglas, Kante Violettgrau), 1 = vom Mond
 	 * beschienen (Pflaume, Silberkante, leichter Schein); {@code flash} = kurz hell (Drücken).
 	 */
 	public static void lamp(Canvas c, int x, int y, int w, int h, float lit, float flash) {
 		float l = ColorMath.clamp01(lit);
-		if (l > 0.02f) Redstone.glow(c, x, y, w, h, HalloweenPalette.SILVER, l * 0.5f);
+		if (l > 0.02f) Paint.glow(c, x, y, w, h, HalloweenPalette.SILVER, l * 0.5f);
 		int fill = ColorMath.lerp(HalloweenPalette.BUTTON, HalloweenPalette.BUTTON_HOVER, l);
 		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
-		Redstone.frame(c, x, y, w, h, ColorMath.lerp(HalloweenPalette.BUTTON_EDGE, HalloweenPalette.SILVER_LIGHT, l));
+		Paint.frame(c, x, y, w, h, ColorMath.lerp(HalloweenPalette.BUTTON_EDGE, HalloweenPalette.SILVER_LIGHT, l));
 		if (w > 4 && h > 4) c.fill(x + 1, y + 1, x + w - 1, y + 2, ColorMath.withAlpha(HalloweenPalette.SILVER_LIGHT, 0x14 + Math.round(0x20 * l)));
 		float f = ColorMath.clamp01(flash);
 		if (f > 0.02f) c.fill(x + 1, y + 1, x + w - 1, y + h - 1, ColorMath.withAlpha(0xFFF3F5FB, Math.round(150 * f)));
@@ -37,7 +37,7 @@ public final class HalloweenLook {
 	public static void vanillaButton(Canvas c, int x, int y, int w, int h, boolean hot, boolean active) {
 		if (!active) {
 			c.fill(x + 1, y + 1, x + w - 1, y + h - 1, HalloweenPalette.BUTTON_OFF);
-			Redstone.frame(c, x, y, w, h, 0xFF2A2440);
+			Paint.frame(c, x, y, w, h, 0xFF2A2440);
 			return;
 		}
 		lamp(c, x, y, w, h, hot ? 1f : 0f, 0f);
@@ -45,7 +45,7 @@ public final class HalloweenLook {
 
 	// --- Linien, Kerze ---
 
-	/** Silberfaden (statt Staubleitung): 1 px Linie, darunter ein Hauch. */
+	/** Silberfaden als Linie: 1 px, darunter ein Hauch. */
 	public static void lineH(Canvas c, int x1, int x2, int y, int argb, float glow) {
 		c.fill(x1, y, x2, y + 1, argb);
 		c.fill(x1, y + 1, x2, y + 2, ColorMath.withAlpha(argb, Math.min(0x60, (argb >>> 24) / 3)));
@@ -58,7 +58,7 @@ public final class HalloweenLook {
 		if (glow > 0.02f) c.fill(x - 1, y1, x, y2, ColorMath.withAlpha(HalloweenPalette.VIOLET_LIGHT, Math.round(30 * ColorMath.clamp01(glow))));
 	}
 
-	/** Kerze (statt Redstone-Fackel); (x, y) = Mitte des Fußes. */
+	/** Kerze (Drehteller des Startbildschirms); (x, y) = Mitte des Fußes. */
 	public static void candle(Canvas c, int x, int y, float lit, float flicker) {
 		float l = ColorMath.clamp01(lit);
 		c.fill(x - 1, y - 5, x + 1, y, 0xFFD9D2C0);
@@ -75,12 +75,12 @@ public final class HalloweenLook {
 	public static void toggle(Canvas c, int x, int y, int w, int h, float progress, boolean hover) {
 		float p = ColorMath.clamp01(progress);
 		int track = ColorMath.lerp(0xFF2A2440, HalloweenPalette.VIOLET, p);
-		Redstone.block(c, x, y, w, h, hover ? ColorMath.lerp(track, HalloweenPalette.SILVER, 0.35f) : ColorMath.lerp(track, 0xFF000000, 0.25f));
+		Paint.block(c, x, y, w, h, hover ? ColorMath.lerp(track, HalloweenPalette.SILVER, 0.35f) : ColorMath.lerp(track, 0xFF000000, 0.25f));
 		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, track);
 		int k = Math.max(3, h - 4);
 		int kx = x + 2 + Math.round((w - k - 4) * p);
 		int ky = y + (h - k) / 2;
-		Redstone.block(c, kx, ky, k, k, HalloweenPalette.SILVER_LIGHT);
+		Paint.block(c, kx, ky, k, k, HalloweenPalette.SILVER_LIGHT);
 		c.fill(kx + 1, ky + k - 2, kx + k - 1, ky + k - 1, HalloweenPalette.SILVER);
 	}
 
