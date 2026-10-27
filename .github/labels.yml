@@ -1,8 +1,5 @@
 # Labels of the repository (name, colour without "#", description). Not read by any workflow – the maintainer creates
 # them once, e.g. with: gh label create "<name>" --color <color> --description "<description>" --force
-- name: no-changelog
-  color: "cfd3d7"
-  description: Nothing players notice – skips the changelog check
 - name: good first issue
   color: "7057ff"
   description: Good for newcomers

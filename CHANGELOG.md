@@ -1,26 +1,29 @@
 # Changelog
 
-Every version of the Cubiq Launcher is listed here – first in English, then in German. The release build copies
-the section of its version into the GitHub release and the auto-update, and the launcher shows it once after
-updating ("What's new").
+Every version of the Cubiq Launcher is listed here – first in English, then in German. New sections are written
+automatically for every release. The release build copies the section of its version into the GitHub release and the
+auto-update, and the launcher shows it once after updating ("What's new").
 
 <!--
-How to write an entry:
-- Collect changes under "## Unreleased" while working. For a release, rename it to "## <version> – <YYYY-MM-DD>".
-- Every version needs both "### English" and "### Deutsch" with the same points. Write for players, not
-  developers: what changed for them, in plain words, no file or function names.
-- The release build fails when the section for its version is missing or one language is empty.
-- Every release gets a theme name in the heading ("## 0.2.0 – 2026-11-30 – The Clip Update | Das Clip-Update")
-  and an update banner right below it: an HTML comment with "banner: accent=#rrggbb motif=/news/0.2.0/banner.png".
-  The banner keeps a fixed look (dark surface, a soft glow and a fine cube grid); only the accent colour and the
-  motif (a picture with a transparent background, e.g. the Cubiq logo or an item) change.
-- Right below the banner comes a second HTML comment starting with "shots:" – one screenshot of the new features per
-  line: "/news/<version>/<file>.png | English caption | Deutsche Bildunterschrift" (captions optional; without the
-  German one the English caption is used for both). PNG or WebP in public/news/<version>/, at most 8, each at most
-  2 MB and 640×360 to 3840×2400 px. Every release needs at least one screenshot; the release check
-  (scripts/changelog.mjs check) fails otherwise. How to take them: docs/release-screenshots.md.
-- Pull requests: the CI check "changelog" wants at least one new point under "## Unreleased" in English AND German.
-  Changes players don't notice (CI, refactoring, docs) get the label "no-changelog" instead.
+How this file is written:
+- Automatically: after every green CI run on main, the workflow "Auto release" (.github/workflows/auto-release.yml,
+  scripts/release.mjs) adds the section of the next version – from the points under "## Unreleased" if there are any,
+  otherwise from the first line of every commit since the last release (same text in both languages; a line "DE: …"
+  in the commit message gives the German text). Details: CONTRIBUTING.md, "Changelog".
+- By hand (nicer notes): collect points under "## Unreleased" with "### English" and "### Deutsch" – the same points,
+  written for players: what changed for them, in plain words, no file or function names. The next release turns
+  "## Unreleased" into "## <version> – <YYYY-MM-DD>".
+- A release can have a theme name in the heading ("## 0.2.0 – 2026-11-30 – The Clip Update | Das Clip-Update"); it
+  becomes the title of the GitHub release ("Cubiq Launcher 0.2.0 – The Clip Update").
+- Right below the heading comes the update banner, an HTML comment "banner: accent=#71a330" (the release colour). The
+  banner keeps a fixed look (dark surface, a soft glow and a fine cube grid) and shows the Cubiq logo; with
+  "motif=/news/<version>/banner.png" it shows that picture instead (transparent background, in public/news/<version>/).
+- Optional screenshots: a second HTML comment starting with "shots:" – one screenshot per line:
+  "/news/<version>/<file>.png | English caption | Deutsche Bildunterschrift" (captions optional; without the German one
+  the English caption is used for both). PNG or WebP in public/news/<version>/, at most 8, each at most 2 MB and
+  640×360 to 3840×2400 px. How to take them: docs/release-screenshots.md.
+- The release build fails when the section for its version is missing, one language is empty or the banner is missing
+  (scripts/changelog.mjs check <version>).
 - Contributors: the release build adds an HTML comment starting with "contributors:" to the section of its version
   (GitHub names of everyone who contributed since the previous release, see scripts/contributors.mjs). The launcher
   thanks them in "What's new", the GitHub release in "Thanks to / Danke an". Don't write it by hand; to keep the

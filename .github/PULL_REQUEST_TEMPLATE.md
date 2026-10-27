@@ -15,8 +15,8 @@
 
 - [ ] The checks for the changed part pass locally (see [CONTRIBUTING.md](https://github.com/PwiePixel/Cubiq-launcher/blob/main/CONTRIBUTING.md#checks)).
 - [ ] New logic has tests.
-- [ ] `CHANGELOG.md` has a new point under `## Unreleased` in **English and German** – or nothing changes for
-      players and this pull request needs the label `no-changelog`.
+- [ ] The title says what changes for players, in plain words – after the squash merge it becomes the point in the
+      changelog ([how](https://github.com/PwiePixel/Cubiq-launcher/blob/main/CONTRIBUTING.md#changelog)).
 - [ ] UI changes: screenshots below (before/after).
 - [ ] New texts are in the language files (`app/locales/`, Cubiq Client `i18n/`), not hard-coded.
 

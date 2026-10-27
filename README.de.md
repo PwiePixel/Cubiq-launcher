@@ -17,7 +17,8 @@
 [Doku](https://github.com/PwiePixel/Cubiq-launcher/wiki) ·
 [Funktionen](#funktionen) ·
 [Vor dem ersten Release](#vor-dem-ersten-release) ·
-[Selbst bauen](#selbst-bauen)
+[Selbst bauen](#selbst-bauen) ·
+[Releases](#releases)
 
 <img src="public/news/0.1.0/home.png" alt="Startseite des Cubiq Launchers" width="860" />
 
@@ -102,7 +103,7 @@ ein Wert, bleibt nur die jeweilige Funktion aus; der Rest des Launchers läuft.
 | Was | Wo | Ohne |
 |---|---|---|
 | **Microsoft-Anmeldung**: Client-ID einer eigenen Azure-App („Nur persönliche Microsoft-Konten“, Plattform „Mobile und Desktopanwendungen“ mit Umleitung `http://localhost/login`, „Öffentliche Clientflows zulassen“ an), [von Mojang freigegeben](https://aka.ms/mce-reviewappid) für die Minecraft-API | Repo-Variable `CUBIQ_MSA_CLIENT_ID` | Keine Anmeldung (Entwicklungs-Builds starten die Demo) |
-| **Update-Schlüssel**: `pnpm tauri signer generate -w ~/.tauri/cubiq-launcher.key` | Öffentlicher Schlüssel in `src-tauri/tauri.conf.json` (`plugins.updater.pubkey`) **und** `PUBLIC_KEY` in `src-tauri/crates/core/src/client_mod_update.rs`; privater Schlüssel + Passwort als Secrets `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Release-Builds lassen sich nicht signieren (der Schlüssel im Repo ist ein Platzhalter) |
+| **Update-Schlüssel**: schon erstellt (Schlüssel-ID `A427CF588D4DF86A`); der öffentliche Schlüssel steht in `src-tauri/tauri.conf.json` und `src-tauri/crates/core/src/client_mod_update.rs` | Secrets `TAURI_SIGNING_PRIVATE_KEY` (Inhalt der Schlüsseldatei) und `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Installer ohne Update-Signatur – installierte Launcher aktualisieren sich nicht selbst |
 | **Cubiq-Dienste** (Freunde, Chat, Umhänge, Creator-Codes, …): Basis-URL deines eigenen Servers mit der API | Repo-Variable `CUBIQ_API_BASE`; für den Mod im Spiel zusätzlich `DEFAULT_API` in `client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/online/OnlineConfig.java` | Dienste ausgeblendet, es wird nichts gesendet |
 | **Discord-Status**: Application-ID deiner Discord-App | Repo-Variable `CUBIQ_DISCORD_APP_ID` | Kein Discord-Status |
 | **CurseForge**: API-Schlüssel aus der CurseForge-Konsole | Secret `CURSEFORGE_API_KEY` | Nur Modrinth |
@@ -134,7 +135,7 @@ pnpm app:dev      # Nuxt-Entwicklungsserver + Tauri-Fenster mit Hot Reload
 
 | Befehl | Zweck |
 |---|---|
-| `pnpm app:build` | Release-Build und Installer (`src-tauri/target/release/bundle`) |
+| `pnpm app:build` | Release-Build und Installer – unter Windows auch als `release/Cubiq-Launcher_<version>_x64-setup.exe`; signiert die Update-Dateien, wenn der Schlüssel in `~/.tauri/cubiq-launcher.key` liegt (Passwort in `cubiq-launcher.key.password`) |
 | `pnpm typecheck` | TypeScript/Vue prüfen |
 | `pnpm test` | Frontend-Tests (Vitest) |
 | `cargo test --workspace` (in `src-tauri`) | Rust-Tests |
@@ -148,10 +149,28 @@ testen:
 cargo run -p cubiq-core --example launch -- <datenordner> 1.21.1 [vanilla|fabric|quilt|forge|neoforge] [sekunden]
 ```
 
-Ein Tag wie `v0.2.0` startet [`release.yml`](.github/workflows/release.yml): Der Workflow baut und signiert den
-Windows-Installer und die Linux-Pakete, veröffentlicht ein Release und aktualisiert den Update-Kanal. Jedes Release
-braucht einen Eintrag in [CHANGELOG.md](CHANGELOG.md) (Englisch und Deutsch) mit mindestens einem Screenshot
-([so geht's](docs/release-screenshots.md)).
+## Releases
+
+Releases entstehen von selbst. Nach jedem grünen CI-Lauf auf `main` prüft
+[`auto-release.yml`](.github/workflows/auto-release.yml), ob sich seit dem letzten Release etwas für Spieler geändert
+hat. Wenn ja,
+
+1. erhöht der Workflow die Version (Commits mit `feat:` → Minor, `feat!:` → Major, alles andere → Patch),
+2. schreibt den neuen Abschnitt in [CHANGELOG.md](CHANGELOG.md) auf Englisch und Deutsch – aus deinen Punkten unter
+   `## Unreleased`, falls vorhanden, sonst aus den Commit-Nachrichten ([so geht's](CONTRIBUTING.md#changelog)),
+3. committet „Release vX.Y.Z“, setzt das Tag und startet [`release.yml`](.github/workflows/release.yml).
+
+`release.yml` baut den Windows-Installer (`Cubiq-Launcher_<version>_x64-setup.exe`), eine portable ZIP und die
+Linux-Pakete und veröffentlicht sie als GitHub-Release „Cubiq Launcher X.Y.Z“ mit dem Changelog als Beschreibung –
+denselben Text zeigt der Launcher nach dem Update („Was ist neu“). Mit dem Signaturschlüssel in den Secrets
+aktualisiert er auch den Update-Kanal, sodass sich installierte Launcher selbst aktualisieren.
+
+- **Von Hand:** Actions → Auto release → Run workflow (Versionssprung wählbar) oder ein Tag wie `v0.2.0` pushen, zu
+  dessen Version es einen Abschnitt in CHANGELOG.md gibt.
+- **Pausieren:** Repo-Variable `CUBIQ_AUTO_RELEASE` auf `false` setzen.
+- **Geschützter `main`:** Dürfen nur Pull Requests `main` ändern, wird der Release-Commit abgelehnt – dann GitHub
+  Actions von dieser Regel ausnehmen.
+- Screenshots und ein eigenes Update-Banner sind freiwillig ([so geht's](docs/release-screenshots.md)).
 
 ## Aufbau
 

@@ -1,9 +1,10 @@
 name: Release
 
-# Baut bei jedem Versions-Tag (v1.2.3) den signierten Windows-Installer und die
-# Linux-Pakete (AppImage, .deb, .rpm), legt ein (Vorab-)Release an und
-# aktualisiert den Update-Kanal, den der eingebaute Auto-Updater abfragt.
-# `latest.json` entsteht erst, wenn Windows UND Linux fertig gebaut sind.
+# Baut bei jedem Versions-Tag (v1.2.3) den Windows-Installer und die Linux-Pakete (AppImage, .deb, .rpm), legt das
+# GitHub-Release an (Titel und Beschreibung aus CHANGELOG.md) und aktualisiert den Update-Kanal, den der eingebaute
+# Auto-Updater abfragt. Gestartet wird es meist von auto-release.yml (setzt Tag + Changelog), sonst per Tag-Push.
+# Ohne Secret TAURI_SIGNING_PRIVATE_KEY gibt es Installer und Pakete trotzdem, nur ohne Update-Signatur – dann
+# kein latest.json (kein Auto-Update). `latest.json` entsteht erst, wenn Windows UND Linux signiert gebaut sind.
 # Dazu die mobile App: signierte Android-APK und unsigniertes iOS-IPA im Kanal `mobile` (mobile.json + AltStore-Quelle).
 on:
   push:
@@ -99,8 +100,10 @@ jobs:
         shell: bash
         run: node --experimental-strip-types scripts/changelog.mjs notes "${TAG#v}" > release-notes.md
 
-      # Nur bauen und signieren – veröffentlicht wird im Job „publish“.
-      - name: Build signed installer
+      # Nur bauen und signieren – veröffentlicht wird im Job „publish“. Fehlt das Secret mit dem Signaturschlüssel,
+      # entsteht der Installer trotzdem, nur ohne Update-Signatur (diese Version kommt dann nicht per Auto-Update).
+      - name: Build installer
+        shell: bash
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -113,7 +116,13 @@ jobs:
           CUBIQ_MSA_CLIENT_ID: ${{ vars.CUBIQ_MSA_CLIENT_ID }}
           CUBIQ_API_BASE: ${{ vars.CUBIQ_API_BASE }}
           CUBIQ_DISCORD_APP_ID: ${{ vars.CUBIQ_DISCORD_APP_ID }}
-        run: pnpm tauri build
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            pnpm tauri build
+          else
+            echo "::warning title=Update-Signatur fehlt::Secret TAURI_SIGNING_PRIVATE_KEY fehlt – Installer ohne Update-Signatur."
+            pnpm tauri build --config src-tauri/tauri.unsigned.conf.json
+          fi
 
       - name: Collect release files
         shell: bash
@@ -124,10 +133,12 @@ jobs:
           mkdir -p out
           exe="Cubiq-Launcher_${version}_x64-setup.exe"
           cp "$src" "out/$exe"
-          cp "$src.sig" "out/$exe.sig"
           cp release-notes.md out/
-          # Eintrag für latest.json – zusammengeführt wird im Job „publish“.
-          node scripts/updater-manifest.mjs platform windows-x86_64 "out/$exe" > out/platform-windows.json
+          # Eintrag für latest.json – zusammengeführt wird im Job „publish“. Nur mit Update-Signatur.
+          if [ -f "$src.sig" ]; then
+            cp "$src.sig" "out/$exe.sig"
+            node scripts/updater-manifest.mjs platform windows-x86_64 "out/$exe" > out/platform-windows.json
+          fi
           ls -la out
 
       # Portable Version: EXE + mitgelieferte Ressourcen (Cubiq Client in client-mod/, liegen wie beim Installer
@@ -224,7 +235,7 @@ jobs:
       - name: Release notes from CHANGELOG.md
         run: node --experimental-strip-types scripts/changelog.mjs notes "${TAG#v}" > /dev/null
 
-      - name: Build signed AppImage, .deb and .rpm
+      - name: Build AppImage, .deb and .rpm
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -235,7 +246,13 @@ jobs:
           # linuxdeploy ist selbst ein AppImage – ohne FUSE im Runner entpacken statt einhängen.
           APPIMAGE_EXTRACT_AND_RUN: "1"
           NO_STRIP: "true"
-        run: pnpm tauri build --bundles appimage,deb,rpm
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            pnpm tauri build --bundles appimage,deb,rpm
+          else
+            echo "::warning title=Update-Signatur fehlt::Secret TAURI_SIGNING_PRIVATE_KEY fehlt – Pakete ohne Update-Signatur."
+            pnpm tauri build --bundles appimage,deb,rpm --config src-tauri/tauri.unsigned.conf.json
+          fi
 
       - name: Collect release files
         env:
@@ -255,10 +272,12 @@ jobs:
           # Ohne die mitgebündelten libwayland-* (sonst leeres Fenster auf Arch/Fedora),
           # danach neu signieren – die Signatur von tauri build passt nicht mehr.
           bash scripts/fix-appimage.sh "out/$appimage"
-          pnpm tauri signer sign "out/$appimage" > /dev/null
-          test -s "out/$appimage.sig"
-          # Der Auto-Updater kann sich unter Linux nur als AppImage selbst ersetzen.
-          node scripts/updater-manifest.mjs platform linux-x86_64 "out/$appimage" > out/platform-linux.json
+          # Der Auto-Updater kann sich unter Linux nur als AppImage selbst ersetzen – nur mit Signaturschlüssel.
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            pnpm tauri signer sign "out/$appimage" > /dev/null
+            test -s "out/$appimage.sig"
+            node scripts/updater-manifest.mjs platform linux-x86_64 "out/$appimage" > out/platform-linux.json
+          fi
           (cd out && sha256sum "$appimage" "$deb" "$rpm" > SHA256SUMS-linux.txt)
           # AUR-Paket (cubiq-launcher-bin) mit Prüfsumme dieses Releases.
           node scripts/aur.mjs --version "$version" --deb "out/$deb" --out out/aur
@@ -275,6 +294,8 @@ jobs:
   publish:
     name: Publish
     needs: [build, linux]
+    # Windows ist Pflicht; fehlen die Linux-Pakete, erscheint das Release trotzdem (ohne sie).
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -296,14 +317,21 @@ jobs:
           set -euo pipefail
           mkdir -p out
           cp artifacts/windows/Cubiq-Launcher_* out/
-          cp artifacts/linux/Cubiq-Launcher* artifacts/linux/SHA256SUMS-linux.txt out/
-          # PKGBUILD + .SRCINFO für das AUR als eigene Dateien im Release.
-          cp artifacts/linux/aur/PKGBUILD out/cubiq-launcher-bin.PKGBUILD
-          cp artifacts/linux/aur/.SRCINFO out/cubiq-launcher-bin.SRCINFO
+          if [ -d artifacts/linux ]; then
+            cp artifacts/linux/Cubiq-Launcher* artifacts/linux/SHA256SUMS-linux.txt out/
+            # PKGBUILD + .SRCINFO für das AUR als eigene Dateien im Release.
+            cp artifacts/linux/aur/PKGBUILD out/cubiq-launcher-bin.PKGBUILD
+            cp artifacts/linux/aur/.SRCINFO out/cubiq-launcher-bin.SRCINFO
+          fi
           cp artifacts/windows/release-notes.md .
-          node scripts/updater-manifest.mjs merge "${TAG#v}" release-notes.md "$GITHUB_REPOSITORY" "$TAG" \
-            artifacts/windows/platform-windows.json artifacts/linux/platform-linux.json > out/latest.json
-          cat out/latest.json
+          # Update-Kanal nur mit signierten Paketen für Windows UND Linux.
+          if [ -f artifacts/windows/platform-windows.json ] && [ -f artifacts/linux/platform-linux.json ]; then
+            node scripts/updater-manifest.mjs merge "${TAG#v}" release-notes.md "$GITHUB_REPOSITORY" "$TAG" \
+              artifacts/windows/platform-windows.json artifacts/linux/platform-linux.json > out/latest.json
+            cat out/latest.json
+          else
+            echo "::warning title=Kein Auto-Update::Ohne Update-Signaturen kein latest.json – diese Version kommt nicht per Auto-Update."
+          fi
           ls -la out
 
       - name: Publish release and update channel
@@ -311,17 +339,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          # Titel aus CHANGELOG.md: „Cubiq Launcher 0.2.0“ bzw. mit Update-Namen.
+          title=$(node --experimental-strip-types scripts/changelog.mjs title "${TAG#v}")
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" out/* --clobber
-            gh release edit "$TAG" --notes-file release-notes.md
+            gh release edit "$TAG" --title "$title" --notes-file release-notes.md
           else
-            gh release create "$TAG" out/* --prerelease --title "Cubiq Launcher $TAG" --notes-file release-notes.md
+            gh release create "$TAG" out/* --latest --title "$title" --notes-file release-notes.md
           fi
-          # Der Updater fragt einen festen Kanal ab (Release "updater"), damit
-          # auch Vorabversionen gefunden werden.
-          gh release view updater >/dev/null 2>&1 || gh release create updater --prerelease --title "Update-Kanal" \
-            --notes "Wird automatisch gepflegt – enthält nur latest.json für den Auto-Updater."
-          gh release upload updater out/latest.json --clobber
+          # Der Updater fragt einen festen Kanal ab (Release "updater"), damit er jede Version findet.
+          if [ -f out/latest.json ]; then
+            gh release view updater >/dev/null 2>&1 || gh release create updater --prerelease --title "Update-Kanal" \
+              --notes "Wird automatisch gepflegt – enthält nur latest.json für den Auto-Updater."
+            gh release upload updater out/latest.json --clobber
+          fi
 
   # --- Android/iOS (Kanal "mobile") ---------------------------------------------------------------------------------
   # Unabhängig vom Desktop-Release: Schlägt hier etwas fehl, sind Installer und latest.json trotzdem draußen.

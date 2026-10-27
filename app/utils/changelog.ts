@@ -8,7 +8,9 @@
 //   ## 0.5.0 – 2026-09-25 – The Clip Update | Das Clip-Update
 //
 // Das Banner jedes Updates hat einen festen Stil (dunkle Fläche, weicher Schein, feines Würfel-Raster); je
-// Version ändern sich nur Akzentfarbe und Motiv (ein freigestelltes Bild, z. B. das Cubiq-Logo oder ein Item):
+// Version ändern sich nur Akzentfarbe und Motiv (ein freigestelltes Bild, z. B. ein Item). Ohne Motiv zeigt der
+// Launcher das Cubiq-Logo – so legt die Release-Automatik (scripts/release.mjs) das Banner an:
+//   <!-- banner: accent=#71a330 -->
 //   <!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png -->
 //
 // Screenshots der Neuerungen stehen als zweiter Kommentar direkt darunter – je Zeile eine Datei aus
@@ -62,8 +64,6 @@ export interface UpdateShot {
 
 /** Höchstens so viele Screenshots je Update. */
 export const SHOTS_MAX = 8
-/** Ab dieser Version braucht jedes Release mindestens einen Screenshot. */
-export const SHOTS_REQUIRED_FROM = '0.1.0'
 
 const BANNER_COMMENT = /^<!-- *banner: *(.*?) *-->$/
 /** Platzhalter für gesicherte Banner-Zeilen, bevor die übrigen Kommentare entfernt werden. */
@@ -336,6 +336,12 @@ export function releaseNotes(entry: ChangelogEntry): string {
   const thanks = thanksSection(entry)
   if (entry.title) return `# ${entry.title.en}\n\n${en}\n\n# ${entry.title.de}\n\n${de}\n${thanks}`
   return `## What's new\n\n${en}\n\n## Neu in dieser Version\n\n${de}\n${thanks}`
+}
+
+/** Titel des GitHub-Release: „Cubiq Launcher 0.4.4“, mit Update-Namen „Cubiq Launcher 0.5.0 – The Clip Update“. */
+export function releaseTitle(entry: Pick<ChangelogEntry, 'title'> | null, version: string): string {
+  const name = `Cubiq Launcher ${version.replace(/^v/, '')}`
+  return entry?.title ? `${name} – ${entry.title.en}` : name
 }
 
 /**
