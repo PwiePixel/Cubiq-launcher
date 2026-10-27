@@ -1082,6 +1082,27 @@ mod tests {
     }
 
     #[test]
+    fn winter_design_comes_from_the_account() {
+        let local = values(Theme::Dark, Language::De);
+        // Konto hat Polarlicht, hier nichts geändert → übernehmen, nichts hochladen.
+        let remote = json!({ "theme": "dark", "accent": "ice", "language": "de", "design": "winter" });
+        let merged = merge_ui(local, UiTimes::default(), Some((&remote, Some(at(0)))));
+        assert_eq!((merged.values.design, merged.values.accent), (Design::Winter, Accent::Ice));
+        assert!(!merged.push);
+        // Hier später wieder auf Cubiq gestellt → lokal gewinnt und geht aufs Konto.
+        let times = UiTimes { design: Some(at(5)), ..Default::default() };
+        let merged = merge_ui(local, times, Some((&remote, Some(at(0)))));
+        assert_eq!(merged.values.design, Design::Cubiq);
+        assert_eq!(merged.data["design"], "cubiq");
+        assert!(merged.push);
+        // Und umgekehrt: hier Polarlicht gewählt → aufs Konto.
+        let winter = UiValues { design: Design::Winter, ..local };
+        let merged = merge_ui(winter, times, Some((&json!({ "theme": "dark", "accent": "cubiq", "language": "de" }), Some(at(0)))));
+        assert_eq!(merged.data["design"], "winter");
+        assert!(merged.push);
+    }
+
+    #[test]
     fn design_syncs_like_the_other_keys() {
         let local = values(Theme::Dark, Language::De);
         // Konto ohne Design = Standard, kein Hochladen; unbekanntes Design (neuere Version) bleibt erhalten.

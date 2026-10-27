@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/sora";
+/* Design „Polarlicht“ (Winter): eigene Datei, alles nur unter `data-design="winter"`. */
+@import "./winter.css";
 
 /*
  * Cubiq-Design: Flächen im Navy des Logos (#0a0a30) mit klaren Höhenstufen, das Grün aus dem

@@ -2420,6 +2420,21 @@
       "updatesPortable": "Portable version – updates come from the download page"
     },
     "appearance": {
+      "look": {
+        "title": "Design",
+        "text": "Changes the whole look – background scene, colors and small details. Color theme and accent color stay as you set them, and the Cubiq Client takes the design into the game.",
+        "choose": "Use the {name} design",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Logo navy with accents in Cubiq green"
+          },
+          "winter": {
+            "name": "Northern Lights",
+            "text": "Aurora in Cubiq green over floating snow islands"
+          }
+        }
+      },
       "colorScheme": "Color theme",
       "themes": {
         "dark": "Dark",

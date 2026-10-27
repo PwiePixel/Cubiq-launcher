@@ -1,22 +1,19 @@
 package dev.pwiepixel.cubiqclient.core.ui.fox;
 
-import dev.pwiepixel.cubiqclient.core.ui.winter.Snow;
-import dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.bayer;
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.clamp;
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.mix;
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.noise;
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.smooth;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.bayer;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.clamp;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.mix;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.noise;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.smooth;
 
 /**
  * Malt die Fuchsbau-Landschaft in Texeln (Port von {@code app/utils/fox/paint.ts}). Himmel und Landschaft entstehen
  * einmal je Aufbau/Farbschema als fertige Ebenen; je Takt setzt {@link #compose} daraus das Bild zusammen und malt nur
  * Wolken, Sterne, Feuer, Rauch, Funken, die Laterne am Bau, Glühwürmchen, Blätter, den atmenden Fuchs und das weiche
- * Licht neu. Gleiche Regeln wie die Winternacht: flächige Bänder mit schmalem 4 × 4-Bayer-Übergang, Dunst auf fernen
+ * Licht neu. Gemalt mit flächigen Bändern mit schmalem 4 × 4-Bayer-Übergang, Dunst auf fernen
  * Ebenen, Licht von der tiefen Sonne. Bäume und Boden sind Minecraft-Blöcke (16 × 16-Texturen, je Block gleich).
  */
 public final class FoxPainter {
@@ -123,10 +120,10 @@ public final class FoxPainter {
 		// Glühwürmchen über der Wiese, dichter am Bau; am Tag nur wenige.
 		int n = (int) Math.round((L.w / (day ? 70.0 : 18.0)) * (L.h >= 90 ? 1 : 0.6));
 		int top = L.meadowTop();
-		FoxParticles.Fireflies all = new FoxParticles.Fireflies(new WinterMath.Rng(L.seed ^ 0xf1), n, L.w * 0.25, L.w, top + 2,
+		FoxParticles.Fireflies all = new FoxParticles.Fireflies(new FoxMath.Rng(L.seed ^ 0xf1), n, L.w * 0.25, L.w, top + 2,
 				Math.max(top + 6, L.h * 0.92));
 		if (parts != null && L.den.large) {
-			FoxParticles.Fireflies near = new FoxParticles.Fireflies(new WinterMath.Rng(L.seed ^ 0xf2), Math.max(3, (int) Math.round(n / 3.0)),
+			FoxParticles.Fireflies near = new FoxParticles.Fireflies(new FoxMath.Rng(L.seed ^ 0xf2), Math.max(3, (int) Math.round(n / 3.0)),
 					L.den.x - L.den.bs * 2, L.den.x + FoxLandscape.DEN_BLOCKS * L.den.bs, L.den.y - L.den.bs * 5, L.den.y - 2);
 			all = merge(all, near);
 		}
@@ -143,7 +140,7 @@ public final class FoxPainter {
 	}
 
 	private static FoxParticles.Fireflies merge(FoxParticles.Fireflies a, FoxParticles.Fireflies b) {
-		FoxParticles.Fireflies m = new FoxParticles.Fireflies(new WinterMath.Rng(0), a.count + b.count, 0, 0, 0, 0);
+		FoxParticles.Fireflies m = new FoxParticles.Fireflies(new FoxMath.Rng(0), a.count + b.count, 0, 0, 0, 0);
 		System.arraycopy(a.hx, 0, m.hx, 0, a.count);
 		System.arraycopy(b.hx, 0, m.hx, a.count, b.count);
 		System.arraycopy(a.hy, 0, m.hy, 0, a.count);
@@ -538,7 +535,7 @@ public final class FoxPainter {
 		int tiers = t.tiers;
 		int ground = t.base;
 		int x = t.x;
-		WinterMath.Rng r = new WinterMath.Rng(t.seed);
+		FoxMath.Rng r = new FoxMath.Rng(t.seed);
 		int trunkTop = ground - (tiers + 1) * bs;
 		Placed placed = new Placed();
 		if (bs <= 2) {
@@ -603,7 +600,7 @@ public final class FoxPainter {
 	private static void cherryTree(Raster R, FoxLandscape.Tree t, FoxPalette P, double haze, int to, int side) {
 		int bs = t.bs;
 		int seed = t.seed;
-		WinterMath.Rng r = new WinterMath.Rng(seed);
+		FoxMath.Rng r = new FoxMath.Rng(seed);
 		int dir = t.flip ? -1 : 1;
 		int cx = t.x;
 		int cy = t.base - bs;
@@ -729,7 +726,7 @@ public final class FoxPainter {
 				R.set(x + xx, y + yy, P.berryLeaf[k]);
 			}
 		}
-		WinterMath.Rng r = new WinterMath.Rng(x);
+		FoxMath.Rng r = new FoxMath.Rng(x);
 		for (int i = 0, n = Math.max(3, (int) Math.round(size / 2.0)); i < n; i++) {
 			int bx = x + 1 + (int) Math.floor(r.next() * (w - 3));
 			int by = y - 2 - (int) Math.floor(r.next() * (h - 3));
@@ -805,7 +802,7 @@ public final class FoxPainter {
 		public boolean calm;
 		public boolean inhale;
 		public boolean twitch;
-		public Snow.Smoke smoke;
+		public Smoke smoke;
 		public FoxParticles.Sparks sparks;
 		public FoxParticles.Leaves leaves;
 	}
@@ -876,7 +873,7 @@ public final class FoxPainter {
 		}
 
 		// Rauch über dem Feuer.
-		Snow.Smoke sm = s.smoke;
+		Smoke sm = s.smoke;
 		if (sm != null) {
 			for (int i = 0; i < sm.count; i++) {
 				double age = 1 - sm.life[i] / (double) sm.max[i];

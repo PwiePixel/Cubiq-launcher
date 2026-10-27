@@ -5,7 +5,6 @@ import dev.pwiepixel.cubiqclient.compat.Mc;
 import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.menus.MenuSkin;
-import dev.pwiepixel.cubiqclient.core.ui.winter.Penguin;
 import dev.pwiepixel.cubiqclient.core.ui.winter.WinterScene;
 import dev.pwiepixel.cubiqclient.screen.CubiqMenuScreen;
 import dev.pwiepixel.cubiqclient.screen.CubiqTitleScreen;
@@ -16,9 +15,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 
 /**
- * Selbsttest Design „Winternacht“ ({@code -PcubiqAutotestOnly=winter}): Startbildschirm in der Nacht, mit Polarlicht, mit
- * dem Pinguin draußen und am hellen Wintertag, Cubiq-Menü (Seite „Menü-Stil“ mit der Design-Wahl), Serverliste,
- * Ladebildschirm der Welt und Pausenmenü. Danach gilt wieder das Aussehen aus der Launcher-Datei; das Spiel endet.
+ * Selbsttest Design „Polarlicht“ ({@code -PcubiqAutotestOnly=winter}): Startbildschirm in der Nacht (zweimal, das
+ * Polarlicht wiegt sich weiter), am hellen Morgen und in OLED, Cubiq-Menü (Seite „Menü-Stil“ mit der Design-Wahl),
+ * Serverliste, Ladebildschirm der Welt und Pausenmenü. Danach gilt wieder das Aussehen aus der Launcher-Datei; das Spiel
+ * endet.
  * Screenshots: cubiqclient-&lt;mc&gt;-winter-*.png.
  */
 public final class WinterTest {
@@ -82,49 +82,42 @@ public final class WinterTest {
 				return;
 			case 1:
 				shot(mc, "title");
-				// Polarlicht sofort (Mitte des ersten Durchgangs).
-				WinterScene.shared().setSeconds(20);
+				WinterScene.shared().setSeconds(40);
 				phase++;
 				wait = 10;
 				return;
 			case 2:
+				// Dieselbe Szene ein paar Sekunden später: das Polarlicht hat sich weitergewiegt.
 				shot(mc, "title-aurora");
-				WinterScene.shared().penguinOut();
-				phase++;
-				return;
-			case 3:
-				// Pinguin abpassen, während er winkt (Tür auf, ~4 s Watscheln).
-				if (!waitFor(WinterScene.shared().penguinPhase() == Penguin.WAVE, 120)) return;
-				shot(mc, "title-penguin");
 				winter("light");
 				phase++;
 				wait = 20;
 				return;
-			case 4:
+			case 3:
 				shot(mc, "title-day");
 				winter("oled");
 				phase++;
 				wait = 10;
 				return;
-			case 5:
+			case 4:
 				shot(mc, "title-oled");
 				winter("dark");
 				Mc.setScreen(new CubiqMenuScreen(new CubiqTitleScreen()).select(modules.menuStyle));
 				phase++;
 				wait = 25;
 				return;
-			case 6:
+			case 5:
 				shot(mc, "cubiqmenu");
 				Mc.setScreen(new JoinMultiplayerScreen(new CubiqTitleScreen()));
 				phase++;
 				wait = 40;
 				return;
-			case 7:
+			case 6:
 				shot(mc, "multiplayer");
 				AutoTest.startWorld(mc);
 				phase++;
 				return;
-			case 8:
+			case 7:
 				// Ladebildschirm abpassen (während die Welt entsteht bzw. lädt).
 				if (screen instanceof LevelLoadingScreen) {
 					wait = 2;
@@ -137,30 +130,30 @@ public final class WinterTest {
 					phase += 2;
 				}
 				return;
-			case 9:
+			case 8:
 				if (screen instanceof LevelLoadingScreen) shot(mc, "loading");
 				phase++;
 				return;
-			case 10:
+			case 9:
 				if (!waitFor(mc.level != null && mc.player != null && Mc.screen() == null, 600)) return;
 				wait = 40;
 				phase++;
 				return;
-			case 11:
+			case 10:
 				Mc.setScreen(new PauseScreen(true));
 				phase++;
 				wait = 15;
 				return;
-			case 12:
+			case 11:
 				shot(mc, "pause");
 				Mc.setScreen(new CubiqMenuScreen(screen).select(modules.titleScreen));
 				phase++;
 				wait = 25;
 				return;
-			case 13:
+			case 12:
 				shot(mc, "cubiqmenu-ingame");
 				// Wieder das Aussehen aus der Launcher-Datei (bzw. Standard).
-				Theme.set(Theme.of("dark", "redstone", null));
+				Theme.set(Theme.of("dark", "cubiq", null));
 				Theme.loadFrom(mc.gameDirectory.toPath().resolve("config"));
 				log("fertig");
 				phase++;

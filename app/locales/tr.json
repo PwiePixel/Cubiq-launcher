@@ -2379,6 +2379,21 @@
       "updatesPortable": "Taşınabilir sürüm – güncellemeler indirme sayfasında"
     },
     "appearance": {
+      "look": {
+        "title": "Tasarım",
+        "text": "Tüm görünümü değiştirir: arka plan sahnesi, renkler ve küçük ayrıntılar. Renk teması ve vurgu rengi senin ayarladığın gibi kalır; Cubiq Client tasarımı oyuna taşır.",
+        "choose": "{name} tasarımını kullan",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Logonun lacivert tonu ve Cubiq yeşili vurgular"
+          },
+          "winter": {
+            "name": "Kuzey Işıkları",
+            "text": "Yüzen karlı adaların üzerinde Cubiq yeşili kutup ışıkları"
+          }
+        }
+      },
       "colorScheme": "Renk teması",
       "themes": {
         "dark": "Koyu",

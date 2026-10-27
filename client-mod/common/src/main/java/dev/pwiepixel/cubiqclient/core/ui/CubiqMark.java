@@ -59,6 +59,23 @@ public final class CubiqMark {
 	}
 
 	/**
+	 * Umriss des Zeichens in einer Farbe ({@code argb} mit Deckkraft), Rauten der Spur so blass wie in {@link #draw}. Das
+	 * Design „Polarlicht“ legt ihn leicht nach oben versetzt hinter das Zeichen – Schnee auf allen oberen Kanten.
+	 */
+	public static void silhouette(Canvas c, int x, int y, int cells, int px, int argb) {
+		if (cells < 4 || px <= 0 || (argb >>> 24) == 0) return;
+		int[] trailAlpha = {0, 255, 255, 255, 255, 230, 160, 95};
+		int[][] rows = rows(cells);
+		for (int row = 0; row < rows.length; row++) {
+			int[] runs = rows[row];
+			for (int i = 0; i + 2 < runs.length; i += 3) {
+				int a = Math.round((argb >>> 24) * trailAlpha[runs[i + 2]] / 255f);
+				c.fill(x + runs[i] * px, y + row * px, x + runs[i + 1] * px, y + (row + 1) * px, ColorMath.withAlpha(argb, a));
+			}
+		}
+	}
+
+	/**
 	 * Zeichen und Schriftzug „CUBIQ“ nebeneinander (Kopfzeilen, Ladebildschirm): das Zeichen etwas höher als der
 	 * Schriftzug, beide in der Akzentfarbe. {@code scale} = GUI-Pixel je Punkt der Pixelschrift, (x, y) = linke obere
 	 * Ecke des Schriftzugs (das Zeichen ragt etwas darüber hinaus). Liefert die Breite.

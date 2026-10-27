@@ -1,0 +1,213 @@
+/*
+ * Design „Polarlicht“ (`data-design="winter"` auf <html>, utils/design.ts) – alles, was das Design an der
+ * Oberfläche ändert, steht hier. Es überschreibt fast nur die Variablen aus main.css: die Grundskala in kaltem
+ * Nachtblau (bzw. als heller Morgen), Kanten, Schatten, Auswahl, Schein und das isometrische Raster in Eisfarben,
+ * Eis-Cyan für „läuft“. Dazu ein paar Details: Karten und Menüs wie mattes Eisglas, ein Saum aus Pixel-Schnee oben
+ * auf Karten, Menüs und dem Spielen-Knopf, ein eisiger Schimmer auf Fortschrittsbalken und Schnee auf dem Logo und
+ * dem kleinen Würfel vor Überschriften. Die Akzentfarbe bleibt frei wählbar (ab Werk Eisblau).
+ * Halloween liegt darüber: jede Regel gilt nur ohne `data-event="halloween"`.
+ *
+ * Der Cubiq Client zeigt im Spiel dasselbe: die Grundskala steht in core/ui/Theme.java (Zweig „winter“), der
+ * Schneesaum mit demselben Profil in core/ui/winter/Frost.java (LIP) – Werte bitte beidseitig ändern.
+ */
+
+/* --- Farben ---------------------------------------------------------------------------------------------- */
+/*
+ * Wie die Navy-Skala von Cubiq: 950–700 sind Flächen und Kanten (Grund → Dock/Karten → Dialoge/Menüs →
+ * Bedienelemente → kräftige Kanten), 600–50 Schrift – auch 600 hält auf Karten mindestens 4,5:1 Kontrast.
+ */
+:root[data-design="winter"]:not([data-event="halloween"]) {
+  --color-base-950: #070c18;
+  --color-base-900: #0a1222;
+  --color-base-850: #0e182c;
+  --color-base-800: #142138;
+  --color-base-700: #1e2e4a;
+  --color-base-600: #7489a8;
+  --color-base-500: #889bb9;
+  --color-base-400: #a2b3cd;
+  --color-base-300: #bfcce0;
+  --color-base-200: #d4def0;
+  --color-base-100: #e4ecf8;
+  --color-base-50: #eef5fc;
+  --color-line: #182840;
+  --color-line-strong: #2c4366;
+  --color-frame: #050913;
+  /* „Läuft“ (Spiel gestartet, Download aktiv) ist Eis-Cyan statt Lime. */
+  --color-live-200: #d7f6ff;
+  --color-live-300: #aeeeff;
+  --color-live-400: #6fdcf5;
+  --color-live-900: #0b2a36;
+  --winter-ice: #9fe7ff;
+  /* Schatten in tiefem Nachtblau, die Lichtkante oben mit einem Hauch Eis. */
+  --shadow-rgb: 1 5 14;
+  --edge-light: inset 0 1px 0 rgb(200 235 255 / 0.06);
+  /* Schein, Auswahl und Raster: Akzent mit Eis gemischt – frostig, folgt aber weiter der Akzentfarbe. */
+  --glow-primary: color-mix(in srgb, color-mix(in srgb, var(--color-primary-500) 60%, var(--winter-ice)) 38%, transparent);
+  --pick-edge: color-mix(in srgb, color-mix(in srgb, var(--color-primary-400) 65%, var(--winter-ice)) 60%, transparent);
+  --iso-line: color-mix(in srgb, var(--winter-ice) 11%, transparent);
+  /* Isometrisches Raster in Eisfarbe, an jedem Kreuzungspunkt ein winziger Pixel-Schneekristall. */
+  --iso-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='30' viewBox='0 0 52 30' shape-rendering='crispEdges'%3E%3Cpath d='M0 0L52 30M0 30L52 0M0 0V30M26 0V30M52 0V30' stroke='%23bfe9ff' stroke-opacity='.05' stroke-width='1' fill='none'/%3E%3Cpath d='M24 15h5v1h-5zM26 13h1v5h-1z' fill='%23e8f8ff' fill-opacity='.14'/%3E%3C/svg%3E");
+  /* Mattes Eisglas für Karten und der Schneesaum (Profil wie Frost.LIP im Cubiq Client: je Spalte 2–5 Pixel
+     Schnee mit heller Oberkante und einem Schatten darunter). */
+  --winter-glass: color-mix(in srgb, var(--color-base-900) 84%, transparent);
+  --winter-lip: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='6' shape-rendering='crispEdges'><path fill='%239db9d9' d='M0 2h4v1h-4zM6 2h5v1h-5zM15 2h5v1h-5zM21 2h3v1h-3zM4 3h2v1h-2zM11 3h1v1h-1zM14 3h1v1h-1zM20 3h1v1h-1zM12 4h1v1h-1zM13 5h1v1h-1z'/><path fill='%23eef6ff' d='M0 1h24v1h-24zM4 2h2v1h-2zM11 2h4v1h-4zM20 2h1v1h-1zM12 3h2v1h-2zM13 4h1v1h-1z'/><path fill='%23ffffff' d='M0 0h24v1h-24z'/></svg>");
+  /* Ein Pixel des Saums sind 2 CSS-Pixel – im Spiel ein GUI-Pixel. */
+  --winter-lip-size: 48px 12px;
+  --winter-dust: rgb(244 250 255 / 0.8);
+  --winter-cap: #eef6ff;
+}
+:root[data-design="winter"][data-theme="oled"]:not([data-event="halloween"]) {
+  --color-base-950: #000000;
+  --color-base-900: #04070e;
+  --color-base-850: #080d18;
+  --color-base-800: #0e1524;
+  --color-base-700: #18233a;
+  --color-line: #101a2c;
+  --color-line-strong: #22314c;
+  --color-frame: #000000;
+}
+/* Heller Morgen über dem Eis. */
+:root[data-design="winter"][data-theme="light"]:not([data-event="halloween"]) {
+  --color-base-950: #eaf2f9;
+  --color-base-900: #ffffff;
+  --color-base-850: #f4f8fc;
+  --color-base-800: #e3ecf5;
+  --color-base-700: #cfdbe8;
+  --color-base-600: #556a86;
+  --color-base-500: #4b5f7a;
+  --color-base-400: #40536c;
+  --color-base-300: #33455d;
+  --color-base-200: #25354c;
+  --color-base-100: #18253a;
+  --color-base-50: #0c1422;
+  --color-line: #d9e4ef;
+  --color-line-strong: #bccbdc;
+  --color-frame: #dde8f2;
+  --color-live-200: #0a5970;
+  --color-live-300: #0e6f8a;
+  --color-live-400: #2fb6d6;
+  --color-live-900: #ddf5fb;
+  --shadow-rgb: 30 62 104;
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.85);
+  --pick-edge: color-mix(in srgb, color-mix(in srgb, var(--color-primary-600) 70%, #2a8cc0) 60%, transparent);
+  --iso-line: color-mix(in srgb, #2a8cc0 13%, transparent);
+  --iso-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='30' viewBox='0 0 52 30' shape-rendering='crispEdges'%3E%3Cpath d='M0 0L52 30M0 30L52 0M0 0V30M26 0V30M52 0V30' stroke='%230c3a5c' stroke-opacity='.06' stroke-width='1' fill='none'/%3E%3Cpath d='M24 15h5v1h-5zM26 13h1v5h-1z' fill='%232a8cc0' fill-opacity='.2'/%3E%3C/svg%3E");
+  --winter-glass: color-mix(in srgb, #ffffff 82%, transparent);
+  --winter-lip: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='6' shape-rendering='crispEdges'><path fill='%23b3c9e1' d='M0 2h4v1h-4zM6 2h5v1h-5zM15 2h5v1h-5zM21 2h3v1h-3zM4 3h2v1h-2zM11 3h1v1h-1zM14 3h1v1h-1zM20 3h1v1h-1zM12 4h1v1h-1zM13 5h1v1h-1z'/><path fill='%23e6f1fb' d='M0 1h24v1h-24zM4 2h2v1h-2zM11 2h4v1h-4zM20 2h1v1h-1zM12 3h2v1h-2zM13 4h1v1h-1z'/><path fill='%23ffffff' d='M0 0h24v1h-24z'/></svg>");
+  --winter-dust: rgb(120 160 205 / 0.9);
+  --winter-cap: #c4dff3;
+}
+
+/* --- Schnee auf dem Logo und dem kleinen Würfel vor Überschriften ----------------------------------------- */
+:root[data-design="winter"]:not([data-event="halloween"]) img[src="/logo.png"] {
+  filter: drop-shadow(0 -1px 0 var(--winter-dust));
+}
+:root[data-design="winter"]:not([data-event="halloween"]) .cube-mark .cube-top {
+  fill: var(--winter-cap);
+}
+
+/* --- Flächen ---------------------------------------------------------------------------------------------- */
+/* In der Komponenten-Ebene: Hilfsklassen an einem Element (eigene Hintergründe) gewinnen weiter. */
+@layer components {
+  /* Karten wie mattes Eisglas, oben liegt der Schneesaum. */
+  :root[data-design="winter"]:not([data-event="halloween"]) .card {
+    background-color: var(--winter-glass);
+    background-image: var(--winter-lip), linear-gradient(180deg, color-mix(in srgb, var(--winter-ice) 5%, transparent), transparent 40%);
+    background-repeat: repeat-x, no-repeat;
+    background-size: var(--winter-lip-size), 100% 100%;
+  }
+  /* Unter der Maus: ein eisiger Rand mit leichtem Schein. */
+  :root[data-design="winter"]:not([data-event="halloween"]) .card-hover:hover {
+    box-shadow:
+      var(--edge-light),
+      var(--elev-2),
+      0 0 0 1px color-mix(in srgb, var(--winter-ice) 24%, transparent),
+      0 0 18px -6px color-mix(in srgb, var(--winter-ice) 30%, transparent);
+  }
+  /* Menüs: Eisglas mit Unschärfe dahinter (ohne „Erweitertes Rendering“ nur durchscheinend). */
+  :root[data-design="winter"]:not([data-event="halloween"]) .menu {
+    background-color: color-mix(in srgb, var(--color-base-850) 88%, transparent);
+    background-image: var(--winter-lip);
+    background-repeat: repeat-x;
+    background-size: var(--winter-lip-size);
+    backdrop-filter: blur(14px) saturate(1.25);
+  }
+  /* Ladeplatzhalter: ein kalter Glanz zieht darüber. */
+  :root[data-design="winter"]:not([data-event="halloween"]) .skeleton::after {
+    background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--winter-ice) 12%, transparent) 50%, transparent 80%);
+  }
+}
+
+/* Seitenwechsel: ein eisiger Lichtstreif statt des grünen Balkens. */
+:root[data-design="winter"]:not([data-event="halloween"]) .route-signal::after {
+  background: linear-gradient(90deg, transparent, var(--color-primary-500), #e8fbff, var(--winter-ice), transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--winter-ice) 60%, transparent);
+}
+
+/* --- Spielen-Knopf (PlayButton.vue) ----------------------------------------------------------------------- */
+/* Bereit: Schneesaum oben, ein kühler Glanz quer über den Knopf – beim Überfahren wandert er einmal hinüber. */
+:root[data-design="winter"]:not([data-event="halloween"]) .play-idle {
+  background-image: var(--winter-lip), linear-gradient(112deg, transparent 32%, rgb(255 255 255 / 0.16) 44%, transparent 56%);
+  background-repeat: repeat-x, no-repeat;
+  background-size: var(--winter-lip-size), 220% 100%;
+  background-position: 0 0, 100% 0;
+}
+:root[data-design="winter"]:not([data-event="halloween"]) .play-idle:hover {
+  animation: winter-glint 1.4s ease-out 1;
+}
+/* Beim Start und Installieren füllt sich der Knopf mit Eis, über das ein Schimmer läuft. */
+:root[data-design="winter"]:not([data-event="halloween"]) :is(.play-busy, .play-running) {
+  background-image: var(--winter-lip);
+  background-repeat: repeat-x;
+  background-size: var(--winter-lip-size);
+}
+:root[data-design="winter"]:not([data-event="halloween"]) .play-fill {
+  background:
+    linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.22) 48%, transparent 60%) 0 0 / 250% 100% no-repeat,
+    linear-gradient(90deg, color-mix(in srgb, var(--color-primary-600) 60%, transparent), color-mix(in srgb, var(--winter-ice) 45%, transparent));
+  animation: winter-shimmer 2.6s linear infinite;
+}
+
+/* --- Fortschritt (ProgressBar.vue) ------------------------------------------------------------------------ */
+:root[data-design="winter"]:not([data-event="halloween"]) .progress {
+  background: color-mix(in srgb, var(--winter-ice) 9%, var(--color-base-800));
+  box-shadow: inset 0 1px 0 rgb(0 0 0 / 0.25);
+}
+:root[data-design="winter"]:not([data-event="halloween"]) .progress-fill {
+  background:
+    linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.55) 46%, transparent 62%) 0 0 / 250% 100% no-repeat,
+    linear-gradient(90deg, var(--color-primary-600), var(--color-primary-400) 70%, color-mix(in srgb, var(--winter-ice) 70%, white));
+  box-shadow: 0 0 10px -2px color-mix(in srgb, var(--winter-ice) 55%, transparent);
+  animation: winter-shimmer 2.2s linear infinite;
+}
+:root[data-design="winter"]:not([data-event="halloween"]) .progress.powered .progress-fill {
+  background:
+    linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.6) 46%, transparent 62%) 0 0 / 250% 100% no-repeat,
+    linear-gradient(90deg, var(--color-live-400), var(--color-live-300));
+  animation: winter-shimmer 2.2s linear infinite;
+}
+:root[data-design="winter"]:not([data-event="halloween"]) .progress.indeterminate::after {
+  background: linear-gradient(90deg, transparent, var(--color-primary-400), #f2fbff, var(--color-primary-400), transparent);
+}
+
+@keyframes winter-shimmer {
+  from {
+    background-position: 160% 0, 0 0;
+  }
+  to {
+    background-position: -60% 0, 0 0;
+  }
+}
+@keyframes winter-glint {
+  from {
+    background-position: 0 0, 100% 0;
+  }
+  to {
+    background-position: 0 0, -20% 0;
+  }
+}
+
+/* Weniger Bewegung: Glanz und Schimmer stehen. */
+:root[data-reduced-motion][data-design="winter"] :is(.play-idle:hover, .play-fill, .progress-fill) {
+  animation: none;
+}

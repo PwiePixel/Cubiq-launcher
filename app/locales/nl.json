@@ -2379,6 +2379,21 @@
       "updatesPortable": "Draagbare versie – updates staan op de downloadpagina"
     },
     "appearance": {
+      "look": {
+        "title": "Ontwerp",
+        "text": "Verandert het hele uiterlijk: achtergrondscène, kleuren en kleine details. Kleurthema en accentkleur blijven zoals je ze hebt ingesteld, en de Cubiq Client neemt het ontwerp mee in het spel.",
+        "choose": "Ontwerp {name} gebruiken",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Marineblauw uit het logo met accenten in Cubiq-groen"
+          },
+          "winter": {
+            "name": "Noorderlicht",
+            "text": "Noorderlicht in Cubiq-groen boven zwevende sneeuweilanden"
+          }
+        }
+      },
       "colorScheme": "Kleurthema",
       "themes": {
         "dark": "Donker",

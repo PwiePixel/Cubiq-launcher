@@ -429,11 +429,6 @@ public final class ModMenu extends UiScreen {
 				grid(c, cx, cy, cw, ch, mouseX, mouseY, dt);
 				break;
 		}
-		if (t.winter && open < 0.999f) {
-			// Winternacht: das Fenster friert beim Öffnen kurz an – heller Reif, der gleich wieder klar wird.
-			float frost = 1f - Anim.easeOut(open);
-			c.fill(px + 1, py + 1, px + pw - 1, py + ph - 1, ColorMath.withAlpha(0xFFEAF6FF, Math.round(110 * frost)));
-		}
 		if (t.fox && open < 0.999f) {
 			// Fuchsbau: das Fenster glimmt beim Öffnen kurz warm auf (wie die Menüs im Launcher).
 			float ember = 1f - Anim.easeOut(open);
@@ -445,17 +440,20 @@ public final class ModMenu extends UiScreen {
 	private void header(Canvas c, int px, int py, int pw, int mx, int my) {
 		Theme t = Theme.get();
 		Paint.windowHeader(c, px, py, pw, HEADER_H, t.surfaceHigh, t.border);
-		// Schriftzug: Cubiq-Zeichen mit „Cubiq“ in Pixelschrift (Winternacht/Fuchsbau: leuchtend), daneben "Client"
+		// Schriftzug: Cubiq-Zeichen mit „Cubiq“ in Pixelschrift (Polarlicht: Schnee auf dem Zeichen, Fuchsbau: leuchtend),
+		// daneben "Client"
 		int lx = px + PAD;
 		int ly = py + (HEADER_H - PixelFont.HEIGHT * 2) / 2;
 		List<int[]> rects = PixelFont.rects("CUBIQ");
 		int clientX;
-		if (t.winter || t.fox || t.halloween) {
+		if (t.fox || t.halloween) {
 			int glow = ColorMath.withAlpha(t.glow, 40);
 			for (int[] r : rects) c.fill(lx + r[0] * 2 - 1, ly + r[1] * 2 - 1, lx + r[2] * 2 + 1, ly + r[3] * 2 + 1, glow);
 			int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
 			for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
 			clientX = lx + PixelFont.width("CUBIQ") * 2 + 5;
+		} else if (t.winter) {
+			clientX = lx + dev.pwiepixel.cubiqclient.core.ui.winter.Frost.lockup(c, lx, ly, 2, 1f) + 5;
 		} else {
 			clientX = lx + dev.pwiepixel.cubiqclient.core.ui.CubiqMark.lockup(c, lx, ly, 2, 1f) + 5;
 		}
@@ -486,26 +484,6 @@ public final class ModMenu extends UiScreen {
 				c.fill(fx, py + HEADER_H - 1, fx + 2, py + HEADER_H, ColorMath.withAlpha(Ember.FLAME_CORE, Math.round(220 * f)));
 			}
 		}
-		if (t.winter) {
-			// Schnee auf dem Schriftzug, eine Schneeflocke daneben und eine Frostlinie mit Eiskristallen unter dem Kopf.
-			dev.pwiepixel.cubiqclient.core.ui.title.TitleUi.snowCaps(c, rects, lx, ly, 2);
-			float sec = (System.nanoTime() / 1_000_000L % 100_000L) / 1000f;
-			dev.pwiepixel.cubiqclient.core.ui.winter.Frost.snowflake(c, clientX + c.textWidth(client) + 5, py + (HEADER_H - 9) / 2, 1,
-					t.light ? 0xFF2B97D6 : 0xFFB8E7FF, dev.pwiepixel.cubiqclient.core.ui.winter.Frost.glint(sec));
-			int fx2 = px + 1 + Math.round((pw - 2) * 0.45f);
-			int segs = 6;
-			for (int i = 0; i < segs; i++) {
-				int sx = px + 1 + (fx2 - px - 1) * i / segs;
-				int ex = px + 1 + (fx2 - px - 1) * (i + 1) / segs;
-				int a = Math.round(200 * (1f - i / (float) segs));
-				c.fill(sx, py + HEADER_H - 1, ex, py + HEADER_H, ColorMath.withAlpha(t.accentText, a));
-			}
-			for (int fx = px + 3; fx < fx2 - 2; fx += 14) {
-				float f = 1f - (fx - px) / (float) Math.max(1, fx2 - px);
-				c.fill(fx, py + HEADER_H - 2, fx + 2, py + HEADER_H, ColorMath.withAlpha(0xFFFFFFFF, Math.round(190 * f)));
-			}
-		}
-
 		// Schließen
 		int closeSize = 16;
 		int closeX = px + pw - PAD - closeSize;

@@ -1,7 +1,5 @@
 package dev.pwiepixel.cubiqclient.core.ui.fox;
 
-import dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath;
-
 /**
  * Bewegtes in der Fuchsbau-Szene (Port von {@code app/utils/fox/particles.ts} und {@code sleep.ts}), nur Zahlen. Ein
  * Takt = ein Bild (80 ms): treibende Kirschblüten und ein paar Herbstblätter, Glühwürmchen über der Wiese, Funken vom
@@ -32,9 +30,9 @@ public final class FoxParticles {
 		public final byte[] size;
 		private final int w;
 		private final int h;
-		private final WinterMath.Rng rand;
+		private final FoxMath.Rng rand;
 
-		public Leaves(int w, int h, WinterMath.Rng rand, double density) {
+		public Leaves(int w, int h, FoxMath.Rng rand, double density) {
 			this.w = w;
 			this.h = h;
 			this.rand = rand;
@@ -92,7 +90,7 @@ public final class FoxParticles {
 		public int ay;
 		public double aa;
 
-		public Fireflies(WinterMath.Rng rand, int n, double x0, double x1, double y0, double y1) {
+		public Fireflies(FoxMath.Rng rand, int n, double x0, double x1, double y0, double y1) {
 			count = Math.max(0, n);
 			hx = new double[count];
 			hy = new double[count];
@@ -136,9 +134,9 @@ public final class FoxParticles {
 		public final int[] life = new int[MAX];
 		public final int[] max = new int[MAX];
 		public int count;
-		private final WinterMath.Rng rand;
+		private final FoxMath.Rng rand;
 
-		public Sparks(WinterMath.Rng rand) {
+		public Sparks(FoxMath.Rng rand) {
 			this.rand = rand;
 		}
 
@@ -194,7 +192,7 @@ public final class FoxParticles {
 	public static boolean twitch(double seconds, boolean calm) {
 		if (calm) return false;
 		int slot = (int) Math.floor(seconds / 20);
-		double at = 4 + WinterMath.noise(slot, 3, 97) * 12;
+		double at = 4 + FoxMath.noise(slot, 3, 97) * 12;
 		double local = seconds - slot * 20;
 		return local >= at && local < at + 0.3;
 	}

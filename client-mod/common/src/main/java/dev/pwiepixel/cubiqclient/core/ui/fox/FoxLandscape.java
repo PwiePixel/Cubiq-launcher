@@ -1,15 +1,13 @@
 package dev.pwiepixel.cubiqclient.core.ui.fox;
 
-import dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.clamp;
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.noise;
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.smooth;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.clamp;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.noise;
+import static dev.pwiepixel.cubiqclient.core.ui.fox.FoxMath.smooth;
 
 /**
  * Aufbau der Fuchsbau-Landschaft (Port von {@code app/utils/fox/landscape.ts}, nur Daten, testbar): ein Minecraft-Wald
@@ -229,7 +227,7 @@ public final class FoxLandscape {
 		w = Math.max(8, cols);
 		h = Math.max(8, rows);
 		seed = seedIn;
-		final WinterMath.Rng rand = new WinterMath.Rng(seed ^ 0xf0c5);
+		final FoxMath.Rng rand = new FoxMath.Rng(seed ^ 0xf0c5);
 		int s = seed & 0xffff;
 
 		int size = w >= 160 && h >= 90 ? 2 : (w >= 100 && h >= 44 ? 1 : 0);
@@ -397,7 +395,7 @@ public final class FoxLandscape {
 		}
 	}
 
-	private static int treeSeed(WinterMath.Rng rand) {
+	private static int treeSeed(FoxMath.Rng rand) {
 		return (int) (rand.next() * 1e9);
 	}
 

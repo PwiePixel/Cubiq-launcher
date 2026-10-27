@@ -8,7 +8,7 @@ import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 /**
  * Kleines „NEU“-Schild für Kacheln, Einstellungszeilen und die Leiste: eine Pille in der Akzentfarbe mit dunkler Schrift
- * (wie die Abzeichen im Launcher), in Winternacht/Fuchsbau/Halloween eine sanft pulsierende Laterne.
+ * (wie die Abzeichen im Launcher), in Fuchsbau/Halloween eine sanft pulsierende Laterne.
  */
 public final class NewBadge {
 	public static final int HEIGHT = 10;
@@ -29,7 +29,7 @@ public final class NewBadge {
 	public static int draw(Canvas c, int x, int y) {
 		Theme t = Theme.get();
 		int w = width(c);
-		if (t.halloween || t.winter || t.fox) {
+		if (t.halloween || t.fox) {
 			// Sanftes Pulsieren, damit neue Einträge ins Auge fallen (ohne zu blinken).
 			float pulse = 0.75f + 0.25f * (float) Math.sin(System.currentTimeMillis() / 380.0);
 			Paint.glow(c, x, y, w, HEIGHT, t.faceGlow, 0.35f * pulse);

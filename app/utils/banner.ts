@@ -1,10 +1,13 @@
 import { HALLOWEEN_EVENT } from './halloween'
 import { paintMoonnightBanner } from './moonnight/banner'
+import { paintWinterBanner } from './winter/banner'
+import { documentVariant } from './winter/palette'
 
 // Titelbild für Instanzen ohne eigenes Banner: ein ruhiges Motiv im Stil des Logos – ein
 // isometrischer Würfel als Umriss und eine Spur aus Pixel-Rauten in der Akzentfarbe, aus der
 // Instanz-ID erzeugt. So hat jede Instanz von Anfang an ein eigenes, stabiles Bild.
-// Ergebnis ist eine kleine SVG-Data-URL; zu Halloween ein Standbild der Mondnacht.
+// Ergebnis ist eine kleine SVG-Data-URL; zu Halloween ein Standbild der Mondnacht, im Design „Polarlicht“
+// eine kleine Polarlicht-Szene mit schwebenden Schnee-Inseln (Pixel-Art, siehe `isPixelBanner`).
 
 export const BANNER_W = 512
 export const BANNER_H = 192
@@ -90,19 +93,27 @@ function documentAccent(): string {
   return /^#[0-9a-f]{3,8}$/i.test(value) ? value : '#71a330'
 }
 
+/** Zeigt das erzeugte Motiv Pixel-Art (pixelig skalieren statt weichzeichnen)? */
+export function isPixelBanner(url: string | null): boolean {
+  return !!url && url.startsWith('data:image/png') && document.documentElement.dataset.design === 'winter'
+}
+
 /** Data-URL des Motivs; `null` ohne Dokument (Tests, Server). */
 export function generatedBanner(id: string): string | null {
   if (typeof document === 'undefined') return null
   const root = document.documentElement
   const halloween = root.dataset.event === HALLOWEEN_EVENT
-  const accent = halloween ? '' : documentAccent()
-  const key = `${id}|${halloween ? HALLOWEEN_EVENT : accent}|${root.dataset.theme ?? 'dark'}`
+  const winter = !halloween && root.dataset.design === 'winter'
+  const accent = halloween || winter ? '' : documentAccent()
+  const look = halloween ? HALLOWEEN_EVENT : winter ? 'winter' : accent
+  const key = `${id}|${look}|${root.dataset.theme ?? 'dark'}`
   const hit = cache.get(key)
   if (hit) return hit
   const seed = bannerSeed(id)
   let url: string | null = null
   try {
     if (halloween) url = paintMoonnightBanner(seed)?.toDataURL('image/png') ?? null
+    else if (winter) url = paintWinterBanner(seed, documentVariant())?.toDataURL('image/png') ?? null
     else url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(bannerSvg(seed, accent))}`
   } catch {
     url = null

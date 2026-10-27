@@ -7,8 +7,9 @@ import dev.pwiepixel.cubiqclient.core.ui.Theme;
 /**
  * Drehscheibe unter der Spielerfigur. Im Cubiq-Design ein flacher Würfel als Sockel, der sich mit der Figur dreht:
  * Oberseite in der Flächenfarbe mit feiner Kante in der Akzentfarbe, die sichtbaren Seiten zum Licht hin heller,
- * darunter ein weicher Schein. Winternacht (Eisscholle), Fuchsbau (Insel) und Halloween (Grabhügel) haben eigene
- * Sockel. Alles aus Rechtecken im Pixelraster ({@code px} GUI-Pixel je Bildpunkt).
+ * darunter ein weicher Schein. Im Polarlicht ist der Würfel verschneit wie die schwebenden Inseln der Szene; Fuchsbau
+ * (Insel) und Halloween (Grabhügel) haben eigene Sockel. Alles aus Rechtecken im Pixelraster ({@code px} GUI-Pixel je
+ * Bildpunkt).
  *
  * <p>Drehung: langsam von selbst ({@link #AUTO_SPEED}); per Ziehen mit der Maus mit Schwung, der danach
  * wieder in die Eigendrehung übergeht. Gezeichnet wird in zwei Durchgängen – hinterer Teil vor der Figur,
@@ -19,7 +20,7 @@ public final class Turntable {
 	public static final float AUTO_SPEED = 15f;
 	/** Grad je GUI-Pixel beim Ziehen. */
 	static final float DRAG_DEG_PER_PX = 1.1f;
-	/** Plätze am Rand (Schneehügel, Blumen) und Punkte auf dem Ring (Reif, Laub). */
+	/** Plätze am Rand (Blumen) und Punkte auf dem Ring (Laub). */
 	private static final int RING_SPOTS = 6;
 	private static final int RING_DOTS = 28;
 
@@ -115,7 +116,7 @@ public final class Turntable {
 			return;
 		}
 		if (t.winter) {
-			floeBack(c, t, cx, cy, radius, ry, thick, squash, px, time);
+			snowBlock(c, t, cx, cy, radius, thick, squash, px);
 			return;
 		}
 		if (t.fox) {
@@ -125,16 +126,11 @@ public final class Turntable {
 		pedestal(c, t, cx, cy, radius, ry, thick, squash, px);
 	}
 
-	/** Vorderer Teil (nach der Figur): was vor den Füßen liegt (Reif, Blumen, Nebel); der Würfel-Sockel braucht nichts. */
+	/** Vorderer Teil (nach der Figur): was vor den Füßen liegt (Blumen, Nebel); die Würfel-Sockel brauchen nichts. */
 	public void drawFront(Canvas c, int cx, int cy, int radius, float squash, int px, float time) {
 		Theme t = Theme.get();
 		if (t.halloween) {
 			graveFront(c, cx, cy, radius, Math.max(px, Math.round(radius * squash)), px, time);
-			return;
-		}
-		if (t.winter) {
-			frostRing(c, t, cx, cy, radius, squash, px, time, false);
-			mounds(c, t, cx, cy, radius, squash, px, time, false);
 			return;
 		}
 		if (t.fox) {
@@ -258,6 +254,52 @@ public final class Turntable {
 		}
 	}
 
+	/**
+	 * Polarlicht: der Würfel-Sockel verschneit wie die schwebenden Inseln der Szene – Seiten aus nachtblauem Fels (zum Licht
+	 * hin heller), oben eine Schneedecke, die als Saum über die sichtbaren Seiten hängt, darunter ein paar Eiszapfen und ein
+	 * kühler Schein in Türkis.
+	 */
+	private void snowBlock(Canvas c, Theme t, int cx, int cy, int radius, int thick, float squash, int px) {
+		dev.pwiepixel.cubiqclient.core.ui.winter.WinterPalette p = dev.pwiepixel.cubiqclient.core.ui.winter.WinterPalette.of(t.themeName);
+		int ry = Math.max(px, Math.round(radius * squash));
+		for (int i = 3; i >= 1; i--) {
+			ellipse(c, cx, cy + thick, radius + i * 3 * px, ry + i * px, px, ColorMath.withAlpha(0xFF2AA894, 8 + (3 - i) * 7));
+		}
+		float spin = (float) Math.toRadians(angle);
+		float r = radius * 0.92f;
+		float[] xs = new float[4];
+		float[] ys = new float[4];
+		for (int k = 0; k < 4; k++) {
+			double a = spin + Math.PI / 4 + k * Math.PI / 2;
+			xs[k] = cx + (float) Math.cos(a) * r;
+			ys[k] = cy + (float) Math.sin(a) * r * squash;
+		}
+		int lip = Math.max(px, Math.round(thick * 0.3f / px) * px);
+		for (int k = 0; k < 4; k++) {
+			int j = (k + 1) % 4;
+			double normal = spin + Math.PI / 2 + k * Math.PI / 2;
+			if (Math.sin(normal) <= 0) continue;
+			float light = (float) (0.5 + 0.5 * Math.cos(normal - Math.PI * 0.75));
+			polygon(c, new float[]{xs[k], xs[j], xs[j], xs[k]}, new float[]{ys[k], ys[j], ys[j] + thick, ys[k] + thick}, px,
+					ColorMath.lerp(p.rockRight, p.rockLeft, light));
+			// Schneesaum unter der Oberkante und drei kleine Eiszapfen an der Unterkante.
+			polygon(c, new float[]{xs[k], xs[j], xs[j], xs[k]}, new float[]{ys[k], ys[j], ys[j] + lip, ys[k] + lip}, px,
+					ColorMath.lerp(p.snowRight, p.snowLeft, light));
+			for (int n = 1; n <= 3; n++) {
+				float f = n / 4f;
+				int ix = Math.round((xs[k] + (xs[j] - xs[k]) * f) / px) * px;
+				int iy = Math.round((ys[k] + (ys[j] - ys[k]) * f + thick) / px) * px;
+				c.fill(ix, iy, ix + px, iy + px * (n == 2 ? 3 : 2), p.ice);
+			}
+		}
+		polygon(c, xs, ys, px, p.snowTop);
+		for (int k = 0; k < 4; k++) {
+			int j = (k + 1) % 4;
+			boolean front = Math.sin(spin + Math.PI / 2 + k * Math.PI / 2) > 0;
+			edge(c, xs[k], ys[k], xs[j], ys[j], px, front ? p.snowLit : p.snowLeft);
+		}
+	}
+
 	/** Kante von (x0, y0) nach (x1, y1) im Pixelraster {@code px} (Dicke px): je Rasterzeile ein Stück. */
 	static void edge(Canvas c, float x0, float y0, float x1, float y1, int px, int argb) {
 		if (y1 < y0) {
@@ -306,85 +348,6 @@ public final class Turntable {
 			int x1 = Math.round(left / px) * px;
 			int x2 = Math.round(right / px) * px;
 			if (x2 > x1) c.fill(x1, y, x2, y + px, argb);
-		}
-	}
-
-	// --- Winternacht: Eisscholle ---
-
-	/**
-	 * Winternacht: statt des Würfel-Sockels eine Eisscholle auf dunklem Wasser – Seitenband aus geschichtetem Eis
-	 * mit Rissen und Luftblasen, die mitwandern, obenauf Schnee, ein Ring aus Reif mit umlaufendem Glitzern, kleine
-	 * Schneehügel mit Eiskristallen und in der Mitte eine Eislaterne im Boden.
-	 */
-	private void floeBack(Canvas c, Theme t, int cx, int cy, int radius, int ry, int thick, float squash, int px, float time) {
-		// Wasser: dunkle Kreise um die Scholle, eine Welle läuft langsam nach außen.
-		float wave = (time * 0.35f) % 1f;
-		int waterY = cy + thick + px;
-		ellipse(c, cx, waterY, radius + 4 * px, ry + 2 * px, px, t.light ? 0x40275A86 : 0x700A1A30);
-		int wr = radius + Math.round((2 + 4 * wave) * px);
-		ellipse(c, cx, waterY, wr, ry + Math.round((1 + 2 * wave) * px), px, ColorMath.withAlpha(0xFF9FD8FF, Math.round(30 * (1 - wave))));
-		ellipse(c, cx, waterY, wr - px, Math.max(px, ry + Math.round((1 + 2 * wave) * px) - px), px, t.light ? 0x40275A86 : 0x700A1A30);
-		// Leuchten unter der Scholle.
-		for (int i = 3; i >= 1; i--) {
-			ellipse(c, cx, cy + thick, radius + i * 3 * px, ry + i * px, px, ColorMath.withAlpha(t.faceGlow, 8 + (3 - i) * 6));
-		}
-		iceBand(c, cx, cy, radius, ry, thick, px);
-		// Oberfläche: Schnee, Kante im Schatten, Licht von rechts.
-		ellipse(c, cx, cy, radius, ry, px, 0xFF9FB8DA);
-		ellipse(c, cx, cy, radius - px, Math.max(px, ry - px), px, 0xFFDCE9F8);
-		ellipse(c, cx + px, cy, radius - 3 * px, Math.max(px, ry - 2 * px), px, 0xFFF2F8FF);
-		frostRing(c, t, cx, cy, radius, squash, px, time, true);
-		mounds(c, t, cx, cy, radius, squash, px, time, true);
-		// Mitte: Eislaterne im Schnee, pulsiert leise.
-		int pr = Math.max(2 * px, Math.round(radius * 0.36f / px) * px);
-		int pry = Math.max(px, Math.round(pr * squash));
-		float pulse = 0.55f + 0.45f * (float) (0.5 + 0.5 * Math.sin(time * 2.1));
-		ellipse(c, cx, cy, pr + px, pry + px, px, 0xFF2A4A70);
-		ellipse(c, cx, cy, pr, pry, px, ColorMath.lerp(t.faceOff, t.faceOn, 0.55f * pulse));
-		ellipse(c, cx, cy, Math.max(px, pr - 2 * px), Math.max(px, pry - px), px, ColorMath.withAlpha(t.faceHot, Math.round(80 * pulse)));
-	}
-
-	/** Seitenband der Scholle: Eisschichten (oben hell, unten tief blau), Risse und Blasen wandern mit der Drehung. */
-	private void iceBand(Canvas c, int cx, int cy, int rx, int ry, int thick, int px) {
-		int base = 0xFF7FB6E0;
-		int deep = 0xFF3C76A8;
-		int edge = 0xFF2A5A88;
-		for (int y = 0; y < ry + thick; y += px) {
-			int hw;
-			if (y < thick) {
-				hw = rx;
-			} else {
-				float fy = (y - thick + px / 2f) / (float) ry;
-				float f = 1f - fy * fy;
-				if (f <= 0f) continue;
-				hw = Math.round(rx * (float) Math.sqrt(f) / px) * px;
-			}
-			if (hw <= 0) continue;
-			float depth = y / (float) Math.max(px, ry + thick);
-			c.fill(cx - hw, cy + y, cx + hw, cy + y + px, ColorMath.lerp(base, deep, depth));
-			c.fill(cx - hw, cy + y, cx - hw + px, cy + y + px, edge);
-			c.fill(cx + hw - px, cy + y, cx + hw, cy + y + px, edge);
-		}
-		// Schichtfuge knapp unter der Oberkante.
-		int seamY = cy + Math.max(px, thick / 2);
-		c.fill(cx - rx + px, seamY, cx + rx - px, seamY + px, 0x50FFFFFF);
-		float phase = -(float) Math.toRadians(angle);
-		int rows = Math.max(1, thick / px);
-		for (int i = 0; i < 18; i++) {
-			double a = phase + i * (Math.PI * 2 / 18);
-			double s = Math.sin(a);
-			if (s <= 0.05) continue;
-			int x = cx + (int) Math.round(Math.cos(a) * (rx - px) / px) * px;
-			int row = (i * 7) % rows;
-			int y = cy + (int) Math.round(s * ry / px) * px + row * px;
-			if (y + px > cy + ry + thick - px) y = cy + ry + thick - 2 * px;
-			if ((i & 1) == 0) {
-				c.fill(x, y, x + px, y + px, 0xC0FFFFFF);
-			} else {
-				// Kurzer Riss schräg nach unten.
-				c.fill(x, y, x + px, y + px, 0xFF2F6596);
-				c.fill(x + px, y + px, x + 2 * px, y + 2 * px, 0xFF2F6596);
-			}
 		}
 	}
 
@@ -506,44 +469,4 @@ public final class Turntable {
 		}
 	}
 
-	/** Ring aus Reif: Punkte auf einer Ellipse, ein Glitzern läuft im Kreis. */
-	private void frostRing(Canvas c, Theme t, int cx, int cy, int rx, float squash, int px, float time, boolean back) {
-		float r = rx * 0.72f;
-		float spin = -(float) Math.toRadians(angle);
-		float head = (time * 0.8f) % 1f;
-		for (int i = 0; i < RING_DOTS; i++) {
-			double a = spin + i * (Math.PI * 2 / RING_DOTS);
-			double s = Math.sin(a);
-			if (back != (s < 0)) continue;
-			int x = cx + (int) Math.round(Math.cos(a) * r / px) * px;
-			int y = cy + (int) Math.round(s * r * squash / px) * px;
-			float pos = i / (float) RING_DOTS;
-			float behind = (head - pos + 1f) % 1f;
-			float glint = Math.max(0f, 1f - behind * 6f);
-			int color = ColorMath.lerp(0xFFAFCDEB, 0xFFFFFFFF, glint);
-			if (glint > 0.3f) c.fill(x - px, y - px, x + 3 * px, y + px, ColorMath.withAlpha(t.faceGlow, Math.round(50 * glint)));
-			c.fill(x, y, x + px * 2, y + px, color);
-		}
-	}
-
-	/** Kleine Schneehügel mit je einem Eiskristall obenauf, die abwechselnd funkeln. */
-	private void mounds(Canvas c, Theme t, int cx, int cy, int rx, float squash, int px, float time, boolean back) {
-		float r = rx * 0.9f;
-		float spin = -(float) Math.toRadians(angle);
-		for (int i = 0; i < RING_SPOTS; i++) {
-			double a = spin + (i + 0.5) * (Math.PI * 2 / RING_SPOTS);
-			double s = Math.sin(a);
-			if (back != (s < 0)) continue;
-			int w = px * 4;
-			int x = cx + (int) Math.round(Math.cos(a) * r / px) * px - w / 2;
-			int y = cy + (int) Math.round(s * r * squash / px) * px - px;
-			boolean on = ((int) (time * 1.5f) + i) % 3 != 0;
-			c.fill(x, y, x + w, y + px, 0xFFFFFFFF);
-			c.fill(x + px / 2, y - px, x + w - px / 2, y, 0xFFF2F8FF);
-			c.fill(x, y + px, x + w, y + 2 * px, 0xFFB7CCE6);
-			int crystal = on ? 0xFFDFF5FF : 0xFF7FAFDA;
-			c.fill(x + px + px / 2, y - 3 * px, x + 2 * px + px / 2, y - px, crystal);
-			if (on) c.fill(x, y - 4 * px, x + w, y - px, ColorMath.withAlpha(t.faceGlow, 34));
-		}
-	}
 }

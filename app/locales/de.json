@@ -2420,6 +2420,21 @@
       "updatesPortable": "Portable Version – Updates gibt es auf der Download-Seite"
     },
     "appearance": {
+      "look": {
+        "title": "Design",
+        "text": "Ändert das ganze Aussehen – Hintergrund-Szene, Farben und kleine Details. Farbschema und Akzentfarbe bleiben, wie du sie eingestellt hast, und der Cubiq Client übernimmt das Design ins Spiel.",
+        "choose": "Design {name} verwenden",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Navy aus dem Logo mit Akzenten in Cubiq-Grün"
+          },
+          "winter": {
+            "name": "Polarlicht",
+            "text": "Polarlicht in Cubiq-Grün über schwebenden Schneeinseln"
+          }
+        }
+      },
       "colorScheme": "Farbschema",
       "themes": {
         "dark": "Dunkel",
