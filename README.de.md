@@ -159,9 +159,10 @@ hat. Wenn ja,
 2. schreibt den neuen Abschnitt in [CHANGELOG.md](CHANGELOG.md) auf Englisch und Deutsch – aus den Spieler-Texten in
    [`changes/`](changes/README.md) (eine Datei je Änderung), sonst aus den Commit-Nachrichten
    ([so geht's](CONTRIBUTING.md#release-notes)),
-3. zeichnet das Bild des Release passend zum Text (eine kleine Voxel-Szene, z. B. ein Schraubenschlüssel für
-   Fehlerbehebungen oder eine Rakete für einen Start – `scripts/release-art.mjs`); Launcher, Website und GitHub-Release
-   zeigen es mit dem Update,
+3. zeichnet das Bild des Release passend zum Text – eine kleine animierte Pixel-Art-Szene mit Cubi, dem Würfel aus
+   dem Logo, z. B. neben einem Schraubenschlüssel für Fehlerbehebungen oder einer Rakete für einen Start
+   (`scripts/release-art.mjs`); Launcher, Website und GitHub-Release zeigen es mit dem Update, dazu die Screenshots
+   aus den Spieler-Texten,
 4. committet „Release vX.Y.Z“, setzt das Tag und startet [`release.yml`](.github/workflows/release.yml).
 
 `release.yml` baut den Windows-Installer (`Cubiq-Launcher_<version>_x64-setup.exe`), eine portable ZIP und die

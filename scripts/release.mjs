@@ -9,18 +9,20 @@
 // - Changelog: Spieler-Texte aus changes/*.md (und ältere Punkte unter „## Unreleased“) haben Vorrang, sonst
 //   entstehen sie aus den Commit-Nachrichten. Die übernommenen Dateien in changes/ werden gelöscht.
 //   Steht die Version schon im Changelog, bleibt ihr Text; nur das Datum wird auf heute gesetzt.
-// - Bild: hat der Abschnitt noch kein Motiv, zeichnet scripts/release-art.mjs eins passend zum Text
-//   (public/news/<version>/banner.png) und trägt es in die Banner-Zeile ein.
+// - Screenshots, die ein Spieler-Text aus changes/ mitbringt (Kommentar „shots:“ mit Dateinamen), ziehen nach
+//   public/news/<version>/ um (scripts/release-lib.mjs, relocateShots).
+// - Bild: hat der Abschnitt noch kein Motiv, zeichnet scripts/release-art.mjs eins passend zum Text – ruhig
+//   (public/news/<version>/banner.png) und bewegt (banner-anim.png) – und trägt beide in die Banner-Zeile ein.
 // - Nichts für Spieler seit dem letzten Release und kein fester Sprung: kein Release.
 // Ausgabe (für $GITHUB_OUTPUT): version=…, tag=…, title=…, skipped=true|false
 
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { changelogFor, parseChangelog, releaseTitle } from '../app/utils/changelog.ts'
 import { releaseArt } from './release-art.mjs'
-import { bumpFor, changelogItem, parseChangeNote, parseGitLog, prepareChangelog, setBannerMotif, setReleaseDate, today, unreleasedReady } from './release-lib.mjs'
+import { bumpFor, changelogItem, parseChangeNote, parseGitLog, prepareChangelog, relocateShots, setBannerMotif, setReleaseDate, today, unreleasedReady } from './release-lib.mjs'
 import { currentVersion, nextVersion, setVersion } from './version.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -85,14 +87,22 @@ if (!released) {
 
 let next = setReleaseDate(text, version, today())
 let consumed = []
+/** Screenshots der Spieler-Texte: changes/<datei> → public/news/<version>/<name> (relocateShots). */
+let shotMoves = []
 if (!changelogFor(parseChangelog(text), version)) {
-  const prepared = prepareChangelog(
-    text,
-    version,
-    today(),
-    items,
-    notes.map((n) => n.note),
-  )
+  const newsDir = join(root, 'public', 'news', version)
+  const taken = new Set(existsSync(newsDir) ? readdirSync(newsDir).map((name) => name.toLowerCase()) : [])
+  const relocated = notes.map((n) => {
+    const { preamble, moves } = relocateShots(n.note.preamble, version, taken)
+    shotMoves.push(...moves)
+    return { ...n.note, preamble }
+  })
+  const missing = shotMoves.filter((m) => !existsSync(join(changesDir, m.from)))
+  if (missing.length) {
+    console.error(`Screenshots fehlen in changes/: ${missing.map((m) => m.from).join(', ')}`)
+    process.exit(1)
+  }
+  const prepared = prepareChangelog(text, version, today(), items, relocated)
   if (!prepared) {
     console.error(`Für ${version} gibt es weder Punkte unter „## Unreleased“ noch Commits – kein Release.`)
     console.log('skipped=true')
@@ -102,18 +112,22 @@ if (!changelogFor(parseChangelog(text), version)) {
   consumed = notes.map((n) => n.name)
 }
 
-// Bild des Release (Motiv im Update-Banner), sofern der Abschnitt noch keins hat.
+// Bild des Release (Motiv im Update-Banner, ruhig und bewegt), sofern der Abschnitt noch keins hat.
 let entry = changelogFor(parseChangelog(next), version)
 let art = null
 if (entry && !entry.banner?.motif) {
   const motif = `/news/${version}/banner.png`
+  const anim = `/news/${version}/banner-anim.png`
   const file = join(root, 'public', motif)
-  art = existsSync(file) ? { png: null, topic: 'vorhanden' } : releaseArt({ version, text: entry.en || entry.de })
-  next = setBannerMotif(next, version, motif)
+  const animFile = join(root, 'public', anim)
+  // Liegt schon ein eigenes Bild bereit, bleibt es (die bewegte Fassung nur, wenn es sie auch gibt).
+  art = existsSync(file) ? { png: null, apng: null, topic: 'vorhanden' } : releaseArt({ version, text: entry.en || entry.de })
+  next = setBannerMotif(next, version, motif, art.apng || existsSync(animFile) ? anim : null)
   entry = changelogFor(parseChangelog(next), version)
   if (!dryRun && art.png) {
     mkdirSync(join(root, 'public', 'news', version), { recursive: true })
     writeFileSync(file, art.png)
+    writeFileSync(animFile, art.apng)
   }
 }
 
@@ -124,6 +138,12 @@ if (dryRun) {
   if (next !== text) writeFileSync(changelogPath, next)
   if (version !== current) setVersion(version)
   for (const name of consumed) rmSync(join(changesDir, name))
+  if (shotMoves.length) mkdirSync(join(root, 'public', 'news', version), { recursive: true })
+  for (const { from, to } of shotMoves) {
+    copyFileSync(join(changesDir, from), join(root, 'public', 'news', version, to))
+    // Dieselbe Datei kann in zwei Texten stehen – nur einmal löschen.
+    if (existsSync(join(changesDir, from))) rmSync(join(changesDir, from))
+  }
   console.error(`Version ${version} vorbereitet: ${title}${art ? ` (Bild: ${art.topic})` : ''}${consumed.length ? `, Texte aus changes/: ${consumed.join(', ')}` : ''}`)
 }
 console.log(`version=${version}\ntag=v${version}\ntitle=${title}\nskipped=false`)

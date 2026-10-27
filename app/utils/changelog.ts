@@ -9,9 +9,10 @@
 //
 // Das Banner jedes Updates hat einen festen Stil (dunkle Fläche, weicher Schein, feines Würfel-Raster); je
 // Version ändern sich nur Akzentfarbe und Motiv (ein freigestelltes Bild). Das Motiv zeichnet die
-// Release-Automatik für jede Version passend zum Inhalt (scripts/release-art.mjs); ohne Motiv zeigt der Launcher
-// das Cubiq-Logo:
-//   <!-- banner: accent=#71a330 motif=/news/0.1.2/banner.png -->
+// Release-Automatik für jede Version passend zum Inhalt (scripts/release-art.mjs) – als ruhiges Bild (`motif`)
+// und als bewegte Fassung (`anim`, animiertes PNG); ohne Motiv zeigt der Launcher das Cubiq-Logo:
+//   <!-- banner: accent=#71a330 motif=/news/0.1.2/banner.png anim=/news/0.1.2/banner-anim.png -->
+// Bei „Weniger Animationen“ zeigen Launcher und Website das ruhige Motiv.
 //
 // Screenshots der Neuerungen stehen als zweiter Kommentar direkt darunter – je Zeile eine Datei aus
 // public/news/<version>/ (PNG oder WebP, höchstens SHOTS_MAX), optional mit Bildunterschrift auf
@@ -47,6 +48,8 @@ export interface UpdateBanner {
   accent: string
   /** Eigenes Bild unter `/news/…`, sonst `null`. */
   motif: string | null
+  /** Bewegte Fassung des Motivs (animiertes PNG unter `/news/…`), sonst `null`; nur zusammen mit `motif`. */
+  anim: string | null
 }
 
 export interface UpdateShot {
@@ -70,12 +73,18 @@ const SHOT_PATH = /^\/news\/[\w.-]+\/[\w.-]+\.(?:png|webp)$/
 // eslint-disable-next-line no-control-regex -- Steuerzeichen sind genau das, was ausgeschlossen wird
 const SHOT_CAPTION = /^[^[\]<>\u0000-\u001f]{1,160}$/
 
-/** „accent=#ff7ab8 motif=/news/0.4.3/banner.png“ → Banner; ungültige Werte werden ignoriert. */
+/** Bild des Banners (`motif=` oder `anim=`): nur Dateien unter `/news/<ordner>/`, sonst `null`. */
+function bannerImage(raw: string, key: 'motif' | 'anim'): string | null {
+  const value = new RegExp(`(?:^|\\s)${key}=(\\/news\\/[\\w.-]+\\/[\\w.-]+\\.(?:png|webp))(?:\\s|$)`).exec(raw)?.[1] ?? null
+  return value && !value.includes('..') ? value : null
+}
+
+/** „accent=#ff7ab8 motif=/news/0.4.3/banner.png anim=…“ → Banner; ungültige Werte werden ignoriert. */
 export function parseBanner(raw: string): UpdateBanner | null {
   const accent = /(?:^|\s)accent=(#[0-9a-fA-F]{6})(?:\s|$)/.exec(raw)?.[1]
   if (!accent) return null
-  const motif = /(?:^|\s)motif=(\/news\/[\w.-]+\/[\w.-]+\.(?:png|webp))(?:\s|$)/.exec(raw)?.[1] ?? null
-  return { accent: accent.toLowerCase(), motif: motif && !motif.includes('..') ? motif : null }
+  const motif = bannerImage(raw, 'motif')
+  return { accent: accent.toLowerCase(), motif, anim: motif ? bannerImage(raw, 'anim') : null }
 }
 
 /**
@@ -289,7 +298,8 @@ export function releaseNotes(entry: ChangelogEntry, { ref }: { ref?: string } = 
   const at = ref ?? `v${version}`
   const en = githubImages(withShots(entry.en, entry, 'en'), at)
   const de = githubImages(withShots(entry.de, entry, 'de'), at)
-  const motif = entry.banner?.motif
+  // Bewegt, wenn es die bewegte Fassung gibt – GitHub zeigt animierte PNGs als Animation.
+  const motif = entry.banner?.anim ?? entry.banner?.motif
   const picture = motif ? `<p align="center"><img src="${githubFile(motif, at)}" alt="" width="220"></p>\n\n` : ''
   if (entry.title) return `${picture}# ${entry.title.en}\n\n${en}\n\n# ${entry.title.de}\n\n${de}\n`
   return `${picture}## What's new\n\n${en}\n\n## Neu in dieser Version\n\n${de}\n`

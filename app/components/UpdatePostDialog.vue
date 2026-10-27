@@ -47,7 +47,7 @@ function openWebsite() {
   <BaseDialog :title="heading ?? title" huge @close="emit('close')">
     <div ref="body">
       <div class="-mx-5 -mt-4 mb-5 h-44">
-        <UpdateBanner :kicker="kicker" :title="title" :accent="entry.banner?.accent" :motif="entry.banner?.motif" tag="p" />
+        <UpdateBanner :kicker="kicker" :title="title" :accent="entry.banner?.accent" :motif="entry.banner?.motif" :anim="entry.banner?.anim" tag="p" />
       </div>
       <UpdateShotGallery v-if="content.shots.length" v-model="shotIndex" :shots="content.shots" :accent="entry.banner?.accent" class="mb-6" />
       <p v-if="englishOnly" class="mb-3 text-xs text-base-400">{{ t('whatsNew.englishOnly') }}</p>

@@ -68,7 +68,7 @@ function hide() {
 <template>
   <section v-if="entry && hidden !== entry.version" class="news card relative overflow-hidden" :aria-label="title">
     <div class="relative h-44">
-      <UpdateBanner :kicker="updateKicker(entry)" :title="title" :accent="entry.banner?.accent" :motif="entry.banner?.motif" tag="h2" />
+      <UpdateBanner :kicker="updateKicker(entry)" :title="title" :accent="entry.banner?.accent" :motif="entry.banner?.motif" :anim="entry.banner?.anim" tag="h2" />
       <button type="button" class="absolute inset-0 cursor-pointer" :aria-label="t('updateNews.read')" @click="reading = 0" />
       <button
         type="button"

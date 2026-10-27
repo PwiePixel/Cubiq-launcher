@@ -7,13 +7,19 @@ Text unter „Was ist neu“, GitHub und die Website im Release – und löscht 
 entstehen und auf `main` zwischendurch Releases erscheinen.
 
 ```markdown
+<!-- shots:
+clip-gallery.png | The clip gallery | Die Clip-Galerie
+-->
+
 ### English
 
-- **Short headline.** One or two sentences for players: what is new or fixed, where to find it and why it helps.
+- **Short headline.** A short paragraph for players: what is new or fixed, where to find it, how to use it and why
+  it helps.
 
 ### Deutsch
 
-- **Kurze Überschrift.** Ein, zwei Sätze für Spieler: was neu oder behoben ist, wo man es findet und was es bringt.
+- **Kurze Überschrift.** Ein kurzer Absatz für Spieler: was neu oder behoben ist, wo man es findet, wie man es
+  benutzt und was es bringt.
 ```
 
 So schreiben:
@@ -23,9 +29,14 @@ So schreiben:
 - Beide Sprachen, gleicher Inhalt. Fett nur die Überschrift des Punkts.
 - Keine Namen, Erwähnungen oder Danksagungen – die Hinweise erklären nur das Update.
 - Mehrere Punkte in einer Datei sind in Ordnung, wenn sie zu derselben Änderung gehören.
-- Screenshots (freiwillig): Kommentar über `### English`, siehe `docs/release-screenshots.md`.
+- Ausführlich statt knapp: je Punkt ein kleiner Absatz – was genau neu ist, wo es steckt (Seite, Menü, Taste), wie
+  man es benutzt und was es bringt. Lieber ein konkretes Beispiel als ein Schlagwort.
+- **Fotos vom Update:** Bei allem, was man sieht, 1–3 Screenshots als PNG/WebP neben den Text in `changes/` legen
+  und oben im Kommentar „shots:“ mit Dateinamen und Bildunterschrift (English | Deutsch) eintragen. Das Release
+  verschiebt sie nach `public/news/<version>/`; Größen und Regeln in `docs/release-screenshots.md`.
 
 Keine Datei nötig für Änderungen, die Spieler nicht bemerken (Tests, CI, Doku, Umbauten) – dann den Commit mit
 `refactor:`, `test:`, `ci:`, `docs:` oder `chore:` beginnen.
 
-Das Bild des Release (Motiv im Update-Banner) entsteht automatisch passend zum Text (`scripts/release-art.mjs`).
+Das Bild des Release (Motiv im Update-Banner) entsteht automatisch passend zum Text – eine kleine Pixel-Art-Szene mit
+Cubi, ruhig und animiert (`scripts/release-art.mjs`).

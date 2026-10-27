@@ -154,8 +154,9 @@ checks whether anything changed for players since the last release. If so, it
 2. writes the new section of [CHANGELOG.md](CHANGELOG.md) in English and German – from the player notes in
    [`changes/`](changes/README.md) (one file per change), otherwise from the commit messages
    ([how](CONTRIBUTING.md#release-notes)),
-3. draws the picture of the release to match its notes (a small voxel scene, e.g. a wrench for fixes or a rocket for a
-   launch – `scripts/release-art.mjs`); the launcher, the website and the GitHub release show it with the update,
+3. draws the picture of the release to match its notes – a small animated pixel-art scene with Cubi, the cube from
+   the logo, e.g. next to a wrench for fixes or a rocket for a launch (`scripts/release-art.mjs`); the launcher, the
+   website and the GitHub release show it with the update, together with the screenshots from the player notes,
 4. commits "Release vX.Y.Z", tags it and starts [`release.yml`](.github/workflows/release.yml).
 
 `release.yml` builds the Windows installer (`Cubiq-Launcher_<version>_x64-setup.exe`), a portable ZIP and the Linux
