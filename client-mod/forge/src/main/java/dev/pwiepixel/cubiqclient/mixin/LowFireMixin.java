@@ -1,0 +1,76 @@
+package dev.pwiepixel.cubiqclient.mixin;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import dev.pwiepixel.cubiqclient.CubiqClient;
+import net.minecraft.client.renderer.ScreenEffectRenderer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+/**
+ * Niedriges Feuer: verschiebt die Flammen am Bildschirmrand nach unten, damit man beim Brennen
+ * noch etwas sieht. Die Methode heißt bis 26.1 renderFire, ab 26.2 submitFire; ihr erster bzw.
+ * zweiter Parameter ist immer der PoseStack, auf dem die Flammen liegen.
+ */
+@Mixin(ScreenEffectRenderer.class)
+public abstract class LowFireMixin {
+	//? if >=26.2 {
+	/*@Inject(method = "submitFire", at = @At("HEAD"), require = 1)
+	private static void cubiqclient$lowerFire(PoseStack pose, net.minecraft.client.renderer.SubmitNodeCollector collector,
+			net.minecraft.client.renderer.texture.TextureAtlasSprite sprite, CallbackInfo ci) {
+		pose.pushPose();
+		pose.translate(0, -cubiqclient$offset(), 0);
+	}
+
+	@Inject(method = "submitFire", at = @At("RETURN"), require = 1)
+	private static void cubiqclient$restoreFire(PoseStack pose, net.minecraft.client.renderer.SubmitNodeCollector collector,
+			net.minecraft.client.renderer.texture.TextureAtlasSprite sprite, CallbackInfo ci) {
+		pose.popPose();
+	}
+	*///?} elif >=1.21.9 {
+	/*@Inject(method = "renderFire", at = @At("HEAD"), require = 1)
+	private static void cubiqclient$lowerFire(PoseStack pose, net.minecraft.client.renderer.MultiBufferSource buffers,
+			net.minecraft.client.renderer.texture.TextureAtlasSprite sprite, CallbackInfo ci) {
+		pose.pushPose();
+		pose.translate(0, -cubiqclient$offset(), 0);
+	}
+
+	@Inject(method = "renderFire", at = @At("RETURN"), require = 1)
+	private static void cubiqclient$restoreFire(PoseStack pose, net.minecraft.client.renderer.MultiBufferSource buffers,
+			net.minecraft.client.renderer.texture.TextureAtlasSprite sprite, CallbackInfo ci) {
+		pose.popPose();
+	}
+	*///?} elif >=1.21.4 {
+	/*@Inject(method = "renderFire", at = @At("HEAD"), require = 1)
+	private static void cubiqclient$lowerFire(PoseStack pose, net.minecraft.client.renderer.MultiBufferSource buffers,
+			CallbackInfo ci) {
+		pose.pushPose();
+		pose.translate(0, -cubiqclient$offset(), 0);
+	}
+
+	@Inject(method = "renderFire", at = @At("RETURN"), require = 1)
+	private static void cubiqclient$restoreFire(PoseStack pose, net.minecraft.client.renderer.MultiBufferSource buffers,
+			CallbackInfo ci) {
+		pose.popPose();
+	}
+	*///?} else {
+	@Inject(method = "renderFire", at = @At("HEAD"), require = 1)
+	private static void cubiqclient$lowerFire(net.minecraft.client.Minecraft minecraft, PoseStack pose, CallbackInfo ci) {
+		pose.pushPose();
+		pose.translate(0, -cubiqclient$offset(), 0);
+	}
+
+	@Inject(method = "renderFire", at = @At("RETURN"), require = 1)
+	private static void cubiqclient$restoreFire(net.minecraft.client.Minecraft minecraft, PoseStack pose, CallbackInfo ci) {
+		pose.popPose();
+	}
+	//?}
+
+	/** Absenkung in Blöcken (0 = Modul aus). */
+	private static float cubiqclient$offset() {
+		CubiqClient client = CubiqClient.get();
+		if (client == null || !client.modules().lowFire.isEnabled()) return 0;
+		return (float) client.modules().lowFireHeight.get();
+	}
+}

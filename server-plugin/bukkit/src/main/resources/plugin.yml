@@ -1,0 +1,21 @@
+name: CubiqServerRules
+main: dev.pwiepixel.cubiqrules.bukkit.CubiqRulesBukkit
+version: '${version}'
+# 1.13 is the lowest valid value; servers before 1.13 ignore this key.
+api-version: '1.13'
+folia-supported: true
+author: PwiePixel
+website: https://github.com/PwiePixel/Cubiq-launcher
+description: "Control Cubiq Client features on your server: lock or force modules and settings, per world. Note: Cubiq team members with the 'serverrules.bypass' team permission can override the rules in their own client after an in-game confirmation (documented on purpose)."
+commands:
+  cubiqrules:
+    description: Reload the Cubiq Server Rules config or show a player's Cubiq Client status.
+    usage: /cubiqrules reload | /cubiqrules status [player]
+    permission: cubiqrules.admin
+permissions:
+  cubiqrules.admin:
+    description: Use /cubiqrules (reload, status).
+    default: op
+  cubiqrules.bypass:
+    description: Receive no Cubiq Server Rules (empty rule set) and be exempt from the missing-client action.
+    default: false

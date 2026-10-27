@@ -1,0 +1,31 @@
+{
+	"providers": [
+		{
+			"type": "bitmap",
+			"file": "cubiqclient:font/badge.png",
+			"ascent": 7,
+			"height": 8,
+			"chars": [
+				"\ue2a5"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "cubiqclient:font/creator_star.png",
+			"ascent": 7,
+			"height": 8,
+			"chars": [
+				"\ue2a6"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "cubiqclient:font/fan_slot.png",
+			"ascent": 7,
+			"height": 8,
+			"chars": [
+				"\ue2a7"
+			]
+		}
+	]
+}

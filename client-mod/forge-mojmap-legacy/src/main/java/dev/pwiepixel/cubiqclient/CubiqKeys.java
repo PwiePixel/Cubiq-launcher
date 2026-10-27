@@ -1,0 +1,163 @@
+package dev.pwiepixel.cubiqclient;
+
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
+import org.lwjgl.glfw.GLFW;
+//? if >=1.19 {
+/*import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+*///?} elif >=1.18 {
+/*import net.minecraftforge.client.ClientRegistry;
+*///?} elif >=1.17 {
+/*import net.minecraftforge.fmlclient.registry.ClientRegistry;
+*///?} else
+import net.minecraftforge.fml.client.registry.ClientRegistry;
+
+/** Tastenbelegungen – erscheinen in den Steuerungs-Optionen unter "Cubiq Client". */
+public final class CubiqKeys {
+	public static final String CATEGORY = "key.categories.cubiqclient";
+
+	public static final KeyMapping menu =
+			new KeyMapping("key.cubiqclient.menu", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, CATEGORY);
+	// Zoom liegt auf V: C ist ab Minecraft 1.12 mit "Hotbar speichern" belegt.
+	public static final KeyMapping zoom =
+			new KeyMapping("key.cubiqclient.zoom", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY);
+	/** Standardmäßig unbelegt – Fullbright lässt sich auch im Menü schalten. */
+	public static final KeyMapping fullbright =
+			new KeyMapping("key.cubiqclient.fullbright", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	/** Gamma durchschalten: aus → an → voll → aus (standardmäßig unbelegt). */
+	public static final KeyMapping gammaCycle =
+			new KeyMapping("key.cubiqclient.gammaCycle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	/** Automatisch nachlegen an/aus (standardmäßig unbelegt). */
+	public static final KeyMapping autoRefill =
+			new KeyMapping("key.cubiqclient.autoRefill", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	public static final KeyMapping freelook =
+			new KeyMapping("key.cubiqclient.freelook", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, CATEGORY);
+
+	/** Wechselt das HUD-Profil (standardmäßig unbelegt). */
+	public static final KeyMapping hudProfile =
+			new KeyMapping("key.cubiqclient.hudProfile", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+
+	/** Emote-Rad (halten, Standard G – in keiner Vanilla-Version belegt). */
+	public static final KeyMapping emoteWheel =
+			new KeyMapping("key.cubiqclient.emoteWheel", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, CATEGORY);
+
+	/** Schaltet das Redstone-Signal-Overlay (F6 – in keiner Vanilla-Version ab 1.9 belegt). */
+	public static final KeyMapping redstoneOverlay =
+			new KeyMapping("key.cubiqclient.redstoneOverlay", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F6, CATEGORY);
+
+	/** Clip der letzten Sekunden speichern (F9 – in keiner Vanilla-Version belegt). */
+	public static final KeyMapping saveClip =
+			new KeyMapping("key.cubiqclient.saveClip", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F9, CATEGORY);
+	/** Aufnahme starten/stoppen (F10 – in keiner Vanilla-Version belegt). */
+	public static final KeyMapping toggleRecording =
+			new KeyMapping("key.cubiqclient.toggleRecording", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F10, CATEGORY);
+
+	/** Öffnet die Garderobe (standardmäßig unbelegt). */
+	public static final KeyMapping wardrobe =
+			new KeyMapping("key.cubiqclient.wardrobe", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	/** Öffnet die Weltkarte (M – in keiner Vanilla-Version belegt; bei Doppelbelegung einmalig freigegeben). */
+	public static final KeyMapping worldMap =
+			new KeyMapping("key.cubiqclient.worldMap", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, CATEGORY);
+	/** Öffnet den Sozial-Bildschirm (standardmäßig unbelegt). */
+	public static final KeyMapping social =
+			new KeyMapping("key.cubiqclient.social", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	/** Schnellantwort/Beitreten zum neuesten Sozial-Toast (Y – in keiner Vanilla-Version belegt). */
+	public static final KeyMapping quickReply =
+			new KeyMapping("key.cubiqclient.quickReply", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Y, CATEGORY);
+	/** Nimmt ein 360°-Panorama auf (standardmäßig unbelegt; auch im Menü auslösbar). */
+	public static final KeyMapping panorama =
+			new KeyMapping("key.cubiqclient.panorama", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	/** Öffnet die Notizen der aktuellen Welt im Cubiq-Menü (standardmäßig unbelegt). */
+	public static final KeyMapping notes =
+			new KeyMapping("key.cubiqclient.notes", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	/** Kamera-Fahrten: Keyframe setzen, abspielen/anhalten, letzten entfernen, löschen (alle standardmäßig unbelegt). */
+	public static final KeyMapping cinematicAdd =
+			new KeyMapping("key.cubiqclient.cinematicAdd", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	public static final KeyMapping cinematicPlay =
+			new KeyMapping("key.cubiqclient.cinematicPlay", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	public static final KeyMapping cinematicRemove =
+			new KeyMapping("key.cubiqclient.cinematicRemove", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	public static final KeyMapping cinematicClear =
+			new KeyMapping("key.cubiqclient.cinematicClear", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	/** Freie Kamera an/aus (standardmäßig unbelegt). */
+	public static final KeyMapping cinematicFreecam =
+			new KeyMapping("key.cubiqclient.cinematicFreecam", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY);
+	private static final KeyMapping[] ALL = {menu, zoom, fullbright, gammaCycle, autoRefill, freelook, hudProfile, emoteWheel, redstoneOverlay,
+			saveClip, toggleRecording, wardrobe, worldMap, social, quickReply, panorama, notes, cinematicAdd, cinematicPlay,
+			cinematicRemove, cinematicClear, cinematicFreecam};
+
+	private CubiqKeys() {
+	}
+
+	/**
+	 * Einmalig: liegt die Weltkarten-Taste noch auf M und nutzt eine andere Belegung (z. B. eine andere Karten-Mod)
+	 * ebenfalls M, wird die Cubiq-Taste freigegeben (im Cubiq-Menü/in den Steuerungen neu belegbar).
+	 * @return true, wenn freigegeben wurde
+	 */
+	public static boolean resolveWorldMapConflict() {
+		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+		if (mc == null || mc.options == null) return false;
+		java.util.List<String> others = new java.util.ArrayList<>();
+		for (KeyMapping k : mc.options.keyMappings) {
+			if (k != worldMap) others.add(k.saveString());
+		}
+		if (!dev.pwiepixel.cubiqclient.core.config.KeyDefaults.conflicts(worldMap.saveString(), "key.keyboard.m", others)) return false;
+		worldMap.setKey(InputConstants.UNKNOWN);
+		KeyMapping.resetMapping();
+		mc.options.save();
+		return true;
+	}
+
+	/** Aktuell belegte Taste (GLFW-Code) einer Tastenbelegung. */
+	public static int boundKey(KeyMapping mapping) {
+		return mapping.getKey().getValue();
+	}
+
+	/**
+	 * Stellt den alten Zoom-Standard C auf V um – aber nur, wenn die Taste noch auf C liegt,
+	 * also nie geändert wurde.
+	 * @return true, wenn umgestellt wurde
+	 */
+	public static boolean migrateZoomKey() {
+		if (boundKey(zoom) != GLFW.GLFW_KEY_C) return false;
+		zoom.setKey(InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_V));
+		KeyMapping.resetMapping();
+		return true;
+	}
+
+	//? if >=1.19 {
+	/*static void register(RegisterKeyMappingsEvent event) {
+		for (KeyMapping key : ALL) event.register(key);
+	}
+	*///?} else {
+	/** Aus FMLClientSetupEvent. */
+	static void register() {
+		for (KeyMapping key : ALL) ClientRegistry.registerKeyBinding(key);
+	}
+	//?}
+
+	/**
+	 * Verbindung einer Modul-Tasteneinstellung (Cubiq-Menü) mit einer Vanilla-Tastenbelegung: gelesen und
+	 * geschrieben wird die Belegung selbst (gespeichert in options.txt). Die Belegung wird erst beim
+	 * Aufruf geholt, weil sie je nach Loader erst später angelegt wird.
+	 */
+	public static dev.pwiepixel.cubiqclient.core.module.KeySetting.Link link(final java.util.function.Supplier<KeyMapping> mapping) {
+		return new dev.pwiepixel.cubiqclient.core.module.KeySetting.Link() {
+			@Override
+			public String get() {
+				KeyMapping m = mapping.get();
+				return m == null ? dev.pwiepixel.cubiqclient.core.module.KeySetting.NONE : m.saveString();
+			}
+
+			@Override
+			public void set(String keyName) {
+				KeyMapping m = mapping.get();
+				if (m == null) return;
+				m.setKey(InputConstants.getKey(keyName));
+				KeyMapping.resetMapping();
+				net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+				if (mc != null && mc.options != null) mc.options.save();
+			}
+		};
+	}
+}

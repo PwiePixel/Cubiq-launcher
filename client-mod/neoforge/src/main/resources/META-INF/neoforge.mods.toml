@@ -1,0 +1,41 @@
+# Vorlage für alle Versionen (processResources): ab NeoForge 20.5 als META-INF/neoforge.mods.toml,
+# für 20.2–20.4 umbenannt in META-INF/mods.toml.
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "GPL-3.0-only"
+issueTrackerURL = "https://github.com/PwiePixel/Cubiq-launcher/issues"
+
+# BadOptimizations-Cache-Hook: lässt die eingebaute Lightmap-Zwischenspeicherung neu rechnen, wenn das
+# Modul „Gamma" seinen Wert ändert (sonst bliebe die Aufhellung unsichtbar). Ältere Fassungen ignorieren es.
+["badoptimizations:cache_hooks"]
+lightmap = "dev.pwiepixel.cubiqclient.compat.BadOptLightmapHook"
+
+[[mods]]
+modId = "cubiqclient"
+version = "${version}"
+displayName = "Cubiq Client"
+authors = "PwiePixel"
+displayURL = "https://github.com/PwiePixel/Cubiq-launcher"
+description = '''
+In-Game-Client des Cubiq Launchers: HUD (FPS, CPS, Tastenanzeige, Ping, Rüstung, Effekte, …) mit Editor, Zoom, Fullbright, eigenes Fadenkreuz, Freelook, Cubiq-Startbildschirm und ein eigenes Menü (Rechte Umschalttaste).
+'''
+# Reine Client-Mod: Server müssen sie nicht haben, Versionsabgleich mit dem Server entfällt.
+displayTest = "IGNORE_ALL_VERSION"
+
+[[mixins]]
+config = "cubiqclient.mixins.json"
+
+# Jede NeoForge-Version dieser Minecraft-Version (gebaut gegen die neueste, siehe versions/<mc>).
+[[dependencies.cubiqclient]]
+modId = "neoforge"
+${required}
+versionRange = "[${neoforge},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.cubiqclient]]
+modId = "minecraft"
+${required}
+versionRange = "[${minecraft}]"
+ordering = "NONE"
+side = "CLIENT"

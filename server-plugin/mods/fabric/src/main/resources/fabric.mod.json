@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"id": "cubiqserverrules",
+	"version": "${version}",
+	"name": "Cubiq Server Rules",
+	"description": "Server-side only: lock or force Cubiq Client modules and settings on your server, globally or per dimension (config/cubiq-server-rules.yml, /cubiqrules). Players without the Cubiq Client are not affected. Note: Cubiq team members with the team permission serverrules.bypass can override the rules in their own client after an in-game confirmation – documented on purpose.",
+	"authors": [
+		"PwiePixel"
+	],
+	"contact": {
+		"homepage": "https://github.com/PwiePixel/Cubiq-launcher",
+		"sources": "https://github.com/PwiePixel/Cubiq-launcher"
+	},
+	"license": "GPL-3.0-only",
+	"environment": "server",
+	"entrypoints": {
+		"server": [
+			"dev.pwiepixel.cubiqrules.fabric.CubiqRulesFabric"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=${loader}",
+		"minecraft": "${minecraft}",
+		"java": ">=${java}",
+		${fapiDepends}
+	},
+	"suggests": {
+		"fabric-permissions-api-v0": "*"
+	}
+}

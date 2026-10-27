@@ -1,0 +1,913 @@
+mod clip_overlay;
+mod commands;
+mod deeplink;
+mod dialog_text;
+mod error;
+mod event_icon;
+mod mobile;
+#[cfg(mobile)]
+mod mobile_game;
+mod open;
+mod push;
+
+use std::sync::Arc;
+
+use tauri::{Emitter, Manager};
+use cubiq_core::Launcher;
+use cubiq_core::data_location::{self, DataLocation};
+
+pub type LauncherState = Arc<Launcher>;
+
+/// Datenordner: `CUBIQ_LAUNCHER_HOME` > portabel > eigener Ordner (Zeiger-Datei) > Standard (Messe-Build: eigener Name).
+#[cfg(desktop)]
+fn data_location(app: &tauri::App) -> Result<DataLocation, Box<dyn std::error::Error>> {
+    let app_data = app.path().data_dir()?;
+    let exe_dir = data_location::exe_dir();
+    // Messe-Build (eigene Kennung): eigener Datenordner, damit die echten Launcher-Daten am Messe-PC unberührt bleiben.
+    let name = data_location::data_name_for(&app.config().identifier);
+    Ok(data_location::resolve_named(std::env::var_os(data_location::HOME_ENV), exe_dir.as_deref(), &app_data, name))
+}
+
+/// Android/iOS: privater Datenordner der App (Sandbox), fest – kein Umzug, keine Zeiger-Datei.
+#[cfg(mobile)]
+fn data_location(app: &tauri::App) -> Result<DataLocation, Box<dyn std::error::Error>> {
+    Ok(data_location::sandbox(app.path().app_data_dir()?))
+}
+
+/// QR-Scanner der Fernbedienung (Kamera) – nur auf Android/iOS.
+#[cfg(mobile)]
+fn qr_scanner<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
+    tauri_plugin_barcode_scanner::init()
+}
+
+/// Am PC gibt es nichts zu scannen.
+#[cfg(not(mobile))]
+fn qr_scanner<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
+    tauri::plugin::Builder::new("cubiq-no-scanner").build()
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    #[cfg(desktop)]
+    if let Ok(exe) = std::env::current_exe() {
+        cubiq_core::firewall::set_helper_exe(exe);
+    }
+    let builder = tauri::Builder::default();
+    #[cfg(desktop)]
+    let builder = builder
+        // Muss als erstes Plugin registriert werden.
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }));
+    let builder = builder
+        // Nach Single-Instance: `cubiq-launcher://`-Links (auch an ein schon offenes Fenster).
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(log::LevelFilter::Info)
+                .level_for("cubiq_core", log::LevelFilter::Debug)
+                .level_for("cubiq_launcher_lib", log::LevelFilter::Debug)
+                .max_file_size(5_000_000)
+                .build(),
+        )
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init());
+    // Desktop: eingebauter Updater (+ Neustart danach) und Fenstergröße/-position merken.
+    #[cfg(desktop)]
+    let builder = builder
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        // Das REC-Overlay ist ein flüchtiges, über das Spiel gelegtes Fenster – Größe/Position
+        // nie merken oder wiederherstellen.
+        .plugin(tauri_plugin_window_state::Builder::default().with_denylist(&[clip_overlay::LABEL]).build());
+    let builder = builder
+        .plugin(tauri_plugin_notification::init())
+        // Fernbedienung: QR-Code des PCs scannen – nur am Handy (am PC ein leeres Plugin).
+        .plugin(qr_scanner());
+    // Android: APK-Installation (PackageInstaller) für Updates aus dem Kanal `mobile`.
+    #[cfg(mobile)]
+    let builder = builder
+        .plugin(mobile::init())
+        // Push-Benachrichtigungen: UnifiedPush (Android) bzw. Abholen im Hintergrund (iOS).
+        .plugin(tauri_plugin_cubiq_push::init());
+    builder
+        .setup(|app| {
+            // Spiel-Engine (eingebettete JVM) – nur Android/iOS.
+            #[cfg(mobile)]
+            app.handle().plugin(tauri_plugin_cubiq_game::init())?;
+            let location = data_location(app)?;
+            let root = location.root.clone();
+            log::info!("Datenverzeichnis: {} ({:?})", root.display(), location.source);
+            if let Some(missing) = &location.missing_custom {
+                log::warn!("Gewählter Datenordner nicht erreichbar ({}) – Standardordner wird benutzt", missing.display());
+            }
+            // Nach einem Umzug: den alten Ordner (falls bestätigt) im Hintergrund löschen.
+            let cleanup = location.clone();
+            tauri::async_runtime::spawn_blocking(move || data_location::finish_pending_delete(&cleanup));
+            // Spielstart, Logs und Spielende gehen als Event ans Frontend.
+            let handle = app.handle().clone();
+            let events = Arc::new(move |event: cubiq_core::launch::GameEvent| {
+                if let Err(e) = handle.emit("game-event", &event) {
+                    log::warn!("game-event konnte nicht gesendet werden: {e}");
+                }
+            });
+            // Messe-Build: Besucher spielen ohne Stand-Konto im Demo-Modus des Spiels.
+            if app.config().identifier.ends_with(data_location::MESSE_IDENTIFIER_SUFFIX) {
+                cubiq_core::allow_demo_without_account();
+            }
+            let launcher = tauri::async_runtime::block_on(Launcher::init(root, events))?;
+            // Android/iOS: kein mitgelieferter Cubiq Client (nur der Update-Kanal, je Instanz ein Jar)
+            // und keine Clips.
+            #[cfg(desktop)]
+            match app.path().resource_dir() {
+                Ok(dir) => launcher.set_client_mod_dir(dir.join("client-mod")),
+                Err(e) => log::warn!("Ressourcen-Ordner nicht gefunden: {e}"),
+            }
+            // Clips: Status, gespeicherte Clips und Fehler gehen als Event ans Frontend.
+            #[cfg(desktop)]
+            let handle = app.handle().clone();
+            #[cfg(desktop)]
+            launcher.clips().set_sink(Arc::new(move |event| {
+                // Erfolge: gespeicherter Clip bzw. gespeicherte Aufnahme (gesendet wird gesammelt im Hintergrund).
+                if matches!(event, cubiq_core::clips::ClipEvent::Saved { .. })
+                    && let Some(state) = handle.try_state::<LauncherState>()
+                {
+                    let launcher = Arc::clone(&state);
+                    tauri::async_runtime::spawn(async move {
+                        launcher.cubiq_achievement_event(cubiq_core::cubiq_api::achievements::ReportKind::ClipRecorded { count: 1 }, None).await;
+                    });
+                }
+                if let Err(e) = handle.emit("clip-event", &event) {
+                    log::warn!("clip-event konnte nicht gesendet werden: {e}");
+                }
+            }));
+            // Kontowechsel im Spiel: „Konto hinzufügen“ öffnet den Browser über die App,
+            // danach lädt die Oberfläche die Accounts neu.
+            let handle = app.handle().clone();
+            launcher.set_url_opener(Arc::new(move |url: &str| {
+                if let Err(e) = crate::open::url(&handle, url) {
+                    log::error!("Browser konnte nicht geöffnet werden: {e}");
+                }
+            }));
+            let handle = app.handle().clone();
+            launcher.set_accounts_sink(Arc::new(move || {
+                if let Err(e) = handle.emit("accounts-changed", ()) {
+                    log::warn!("accounts-changed konnte nicht gesendet werden: {e}");
+                }
+            }));
+            // Cubiq-Synchronisation: nach jedem Abgleich (Änderungen + Status) ans Frontend.
+            let handle = app.handle().clone();
+            launcher.set_cubiq_sync_sink(Arc::new(move |event| {
+                if let Err(e) = handle.emit("cubiq-sync", &event) {
+                    log::warn!("cubiq-sync konnte nicht gesendet werden: {e}");
+                }
+            }));
+            // „Im Launcher öffnen“ aus dem Spiel: Fenster nach vorn, Player mit dem Clip.
+            #[cfg(desktop)]
+            let handle = app.handle().clone();
+            #[cfg(desktop)]
+            launcher.set_clip_open_sink(Arc::new(move |request| {
+                if let Some(window) = handle.get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.unminimize();
+                    let _ = window.set_focus();
+                }
+                if let Err(e) = handle.emit("clip-open", &request) {
+                    log::warn!("clip-open konnte nicht gesendet werden: {e}");
+                }
+            }));
+            // „Im Launcher öffnen“ einer Welt mit Mods aus dem Spiel: Fenster nach vorn + Mod-Dialog.
+            let handle = app.handle().clone();
+            launcher.set_hosting_open_sink(Arc::new(move |room_id| {
+                if let Some(window) = handle.get_webview_window("main") {
+                    let _ = window.show();
+                    #[cfg(desktop)]
+                    let _ = window.unminimize();
+                    let _ = window.set_focus();
+                }
+                if let Err(e) = handle.emit("hosting-open", serde_json::json!({ "roomId": room_id })) {
+                    log::warn!("hosting-open konnte nicht gesendet werden: {e}");
+                }
+            }));
+            // Echtzeit-Kanal der Cubiq API: Ereignisse (Chat, Freunde, Präsenz …) und der
+            // Zustand der Verbindung gehen sofort ans Frontend.
+            let handle = app.handle().clone();
+            launcher.set_cubiq_live_sink(Arc::new(move |out| {
+                let result = match out {
+                    cubiq_core::cubiq_api::live::LiveOut::Event(event) => handle.emit("cubiq-live", &event),
+                    // Schon als Push-Benachrichtigung gezeigt: Oberfläche übernimmt den Zustand ohne Hinweis.
+                    cubiq_core::cubiq_api::live::LiveOut::Notified(event) => match serde_json::to_value(&event) {
+                        Ok(mut value) => {
+                            value["quiet"] = serde_json::Value::Bool(true);
+                            handle.emit("cubiq-live", &value)
+                        }
+                        Err(e) => {
+                            log::warn!("cubiq-live nicht serialisierbar: {e}");
+                            Ok(())
+                        }
+                    },
+                    cubiq_core::cubiq_api::live::LiveOut::Status(status) => handle.emit("cubiq-live-status", &status),
+                };
+                if let Err(e) = result {
+                    log::warn!("cubiq-live konnte nicht gesendet werden: {e}");
+                }
+            }));
+            // Lokale Server: Log-Zeilen und Zustand (Start, Spieler, Ende) ans Frontend.
+            let handle = app.handle().clone();
+            launcher.local_servers().set_sink(Arc::new(move |event| {
+                if let Err(e) = handle.emit("local-server", &event) {
+                    log::warn!("local-server konnte nicht gesendet werden: {e}");
+                }
+            }));
+            // Teilen lokaler Server: Stand von Relay und e4mc.
+            let handle = app.handle().clone();
+            launcher.server_shares().set_sink(Arc::new(move |update| {
+                if let Err(e) = handle.emit("local-server-share", &update) {
+                    log::warn!("local-server-share konnte nicht gesendet werden: {e}");
+                }
+            }));
+            let launcher = Arc::new(launcher);
+            app.manage(mobile::UpdateState::new(&launcher)?);
+            // Event-Symbol vom letzten Lauf gleich ins Fenster; danach entscheidet die Oberfläche (event_icon_sync).
+            let event_icons = event_icon::EventIconState::new(&launcher);
+            event_icons.restore_window(app.handle());
+            app.manage(event_icons);
+            // Spiel-Engine: HTTP des Launchers (TLS, Proxy) für Runtime-Downloads, Zustand und
+            // Logs der Engine in den Spiele-Manager (game-event, Spielzeit, Logs).
+            #[cfg(mobile)]
+            {
+                use tauri_plugin_cubiq_game::CubiqGameExt;
+                app.cubiq_game().set_http_client(launcher.http().clone());
+                mobile_game::forward_events(app.handle(), &launcher);
+                // iOS: Das Spielende beendet die App – Ende der letzten Sitzung nachtragen.
+                #[cfg(target_os = "ios")]
+                mobile_game::finish_last_session(app.handle(), &launcher);
+                // Android: Sitzungen eines beendeten Launcher-Prozesses nachtragen (Grund, Log-Ende).
+                #[cfg(target_os = "android")]
+                mobile_game::finish_android_sessions(app.handle(), &launcher);
+            }
+            // Neuer Cubiq Client im Update-Kanal? Läuft im Hintergrund, offline egal. Lädt nur das
+            // signierte Manifest – Jars erst beim Start einer Instanz, die sie braucht.
+            let updates = Arc::clone(&launcher);
+            tauri::async_runtime::spawn(async move {
+                updates.check_client_mod_updates().await;
+            });
+            // Desktop: Clips wieder aufnehmen, Präsenz senden. Android/iOS: nichts davon.
+            #[cfg(desktop)]
+            {
+                // Spiele, die beim letzten Schließen noch liefen, wieder aufnehmen.
+                tauri::async_runtime::spawn(Arc::clone(&launcher).resume_clips());
+                // Cubiq-Präsenz im 60-s-Takt (ohne Einwilligung passiert nichts).
+                tauri::async_runtime::spawn(Arc::clone(&launcher).run_cubiq_presence());
+            }
+            // Skins/Presets/Theme/Sprache mit dem Cubiq-Konto abgleichen (nur mit Einwilligung + Schalter).
+            tauri::async_runtime::spawn(Arc::clone(&launcher).run_cubiq_sync());
+            // Echtzeit-Kanal `/v1/events/me` (nur mit Einwilligung und Account).
+            tauri::async_runtime::spawn(Arc::clone(&launcher).run_cubiq_live());
+            // Erfolge: gesammelte Meldungen (Spielstart, Mods, Modpacks, Clips) im Hintergrund senden.
+            tauri::async_runtime::spawn(Arc::clone(&launcher).run_achievement_reports());
+            #[cfg(desktop)]
+            {
+                // Spiele mit verbundenem Cubiq Client: Der Launcher schweigt dann zu Sozial-Hinweisen.
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(Arc::clone(&launcher).run_social_game_clients(Arc::new(move |clients| {
+                    if let Err(e) = handle.emit("cubiq-client-linked", &clients) {
+                        log::warn!("cubiq-client-linked konnte nicht gesendet werden: {e}");
+                    }
+                })));
+                // Discord-Status (nur lokal mit der Discord-App; läuft Discord nicht, passiert nichts).
+                tauri::async_runtime::spawn(Arc::clone(&launcher).run_discord());
+            }
+            app.manage::<LauncherState>(launcher);
+            app.manage(location);
+            app.manage(commands::system::DropState::default());
+            app.manage(commands::export::PackPickState::default());
+            app.manage(commands::tasks::TaskRegistry::default());
+            app.manage(cubiq_core::cubiq_api::cape_video::VideoPicks::default());
+            deeplink::setup(app);
+            // Push: Gerät beim Start abgleichen (neue Version, Sprache, Sitzung) – nur am Handy.
+            push::start(app.handle());
+            Ok(())
+        })
+        // Clips abspielen: `cubiqclip://localhost/<art>/<instanz>/<datei>` – nur Dateien im
+        // Clip-Ordner, Videos in Stücken (Range), Vorschaubilder/-leisten bei Bedarf erzeugt.
+        .register_asynchronous_uri_scheme_protocol(cubiq_core::clips::serve::SCHEME, |ctx, request, responder| {
+            let app = ctx.app_handle().clone();
+            let path = request.uri().path().to_owned();
+            let range = request.headers().get("range").and_then(|v| v.to_str().ok()).map(str::to_owned);
+            let head = request.method() == tauri::http::Method::HEAD;
+            let readonly = head || request.method() == tauri::http::Method::GET;
+            tauri::async_runtime::spawn(async move {
+                let response = match app.try_state::<LauncherState>() {
+                    Some(launcher) if readonly => launcher.serve_clip(&path, range).await,
+                    Some(_) => cubiq_core::clips::serve::Response::status(405),
+                    None => cubiq_core::clips::serve::Response::status(503),
+                };
+                let mut builder = tauri::http::Response::builder().status(response.status);
+                for (name, value) in &response.headers {
+                    builder = builder.header(*name, value);
+                }
+                let body = if head { Vec::new() } else { response.body };
+                match builder.body(body) {
+                    Ok(r) => responder.respond(r),
+                    Err(e) => log::warn!("cubiqclip-Antwort fehlerhaft: {e}"),
+                }
+            });
+        })
+        // Chat-Bilder: `cubiqchat://localhost/<a|t|l|e>/…` – der Kern holt sie mit dem Token
+        // (der nie ins Webview gelangt) und liefert nur geprüfte PNG/JPEG/WebP aus.
+        .register_asynchronous_uri_scheme_protocol(cubiq_core::cubiq_api::media::SCHEME, |ctx, request, responder| {
+            let app = ctx.app_handle().clone();
+            let path = request.uri().path().to_owned();
+            let readonly = request.method() == tauri::http::Method::GET;
+            tauri::async_runtime::spawn(async move {
+                let response = match app.try_state::<LauncherState>() {
+                    Some(launcher) if readonly => launcher.serve_chat_image(&path).await,
+                    Some(_) => cubiq_core::clips::serve::Response::status(405),
+                    None => cubiq_core::clips::serve::Response::status(503),
+                };
+                let mut builder = tauri::http::Response::builder().status(response.status);
+                for (name, value) in &response.headers {
+                    builder = builder.header(*name, value);
+                }
+                match builder.body(response.body) {
+                    Ok(r) => responder.respond(r),
+                    Err(e) => log::warn!("cubiqchat-Antwort fehlerhaft: {e}"),
+                }
+            });
+        })
+        // Dateien, die ins Fenster gezogen werden: Pfade bleiben in Rust,
+        // das Webview bekommt nur Namen und eine Marke.
+        .on_window_event(|window, event| {
+            use commands::system::{DropEvent, DropState};
+            // Handy: App im Hintergrund → Echtzeit-Kanal zu (der Server schickt dann Push), vorn → wieder auf.
+            #[cfg(mobile)]
+            match event {
+                tauri::WindowEvent::Suspended => return push::on_foreground(window.app_handle(), false),
+                tauri::WindowEvent::Resumed => return push::on_foreground(window.app_handle(), true),
+                _ => {}
+            }
+            // Hauptfenster zu → App beenden. Sonst hält ein unsichtbares Hilfsfenster (Clip-Overlay) den Prozess
+            // ohne Oberfläche am Leben: Ein neuer Start landet dann bei diesem Prozess, und es passiert nichts.
+            #[cfg(desktop)]
+            if matches!(event, tauri::WindowEvent::Destroyed) && window.label() == "main" {
+                window.app_handle().exit(0);
+                return;
+            }
+            let payload = match event {
+                tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Enter { .. }) => DropEvent::Enter,
+                tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Leave) => DropEvent::Leave,
+                tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) => {
+                    window.state::<DropState>().store(paths.clone())
+                }
+                _ => return,
+            };
+            if let Err(e) = window.emit("file-drop", payload) {
+                log::warn!("file-drop konnte nicht gesendet werden: {e}");
+            }
+        })
+        .invoke_handler(tauri::generate_handler![
+            commands::tasks::cancel_task,
+            commands::tasks::pause_task,
+            commands::tasks::task_history,
+            commands::tasks::record_task,
+            commands::tasks::remove_task_record,
+            commands::tasks::clear_task_history,
+            commands::system::add_dropped_files,
+            commands::system::pick_content_files,
+            commands::system::pick_java_path,
+            commands::system::check_java,
+            commands::system::detect_java,
+            commands::system::install_java,
+            commands::system::storage_stats,
+            commands::system::clean_unused_storage,
+            commands::system::verify_storage,
+            commands::instances::set_instance_group,
+            commands::instances::get_fps_mode,
+            commands::instances::set_fps_mode,
+            commands::instances::loader_versions,
+            commands::instances::latest_loader_version,
+            commands::content::bulk_content,
+            commands::content::content_organization,
+            commands::content::create_content_group,
+            commands::content::update_content_group,
+            commands::content::delete_content_group,
+            commands::content::assign_content_group,
+            commands::bisect::bisect_status,
+            commands::bisect::bisect_active,
+            commands::bisect::bisect_start,
+            commands::bisect::bisect_answer,
+            commands::bisect::bisect_continue,
+            commands::bisect::bisect_finish,
+            commands::games::reinstall_instance,
+            commands::app::app_info,
+            commands::app::client_mod_status,
+            commands::app::open_data_dir,
+            commands::app::firewall_status,
+            commands::app::firewall_allow_all,
+            commands::relocate::pick_target_folder,
+            commands::relocate::data_move_plan,
+            commands::relocate::move_data_dir,
+            commands::relocate::confirm_data_move,
+            commands::relocate::instance_location,
+            commands::relocate::instance_move_plan,
+            commands::relocate::move_instance,
+            commands::relocate::unavailable_instances,
+            commands::relocate::forget_unavailable_instance,
+            mobile::mobile_update_check,
+            mobile::mobile_update_install,
+            mobile::mobile_exit_app,
+            event_icon::event_icon_sync,
+            push::push_status,
+            push::push_set_settings,
+            push::push_choose_distributor,
+            push::push_devices,
+            push::push_open_distributor,
+            push::push_remove_device,
+            commands::settings::get_settings,
+            commands::settings::update_settings,
+            commands::instances::list_instances,
+            commands::instances::get_instance,
+            commands::instances::create_instance,
+            commands::instances::pick_instance_icon,
+            commands::instances::remove_instance_icon,
+            commands::icons::save_instance_icon,
+            commands::icons::instance_icon_source,
+            commands::icons::mc_texture_versions,
+            commands::icons::mc_textures,
+            commands::icons::pick_icon_image,
+            commands::icons::save_icon_png,
+            commands::instances::pick_instance_banner,
+            commands::instances::set_instance_banner_screenshot,
+            commands::instances::remove_instance_banner,
+            commands::instances::change_instance_version,
+            commands::instances::instance_history,
+            commands::content::refresh_content_meta,
+            commands::content::content_changelog,
+            commands::content::modrinth_project,
+            commands::content::modrinth_project_versions,
+            commands::content::modrinth_projects,
+            commands::content::plan_content_migration,
+            commands::content::open_external_url,
+            commands::instances::update_instance,
+            commands::instances::delete_instance,
+            commands::instances::open_instance_dir,
+            commands::meta::get_version_manifest,
+            commands::games::launch_instance,
+            commands::games::stop_instance,
+            commands::games::running_games,
+            commands::games::bedrock_info,
+            commands::games::launch_bedrock,
+            commands::games::get_game_logs,
+            commands::games::repair_instance,
+            commands::games::share_log,
+            commands::accounts::list_accounts,
+            commands::accounts::login_browser,
+            commands::accounts::login_device_code,
+            commands::accounts::cancel_login,
+            commands::accounts::set_active_account,
+            commands::accounts::remove_account,
+            commands::content::list_content,
+            commands::content::duplicate_mods,
+            commands::content::resolve_duplicate_mods,
+            commands::content::set_content_enabled,
+            commands::content::delete_content,
+            commands::content::installed_projects,
+            commands::content::modrinth_search,
+            commands::content::modrinth_categories,
+            commands::content::modrinth_install,
+            commands::content::modrinth_versions,
+            commands::content::check_content_updates,
+            commands::content::apply_content_update,
+            commands::content::fix_mod_conflicts,
+            commands::content::install_missing_dependencies,
+            commands::content::mod_conflicts,
+            commands::content::mod_conflict_fit,
+            commands::content::trash_content,
+            commands::content::install_performance_pack,
+            commands::content::install_modpack,
+            commands::content::preview_modpack,
+            commands::content::open_content_dir,
+            commands::curseforge::curseforge_status,
+            commands::curseforge::curseforge_search,
+            commands::curseforge::curseforge_categories,
+            commands::curseforge::curseforge_project,
+            commands::curseforge::curseforge_project_versions,
+            commands::curseforge::curseforge_projects,
+            commands::curseforge::curseforge_versions,
+            commands::curseforge::curseforge_changelog,
+            commands::curseforge::curseforge_install,
+            commands::curseforge::install_curseforge_modpack,
+            commands::curseforge::preview_curseforge_modpack,
+            commands::curseforge::curseforge_blocked,
+            commands::curseforge::curseforge_adopt_downloads,
+            commands::curseforge::curseforge_dismiss_blocked,
+            commands::presets::list_presets,
+            commands::presets::create_preset,
+            commands::presets::update_preset,
+            commands::presets::set_preset_auto,
+            commands::presets::delete_preset,
+            commands::presets::reorder_presets,
+            commands::presets::export_preset,
+            commands::presets::import_preset,
+            commands::presets::apply_presets,
+            commands::presets::preset_check,
+            commands::presets::preset_pick_instance,
+            commands::presets::preset_pick_modpack,
+            commands::presets::preset_pick_pack_code,
+            commands::presets::fps_boost_suggested,
+            commands::controls::controls_list,
+            commands::controls::controls_save,
+            commands::controls::controls_duplicate,
+            commands::controls::controls_delete,
+            commands::controls::controls_reset,
+            commands::controls::controls_export_code,
+            commands::controls::controls_import_code,
+            commands::controls::controls_export_file,
+            commands::controls::controls_import_file,
+            commands::controls::set_instance_touch_profile,
+            commands::servers::list_servers,
+            commands::servers::add_server,
+            commands::servers::update_server,
+            commands::servers::remove_server,
+            commands::servers::ping_server,
+            commands::extras::list_screenshots,
+            commands::extras::open_screenshot,
+            commands::extras::delete_screenshot,
+            commands::extras::duplicate_instance,
+            commands::instances::instance_shared_folders,
+            commands::instances::set_instance_shared_folder,
+            commands::files::list_instance_files,
+            commands::files::create_instance_folder,
+            commands::files::create_instance_file,
+            commands::files::rename_instance_file,
+            commands::files::trash_instance_files,
+            commands::files::open_instance_file,
+            commands::files::reveal_instance_file,
+            commands::files::read_instance_text,
+            commands::files::read_instance_text_backup,
+            commands::files::write_instance_text,
+            commands::files::pick_instance_upload,
+            commands::files::import_dropped_instance_files,
+            commands::worlds::instance_worlds,
+            commands::worlds::open_world_folder,
+            commands::worlds::backup_world,
+            commands::worlds::trash_world,
+            commands::worlds::instance_servers,
+            commands::worlds::ping_instance_servers,
+            commands::worlds::add_instance_server,
+            commands::worlds::update_instance_server,
+            commands::worlds::remove_instance_server,
+            commands::logs::list_log_sources,
+            commands::logs::read_log_source,
+            commands::logs::share_log_source,
+            commands::logs::qr_code,
+            commands::crash::list_crashes,
+            commands::crash::get_crash,
+            commands::crash::analyze_log_source,
+            commands::crash::set_instance_memory,
+            commands::crash::switch_instance_java,
+            commands::crash::update_cubiq_client_now,
+            commands::import::scan_imports,
+            commands::import::import_overview,
+            commands::import::pick_import_folder,
+            commands::import::import_instance,
+            commands::import::cubiq_client_offer,
+            commands::skins::skin_profile,
+            commands::skins::player_skin_url,
+            commands::skins::skin_library,
+            commands::skins::builtin_skins,
+            commands::skins::skin_packs,
+            commands::skins::pick_skin_files,
+            commands::skins::stage_dropped_skins,
+            commands::skins::stage_skin_url,
+            commands::skins::stage_player_skin,
+            commands::skins::scan_launcher_skins,
+            commands::skins::import_staged_skins,
+            commands::skins::discard_staged_skins,
+            commands::skins::save_active_skin,
+            commands::skins::delete_skin,
+            commands::skins::rename_skin,
+            commands::skins::apply_skin_changes,
+            commands::skins::skin_sync_status,
+            commands::skins::cancel_skin_sync,
+            commands::news::get_news,
+            commands::news::news_image,
+            commands::news::patch_notes_body,
+            commands::news::cubiq_featured_packs,
+            commands::screenshots::all_screenshots,
+            commands::screenshots::screenshot_thumbnail,
+            commands::screenshots::screenshot_image,
+            commands::screenshots::copy_screenshot,
+            commands::screenshots::reveal_screenshot,
+            commands::screenshots::trash_screenshot,
+            commands::clips::list_clips,
+            commands::clips::clip_usage,
+            commands::clips::rename_clip,
+            commands::clips::trash_clip,
+            commands::clips::reveal_clip,
+            commands::clips::open_clips_folder,
+            commands::clips::clip_states,
+            commands::clips::clip_action,
+            commands::clips::ffmpeg_status,
+            commands::clips::install_ffmpeg,
+            commands::clips::pick_clips_folder,
+            commands::clips::clip_details,
+            commands::clips::clip_strip,
+            commands::clips::plan_clip_trim,
+            commands::clips::trim_clip,
+            commands::clips::export_clip,
+            commands::clips::copy_clip_file,
+            commands::clips::open_clip_external,
+            clip_overlay::clip_overlay_show,
+            clip_overlay::clip_overlay_track,
+            clip_overlay::clip_overlay_hide,
+            commands::export::export_candidates,
+            commands::export::export_modpack,
+            commands::export::import_modpack_file,
+            commands::export::pick_modpack_file,
+            commands::packs::share_pack,
+            commands::packs::upload_shared_pack,
+            commands::packs::discard_share_pack,
+            deeplink::take_pending_pack_link,
+            deeplink::take_pending_web_login,
+            deeplink::take_pending_remote_pair,
+            deeplink::take_pending_push_target,
+            deeplink::take_pending_modpack_link,
+            commands::remote::remote_pair_start,
+            commands::remote::remote_pair_cancel,
+            commands::remote::remote_publish_status,
+            commands::remote::remote_claim,
+            commands::remote::remote_result,
+            commands::remote::remote_pair_confirm,
+            commands::remote::remote_send,
+            commands::remote::remote_pairings,
+            commands::remote::remote_unpair,
+            commands::packs::packs_mine,
+            commands::packs::pack_set_duration,
+            commands::packs::pack_delete,
+            commands::packs::pack_send,
+            commands::packs::pack_inbox,
+            commands::packs::pack_inbox_dismiss,
+            commands::packs::pack_by_code,
+            commands::packs::preview_pack_code,
+            commands::packs::install_pack_code,
+            commands::packs::pack_links,
+            commands::packs::pack_unlink,
+            commands::packs::pack_updates,
+            commands::packs::update_pack_instance,
+            commands::cubiq::cubiq_status,
+            commands::cubiq::cubiq_web_login_accounts,
+            commands::cubiq::cubiq_web_login_lookup,
+            commands::cubiq::cubiq_web_login_decide,
+            commands::cubiq::cubiq_sync_status,
+            commands::cubiq::cubiq_achievements,
+            commands::cubiq::cubiq_player_achievements,
+            commands::cubiq::cubiq_achievement_report,
+            commands::cubiq::cubiq_set_achievements_visible,
+            commands::cubiq::cubiq_set_consent,
+            commands::cubiq::cubiq_me,
+            commands::cubiq::cubiq_update_me,
+            commands::cubiq::cubiq_delete_me,
+            commands::cubiq::cubiq_capes,
+            commands::cubiq::cubiq_set_cape,
+            commands::cubiq::cubiq_pick_cape_sources,
+            commands::cubiq::cubiq_pick_cape_video,
+            commands::cubiq::cubiq_cape_video_frames,
+            commands::cubiq::cubiq_upload_cape,
+            commands::cubiq::cubiq_delete_cape,
+            commands::cubiq::cubiq_report_cape,
+            commands::cubiq::cubiq_redeem,
+            commands::cubiq::cubiq_hats,
+            commands::cubiq::cubiq_head_cosmetics,
+            commands::cubiq::cubiq_head_cosmetic_model,
+            commands::cubiq::cubiq_set_hat,
+            commands::cubiq::cubiq_set_companion,
+            commands::cubiq::cubiq_set_pet,
+            commands::cubiq::cubiq_equip_cosmetic,
+            commands::cubiq::cubiq_claim_cosmetic,
+            commands::cubiq::cubiq_claim_cape,
+            commands::cubiq::cubiq_active_events,
+            commands::cubiq::cubiq_look_events,
+            commands::cubiq::cubiq_admin_events,
+            commands::cubiq::cubiq_admin_set_event,
+            commands::cubiq::cubiq_admin_featured_packs,
+            commands::cubiq::cubiq_admin_add_featured_pack,
+            commands::cubiq::cubiq_admin_update_featured_pack,
+            commands::cubiq::cubiq_admin_delete_featured_pack,
+            commands::cubiq::cubiq_admin_order_featured_packs,
+            commands::cubiq::cubiq_admin_refresh_featured_pack,
+            commands::cubiq::cubiq_admin_add_event_player,
+            commands::cubiq::cubiq_admin_remove_event_player,
+            commands::cubiq::cubiq_admin_add_event_look_block,
+            commands::cubiq::cubiq_admin_remove_event_look_block,
+            commands::cubiq::cubiq_player_capes,
+            commands::cubiq::cubiq_friends,
+            commands::cubiq::cubiq_blocks,
+            commands::cubiq::cubiq_friend_request,
+            commands::cubiq::cubiq_friend_accept,
+            commands::cubiq::cubiq_friend_decline,
+            commands::cubiq::cubiq_friend_cancel,
+            commands::cubiq::cubiq_friend_remove,
+            commands::cubiq::cubiq_cape_offers,
+            commands::cubiq::cubiq_offer_cape,
+            commands::cubiq::cubiq_accept_cape_offer,
+            commands::cubiq::cubiq_decline_cape_offer,
+            commands::cubiq::cubiq_cape_holders,
+            commands::cubiq::cubiq_revoke_cape_share,
+            commands::cubiq::cubiq_block,
+            commands::cubiq::cubiq_unblock,
+            commands::cubiq::cubiq_admin_stats,
+            commands::cubiq::cubiq_admin_capes,
+            commands::cubiq::cubiq_admin_approve,
+            commands::cubiq::cubiq_admin_reject,
+            commands::cubiq::cubiq_admin_delete_cape,
+            commands::cubiq::cubiq_admin_codes,
+            commands::cubiq::cubiq_admin_create_codes,
+            commands::cubiq::cubiq_admin_revoke_code,
+            commands::cubiq::cubiq_admin_user,
+            commands::cubiq::cubiq_admin_grant,
+            commands::cubiq::cubiq_admin_revoke_grant,
+            commands::cubiq::cubiq_admin_ban,
+            commands::cubiq::cubiq_admin_unban,
+            commands::social::cubiq_live_status,
+            commands::social::cubiq_live_reconnect,
+            commands::social::chat_conversations,
+            commands::social::chat_conversation,
+            commands::social::chat_open_dm,
+            commands::social::chat_unread,
+            commands::social::chat_create_group,
+            commands::social::chat_rename_group,
+            commands::social::chat_add_members,
+            commands::social::chat_remove_member,
+            commands::social::chat_leave_group,
+            commands::social::chat_transfer_group,
+            commands::social::chat_delete_group,
+            commands::social::chat_messages,
+            commands::social::chat_send,
+            commands::social::chat_edit,
+            commands::social::chat_delete,
+            commands::social::chat_react,
+            commands::social::chat_read,
+            commands::social::chat_mark_unread,
+            commands::social::chat_mute,
+            commands::social::chat_typing,
+            commands::social::chat_server_status,
+            commands::social::chat_pick_images,
+            commands::social::chat_stage_dropped,
+            commands::social::chat_stage_pasted,
+            commands::social::chat_local_images,
+            commands::social::chat_forget_local,
+            commands::social::chat_upload,
+            commands::social::screenshot_favorites,
+            commands::social::share_screenshot,
+            commands::social::shares_list,
+            commands::social::share_delete,
+            commands::social::set_screenshot_favorite,
+            commands::social::chat_report,
+            commands::social::chat_my_reports,
+            commands::social::chat_my_moderation,
+            commands::social::admin_reports,
+            commands::social::admin_report,
+            commands::social::admin_report_status,
+            commands::social::admin_report_action,
+            commands::social::admin_report_note,
+            commands::social::admin_moderation_user,
+            commands::social::admin_mute,
+            commands::social::admin_unmute,
+            commands::social::admin_warn,
+            commands::social::admin_word_filter,
+            commands::social::admin_add_word,
+            commands::social::admin_delete_word,
+            commands::social::admin_audit,
+            commands::moderation::cubiq_my_sanctions,
+            commands::moderation::cubiq_appeal,
+            commands::moderation::cubiq_my_applications,
+            commands::moderation::cubiq_withdraw_application,
+            commands::moderation::admin_dashboard,
+            commands::moderation::admin_search,
+            commands::moderation::admin_players,
+            commands::moderation::admin_player,
+            commands::moderation::admin_player_note,
+            commands::moderation::admin_player_note_delete,
+            commands::moderation::admin_sanctions,
+            commands::moderation::admin_sanction,
+            commands::moderation::admin_sanction_create,
+            commands::moderation::admin_sanction_lift,
+            commands::moderation::admin_sanction_duration,
+            commands::moderation::admin_appeals,
+            commands::moderation::admin_appeal_decide,
+            commands::moderation::admin_rooms,
+            commands::moderation::admin_room_close,
+            commands::moderation::admin_bulk,
+            commands::moderation::admin_cosmetics,
+            commands::moderation::admin_delete_cosmetic,
+            commands::moderation::admin_capes,
+            commands::halloween::halloween_state,
+            commands::halloween::halloween_find_pumpkin,
+            commands::halloween::halloween_trick,
+            commands::halloween::halloween_set_effects,
+            commands::halloween::halloween_stickers,
+            commands::halloween::halloween_choose_wings,
+            commands::halloween::cubiq_set_wings,
+            commands::halloween::cubiq_badge_images,
+            commands::creator::creator_me,
+            commands::creator::creator_redeem,
+            commands::creator::creator_end_support,
+            commands::creator::creator_block,
+            commands::creator::creator_unblock,
+            commands::creator::creator_set_show_symbols,
+            commands::creator::creator_packs,
+            commands::creator::creator_dashboard,
+            commands::creator::creator_pet,
+            commands::creator::creator_set_pet_extras,
+            commands::creator::creator_pet_codes,
+            commands::creator::creator_create_pet_codes,
+            commands::creator::creator_revoke_pet_code,
+            commands::creator::creator_request_pet,
+            commands::creator::creator_pet_request_image,
+            commands::creator::creator_withdraw_pet_request,
+            commands::creator::creator_create_code,
+            commands::creator::creator_update_code,
+            commands::creator::creator_upload_symbol,
+            commands::creator::creator_withdraw_symbol,
+            commands::creator::creator_upload_fan_cape,
+            commands::creator::creator_withdraw_fan_cape,
+            commands::creator::creator_request,
+            commands::creator::creator_previews,
+            commands::creator::creator_set_pack_listed,
+            commands::creator::creator_invite_helper,
+            commands::creator::creator_update_helper,
+            commands::creator::creator_remove_helper,
+            commands::creator::creator_answer_helper_invite,
+            commands::creator::creator_leave_helping,
+            commands::creator::admin_creator_queue,
+            commands::creator::admin_creator_decide,
+            commands::creator::admin_creators,
+            commands::creator::admin_creator_add,
+            commands::creator::admin_creator_update,
+            commands::creator::admin_creator_revoke,
+            commands::creator::admin_creator_restore,
+            commands::creator::admin_creator_requests,
+            commands::creator::admin_creator_answer,
+            commands::creator::admin_creator_stats,
+            commands::creator::admin_creator_stats_detail,
+            commands::social::social_quiet_hours,
+            commands::social::social_notify_native,
+            commands::social::social_focus_window,
+            commands::social::social_game_clients,
+            commands::hosting::hosting_friends_rooms,
+            commands::hosting::hosting_my_rooms,
+            commands::hosting::hosting_room,
+            commands::hosting::hosting_join,
+            commands::hosting::hosting_leave,
+            commands::hosting::hosting_delivery,
+            commands::hosting::hosting_room_content,
+            commands::hosting::hosting_instance_mods,
+            commands::hosting::hosting_prepare,
+            commands::server_export::server_export_plan,
+            commands::server_export::export_server,
+            commands::server_export::local_servers_list,
+            commands::server_export::local_server_start,
+            commands::server_export::local_server_stop,
+            commands::server_export::local_server_kill,
+            commands::server_export::local_server_restart,
+            commands::server_export::local_server_command,
+            commands::server_export::local_server_logs,
+            commands::server_export::local_server_open_folder,
+            commands::server_export::local_server_delete,
+            commands::server_export::local_server_addresses,
+            commands::server_export::local_server_share_status,
+            commands::server_export::local_server_share,
+            commands::server_export::local_server_unshare,
+            commands::server_export::local_server_invite,
+        ])
+        .build(tauri::generate_context!())
+        .expect("Cubiq Launcher konnte nicht gestartet werden")
+        .run(|app, event| {
+            // Beim Beenden die Cubiq-Präsenz zurücknehmen (kurz, offline egal).
+            if let tauri::RunEvent::Exit = event
+                && let Some(launcher) = app.try_state::<LauncherState>()
+            {
+                let launcher = Arc::clone(&launcher);
+                // Laufende Aufnahmen sichern (höchstens ~5 s), dann die Cubiq-Präsenz
+                // (cubiq_shutdown hat eigene kurze Timeouts, höchstens ~3 s) und den
+                // Discord-Status (höchstens ~1,5 s, parallel dazu).
+                // Lokale Server bekommen `stop` (Welt speichern) und werden nach höchstens
+                // ~20 s hart beendet – parallel zum Rest.
+                tauri::async_runtime::block_on(async move {
+                    let discord = Arc::clone(&launcher);
+                    let discord = tauri::async_runtime::spawn(async move { discord.discord_shutdown().await });
+                    let servers = Arc::clone(&launcher);
+                    let servers = tauri::async_runtime::spawn(async move { servers.local_servers_shutdown().await });
+                    launcher.clips_shutdown().await;
+                    launcher.cubiq_shutdown().await;
+                    let _ = discord.await;
+                    let _ = servers.await;
+                });
+            }
+        });
+}

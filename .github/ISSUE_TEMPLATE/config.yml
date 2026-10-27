@@ -1,0 +1,9 @@
+# Bugs and ideas: GitHub issues. Questions: Discussions. Security problems: privately via an advisory.
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question in Discussions
+    url: https://github.com/PwiePixel/Cubiq-launcher/discussions
+    about: Questions about the launcher, the Cubiq Client, building from source or contributing.
+  - name: Report a security vulnerability
+    url: https://github.com/PwiePixel/Cubiq-launcher/security/advisories/new
+    about: Please report security problems privately, never in public.

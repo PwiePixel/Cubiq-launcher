@@ -1,0 +1,30 @@
+modLoader = "javafml"
+loaderVersion = "[${loaderMajor},)"
+license = "GPL-3.0-only"
+issueTrackerURL = "https://github.com/PwiePixel/Cubiq-launcher/issues"
+
+[[mods]]
+modId = "cubiqclient"
+version = "${version}"
+displayName = "Cubiq Client"
+authors = "PwiePixel"
+displayURL = "https://github.com/PwiePixel/Cubiq-launcher"
+description = '''
+In-Game-Client des Cubiq Launchers: HUD (FPS, CPS, Tastenanzeige, Ping, Rüstung, Effekte, Koordinaten …), Zoom, Fullbright, Fadenkreuz und ein eigenes Menü (Rechte Umschalttaste).
+'''
+${displayTest}
+
+[[dependencies.cubiqclient]]
+modId = "forge"
+mandatory = true
+versionRange = "[${forgeMin},)"
+ordering = "NONE"
+side = "CLIENT"
+
+# Eine JAR je Minecraft-Version – bewusst keine breitere Spanne.
+[[dependencies.cubiqclient]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[${minecraft}]"
+ordering = "NONE"
+side = "CLIENT"

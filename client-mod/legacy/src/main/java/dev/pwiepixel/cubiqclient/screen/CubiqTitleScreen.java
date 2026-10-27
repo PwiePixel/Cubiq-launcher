@@ -1,0 +1,167 @@
+package dev.pwiepixel.cubiqclient.screen;
+
+import dev.pwiepixel.cubiqclient.CubiqClient;
+import dev.pwiepixel.cubiqclient.compat.Mc;
+import dev.pwiepixel.cubiqclient.core.ui.title.TitleHost;
+import dev.pwiepixel.cubiqclient.core.ui.title.TitleUi;
+import dev.pwiepixel.cubiqclient.ui.Gfx;
+import net.minecraft.client.gui.GuiMultiplayer;
+import net.minecraft.client.gui.GuiOptions;
+import net.minecraftforge.fml.client.GuiModList;
+
+/**
+ * Cubiq-Startbildschirm (ersetzt den Vanilla-Titelbildschirm, abschaltbar im Modul "Startbildschirm").
+ * Aussehen und Bedienung stehen versionsunabhängig in {@link TitleUi}; hier nur die Ziele der Knöpfe.
+ * Diese Versionen zeichnen jedes Rechteck einzeln – daher die sparsame Hintergrund-Animation.
+ */
+public final class CubiqTitleScreen extends CubiqUiScreen {
+	private final TitleUi title;
+
+	public CubiqTitleScreen() {
+		this(new Host());
+	}
+
+	private CubiqTitleScreen(Host host) {
+		super("Cubiq Client", new TitleUi(host));
+		host.screen = this;
+		this.title = (TitleUi) ui();
+	}
+
+	/** Die Oberfläche (Selbsttest: Auswahl, Messung). */
+	public TitleUi titleUi() {
+		return title;
+	}
+
+	@Override
+	protected boolean customBackground() {
+		return true;
+	}
+
+	@Override
+	protected void drawBackground(Gfx g, float partialTick) {
+		// Den Hintergrund zeichnet TitleUi (Redstone-Schaltung).
+	}
+
+	@Override
+	public boolean shouldCloseOnEsc() {
+		return false;
+	}
+
+	/** Ziele der Knöpfe. */
+	private static final class Host implements TitleHost {
+		private final String versionLine = "Minecraft " + Mc.version() + " · Forge · Cubiq Client " + CubiqClient.get().version();
+		CubiqTitleScreen screen;
+
+		@Override
+		public void singleplayer() {
+			Mc.setScreen(Mc.worldSelectScreen(screen));
+		}
+
+		@Override
+		public void multiplayer() {
+			Mc.setScreen(new GuiMultiplayer(screen));
+		}
+
+		@Override
+		public void options() {
+			Mc.setScreen(new GuiOptions(screen, Mc.mc().gameSettings));
+		}
+
+		@Override
+		public void cubiqMenu() {
+			Mc.setScreen(new CubiqMenuScreen(screen));
+		}
+
+		/** Einführung beim ersten Start (über dem Startbildschirm). */
+		@Override
+		public boolean openIntro() {
+			new CubiqMenuHost(screen).openIntro();
+			return true;
+		}
+
+		@Override
+		public boolean openAccounts() {
+			if (!AccountsScreen.available()) return false;
+			Mc.setScreen(AccountsScreen.create(screen));
+			return true;
+		}
+
+		@Override
+		public boolean openWardrobe() {
+			if (!WardrobeScreen.available()) return false;
+			Mc.setScreen(WardrobeScreen.create(screen));
+			return true;
+		}
+
+		/** Forge bringt immer eine Mod-Liste mit. */
+		@Override
+		public boolean openFriends() {
+			if (!MenuScreens.friendsAvailable()) return false;
+			Mc.setScreen(MenuScreens.friends(screen));
+			return true;
+		}
+
+		@Override
+		public boolean openClips() {
+			Mc.setScreen(MenuScreens.clips(screen));
+			return true;
+		}
+
+		@Override
+		public boolean hasMods() {
+			return true;
+		}
+
+		@Override
+		public void mods() {
+			Mc.setScreen(new GuiModList(screen));
+		}
+
+		@Override
+		public void quit() {
+			Mc.mc().shutdown();
+		}
+
+		@Override
+		public void classicTitle() {
+			CubiqClient.get().openVanillaTitle();
+		}
+
+		@Override
+		public String versionLine() {
+			return versionLine;
+		}
+
+		@Override
+		public void playClick() {
+			screen.clickSound();
+		}
+
+		/** Den Erzähler gibt es erst ab 1.12 – hier bleibt es still. */
+		@Override
+		public void narrate(String text) {
+		}
+
+		@Override
+		public boolean animated() {
+			return CubiqClient.get().modules().titleAnimated.get();
+		}
+
+		@Override
+		public boolean simpleAnimation() {
+			return true;
+		}
+
+		/** Eigener Skin/Umhang für die Figur auf der Drehscheibe (kommt aus den Cubiq-Online-Funktionen). */
+		@Override
+		public dev.pwiepixel.cubiqclient.core.skin.PlayerLook look() {
+			dev.pwiepixel.cubiqclient.core.online.OnlineFeatures<Object> f = dev.pwiepixel.cubiqclient.online.LegacyOnline.features();
+			return f == null ? null : f.look();
+		}
+
+		@Override
+		public String playerName() {
+			return Mc.mc().getSession().getUsername();
+		}
+	}
+}

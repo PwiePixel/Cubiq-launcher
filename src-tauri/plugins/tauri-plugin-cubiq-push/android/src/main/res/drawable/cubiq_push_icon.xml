@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Statusleisten-Symbol: Würfel aus drei Flächen (einfarbig, Android färbt es selbst). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2.5L20,7L12,11.5L4,7ZM3.5,8.6L11.2,12.9L11.2,21.6L3.5,17.3ZM20.5,8.6L12.8,12.9L12.8,21.6L20.5,17.3Z" />
+</vector>

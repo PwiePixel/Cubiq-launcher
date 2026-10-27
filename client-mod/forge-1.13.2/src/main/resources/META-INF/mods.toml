@@ -1,0 +1,30 @@
+# Cubiq Client – Forge 1.13.2 (FML2 / ModLauncher)
+modLoader="javafml"
+# Forge 1.13.2 = FML 25.x
+loaderVersion="[25,)"
+issueTrackerURL="https://github.com/PwiePixel/Cubiq-launcher/issues"
+
+[[mods]]
+modId="cubiqclient"
+version="${version}"
+displayName="Cubiq Client"
+displayURL="https://github.com/PwiePixel/Cubiq-launcher"
+authors="PwiePixel"
+credits="Lizenz: GPL-3.0-only"
+description='''
+In-Game-Client des Cubiq Launchers: HUD (FPS, CPS, Tastenanzeige, Ping, Rüstung, Effekte, Koordinaten, Uhrzeit, Speicher, Server, Packs), Zoom, Fullbright, Toggle-Sprint/-Schleichen, eigenes Fadenkreuz und ein eigenes Menü (Rechte Umschalttaste).
+'''
+
+[[dependencies.cubiqclient]]
+    modId="forge"
+    mandatory=true
+    versionRange="[25.0.0,)"
+    ordering="NONE"
+    side="CLIENT"
+
+[[dependencies.cubiqclient]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.13.2]"
+    ordering="NONE"
+    side="CLIENT"
