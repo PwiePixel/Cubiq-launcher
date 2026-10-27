@@ -7230,7 +7230,7 @@
       "grid": "Grid",
       "notch": "Notch",
       "discard": "Discard changes?",
-      "selectHint": "Tap a button to change it. Drag to move, drag the red corner to resize. Arrow keys nudge it.",
+      "selectHint": "Tap a button to change it. Drag to move, drag the green corner to resize. Arrow keys nudge it.",
       "actionType": "Action",
       "key": "Key",
       "chord": "Hold first",

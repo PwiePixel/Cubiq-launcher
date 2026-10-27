@@ -7083,7 +7083,7 @@
       "grid": "Siatka",
       "notch": "Wcięcie",
       "discard": "Odrzucić zmiany?",
-      "selectHint": "Dotknij przycisku, aby go zmienić. Przeciągnij, aby przesunąć, czerwony róg zmienia rozmiar. Strzałki przesuwają dokładnie.",
+      "selectHint": "Dotknij przycisku, aby go zmienić. Przeciągnij, aby przesunąć, zielony róg zmienia rozmiar. Strzałki przesuwają dokładnie.",
       "actionType": "Akcja",
       "key": "Klawisz",
       "chord": "Najpierw przytrzymaj",

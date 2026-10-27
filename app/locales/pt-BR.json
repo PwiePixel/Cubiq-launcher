@@ -7083,7 +7083,7 @@
       "grid": "Grade",
       "notch": "Entalhe",
       "discard": "Descartar alterações?",
-      "selectHint": "Toque em um botão para alterá-lo. Arraste para mover, o canto vermelho muda o tamanho. As setas ajustam com precisão.",
+      "selectHint": "Toque em um botão para alterá-lo. Arraste para mover, o canto verde muda o tamanho. As setas ajustam com precisão.",
       "actionType": "Ação",
       "key": "Tecla",
       "chord": "Segurar antes",

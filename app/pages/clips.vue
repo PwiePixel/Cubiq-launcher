@@ -123,7 +123,7 @@ function openFolder() {
         <span v-if="usage.freeBytes !== null">{{ t('clips.free', { free: formatBytes(usage.freeBytes) }) }}</span>
       </div>
       <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-base-800" role="progressbar" :aria-valuenow="Math.round(share)" aria-valuemin="0" aria-valuemax="100">
-        <div class="h-full rounded-full" :class="share > 90 ? 'bg-warn' : 'bg-danger-500'" :style="{ width: `${share}%` }" />
+        <div class="h-full rounded-full" :class="share > 90 ? 'bg-warn' : 'bg-primary-500'" :style="{ width: `${share}%` }" />
       </div>
     </div>
 

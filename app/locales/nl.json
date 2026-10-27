@@ -7083,7 +7083,7 @@
       "grid": "Raster",
       "notch": "Notch",
       "discard": "Wijzigingen weggooien?",
-      "selectHint": "Tik op een knop om hem te wijzigen. Sleep om te verplaatsen, de rode hoek wijzigt de grootte. Pijltjestoetsen schuiven precies.",
+      "selectHint": "Tik op een knop om hem te wijzigen. Sleep om te verplaatsen, de groene hoek wijzigt de grootte. Pijltjestoetsen schuiven precies.",
       "actionType": "Actie",
       "key": "Toets",
       "chord": "Eerst vasthouden",

@@ -7083,7 +7083,7 @@
       "grid": "Grille",
       "notch": "Encoche",
       "discard": "Abandonner les modifications ?",
-      "selectHint": "Touche un bouton pour le modifier. Glisse pour le déplacer, le coin rouge change la taille. Les flèches l’ajustent finement.",
+      "selectHint": "Touche un bouton pour le modifier. Glisse pour le déplacer, le coin vert change la taille. Les flèches l’ajustent finement.",
       "actionType": "Action",
       "key": "Touche",
       "chord": "Maintenir avant",
