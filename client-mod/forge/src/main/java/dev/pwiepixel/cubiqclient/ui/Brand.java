@@ -58,6 +58,11 @@ public final class Brand {
 			g.fill(x, y, x + w, y + h, hover ? SURFACE_HOVER : SURFACE);
 			outline(g, x, y, w, h, hover ? TEXT_DIM : BORDER);
 		}
-		g.centered(font, label, x + w / 2, y + (h - 8) / 2, primary ? ON_ACCENT : TEXT);
+		if (primary) {
+			// Dunkle Schrift auf dem Grün ohne Schatten (mit Schatten wirkt sie verschmiert).
+			g.text(font, label, x + (w - font.width(label)) / 2, y + (h - 8) / 2, ON_ACCENT, false);
+		} else {
+			g.centered(font, label, x + w / 2, y + (h - 8) / 2, TEXT);
+		}
 	}
 }
