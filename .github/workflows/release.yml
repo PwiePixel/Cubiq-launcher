@@ -97,7 +97,8 @@ jobs:
             if [ "$SIGNING" = "ok" ]; then echo "| Update-Signatur (TAURI_SIGNING_PRIVATE_KEY + _PASSWORD) | ✅ $SIGNING_REASON |"
             else echo "| Update-Signatur (TAURI_SIGNING_PRIVATE_KEY + _PASSWORD) | ⚠️ $SIGNING_REASON Gebaut wird ohne Update-Signatur. |"; fi
             set_or_not "Secret CURSEFORGE_API_KEY" "$CURSEFORGE_API_KEY" "nur Modrinth"
-            set_or_not "Variable CUBIQ_MSA_CLIENT_ID" "$CUBIQ_MSA_CLIENT_ID" "keine Microsoft-Anmeldung"
+            if [ -n "$CUBIQ_MSA_CLIENT_ID" ]; then echo "| Variable CUBIQ_MSA_CLIENT_ID | ✅ gesetzt – eigene Azure-App |"
+            else echo "| Microsoft-Anmeldung | ✅ Azure-App des Cubiq Launchers (eingebaut) |"; fi
             set_or_not "Variable CUBIQ_API_BASE" "$CUBIQ_API_BASE" "Cubiq-Dienste aus"
             set_or_not "Variable CUBIQ_DISCORD_APP_ID" "$CUBIQ_DISCORD_APP_ID" "kein Discord-Status"
             set_or_not "Secret ANDROID_KEYSTORE_BASE64" "$ANDROID_KEYSTORE_BASE64" "Android-APK wird nicht veröffentlicht"

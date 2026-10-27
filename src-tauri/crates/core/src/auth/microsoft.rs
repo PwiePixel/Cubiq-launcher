@@ -13,12 +13,16 @@ use tokio::net::TcpListener;
 
 use crate::{Error, Result};
 
-/// Public Client (kein Secret) – die ID ist nicht geheim. Jeder Launcher braucht seine eigene
-/// Azure-App, die Mojang für die Minecraft-API freigeschaltet hat; ihre Anwendungs-ID wird beim
-/// Bauen mit `CUBIQ_MSA_CLIENT_ID=<ID>` eingetragen. Ohne bleibt die Microsoft-Anmeldung aus.
+/// Anwendungs-ID der Azure-App „Cubiq Launcher“ (öffentlicher Client, kein Secret – die ID ist nicht
+/// geheim). Dieselbe ID nutzen die Anmeldung im Spiel (`MsAuth.CLIENT_ID` im Cubiq Client) und die
+/// Website (`MS_CLIENT_ID`). Für die Minecraft-API muss Microsoft die App freigeben (docs/microsoft-sign-in.md).
+pub const CUBIQ_APP_ID: &str = "5cc8876f-8fe1-4c27-bc28-9355a79db635";
+
+/// Eigene Azure-App beim Bauen: `CUBIQ_MSA_CLIENT_ID=<ID>`. Leer oder nicht gesetzt (GitHub setzt
+/// fehlende Variablen leer) → die App des Cubiq Launchers.
 pub const CLIENT_ID: &str = match option_env!("CUBIQ_MSA_CLIENT_ID") {
-    Some(id) => id,
-    None => "",
+    Some(id) if !id.is_empty() => id,
+    _ => CUBIQ_APP_ID,
 };
 
 /// Eingetragene Client-ID – oder ein verständlicher Fehler, solange dieser Build keine hat.

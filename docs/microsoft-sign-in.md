@@ -81,11 +81,17 @@ the launcher shows "not approved" at sign-in (`login_with_xbox` answers 403); af
 > servers – our online features verify players through Mojang's session server (join/hasJoined). Source code of the
 > sign-in: https://github.com/PwiePixel/Cubiq-launcher/blob/main/src-tauri/crates/core/src/auth/microsoft.rs
 
-## 4. After approval
+## 4. The app in the code
 
-- Launcher: GitHub → repository **Settings** → **Secrets and variables** → **Actions** → **Variables** →
-  `CUBIQ_MSA_CLIENT_ID` = the Application (client) ID. The next release build has sign-in. Locally:
-  `CUBIQ_MSA_CLIENT_ID=… pnpm app:build`.
-- Cubiq Client: the same ID in `MsAuth.CLIENT_ID` (`client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java`).
-  The ID is not secret and may be committed.
-- Website: `MS_CLIENT_ID` (same ID) and `MS_CLIENT_SECRET` (the secret value) in the server's `.env`.
+The Azure app "Cubiq Launcher" is registered (application/client ID `5cc8876f-8fe1-4c27-bc28-9355a79db635`, tenant
+`f549d532-b025-4e54-8fea-8dbc13d91ed7`, personal accounts only, public client redirect `http://localhost/login`). Its
+client ID is built in – nothing else to set for the launcher and the Cubiq Client:
+
+- Launcher: `CUBIQ_APP_ID` in `src-tauri/crates/core/src/auth/microsoft.rs`. A build can use a different app with the
+  repository variable (or environment variable) `CUBIQ_MSA_CLIENT_ID`.
+- Cubiq Client: `MsAuth.CLIENT_ID` (`client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java`).
+- Website: `MS_CLIENT_ID` is prefilled in `.env.example`; add the **Web** redirect and a client secret
+  (`MS_CLIENT_SECRET`) once the website runs (step 2.5).
+
+Until Microsoft approves the app, signing in shows that the login is still waiting for the approval; afterwards it
+works without a new release.

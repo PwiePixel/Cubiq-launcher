@@ -35,11 +35,11 @@ import java.util.Map;
  */
 public final class MsAuth {
 	/**
-	 * Öffentlicher Client des Cubiq Launchers – nicht geheim. Hier die Anwendungs-ID der eigenen, von Mojang
-	 * freigeschalteten Azure-App eintragen (dieselbe wie {@code CUBIQ_MSA_CLIENT_ID} beim Bauen des Launchers);
-	 * leer = die Anmeldung im Spiel meldet, dass sie nicht eingerichtet ist.
+	 * Anwendungs-ID der Azure-App „Cubiq Launcher“ – öffentlicher Client, nicht geheim, dieselbe wie im Launcher
+	 * ({@code CUBIQ_APP_ID} in {@code auth/microsoft.rs}). Für die Minecraft-API muss Microsoft die App freigeben;
+	 * bis dahin meldet die Anmeldung, dass sie (noch) nicht freigegeben ist.
 	 */
-	public static final String CLIENT_ID = "";
+	public static final String CLIENT_ID = "5cc8876f-8fe1-4c27-bc28-9355a79db635";
 	static final String SCOPE = "XboxLive.signin offline_access";
 	static final String AUTHORIZE_URL = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize";
 	static final String TOKEN_URL = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
