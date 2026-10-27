@@ -1,60 +1,32 @@
 // Changelog für den Release-Build: gibt die Hinweise einer Version aus (Englisch + Deutsch)
-// und bricht ab, wenn der Abschnitt fehlt, eine Sprache leer ist oder das Update-Banner fehlt
-// (Zeile „<!-- banner: accent=#rrggbb motif=/news/<version>/banner.png -->“ + Bild in public/) oder die
-// Screenshots nicht passen (Kommentar „<!-- shots: … -->“, ab 0.6.5 Pflicht, siehe scripts/news-shots.mjs).
+// und bricht ab, wenn der Abschnitt fehlt, eine Sprache leer ist, das Update-Banner fehlt
+// (Zeile „<!-- banner: accent=#rrggbb -->“, optional mit eigenem Motiv „motif=/news/<version>/banner.png“ – das Bild
+// muss dann in public/ liegen, ohne Motiv zeigt der Launcher das Cubiq-Logo) oder angegebene Screenshots nicht passen
+// (Kommentar „<!-- shots: … -->“, freiwillig, siehe scripts/news-shots.mjs).
+// Den Abschnitt legt die Release-Automatik an (scripts/release.mjs, .github/workflows/auto-release.yml).
 //
 //   node --experimental-strip-types scripts/changelog.mjs notes 0.4.4   → Markdown für Release/Update
 //   node --experimental-strip-types scripts/changelog.mjs check 0.4.4   → nur prüfen
+//   node --experimental-strip-types scripts/changelog.mjs title 0.4.4   → Titel des GitHub-Release
+//       („Cubiq Launcher 0.4.4“, mit Update-Namen aus der Überschrift „Cubiq Launcher 0.4.4 – The Clip Update“)
 //   node --experimental-strip-types scripts/changelog.mjs set-contributors 0.4.4 alice,bob
 //       → schreibt „<!-- contributors: alice,bob -->“ in den Abschnitt (ändert CHANGELOG.md; leere Liste = nichts
 //         tun). Die Namen liefert scripts/contributors.mjs; der Release-Build ruft beides vor „notes“ auf.
-//   node --experimental-strip-types scripts/changelog.mjs pr <CHANGELOG.md der Ziel-Branch>
-//       → PR-Prüfung (CI): neuer Punkt unter „## Unreleased“ in Englisch UND Deutsch (scripts/changelog-pr.mjs)
 //
 // Der Parser ist derselbe wie im Launcher (app/utils/changelog.ts).
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { changelogFor, parseChangelog, releaseNotes, setContributors } from '../app/utils/changelog.ts'
-import { checkPrChangelog } from './changelog-pr.mjs'
+import { changelogFor, parseChangelog, releaseNotes, releaseTitle, setContributors } from '../app/utils/changelog.ts'
 import { checkShots } from './news-shots.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const changelogPath = join(root, 'CHANGELOG.md')
 const [command, arg, extra] = process.argv.slice(2)
 
-if (command === 'pr') {
-  if (!arg) {
-    console.error('Aufruf: changelog.mjs pr <CHANGELOG.md der Ziel-Branch>')
-    process.exit(2)
-  }
-  const base = existsSync(arg) ? readFileSync(arg, 'utf8') : ''
-  const problems = checkPrChangelog(base, readFileSync(changelogPath, 'utf8'))
-  if (problems.length) {
-    console.error(
-      [
-        'CHANGELOG.md needs an entry for this pull request:',
-        ...problems.map((p) => `  - ${p}`),
-        '',
-        'Describe what changes for players under "## Unreleased", in English and German (same points):',
-        '  ### English',
-        '  - **Log search.** The log view now finds text in folded stack traces too.',
-        '  ### Deutsch',
-        '  - **Log-Suche.** Die Log-Ansicht findet Text jetzt auch in eingeklappten Stacktraces.',
-        '',
-        'Nothing players notice (CI, refactoring, docs)? Ask for the label "no-changelog".',
-        'More: CONTRIBUTING.md',
-      ].join('\n'),
-    )
-    process.exit(1)
-  }
-  console.log('CHANGELOG.md: new points under "## Unreleased" in English and German.')
-  process.exit(0)
-}
-
-if (!['notes', 'check', 'set-contributors'].includes(command) || !arg) {
-  console.error('Aufruf: changelog.mjs notes|check <version> | set-contributors <version> <a,b> | pr <datei>')
+if (!['notes', 'check', 'title', 'set-contributors'].includes(command) || !arg) {
+  console.error('Aufruf: changelog.mjs notes|check|title <version> | set-contributors <version> <a,b>')
   process.exit(2)
 }
 
@@ -75,6 +47,10 @@ if (command === 'set-contributors') {
 }
 
 const entry = changelogFor(parseChangelog(readFileSync(changelogPath, 'utf8')), version)
+if (command === 'title') {
+  console.log(releaseTitle(entry, version))
+  process.exit(0)
+}
 if (!entry) {
   console.error(`CHANGELOG.md hat keinen Abschnitt „## ${version} – <Datum>“. Bitte vor dem Release eintragen.`)
   process.exit(1)
@@ -85,14 +61,18 @@ if (missing.length) {
   process.exit(1)
 }
 const banner = entry.banner
-if (!banner?.motif || !existsSync(join(root, 'public', banner.motif))) {
+if (!banner) {
   console.error(
     [
       `CHANGELOG.md, Version ${version}: Update-Banner fehlt. Unter der Überschrift eintragen:`,
-      `  <!-- banner: accent=#rrggbb motif=/news/${version}/banner.png -->`,
-      `und das Motiv (Cubiq Studio, Vorlage „Update-Banner“) als public/news/${version}/banner.png ablegen.`,
+      '  <!-- banner: accent=#71a330 -->',
+      `Eigenes Motiv (optional): „motif=/news/${version}/banner.png“ ergänzen und das Bild dort in public/ ablegen.`,
     ].join('\n'),
   )
+  process.exit(1)
+}
+if (banner.motif && !existsSync(join(root, 'public', banner.motif))) {
+  console.error(`CHANGELOG.md, Version ${version}: Motiv des Update-Banners fehlt: public${banner.motif}`)
   process.exit(1)
 }
 const shotProblems = checkShots(entry, join(root, 'public'))

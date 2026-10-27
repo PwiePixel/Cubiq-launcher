@@ -1,10 +1,11 @@
 // Prüft die Screenshots eines Updates (Kommentar „shots:“ in CHANGELOG.md, Dateien in public/news/<version>/):
 // lesbare Einträge, höchstens SHOTS_MAX, Datei vorhanden, echtes PNG/WebP passend zur Endung, vernünftige
-// Größe – und ab SHOTS_REQUIRED_FROM mindestens ein Bild. Genutzt von scripts/changelog.mjs check und den Tests.
+// Größe. Screenshots sind freiwillig (automatische Releases haben keine). Genutzt von scripts/changelog.mjs check
+// und den Tests.
 
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { SHOTS_MAX, SHOTS_REQUIRED_FROM, compareVersions } from '../app/utils/changelog.ts'
+import { SHOTS_MAX } from '../app/utils/changelog.ts'
 
 /** Größte erlaubte Datei (Launcher liefert sie mit, die Website lädt sie von GitHub). */
 export const SHOT_MAX_BYTES = 2 * 1024 * 1024
@@ -49,9 +50,6 @@ export function checkShots(entry, publicDir) {
     (raw) => `Eintrag „${raw}“ ist ungültig – Form: /news/${version}/<datei>.png | English caption | Deutsche Bildunterschrift`,
   )
   if (entry.shots.length > SHOTS_MAX) problems.push(`${entry.shots.length} Screenshots – höchstens ${SHOTS_MAX} je Update.`)
-  if (entry.version && compareVersions(entry.version, SHOTS_REQUIRED_FROM) >= 0 && entry.shots.length === 0) {
-    problems.push(`Kein Screenshot – ab ${SHOTS_REQUIRED_FROM} braucht jedes Update mindestens einen (Kommentar „shots:“ unter dem Banner).`)
-  }
   for (const shot of entry.shots) {
     if (!shot.src.startsWith(`/news/${version}/`)) {
       problems.push(`${shot.src}: gehört nach /news/${version}/.`)

@@ -18,7 +18,6 @@ import {
   splitPost,
   versionSeed,
 } from '../app/utils/changelog'
-import { checkPrChangelog, listPoints, newUnreleasedPoints } from '../scripts/changelog-pr.mjs'
 import { checkShots, imageInfo } from '../scripts/news-shots.mjs'
 
 const root = path.resolve(__dirname, '..')
@@ -153,10 +152,10 @@ describe('Changelog', () => {
     }
     for (const e of released) {
       expect(e.date, `${e.version}: Datum`).toMatch(/^\d{4}-\d{2}-\d{2}$/)
-      expect(e.title, `${e.version}: Update-Name`).not.toBeNull()
-      expect(e.banner?.motif, `${e.version}: Banner-Motiv`).toBeTruthy()
-      expect(existsSync(path.join(root, 'public', e.banner!.motif!)), `${e.version}: ${e.banner?.motif} fehlt`).toBe(true)
-      // Screenshots: gültig, vorhanden, echte PNG/WebP in vernünftiger Größe; ab SHOTS_REQUIRED_FROM mindestens einer.
+      expect(e.banner, `${e.version}: Banner`).not.toBeNull()
+      // Eigenes Motiv ist freiwillig (sonst das Logo) – angegeben muss es aber da sein.
+      if (e.banner?.motif) expect(existsSync(path.join(root, 'public', e.banner.motif)), `${e.version}: ${e.banner.motif} fehlt`).toBe(true)
+      // Screenshots (freiwillig): gültig, vorhanden, echte PNG/WebP in vernünftiger Größe.
       expect(checkShots(e, path.join(root, 'public')), `${e.version}: Screenshots`).toEqual([])
     }
     const { version } = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as { version: string }
@@ -247,7 +246,7 @@ describe('Changelog', () => {
     expect(notes).toContain(`![](${raw}/b.png)`)
   })
 
-  it('Release-Check der Screenshots: Pflicht ab 0.1.0, Dateien, Format, Größe, Anzahl', () => {
+  it('Release-Check der Screenshots: freiwillig, Dateien, Format, Größe, Anzahl', () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'cubiq-shots-'))
     try {
       mkdirSync(path.join(dir, 'news', '0.6.5'), { recursive: true })
@@ -279,9 +278,8 @@ describe('Changelog', () => {
       const entry = (version: string, lines: string[]) =>
         parseChangelog([`## ${version} – 2026-10-01 – X | X`, '<!-- shots:', ...lines, '-->', '### English', '- a', '### Deutsch', '- a'].join('\n'))[0]!
       expect(checkShots(entry('0.6.5', ['/news/0.6.5/ok.png | A | A', '/news/0.6.5/ok.webp']), dir)).toEqual([])
-      // Ab 0.1.0 Pflicht, davor freiwillig.
-      expect(checkShots(entry('0.6.5', []), dir).join()).toContain('Kein Screenshot')
-      expect(checkShots(entry('0.7.0', []), dir)).toHaveLength(1)
+      // Freiwillig: ohne Screenshots kein Fehler (automatische Releases haben keine).
+      expect(checkShots(entry('0.6.5', []), dir)).toEqual([])
       expect(checkShots(entry('0.0.9', []), dir)).toEqual([])
       const bad = checkShots(
         entry('0.6.5', ['/news/0.6.5/missing.png', '/news/0.6.5/tiny.png', '/news/0.6.5/fake.png', '/news/0.6.5/text.png', '/news/0.6.4/other.png', 'kaputt']),
@@ -346,47 +344,5 @@ describe('Changelog', () => {
     // Ohne „### English“ direkt unter die Überschrift; Windows-Zeilenenden bleiben erhalten.
     expect(setContributors('## 1.0.0 – 2026-01-01\r\n- x\r\n', '1.0.0', ['a'])).toBe('## 1.0.0 – 2026-01-01\r\n<!-- contributors: a -->\r\n- x\r\n')
     expect(() => setContributors(text, '9.9.9', ['a'])).toThrow('9.9.9')
-  })
-
-  it('PR-Prüfung: neuer Punkt unter „## Unreleased“ in Englisch und Deutsch', () => {
-    const doc = (en: string[], de: string[]) =>
-      [
-        '# Changelog',
-        '<!--',
-        '## Unreleased (nur im Kommentar – zählt nicht)',
-        '-->',
-        '',
-        '## Unreleased',
-        '',
-        '### English',
-        ...en,
-        '',
-        '### Deutsch',
-        ...de,
-        '',
-        '## 0.14.0 – 2026-09-28',
-        '### English',
-        '- Old',
-        '### Deutsch',
-        '- Alt',
-      ].join('\n')
-    const base = doc(['- **Docs.** New docs', '  in three languages.'], ['- **Docs.** Neue Docs', '  in drei Sprachen.'])
-    expect(listPoints('- a\n  more\n  - nested\n* b\n\ntext\n+ c')).toEqual(['a more - nested', 'b', 'c'])
-    // Nichts geändert → beide Sprachen fehlen.
-    expect(checkPrChangelog(base, base)).toHaveLength(2)
-    // Nur Englisch neu.
-    const onlyEn = doc(['- **Docs.** New docs', '  in three languages.', '- Log search'], ['- **Docs.** Neue Docs', '  in drei Sprachen.'])
-    expect(checkPrChangelog(base, onlyEn)).toEqual(['No new point under "## Unreleased" → "### Deutsch".'])
-    // Beide neu (auch ein geänderter Punkt zählt).
-    const both = doc(['- **Docs.** New docs in four languages.'], ['- **Docs.** Neue Docs', '  in drei Sprachen.', '- Log-Suche'])
-    expect(checkPrChangelog(base, both)).toEqual([])
-    expect(newUnreleasedPoints(base, both)).toEqual({ en: ['**Docs.** New docs in four languages.'], de: ['Log-Suche'] })
-    // Nur umgebrochen → kein neuer Punkt.
-    const rewrapped = doc(['- **Docs.** New docs in three', '  languages.'], ['- **Docs.** Neue Docs in drei Sprachen.'])
-    expect(checkPrChangelog(base, rewrapped)).toHaveLength(2)
-    // Ziel-Branch ohne Unreleased (gerade veröffentlicht) oder ohne Datei: alles zählt als neu.
-    expect(checkPrChangelog('', both)).toEqual([])
-    // Kein Abschnitt „## Unreleased“ im PR.
-    expect(checkPrChangelog(base, '# Changelog\n<!--\n## Unreleased\n-->\n## 0.14.0 – 2026-09-28\n### English\n- a')[0]).toContain('no "## Unreleased" section')
   })
 })

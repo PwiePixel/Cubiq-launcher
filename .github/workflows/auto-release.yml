@@ -1,0 +1,113 @@
+name: Auto release
+
+# Macht aus jedem grünen CI-Lauf auf main ein Release, wenn sich seit dem letzten Release etwas für Spieler geändert
+# hat (scripts/release.mjs):
+#   1. Versionsnummer erhöhen (feat → Minor, sonst Patch, feat!/BREAKING CHANGE → Major) – in package.json,
+#      tauri.conf.json, Cargo.toml und Cargo.lock.
+#   2. Abschnitt in CHANGELOG.md schreiben (Englisch + Deutsch): Punkte unter „## Unreleased“, sonst die erste Zeile
+#      jedes Commits seit dem letzten Release. Den Text zeigt der Launcher unter „Was ist neu“.
+#   3. Commit „Release vX.Y.Z“ + Tag auf main pushen und release.yml starten: Installer bauen, GitHub-Release mit
+#      Titel („Cubiq Launcher X.Y.Z“) und Beschreibung aus dem Changelog, Update-Kanal für den Auto-Updater.
+#
+# Von Hand: Actions → Auto release → Run workflow (Sprung wählbar, wartet nicht auf CI).
+# Abschalten: Repo-Variable CUBIQ_AUTO_RELEASE = false (Settings → Secrets and variables → Actions → Variables).
+# Pushes mit GITHUB_TOKEN starten keine Workflows – der Release-Commit löst also weder CI noch diesen Workflow aus;
+# release.yml wird deshalb ausdrücklich gestartet (workflow_dispatch ist davon ausgenommen).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Versionssprung (auto = nach den Commits)"
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: read
+
+# Nie zwei Releases gleichzeitig vorbereiten.
+concurrency:
+  group: auto-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Prepare release
+    # Nur grüne CI-Läufe von Pushes auf main dieses Repos (nicht PRs aus einem Fork-Branch namens main).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (vars.CUBIQ_AUTO_RELEASE != 'false' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      # Release-Commit + Tag pushen …
+      contents: write
+      # … und release.yml starten.
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          # Alle Commits und Tags: Commits seit dem letzten Release, vorhandene Versionen.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Ist main inzwischen weiter, startet der CI-Lauf des neueren Commits diesen Workflow noch einmal.
+      - name: Still the commit CI checked?
+        id: current
+        env:
+          CHECKED: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ] && [ "$(git rev-parse HEAD)" != "$CHECKED" ]; then
+            echo "main ist schon weiter als der geprüfte Commit – das Release kommt mit dem nächsten CI-Lauf."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Version and changelog
+        id: prepare
+        if: steps.current.outputs.skip != 'true'
+        env:
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: node --experimental-strip-types scripts/release.mjs prepare --bump "$BUMP" >> "$GITHUB_OUTPUT"
+
+      - name: Commit, tag and push
+        if: steps.prepare.outputs.skipped == 'false'
+        env:
+          TAG: ${{ steps.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+          # Erstes Release einer schon eingetragenen Version: evtl. nichts zu committen.
+          git diff --cached --quiet || git commit -m "Release $TAG"
+          git tag -a "$TAG" -m "Cubiq Launcher ${TAG#v}"
+          # Beides oder nichts – ist main inzwischen weiter, schlägt der Push fehl und der nächste Lauf übernimmt.
+          git push --atomic origin HEAD:main "refs/tags/$TAG"
+
+      - name: Start the release build
+        if: steps.prepare.outputs.skipped == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.prepare.outputs.tag }}
+          TITLE: ${{ steps.prepare.outputs.title }}
+        run: |
+          set -euo pipefail
+          gh workflow run release.yml --ref "$TAG" -f tag="$TAG"
+          {
+            echo "### $TITLE"
+            echo
+            echo "Tag \`$TAG\` ist gesetzt, der Release-Build läuft: Actions → Release."
+            echo
+            node --experimental-strip-types scripts/changelog.mjs notes "${TAG#v}"
+          } >> "$GITHUB_STEP_SUMMARY"

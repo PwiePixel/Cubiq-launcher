@@ -37,10 +37,10 @@ use crate::{Error, Result, fsutil};
 /// Fester Release-Kanal (wie `updater` für den Launcher selbst).
 pub const CHANNEL_URL: &str = "https://github.com/PwiePixel/Cubiq-launcher/releases/download/client-mod/";
 /// Öffentlicher Schlüssel des Tauri-Updaters (`plugins.updater.pubkey` in
-/// `tauri.conf.json`, Base64 einer Minisign-Schlüsseldatei). Ein Test stellt
-/// sicher, dass beide übereinstimmen. Vor dem ersten Release durch den eigenen
-/// Schlüssel ersetzen (`pnpm tauri signer generate`, siehe README).
-pub const PUBLIC_KEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDREMjk3RERDOENBOTFEQUQKUldTdEhhbU0zSDBwVFhIb29oaVozcEZ2WktyR1pMZmgyTW9COStuYXJuYXZRWUJxMUduYWdUbEoK";
+/// `tauri.conf.json`, Base64 einer Minisign-Schlüsseldatei, Schlüssel-ID
+/// A427CF588D4DF86A). Ein Test stellt sicher, dass beide übereinstimmen. Der
+/// private Schlüssel liegt nur als Secret `TAURI_SIGNING_PRIVATE_KEY` vor.
+pub const PUBLIC_KEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE0MjdDRjU4OEQ0REY4NkEKUldScStFMk5XTThucERNTjlrSlozN0plT3NNMjBLL0x1Q0VnY3hEVTNuSzk1NE9jNTlrMVk1aCsK";
 
 pub const MANIFEST_FILE: &str = "client-mod.json";
 pub const SIGNATURE_FILE: &str = "client-mod.json.sig";

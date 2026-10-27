@@ -17,7 +17,8 @@
 [Docs](https://github.com/PwiePixel/Cubiq-launcher/wiki) ·
 [Features](#features) ·
 [Before the first release](#before-the-first-release) ·
-[Building](#building-from-source)
+[Building](#building-from-source) ·
+[Releases](#releases)
 
 <img src="public/news/0.1.0/home.png" alt="Cubiq Launcher start page" width="860" />
 
@@ -99,7 +100,7 @@ matching feature stays off, the rest of the launcher works.
 | What | Where | Without it |
 |---|---|---|
 | **Microsoft sign-in**: client ID of your own Azure app ("Personal Microsoft accounts only", platform "Mobile and desktop applications" with redirect `http://localhost/login`, "Allow public client flows" on), [approved by Mojang](https://aka.ms/mce-reviewappid) for the Minecraft API | Repository variable `CUBIQ_MSA_CLIENT_ID` | No sign-in (development builds start the demo) |
-| **Update signing key**: `pnpm tauri signer generate -w ~/.tauri/cubiq-launcher.key` | Public key in `src-tauri/tauri.conf.json` (`plugins.updater.pubkey`) **and** `PUBLIC_KEY` in `src-tauri/crates/core/src/client_mod_update.rs`; private key + password as secrets `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Release builds can't be signed (the key in the repository is a placeholder) |
+| **Update signing key**: already created (key ID `A427CF588D4DF86A`); the public key is in `src-tauri/tauri.conf.json` and `src-tauri/crates/core/src/client_mod_update.rs` | Secrets `TAURI_SIGNING_PRIVATE_KEY` (content of the key file) and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Installers without update signature – installed launchers don't update themselves |
 | **Cubiq services** (friends, chat, capes, creator codes, …): base URL of your own server implementing the API | Repository variable `CUBIQ_API_BASE`; for the in-game mod also `DEFAULT_API` in `client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/online/OnlineConfig.java` | Services hidden, nothing is sent |
 | **Discord status**: application ID of your Discord app | Repository variable `CUBIQ_DISCORD_APP_ID` | No Discord status |
 | **CurseForge**: API key from the CurseForge console | Secret `CURSEFORGE_API_KEY` | Only Modrinth |
@@ -131,7 +132,7 @@ pnpm app:dev      # Nuxt dev server + Tauri window with hot reload
 
 | Command | Purpose |
 |---|---|
-| `pnpm app:build` | Release build and installer (`src-tauri/target/release/bundle`) |
+| `pnpm app:build` | Release build and installer – on Windows also as `release/Cubiq-Launcher_<version>_x64-setup.exe`; signs the update files if the key is in `~/.tauri/cubiq-launcher.key` (password in `cubiq-launcher.key.password`) |
 | `pnpm typecheck` | Type-check TypeScript/Vue |
 | `pnpm test` | Frontend tests (Vitest) |
 | `cargo test --workspace` (in `src-tauri`) | Rust tests |
@@ -144,10 +145,27 @@ Set `CUBIQ_LAUNCHER_HOME` to use a different data directory. The launch pipeline
 cargo run -p cubiq-core --example launch -- <data-dir> 1.21.1 [vanilla|fabric|quilt|forge|neoforge] [seconds]
 ```
 
-Pushing a tag like `v0.2.0` runs [`release.yml`](.github/workflows/release.yml): it builds and signs the Windows
-installer and the Linux packages, publishes a release and refreshes the update channel. Every release needs an entry
-in [CHANGELOG.md](CHANGELOG.md) (English and German) with at least one screenshot
-([how to take them](docs/release-screenshots.md)).
+## Releases
+
+Releases make themselves. After every green CI run on `main`, [`auto-release.yml`](.github/workflows/auto-release.yml)
+checks whether anything changed for players since the last release. If so, it
+
+1. raises the version (`feat:` commits → minor, `feat!:` → major, everything else → patch),
+2. writes the new section of [CHANGELOG.md](CHANGELOG.md) in English and German – from your points under
+   `## Unreleased` if there are any, otherwise from the commit messages ([how](CONTRIBUTING.md#changelog)),
+3. commits "Release vX.Y.Z", tags it and starts [`release.yml`](.github/workflows/release.yml).
+
+`release.yml` builds the Windows installer (`Cubiq-Launcher_<version>_x64-setup.exe`), a portable ZIP and the Linux
+packages and publishes them as the GitHub release "Cubiq Launcher X.Y.Z" with the changelog as description – the
+launcher shows the same text after updating ("What's new"). With the signing key in the secrets it also refreshes the
+update channel, so installed launchers update themselves.
+
+- **By hand:** Actions → Auto release → Run workflow (pick the version step), or push a tag like `v0.2.0` whose
+  version has a section in CHANGELOG.md.
+- **Pause:** set the repository variable `CUBIQ_AUTO_RELEASE` to `false`.
+- **Protected `main`:** if only pull requests may change `main`, the release commit is rejected – let GitHub Actions
+  bypass that rule.
+- Screenshots and a custom update banner are optional ([how](docs/release-screenshots.md)).
 
 ## Architecture
 

@@ -6,28 +6,23 @@ name: CI
 # - „changes“ schaut, welche Teile ein PR ändert; nur deren Jobs laufen (Push auf main: immer alle).
 # - „ci-ok“ fasst alles zusammen und ist der EINE Pflicht-Check im Ruleset von main: grün, wenn jeder Job
 #   erfolgreich war oder übersprungen wurde – so blockieren übersprungene Jobs keinen PR.
-# - Label „no-changelog“ schaltet den Changelog-Check ab; Setzen/Entfernen startet die Prüfung neu. Andere Labels
-#   lösen nur einen leeren Lauf aus (eigene Concurrency-Gruppe, „ci-ok“ heißt dort anders), der nichts abbricht und
-#   den echten „ci-ok“ nicht überschreibt.
+# - Ist ein Lauf auf main grün, macht .github/workflows/auto-release.yml daraus ein Release (mit Changelog).
 #
 # Sicherheit: pull_request (nicht pull_request_target) – fremder Code läuft ohne Secrets und nur mit Lese-Token.
 on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}${{ (github.event.action == 'labeled' || github.event.action == 'unlabeled') && github.event.label.name != 'no-changelog' && '-label' || '' }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   changes:
-    # Label-Änderungen außer „no-changelog“ ändern am Ergebnis nichts → alles überspringen.
-    if: ${{ !((github.event.action == 'labeled' || github.event.action == 'unlabeled') && github.event.label.name != 'no-changelog') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -363,34 +358,11 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # Nur für PRs: neuer Punkt unter „## Unreleased“ in Englisch UND Deutsch (Logik: scripts/changelog-pr.mjs).
-  changelog:
-    needs: changes
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'no-changelog')
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Changelog entry (English + German)
-        run: |
-          set -euo pipefail
-          # HEAD = Merge-Commit des PRs, HEAD^1 = Ziel-Branch.
-          git show HEAD^1:CHANGELOG.md > "$RUNNER_TEMP/base-changelog.md" 2>/dev/null || : > "$RUNNER_TEMP/base-changelog.md"
-          node --experimental-strip-types scripts/changelog.mjs pr "$RUNNER_TEMP/base-changelog.md"
-
-  # Der Pflicht-Check für das Ruleset. Übersprungen (Pfad nicht geändert, Label no-changelog, Push) zählt als ok.
+  # Der Pflicht-Check für das Ruleset. Übersprungen (Pfad nicht geändert) zählt als ok.
   ci-ok:
-    name: ${{ ((github.event.action == 'labeled' || github.event.action == 'unlabeled') && github.event.label.name != 'no-changelog') && 'ci-ok (label change, nothing to do)' || 'ci-ok' }}
-    needs: [changes, launcher-windows, launcher-linux, launcher-android, launcher-ios, ios-engine, client-mod, changelog]
-    if: ${{ always() && !((github.event.action == 'labeled' || github.event.action == 'unlabeled') && github.event.label.name != 'no-changelog') }}
+    name: ci-ok
+    needs: [changes, launcher-windows, launcher-linux, launcher-android, launcher-ios, ios-engine, client-mod]
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

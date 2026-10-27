@@ -1,8 +1,13 @@
 # Release screenshots
 
-Every launcher release shows screenshots of its new features: in the launcher (update card, news, "What's new" –
-a dialog with banner, gallery and notes), on the website blog and in the GitHub release notes. Since the first
-version (**0.1.0**), `node scripts/changelog.mjs check <version>` (and therefore the release build) fails without at least one screenshot.
+A launcher release can show screenshots of its new features: in the launcher (update card, news, "What's new" – a
+dialog with banner, gallery and notes), on the website blog and in the GitHub release notes. They are optional –
+automatic releases have none until you add them. Add them to the version's section in `CHANGELOG.md` before the release
+(write the notes under `## Unreleased` yourself, the automatic release keeps the comments there), or later by hand.
+
+The update banner works the same way: `<!-- banner: accent=#71a330 -->` shows the Cubiq logo in the release colour;
+`motif=/news/<version>/banner.png` (a picture with a transparent background in `public/news/<version>/`) replaces the
+logo.
 
 ## Where they go
 

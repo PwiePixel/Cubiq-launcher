@@ -34,7 +34,6 @@ is **`ci-ok`** – it sums up all the others:
 |---|---|---|
 | `launcher-windows`, `launcher-linux` | `app/`, `src-tauri/`, `scripts/`, `tests/`, `public/`, `packaging/`, `package.json` … | type check, frontend tests, frontend build, Clippy, Rust tests, Linux package metadata |
 | `client-mod` | `client-mod/`, `data/` | unit tests of `client-mod/common`, compiles Fabric 1.21.11 and 26.3, Forge 1.8.9 and Forge 1.7.10 |
-| `changelog` | every pull request | a new point in `CHANGELOG.md` in English and German (see below) |
 
 Run them locally before you ask for a review:
 
@@ -56,26 +55,25 @@ cd client-mod
 Clippy warnings count as errors. Add tests for new logic: Vitest files in `tests/`, Rust unit tests next to the code,
 JUnit tests in `client-mod/common`.
 
-## Changelog (English + German)
+## Changelog
 
-Every change that players notice gets an entry in [`CHANGELOG.md`](CHANGELOG.md) under `## Unreleased`, with the same
-points in **English and German**:
+The changelog writes itself. After every green CI run on `main`, the workflow **Auto release** makes a new version:
+the first line of every commit since the last release becomes a point in [`CHANGELOG.md`](CHANGELOG.md) – players see
+it in the launcher ("What's new") and in the GitHub release. Pull requests are squash-merged, so their **title** is
+that line.
 
-```md
-## Unreleased
-
-### English
-- **Log search.** The log view now finds text in folded stack traces too.
-
-### Deutsch
-- **Log-Suche.** Die Log-Ansicht findet Text jetzt auch in eingeklappten Stacktraces.
-```
-
-Write for players, not developers: what changes for them, in plain words, without file or function names. If you
-can't write German, write the English point and say so in the pull request – a maintainer will help.
-
-The `changelog` check fails if a pull request adds no new point in both languages. Changes that players don't notice
-(CI, refactoring, tests, docs) get the label **`no-changelog`** from a maintainer instead.
+- **Write it for players**, in plain words, without file or function names: `Log search finds text in folded stack
+  traces`, not `Fix regex in logview.ts`.
+- **`feat: …`** marks a new feature (shown in bold, raises the minor version), **`fix: …`** a bug fix; anything else is
+  a change (patch version). `feat!: …` or `BREAKING CHANGE` in the body raises the major version.
+- **German text:** a line `DE: …` further down in the commit message replaces the point in the German part, `EN: …`
+  the English one (when squash-merging, add it to the message in the merge dialog). Without them both parts use the
+  first line.
+- **Left out automatically:** commits starting with `ci:`, `chore:`, `docs:`, `test:`, `build:`, `style:` or
+  `refactor:`, dependency bumps, commits that only touch docs, tests, workflows or scripts, and anything with
+  `[skip changelog]` in the message. Nothing for players since the last release → no release.
+- **Nicer notes:** write them yourself in `CHANGELOG.md` under `## Unreleased` (`### English` and `### Deutsch`, same
+  points, see the comment at the top of the file). The next release takes them instead of the commit messages.
 
 Everyone whose commits end up in a release is thanked by their GitHub name in the release notes and in the launcher's
 "What's new" window – automatically, you don't need to do anything.
