@@ -1,6 +1,6 @@
 // Cubiq Launcher – Hilfe-Bildschirm, solange JIT fehlt. Prüft jede Sekunde und meldet sich,
 // sobald JIT aktiv ist; ohne JIT startet das Spiel nie.
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 import UIKit
 

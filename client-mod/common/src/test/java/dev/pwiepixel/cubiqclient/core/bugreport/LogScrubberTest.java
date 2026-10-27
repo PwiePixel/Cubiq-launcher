@@ -328,15 +328,15 @@ class LogScrubberTest {
 		String log = "[09:12:01] [main/INFO]: Loading Minecraft 1.21.1 with Fabric Loader 0.16.5\n"
 				+ "[09:12:02] [Render thread/INFO]: Setting user: RedstoneRon\n"
 				+ "[09:12:02] [Render thread/INFO]: Backend library: LWJGL version 3.3.3\n"
-				+ "[09:12:03] [Render thread/INFO]: Reloading ResourceManager: vanilla, fabric, file/C:\\Users\\Ron Tamer\\Downloads\\pack.zip\n"
+				+ "[09:12:03] [Render thread/INFO]: Reloading ResourceManager: vanilla, fabric, file/C:\\Users\\Ron Baker\\Downloads\\pack.zip\n"
 				+ "[09:14:10] [Render thread/INFO]: Connecting to 203.0.113.7, 25565\n"
 				+ "[09:14:12] [Render thread/INFO]: [CHAT] RedstoneRon joined the game\n"
 				+ "[09:14:15] [Cubiq-Online/INFO]: Cubiq Client: POST /v1/presence Authorization: Bearer cubiq_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ\n"
 				+ "[09:15:00] [Render thread/INFO]: Saved screenshot as 2026-09-28_09.15.00.png\n"
-				+ "[09:15:01] [Render thread/WARN]: Mail from ron@tamerin.tech rejected\n"
+				+ "[09:15:01] [Render thread/WARN]: Mail from ron@blockmail.example rejected\n"
 				+ "[09:16:00] [Render thread/INFO]: Player 5b7d3a0e-1b2c-4d5e-8f90-1a2b3c4d5e6f (RedstoneRon) at /2a02:810a:13c0:1f00::5:25565\n";
-		String out = LogScrubber.scrub(log, Arrays.asList("RedstoneRon"), "Ron Tamer", "C:\\Users\\Ron Tamer").text;
-		for (String secret : new String[]{"RedstoneRon", "Ron Tamer", "203.0.113.7", "joined the game", "cubiq_abc", "tamerin",
+		String out = LogScrubber.scrub(log, Arrays.asList("RedstoneRon"), "Ron Baker", "C:\\Users\\Ron Baker").text;
+		for (String secret : new String[]{"RedstoneRon", "Ron Baker", "203.0.113.7", "joined the game", "cubiq_abc", "blockmail",
 				"5b7d3a0e", "2a02:810a"}) {
 			assertFalse(out.contains(secret), secret + " in\n" + out);
 		}

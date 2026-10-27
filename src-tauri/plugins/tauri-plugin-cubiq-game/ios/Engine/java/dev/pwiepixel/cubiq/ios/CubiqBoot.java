@@ -7,7 +7,7 @@
  *
  * Aufruf: java ... -Dcubiq.boot.classpath=<a.jar:b.jar> dev.pwiepixel.cubiq.ios.CubiqBoot <Hauptklasse> <Spielargumente...>
  *
- * Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 package dev.pwiepixel.cubiq.ios;
 

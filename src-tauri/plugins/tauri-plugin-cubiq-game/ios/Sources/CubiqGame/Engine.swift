@@ -1,6 +1,6 @@
 // Cubiq Launcher – Bindung an libcubiqengine.dylib (C-Schnittstelle: Engine/cubiq/cubiq_engine.h).
 // Zur Laufzeit geladen: fehlt die Engine (Launcher-Build ohne Spiel), baut und startet die App trotzdem.
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 import Foundation
 

@@ -1,6 +1,6 @@
 // Cubiq Launcher – Vollbild-Spielansicht (quer, Home-Balken aus). Zeigt bei fehlendem JIT erst die
 // Hilfe, startet dann die JVM und reicht Eingaben an die Engine weiter (GameInput).
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 import GameController
 import Tauri

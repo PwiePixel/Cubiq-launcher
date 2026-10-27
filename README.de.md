@@ -25,9 +25,8 @@
 </div>
 
 > [!NOTE]
-> Der Cubiq Launcher ist noch früh in der Entwicklung (Version 0.1.0). Er basiert auf dem
-> [TRS Launcher](https://github.com/theredstonee/TRS-Launcher) von Ohev Tamerin (Theredstonee) und steht wie dieser
-> unter der GPL-3.0. Was geändert wurde, steht in [NOTICE](NOTICE).
+> Der Cubiq Launcher ist noch früh in der Entwicklung (Version 0.1.0). Er ist freie Software unter der GPL-3.0;
+> Copyright- und Drittanbieter-Hinweise stehen in [NOTICE](NOTICE).
 
 ## Funktionen
 
@@ -97,8 +96,8 @@ Deine Daten liegen in `~/.local/share/Cubiq-Launcher`. Mehr in der [Linux-Anleit
 
 ## Vor dem ersten Release
 
-Diese Werte gehören dir und werden beim Bauen eingetragen – vom ursprünglichen Projekt wird nichts verwendet. Fehlt
-ein Wert, bleibt nur die jeweilige Funktion aus; der Rest des Launchers läuft.
+Diese Werte gehören dir und werden beim Bauen eingetragen. Fehlt ein Wert, bleibt nur die jeweilige Funktion aus;
+der Rest des Launchers läuft.
 
 | Was | Wo | Ohne |
 |---|---|---|
@@ -220,8 +219,7 @@ Beiträge sind willkommen – lies [CONTRIBUTING.md](CONTRIBUTING.md). Sicherhei
 
 Der Cubiq Launcher steht unter der [GNU General Public License v3.0](LICENSE).
 
-Copyright (C) 2026 PwiePixel. Basiert auf dem TRS Launcher, Copyright (C) 2026 Ohev Tamerin (Theredstonee).
-Copyright- und Drittanbieter-Hinweise: [NOTICE](NOTICE). Teile der Prozessverwaltung stammen aus
+Copyright (C) 2026 PwiePixel. Copyright- und Drittanbieter-Hinweise: [NOTICE](NOTICE). Teile der Prozessverwaltung stammen aus
 [Polyfrost OneLauncher](https://github.com/Polyfrost/OneLauncher) (GPL-3.0-only).
 
 <sub>Der Cubiq Launcher ist kein offizielles Minecraft-Produkt und weder von Mojang noch von Microsoft genehmigt oder mit ihnen verbunden.</sub>
