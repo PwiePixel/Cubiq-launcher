@@ -208,6 +208,14 @@ describe('Release-Automatik', () => {
     )
   })
 
+  it('hängt Änderungen ohne eigenen Spieler-Text hinter die Spieler-Texte', () => {
+    const note = parseChangeNote('### English\n- **Faster start.** Opens quicker.\n\n### Deutsch\n- **Schneller Start.** Öffnet schneller.')!
+    const extra = [changelogItem(commit('feat: Calm client', 'EN: Calmer menus in the game\nDE: Ruhigere Menüs im Spiel')), null]
+    const entry = changelogFor(parseChangelog(prepareChangelog(`${intro}\n${released}`, '0.2.0', '2026-11-02', [], [note], extra)!), '0.2.0')!
+    expect(entry.en).toBe('- **Faster start.** Opens quicker.\n- **Calmer menus in the game.**')
+    expect(entry.de).toBe('- **Schneller Start.** Öffnet schneller.\n- **Ruhigere Menüs im Spiel.**')
+  })
+
   it('zieht Screenshots der Spieler-Texte nach public/news/<version>/ um', () => {
     const note = parseChangeNote(
       ['<!-- shots:', 'home.png | The new home | Der neue Start', './menu.webp', '/news/0.1.0/old.png | Old', '-->', '', '### English', '- **New look.** Nicer.', '', '### Deutsch', '- **Neuer Look.** Schöner.'].join('\n'),

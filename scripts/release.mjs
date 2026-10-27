@@ -58,8 +58,29 @@ if (!['auto', 'patch', 'minor', 'major'].includes(bump)) {
 const tag = lastTag()
 const current = currentVersion()
 const released = git('tag', '--list', `v${current}`) !== ''
-const log = git('log', '--no-merges', '--name-only', '--format=%x1e%H%x1f%s%x1f%b%x1f', ...(tag ? [`${tag}..HEAD`] : ['HEAD']))
-let items = parseGitLog(log).map(changelogItem).filter(Boolean)
+const range = tag ? [`${tag}..HEAD`] : ['HEAD']
+const log = git('log', '--no-merges', '--name-only', '--format=%x1e%H%x1f%s%x1f%b%x1f', ...range)
+const commits = parseGitLog(log)
+let items = commits.map(changelogItem).filter(Boolean)
+
+/**
+ * Commits, deren Änderung einen Spieler-Text in changes/ mitgebracht hat: bei einem Merge alle Commits des
+ * Pull Requests, wenn einer davon eine Datei in changes/ anlegt; sonst der Commit selbst (z. B. Squash-Merge).
+ */
+function coveredByNotes() {
+  const covered = new Set()
+  const isNote = (files) => files.split('\n').some((f) => /^changes\/[^/]+\.md$/.test(f.trim()) && !/readme\.md$/i.test(f))
+  for (const line of git('log', '--first-parent', '--format=%H %P', ...range).split('\n').filter(Boolean)) {
+    const [hash, first, second] = line.split(' ')
+    if (second) {
+      if (!isNote(git('diff', '--name-only', '--diff-filter=A', `${first}...${second}`, '--', 'changes'))) continue
+      for (const h of git('log', '--no-merges', '--format=%H', `${first}..${second}`).split('\n').filter(Boolean)) covered.add(h)
+    } else if (isNote(git('show', '--name-only', '--diff-filter=A', '--format=', hash, '--', 'changes'))) {
+      covered.add(hash)
+    }
+  }
+  return covered
+}
 const text = readFileSync(changelogPath, 'utf8')
 // Spieler-Texte je Änderung (changes/<thema>.md, ohne README), in Dateinamen-Reihenfolge.
 const noteFiles = existsSync(changesDir)
@@ -102,7 +123,12 @@ if (!changelogFor(parseChangelog(text), version)) {
     console.error(`Screenshots fehlen in changes/: ${missing.map((m) => m.from).join(', ')}`)
     process.exit(1)
   }
-  const prepared = prepareChangelog(text, version, today(), items, relocated)
+  // Neuerungen und Fehlerbehebungen ohne eigenen Spieler-Text (z. B. ältere Pull Requests) kommen aus den Commits
+  // dazu – nur mit „feat:“/„fix:“ oder eigenen Zeilen „EN: …“/„DE: …“, damit keine Aufräum-Commits darin landen.
+  const covered = relocated.length ? coveredByNotes() : new Set()
+  const meant = (c) => /^(?:feat|fix)(?:\([^)]*\))?!?:/i.test(c.subject) || /^(?:EN|DE):\s*\S/im.test(c.body)
+  const extra = relocated.length ? commits.filter((c) => !covered.has(c.hash) && meant(c)).map(changelogItem) : []
+  const prepared = prepareChangelog(text, version, today(), items, relocated, extra)
   if (!prepared) {
     console.error(`Für ${version} gibt es weder Punkte unter „## Unreleased“ noch Commits – kein Release.`)
     console.log('skipped=true')

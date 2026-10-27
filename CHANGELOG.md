@@ -29,7 +29,7 @@ How this file is written:
 -->
 
 ## 0.2.0 – 2026-10-27
-<!-- banner: accent=#71a330 motif=/news/0.2.0/banner.png -->
+<!-- banner: accent=#71a330 motif=/news/0.2.0/banner.png anim=/news/0.2.0/banner-anim.png -->
 
 ### English
 - **Green where it belongs.** A few spots still showed red although nothing was wrong: the storage bar on the clips
@@ -38,6 +38,11 @@ How this file is written:
 - **Clearer message when a shared mod file is missing.** When you join a friend's world that uses mods and the host
   doesn't share one of the files (anymore), the launcher now tells you exactly that instead of only saying
   "connection closed" – so you know to ask your friend to share the file again.
+- **Calmer animations in the game, too.** If you chose "Reduce animations" under Settings → Appearance → Animations –
+  or "Follow Windows/system" while your system asks for less motion – the Cubiq Client now follows along: the
+  backgrounds of the title screen, the menus and the loading screens stand still, the intro appears without fading or
+  sliding in, and progress bars glow evenly instead of running. Your own in-game setting for animated backgrounds
+  stays exactly as it is.
 
 ### Deutsch
 - **Grün, wo es hingehört.** Ein paar Stellen waren noch rot, obwohl nichts falsch war: der Speicherplatz-Balken auf
@@ -46,6 +51,11 @@ How this file is written:
 - **Klarere Meldung, wenn eine geteilte Mod-Datei fehlt.** Trittst du der Welt eines Freundes mit Mods bei und der
   Host teilt eine der Dateien nicht (mehr), sagt dir der Launcher jetzt genau das statt nur „Verbindung getrennt“ –
   so weißt du, dass dein Freund die Datei wieder freigeben muss.
+- **Ruhigere Animationen auch im Spiel.** Hast du unter Einstellungen → Aussehen → Animationen „Animationen
+  reduzieren“ gewählt – oder „Wie Windows/System“, während dein System weniger Bewegung wünscht –, macht der Cubiq
+  Client jetzt mit: Die Hintergründe von Titelbildschirm, Menüs und Ladebildschirmen stehen still, das Intro erscheint
+  ohne Ein- und Ausblenden, und Fortschrittsbalken leuchten gleichmäßig, statt zu laufen. Deine eigene Einstellung im
+  Spiel für animierte Hintergründe bleibt dabei genau so, wie sie ist.
 
 ## 0.1.1 – 2026-10-27
 <!-- banner: accent=#71a330 motif=/news/0.1.1/banner.png anim=/news/0.1.1/banner-anim.png -->

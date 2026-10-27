@@ -233,14 +233,17 @@ export function unreleasedReady(text) {
 /**
  * CHANGELOG.md für eine neue Version vorbereiten. Spieler-Texte – Dateien aus changes/ (`notes`, siehe
  * parseChangeNote) und Punkte unter „## Unreleased“ – haben Vorrang und werden zur Version (fehlt eine Sprache,
- * gilt die andere); sonst entsteht der Abschnitt aus den Commits. `null` = es gibt nichts zu veröffentlichen.
+ * gilt die andere); sonst entsteht der Abschnitt aus den Commits. `extra` = Punkte aus Commits, deren Änderung
+ * keinen Spieler-Text mitgebracht hat – sie kommen hinter die Spieler-Texte, damit nichts verloren geht.
+ * `null` = es gibt nichts zu veröffentlichen.
  * @param {string} text
  * @param {string} version
  * @param {string} date
  * @param {ReturnType<typeof changelogItem>[]} items
  * @param {ReturnType<typeof parseChangeNote>[]} [notes]
+ * @param {ReturnType<typeof changelogItem>[]} [extra]
  */
-export function prepareChangelog(text, version, date, items, notes = []) {
+export function prepareChangelog(text, version, date, items, notes = [], extra = []) {
   const nl = text.includes('\r\n') ? '\r\n' : '\n'
   const lines = text.split(/\r?\n/)
   const range = unreleasedRange(lines)
@@ -251,7 +254,10 @@ export function prepareChangelog(text, version, date, items, notes = []) {
   if (parts.length) {
     const preamble = parts.flatMap((p) => p.preamble)
     const banner = preamble.some((line) => /^<!--\s*banner:/i.test(line.trim())) ? [] : [BANNER]
-    section = [`## ${version} – ${date}`, ...banner, ...preamble, '', '### English', ...parts.flatMap((p) => p.en), '', '### Deutsch', ...parts.flatMap((p) => p.de), '']
+    const more = extra.filter(Boolean)
+    const en = [...parts.flatMap((p) => p.en), ...bullets(more, 'en')]
+    const de = [...parts.flatMap((p) => p.de), ...bullets(more, 'de')]
+    section = [`## ${version} – ${date}`, ...banner, ...preamble, '', '### English', ...en, '', '### Deutsch', ...de, '']
   }
   if (!section) {
     const real = items.filter(Boolean)
