@@ -110,6 +110,32 @@ impl Drop for ProcessHandle {
     }
 }
 
+// --- Live-Leistung -------------------------------------------------------------------
+
+/// CPU-Zeit (ms, Kernel + Benutzer) und Arbeitsspeicher (Working Set, Bytes) eines Prozesses.
+pub fn process_usage(pid: u32) -> Option<crate::game_perf::ProcessUsage> {
+    use windows::Win32::System::ProcessStatus::{GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS};
+    if pid == 0 {
+        return None;
+    }
+    // SAFETY: reiner API-Aufruf; ein ungültiger PID liefert einen Fehler. Das Handle schließt `ProcessHandle`.
+    let process = ProcessHandle(unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) }.ok()?);
+    let (mut created, mut exited, mut kernel, mut user) =
+        (FILETIME::default(), FILETIME::default(), FILETIME::default(), FILETIME::default());
+    // SAFETY: gültiges Handle, alle Ausgabezeiger zeigen auf lokale Werte.
+    unsafe { GetProcessTimes(process.0, &mut created, &mut exited, &mut kernel, &mut user) }.ok()?;
+    let cb = std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32;
+    let mut counters = PROCESS_MEMORY_COUNTERS { cb, ..Default::default() };
+    // SAFETY: gültiges Handle (PROCESS_QUERY_LIMITED_INFORMATION reicht ab Windows 8.1); `cb` nennt die Größe.
+    unsafe { GetProcessMemoryInfo(process.0, &mut counters, cb) }.ok()?;
+    // FILETIME zählt in 100 ns.
+    let time = |t: FILETIME| (u64::from(t.dwHighDateTime) << 32) | u64::from(t.dwLowDateTime);
+    Some(crate::game_perf::ProcessUsage {
+        cpu_ms: time(kernel).saturating_add(time(user)) / 10_000,
+        rss_bytes: u64::try_from(counters.WorkingSetSize).unwrap_or(u64::MAX),
+    })
+}
+
 // --- Grafikkarte ---------------------------------------------------------------------
 
 /// Unter Windows setzt [`crate::gpu`] die Grafikeinstellung in der Registry –

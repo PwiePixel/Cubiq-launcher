@@ -3430,6 +3430,26 @@
     "preparing": "Preparing Minecraft",
     "crashed": "The game closed unexpectedly – the logs usually show the cause."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Hop over the blocks while Minecraft starts.",
+    "start": "Play",
+    "controls": "Space, ↑ or click to hop – press again in the air for a double hop.",
+    "areaLabel": "Cubi Hop. Press Space, the up arrow or click to hop.",
+    "score": "Score {score}",
+    "best": "Best {score}",
+    "newBest": "New best!",
+    "over": "Ouch! Click or press Space to try again.",
+    "paused": "Paused – click or press Space to continue.",
+    "result": "Game over. Score: {score}.",
+    "resultBest": "Game over. Score: {score} – a new best!",
+    "windowSoon": "Minecraft is opening its window …",
+    "ready": "Minecraft is ready!",
+    "closesIn": "Closes in {seconds} s",
+    "keepPlaying": "Keep playing",
+    "closeNow": "Close",
+    "close": "Close mini-game"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Interface",
@@ -4756,6 +4776,10 @@
     "more": "{n} more images",
     "openRelease": "View release on GitHub"
   },
+  "updateModel": {
+    "label": "3D model of the update picture. Drag it or use the arrow keys to turn it.",
+    "hint": "Drag to turn"
+  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} clip or recording | {n} clips and recordings",
@@ -4972,6 +4996,53 @@
     "chatHint": "Only chat messages",
     "allHint": "Show everything again",
     "nothingSelected": "No level selected – click one of the buttons above."
+  },
+  "perfLive": {
+    "title": "Live performance",
+    "client": "Cubiq Client",
+    "expand": "Show charts",
+    "collapse": "Hide charts",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS only with the Cubiq Client",
+    "fpsLimited": "Limited while in the background",
+    "fpsWaiting": "Waiting for the first frames …",
+    "fpsStats": "Avg {avg} · low {min}",
+    "heap": "Java: {used} of {max}",
+    "systemFree": "PC: {free} free",
+    "cpuNote": "of the whole PC ({cores} threads)",
+    "noData": "no values yet",
+    "chartSummary": "{label} over the last minute: now {now}, average {avg}, lowest {min}, highest {max}",
+    "now": "now",
+    "secondsAgo": "{seconds} s ago",
+    "dismissTip": "Hide tip",
+    "tips": {
+      "performanceAction": "Performance settings",
+      "memory": {
+        "title": "Minecraft is running out of memory",
+        "text": "The Java memory has been almost full for a while. That causes stutters and can crash the game – give this instance more memory.",
+        "action": "Memory settings"
+      },
+      "systemMemory": {
+        "title": "Your PC is almost out of memory",
+        "text": "Only {free} are free. Close programs you don't need right now – giving Minecraft even more memory would make it worse."
+      },
+      "stutter": {
+        "title": "Short stutters",
+        "text": "The frame rate keeps dropping for a moment. Lower the render distance or use the Cubiq optimization – and if the Java memory is almost full, give the instance more."
+      },
+      "lowFps": {
+        "title": "Low frame rate",
+        "text": "Lower the render distance in the video settings, or use FPS boost in the game: Cubiq menu (Right Shift) → Performance.",
+        "boostOff": "The Cubiq optimization is off for this instance. Turn it on – Sodium and other performance mods usually give a lot more FPS."
+      },
+      "cpu": {
+        "title": "Processor at its limit",
+        "text": "Minecraft uses almost all of your processor. Lower the render and simulation distance, or close programs running in the background."
+      }
+    }
   },
   "logShare": {
     "qrLabel": "QR code of the link",

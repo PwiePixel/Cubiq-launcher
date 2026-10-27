@@ -3385,6 +3385,26 @@
     "preparing": "Minecraft voorbereiden",
     "crashed": "Het spel is onverwacht gesloten – de logs tonen meestal de oorzaak."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Spring over de blokken terwijl Minecraft start.",
+    "start": "Spelen",
+    "controls": "Spatie, ↑ of klik om te springen – druk in de lucht nog eens voor een dubbele sprong.",
+    "areaLabel": "Cubi Hop. Druk op spatie, pijl omhoog of klik om te springen.",
+    "score": "Score {score}",
+    "best": "Record {score}",
+    "newBest": "Nieuw record!",
+    "over": "Au! Klik of druk op spatie om het opnieuw te proberen.",
+    "paused": "Gepauzeerd – klik of druk op spatie om verder te gaan.",
+    "result": "Spel voorbij. Score: {score}.",
+    "resultBest": "Spel voorbij. Score: {score} – nieuw record!",
+    "windowSoon": "Minecraft opent zijn venster …",
+    "ready": "Minecraft is klaar!",
+    "closesIn": "Sluit over {seconds} s",
+    "keepPlaying": "Verder spelen",
+    "closeNow": "Sluiten",
+    "close": "Minispel sluiten"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Interface",
@@ -4688,6 +4708,10 @@
     "more": "Nog {n} afbeeldingen",
     "openRelease": "Release op GitHub bekijken"
   },
+  "updateModel": {
+    "label": "3D-model van de update-afbeelding. Sleep het of gebruik de pijltjestoetsen om het te draaien.",
+    "hint": "Sleep om te draaien"
+  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} clip of opname | {n} clips en opnames",
@@ -4904,6 +4928,53 @@
     "chatHint": "Alleen chatberichten",
     "allHint": "Weer alles tonen",
     "nothingSelected": "Geen niveau gekozen – klik hierboven op een van de knoppen."
+  },
+  "perfLive": {
+    "title": "Live prestaties",
+    "client": "Cubiq Client",
+    "expand": "Grafieken tonen",
+    "collapse": "Grafieken verbergen",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS alleen met de Cubiq Client",
+    "fpsLimited": "Beperkt op de achtergrond",
+    "fpsWaiting": "Wachten op de eerste beelden …",
+    "fpsStats": "Gem. {avg} · min. {min}",
+    "heap": "Java: {used} van {max}",
+    "systemFree": "PC: {free} vrij",
+    "cpuNote": "van de hele pc ({cores} threads)",
+    "noData": "nog geen waarden",
+    "chartSummary": "{label} in de laatste minuut: nu {now}, gemiddeld {avg}, laagste {min}, hoogste {max}",
+    "now": "nu",
+    "secondsAgo": "{seconds} s geleden",
+    "dismissTip": "Tip verbergen",
+    "tips": {
+      "performanceAction": "Prestatie-instellingen",
+      "memory": {
+        "title": "Minecraft heeft bijna geen geheugen meer",
+        "text": "Het Java-geheugen is al een tijdje bijna vol. Dat zorgt voor haperingen en kan het spel laten crashen – geef deze instantie meer geheugen.",
+        "action": "Geheugeninstellingen"
+      },
+      "systemMemory": {
+        "title": "Je pc heeft bijna geen vrij geheugen meer",
+        "text": "Er is nog maar {free} vrij. Sluit programma's die je nu niet nodig hebt – Minecraft nog meer geheugen geven zou het erger maken."
+      },
+      "stutter": {
+        "title": "Korte haperingen",
+        "text": "De framerate zakt steeds even in. Verlaag de kijkafstand of gebruik de Cubiq-optimalisatie – en is het Java-geheugen bijna vol, geef de instantie dan meer."
+      },
+      "lowFps": {
+        "title": "Lage framerate",
+        "text": "Verlaag de kijkafstand in de video-instellingen, of gebruik de FPS-boost in het spel: Cubiq-menu (Rechter Shift) → Prestaties.",
+        "boostOff": "De Cubiq-optimalisatie staat uit voor deze instantie. Zet haar aan – Sodium en andere prestatiemods geven meestal veel meer FPS."
+      },
+      "cpu": {
+        "title": "Processor aan zijn limiet",
+        "text": "Minecraft gebruikt bijna de hele processor. Verlaag de kijk- en simulatieafstand, of sluit programma's die op de achtergrond draaien."
+      }
+    }
   },
   "logShare": {
     "qrLabel": "QR-code van de link",

@@ -266,6 +266,7 @@ import type {
 } from '~/types'
 import { presetCheckSchema, presetPickListSchema, sharedFolderStatusSchema } from './schemas'
 import { pingStatusSchema } from './ping'
+import { gamePerfSchema } from './perfLive'
 import { badgeImageSchema, halloweenStateSchema, pumpkinFoundSchema, stickerSchema, trickOutcomeSchema, type LauncherPumpkin } from './halloween'
 
 export class BackendError extends Error {
@@ -486,6 +487,8 @@ export const backend = {
   launchBedrock: () => call<void>('launch_bedrock'),
   runningGames: () => call<RunningGame[]>('running_games'),
   getGameLogs: (id: string) => call<LogLine[]>('get_game_logs', { id }),
+  /** Live-Leistung des laufenden Spiels (CPU-Zeit, Speicher, mit Cubiq Client auch FPS); `null`, wenn es nicht läuft. */
+  gamePerf: (id: string) => checked(gamePerfSchema.nullable(), 'game_perf', { id }),
   repairInstance: (id: string, onProgress: (p: StageProgress) => void, taskId: string | null = null) =>
     call<void>('repair_instance', { id, onProgress: channel(onProgress), taskId }),
   /** Lädt den Log geschwärzt auf mclo.gs hoch; liefert den Link. */

@@ -4,7 +4,7 @@ import { isTauri } from '@tauri-apps/api/core'
 import changelogText from '~~/CHANGELOG.md?raw'
 
 // Update-News auf der Startseite: das neueste Update bis zur installierten Version als Karte –
-// Update-Banner (feste Vorlage + Motiv), großer Update-Name, die Schlagzeilen, kleine Vorschaubilder der
+// Update-Banner (feste Vorlage + Motiv als drehbares 3D-Modell), großer Update-Name, die Schlagzeilen, kleine Vorschaubilder der
 // Screenshots und „Beitrag lesen“. Klick auf Banner, Vorschaubild oder Knopf öffnet den Beitrag im Dialog.
 
 const HIDDEN_KEY = 'cubiq.updateNews.hidden'
@@ -68,8 +68,19 @@ function hide() {
 <template>
   <section v-if="entry && hidden !== entry.version" class="news card relative overflow-hidden" :aria-label="title">
     <div class="relative h-44">
-      <UpdateBanner :kicker="updateKicker(entry)" :title="title" :accent="entry.banner?.accent" :motif="entry.banner?.motif" :anim="entry.banner?.anim" tag="h2" />
-      <button type="button" class="absolute inset-0 cursor-pointer" :aria-label="t('updateNews.read')" @click="reading = 0" />
+      <!-- Motiv als drehbares 3D-Modell: Ziehen dreht es, ein kurzer Klick öffnet wie der Rest den Beitrag. -->
+      <UpdateBanner
+        :kicker="updateKicker(entry)"
+        :title="title"
+        :accent="entry.banner?.accent"
+        :motif="entry.banner?.motif"
+        :anim="entry.banner?.anim"
+        tag="h2"
+        model3d
+        @activate="reading = 0"
+      >
+        <button type="button" class="absolute inset-0 cursor-pointer" :aria-label="t('updateNews.read')" @click="reading = 0" />
+      </UpdateBanner>
       <button
         type="button"
         class="btn-icon absolute top-5 right-3 size-8 bg-base-950/60 backdrop-blur"

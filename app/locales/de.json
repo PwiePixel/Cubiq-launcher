@@ -3430,6 +3430,26 @@
     "preparing": "Minecraft wird vorbereitet",
     "crashed": "Das Spiel wurde unerwartet beendet – die Logs zeigen meist die Ursache."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Hüpf über die Blöcke, während Minecraft startet.",
+    "start": "Spielen",
+    "controls": "Leertaste, ↑ oder Klick zum Hüpfen – in der Luft noch einmal für einen Doppelsprung.",
+    "areaLabel": "Cubi Hop. Leertaste, Pfeil nach oben oder Klick zum Hüpfen.",
+    "score": "Punkte {score}",
+    "best": "Rekord {score}",
+    "newBest": "Neuer Rekord!",
+    "over": "Autsch! Klicken oder Leertaste für einen neuen Versuch.",
+    "paused": "Pause – klicken oder Leertaste zum Weitermachen.",
+    "result": "Vorbei. Punkte: {score}.",
+    "resultBest": "Vorbei. Punkte: {score} – neuer Rekord!",
+    "windowSoon": "Minecraft öffnet sein Fenster …",
+    "ready": "Minecraft ist bereit!",
+    "closesIn": "Schließt in {seconds} s",
+    "keepPlaying": "Weiterspielen",
+    "closeNow": "Schließen",
+    "close": "Minispiel schließen"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Darstellung",
@@ -4756,6 +4776,10 @@
     "more": "{n} weitere Bilder",
     "openRelease": "Release auf GitHub ansehen"
   },
+  "updateModel": {
+    "label": "3D-Modell des Update-Bilds. Zum Drehen ziehen oder die Pfeiltasten nutzen.",
+    "hint": "Zum Drehen ziehen"
+  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} Clip oder Aufnahme | {n} Clips und Aufnahmen",
@@ -4972,6 +4996,53 @@
     "chatHint": "Nur Chat-Nachrichten",
     "allHint": "Wieder alles zeigen",
     "nothingSelected": "Keine Stufe ausgewählt – klick oben einen der Knöpfe an."
+  },
+  "perfLive": {
+    "title": "Live-Leistung",
+    "client": "Cubiq Client",
+    "expand": "Kurven zeigen",
+    "collapse": "Kurven ausblenden",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS nur mit dem Cubiq Client",
+    "fpsLimited": "Im Hintergrund gebremst",
+    "fpsWaiting": "Warte auf die ersten Bilder …",
+    "fpsStats": "Ø {avg} · min. {min}",
+    "heap": "Java: {used} von {max}",
+    "systemFree": "PC: {free} frei",
+    "cpuNote": "vom ganzen PC ({cores} Threads)",
+    "noData": "noch keine Werte",
+    "chartSummary": "{label} in der letzten Minute: jetzt {now}, Durchschnitt {avg}, niedrigster Wert {min}, höchster {max}",
+    "now": "jetzt",
+    "secondsAgo": "vor {seconds} s",
+    "dismissTip": "Tipp ausblenden",
+    "tips": {
+      "performanceAction": "Leistungs-Einstellungen",
+      "memory": {
+        "title": "Minecraft geht der Speicher aus",
+        "text": "Der Java-Speicher ist seit einer Weile fast voll. Das sorgt für Ruckler und kann das Spiel abstürzen lassen – gib dieser Instanz mehr Speicher.",
+        "action": "Speicher-Einstellungen"
+      },
+      "systemMemory": {
+        "title": "Dein PC hat kaum noch freien Speicher",
+        "text": "Nur noch {free} sind frei. Schließ Programme, die du gerade nicht brauchst – Minecraft noch mehr Speicher zu geben, würde es schlimmer machen."
+      },
+      "stutter": {
+        "title": "Kurze Ruckler",
+        "text": "Die Bildrate bricht immer wieder kurz ein. Senk die Sichtweite oder nutz die Cubiq-Optimierung – und ist der Java-Speicher fast voll, gib der Instanz mehr."
+      },
+      "lowFps": {
+        "title": "Niedrige Bildrate",
+        "text": "Senk die Sichtweite in den Grafikeinstellungen oder nutz den FPS-Boost im Spiel: Cubiq-Menü (rechte Umschalttaste) → Leistung.",
+        "boostOff": "Die Cubiq-Optimierung ist für diese Instanz aus. Schalt sie ein – Sodium und andere Leistungs-Mods bringen meist deutlich mehr FPS."
+      },
+      "cpu": {
+        "title": "Prozessor am Limit",
+        "text": "Minecraft nutzt fast den ganzen Prozessor. Senk Sicht- und Simulationsweite oder schließ Programme, die im Hintergrund laufen."
+      }
+    }
   },
   "logShare": {
     "qrLabel": "QR-Code des Links",

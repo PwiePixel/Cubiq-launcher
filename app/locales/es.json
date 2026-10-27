@@ -3430,6 +3430,26 @@
     "preparing": "Preparando Minecraft",
     "crashed": "El juego se cerró inesperadamente: los registros suelen mostrar la causa."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Salta sobre los bloques mientras Minecraft se inicia.",
+    "start": "Jugar",
+    "controls": "Espacio, ↑ o clic para saltar; pulsa otra vez en el aire para un doble salto.",
+    "areaLabel": "Cubi Hop. Pulsa Espacio, la flecha arriba o haz clic para saltar.",
+    "score": "Puntos {score}",
+    "best": "Récord {score}",
+    "newBest": "¡Nuevo récord!",
+    "over": "¡Ay! Haz clic o pulsa Espacio para intentarlo de nuevo.",
+    "paused": "En pausa: haz clic o pulsa Espacio para continuar.",
+    "result": "Fin de la partida. Puntos: {score}.",
+    "resultBest": "Fin de la partida. Puntos: {score}. ¡Nuevo récord!",
+    "windowSoon": "Minecraft está abriendo su ventana…",
+    "ready": "¡Minecraft está listo!",
+    "closesIn": "Se cierra en {seconds} s",
+    "keepPlaying": "Seguir jugando",
+    "closeNow": "Cerrar",
+    "close": "Cerrar minijuego"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Interfaz",
@@ -4756,6 +4776,10 @@
     "more": "{n} imágenes más",
     "openRelease": "Ver la versión en GitHub"
   },
+  "updateModel": {
+    "label": "Modelo 3D de la imagen de la actualización. Arrástralo o usa las flechas para girarlo.",
+    "hint": "Arrastra para girar"
+  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} clip o grabación | {n} clips y grabaciones",
@@ -4972,6 +4996,53 @@
     "chatHint": "Solo mensajes del chat",
     "allHint": "Volver a mostrar todo",
     "nothingSelected": "Ningún nivel seleccionado: pulsa uno de los botones de arriba."
+  },
+  "perfLive": {
+    "title": "Rendimiento en vivo",
+    "client": "Cubiq Client",
+    "expand": "Mostrar gráficos",
+    "collapse": "Ocultar gráficos",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS solo con el Cubiq Client",
+    "fpsLimited": "Limitado en segundo plano",
+    "fpsWaiting": "Esperando los primeros fotogramas…",
+    "fpsStats": "Media {avg} · mín. {min}",
+    "heap": "Java: {used} de {max}",
+    "systemFree": "PC: {free} libres",
+    "cpuNote": "de todo el PC ({cores} hilos)",
+    "noData": "aún sin valores",
+    "chartSummary": "{label} en el último minuto: ahora {now}, media {avg}, mínimo {min}, máximo {max}",
+    "now": "ahora",
+    "secondsAgo": "hace {seconds} s",
+    "dismissTip": "Ocultar consejo",
+    "tips": {
+      "performanceAction": "Ajustes de rendimiento",
+      "memory": {
+        "title": "A Minecraft se le acaba la memoria",
+        "text": "La memoria de Java lleva un rato casi llena. Eso provoca tirones y puede cerrar el juego: dale más memoria a esta instancia.",
+        "action": "Ajustes de memoria"
+      },
+      "systemMemory": {
+        "title": "A tu PC casi no le queda memoria",
+        "text": "Solo quedan {free} libres. Cierra los programas que no necesites ahora: darle aún más memoria a Minecraft lo empeoraría."
+      },
+      "stutter": {
+        "title": "Tirones breves",
+        "text": "La tasa de fotogramas cae una y otra vez por un momento. Baja la distancia de renderizado o usa la optimización de Cubiq; y si la memoria de Java está casi llena, dale más a la instancia."
+      },
+      "lowFps": {
+        "title": "Tasa de fotogramas baja",
+        "text": "Baja la distancia de renderizado en los ajustes de vídeo o usa el impulso de FPS en el juego: menú de Cubiq (Mayús derecha) → Rendimiento.",
+        "boostOff": "La optimización de Cubiq está desactivada para esta instancia. Actívala: Sodium y otros mods de rendimiento suelen dar muchos más FPS."
+      },
+      "cpu": {
+        "title": "Procesador al límite",
+        "text": "Minecraft usa casi todo tu procesador. Baja la distancia de renderizado y de simulación o cierra los programas que se ejecutan en segundo plano."
+      }
+    }
   },
   "logShare": {
     "qrLabel": "Código QR del enlace",

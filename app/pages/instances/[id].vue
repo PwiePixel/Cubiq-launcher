@@ -296,6 +296,10 @@ function openFolder() {
         </div>
         <CrashPanel v-else-if="game.lastExit?.crashed" :instance-id="instance.id" :exit-code="game.lastExit.exitCode" :diagnosis="game.lastExit.diagnosis" :crash-id="game.lastExit.crashId" class="mb-4 shrink-0" />
         <FpsBoostHint :instance="instance" />
+        <!-- Während Minecraft startet: „Cubi Hop“ zum Zeitvertreib. -->
+        <LaunchMiniGame :instance-id="instance.id" class="mb-4 shrink-0" />
+        <!-- Läuft das Spiel: FPS, RAM und CPU live, mit Tipps, wenn es ruckelt. -->
+        <PerfLivePanel :instance="instance" class="mb-4 shrink-0" @open-settings="settingsOpen = $event" />
 
         <PackUpdateNotice :instance-id="instance.id" @share="sharingPack = true" />
         <SharePackDialog v-if="sharingPack" :instance="instance" @close="sharingPack = false" />

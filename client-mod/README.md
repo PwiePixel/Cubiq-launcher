@@ -310,6 +310,11 @@ every input to `UiScreen.input*`. Contract for engine and overlay: [`docs/touch-
   `clips.enable`), push
   `accountsChanged`. Access tokens arrive sealed (HMAC-SHA256 key stream + tag with a per-connection key). Test vectors
   are shared with the launcher (`CubiqLinkTest` ↔ `src-tauri/crates/core/src/link/proto.rs`).
+- Live performance (`PerfReport`): when the launcher names `perf.report` in its `challenge`, the network thread
+  sends about once per second `{"type":"perf","fps":…,"limited":…,"heapUsed":…,"heapMax":…}` (heap in MB; `fps` =
+  the FPS meter of the last 1.5 s, fed in `Performance.tick`, left out when unknown; `limited` = Dynamic FPS is
+  throttling). Display only – the launcher shows it as live charts on the instance page. Never sent from the game
+  thread. Tests: `PerfReportTest`.
 - Protocol 1 (older launchers): hello with the token from `clips.json`, clips only.
 
 **Accounts** (`common/core/account`, UI `common/core/ui/account/AccountsUi`):

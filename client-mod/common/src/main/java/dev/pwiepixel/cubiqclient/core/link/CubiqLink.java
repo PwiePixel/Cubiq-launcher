@@ -233,6 +233,8 @@ public final class CubiqLink {
 	private volatile boolean running;
 	private volatile LinkTarget lastTarget = LinkTarget.MISSING;
 	private Thread thread;
+	/** Leistung für die Live-Anzeige des Launchers (nur im Netz-Thread benutzt). */
+	private final PerfReport perf = new PerfReport();
 
 	private static final class Pending {
 		final Callback callback;
@@ -556,6 +558,7 @@ public final class CubiqLink {
 			}
 			long lastLine = System.currentTimeMillis();
 			while (running) {
+				if (greeted) reportPerf(o);
 				String raw;
 				try {
 					raw = readLine(in);
@@ -614,6 +617,16 @@ public final class CubiqLink {
 				// egal
 			}
 		}
+	}
+
+	/**
+	 * Netz-Thread: etwa einmal je Sekunde Bildrate und Java-Speicher an den Launcher (nur, wenn er
+	 * {@link PerfReport#FEATURE} nennt). Ein Schreibfehler beendet die Verbindung wie sonst auch.
+	 */
+	private void reportPerf(OutputStream o) {
+		if (!status.has(PerfReport.FEATURE)) return;
+		String line = perf.due(System.currentTimeMillis(), PerfReport.heapUsed(), PerfReport.heapMax());
+		if (line != null) write(o, line);
 	}
 
 	/** Erste Antwort während der Anmeldung (mit Zeitlimit). */

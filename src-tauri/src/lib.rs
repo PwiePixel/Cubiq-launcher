@@ -465,6 +465,8 @@ pub fn run() {
             commands::games::get_game_logs,
             commands::games::repair_instance,
             commands::games::share_log,
+            // Live-Leistungsanzeige (FPS, RAM, CPU des laufenden Spiels)
+            commands::games::game_perf,
             commands::accounts::list_accounts,
             commands::accounts::login_browser,
             commands::accounts::login_device_code,

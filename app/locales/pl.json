@@ -3385,6 +3385,26 @@
     "preparing": "Przygotowywanie Minecrafta",
     "crashed": "Gra zamknęła się nieoczekiwanie – logi zwykle pokazują przyczynę."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Przeskakuj bloki, gdy Minecraft się uruchamia.",
+    "start": "Graj",
+    "controls": "Spacja, ↑ lub kliknięcie, aby skoczyć – naciśnij jeszcze raz w powietrzu, aby wykonać podwójny skok.",
+    "areaLabel": "Cubi Hop. Naciśnij spację, strzałkę w górę lub kliknij, aby skoczyć.",
+    "score": "Wynik {score}",
+    "best": "Rekord {score}",
+    "newBest": "Nowy rekord!",
+    "over": "Auć! Kliknij lub naciśnij spację, aby spróbować ponownie.",
+    "paused": "Pauza – kliknij lub naciśnij spację, aby kontynuować.",
+    "result": "Koniec gry. Wynik: {score}.",
+    "resultBest": "Koniec gry. Wynik: {score} – nowy rekord!",
+    "windowSoon": "Minecraft otwiera swoje okno…",
+    "ready": "Minecraft jest gotowy!",
+    "closesIn": "Zamknie się za {seconds} s",
+    "keepPlaying": "Graj dalej",
+    "closeNow": "Zamknij",
+    "close": "Zamknij minigrę"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Interfejs",
@@ -4688,6 +4708,10 @@
     "more": "Więcej obrazów: {n}",
     "openRelease": "Zobacz wydanie na GitHubie"
   },
+  "updateModel": {
+    "label": "Model 3D obrazka aktualizacji. Przeciągnij go lub użyj strzałek, aby go obrócić.",
+    "hint": "Przeciągnij, aby obrócić"
+  },
   "clips": {
     "title": "Klipy",
     "subtitle": "{n} klip lub nagranie | {n} klipy i nagrania | {n} klipów i nagrań",
@@ -4904,6 +4928,53 @@
     "chatHint": "Tylko wiadomości czatu",
     "allHint": "Pokaż znowu wszystko",
     "nothingSelected": "Nie wybrano poziomu – kliknij jeden z przycisków powyżej."
+  },
+  "perfLive": {
+    "title": "Wydajność na żywo",
+    "client": "Cubiq Client",
+    "expand": "Pokaż wykresy",
+    "collapse": "Ukryj wykresy",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS tylko z Cubiq Client",
+    "fpsLimited": "Ograniczone w tle",
+    "fpsWaiting": "Czekam na pierwsze klatki…",
+    "fpsStats": "Śr. {avg} · min. {min}",
+    "heap": "Java: {used} z {max}",
+    "systemFree": "PC: wolne {free}",
+    "cpuNote": "całego PC ({cores} wątków)",
+    "noData": "jeszcze brak wartości",
+    "chartSummary": "{label} w ostatniej minucie: teraz {now}, średnio {avg}, najniżej {min}, najwyżej {max}",
+    "now": "teraz",
+    "secondsAgo": "{seconds} s temu",
+    "dismissTip": "Ukryj wskazówkę",
+    "tips": {
+      "performanceAction": "Ustawienia wydajności",
+      "memory": {
+        "title": "Minecraftowi kończy się pamięć",
+        "text": "Pamięć Javy od dłuższego czasu jest prawie pełna. To powoduje przycięcia i może wywołać awarię gry – daj tej instancji więcej pamięci.",
+        "action": "Ustawienia pamięci"
+      },
+      "systemMemory": {
+        "title": "Twojemu PC prawie brakuje pamięci",
+        "text": "Wolne jest tylko {free}. Zamknij programy, których teraz nie potrzebujesz – dawanie Minecraftowi jeszcze więcej pamięci tylko by to pogorszyło."
+      },
+      "stutter": {
+        "title": "Krótkie przycięcia",
+        "text": "Liczba klatek co chwilę na moment spada. Zmniejsz odległość renderowania lub użyj optymalizacji Cubiq – a jeśli pamięć Javy jest prawie pełna, daj instancji więcej."
+      },
+      "lowFps": {
+        "title": "Niska liczba klatek",
+        "text": "Zmniejsz odległość renderowania w ustawieniach grafiki lub użyj zwiększenia FPS w grze: menu Cubiq (prawy Shift) → Wydajność.",
+        "boostOff": "Optymalizacja Cubiq jest wyłączona dla tej instancji. Włącz ją – Sodium i inne mody wydajnościowe zwykle dają dużo więcej FPS."
+      },
+      "cpu": {
+        "title": "Procesor na granicy możliwości",
+        "text": "Minecraft używa prawie całego procesora. Zmniejsz odległość renderowania i symulacji lub zamknij programy działające w tle."
+      }
+    }
   },
   "logShare": {
     "qrLabel": "Kod QR linku",

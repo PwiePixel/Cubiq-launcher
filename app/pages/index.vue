@@ -294,6 +294,9 @@ function play(instance: Instance) {
         </div>
       </section>
 
+      <!-- Während Minecraft startet: „Cubi Hop“ zum Zeitvertreib (schließt, sobald das Spielfenster da ist). -->
+      <LaunchMiniGame />
+
       <!-- Neuestes Update als Karte mit seinem Update-Banner. -->
       <UpdateNewsCard />
 

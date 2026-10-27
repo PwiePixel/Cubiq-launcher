@@ -157,6 +157,8 @@ public final class Performance {
 			double recent = meter.recent(nowMillis, 3000);
 			if (recent > 0) gameFps = recent;
 		}
+		// Live-Leistungsanzeige im Launcher: Bildrate der letzten 1,5 s (gesendet im Netz-Thread des Cubiq Link).
+		dev.pwiepixel.cubiqclient.core.link.PerfReport.offer(nowMillis, meter.recent(nowMillis, 1500), frameLimit > 0);
 		// Grafik-Modus gewechselt (Menü, Einführung oder Launcher)? Dann die Vanilla-Optionen einmal anpassen.
 		FpsConfigMode fps = FpsConfigMode.shared();
 		if (game != null && fps != null && fps.gamePending() && ticks > 20) {

@@ -31,6 +31,7 @@ pub mod firewall;
 pub mod forge;
 pub mod fsutil;
 pub mod gamelog;
+pub mod game_perf;
 pub mod gpu;
 pub mod history;
 pub mod hooks;
