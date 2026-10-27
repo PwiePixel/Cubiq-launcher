@@ -1,0 +1,45 @@
+plugins {
+	id 'java'
+}
+
+repositories {
+	mavenCentral()
+}
+
+def netty = '4.2.16.Final'
+
+dependencies {
+	compileOnly "io.netty:netty-transport:${netty}"
+	compileOnly "io.netty:netty-buffer:${netty}"
+	compileOnly "io.netty:netty-codec-base:${netty}"
+	compileOnly "io.netty:netty-handler:${netty}"
+	compileOnly "io.netty:netty-codec-classes-quic:${netty}"
+}
+
+// Die beiden Schnittstellen kommen zur Laufzeit vom Mod (Eltern-ClassLoader) – nur zum Kompilieren.
+sourceSets.main.java {
+	srcDir '../common/src/main/java'
+	include 'dev/pwiepixel/cubiqclient/e4mcbridge/**'
+	include 'dev/pwiepixel/cubiqclient/core/hosting/e4mc/PublicTunnel.java'
+	include 'dev/pwiepixel/cubiqclient/core/hosting/net/PeerStream.java'
+}
+
+tasks.named('compileJava') {
+	options.release = 8
+	options.encoding = 'UTF-8'
+	options.compilerArgs << '-Xlint:-options'
+}
+
+jar {
+	archiveFileName = 'e4mc-bridge.jar'
+	exclude 'dev/pwiepixel/cubiqclient/core/**'
+	from('LICENSE-e4mc') { into 'META-INF' }
+	// Reproduzierbar (gleicher Inhalt → gleiche Bytes).
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
+}
+
+tasks.register('publishBridge', Copy) {
+	from jar
+	into '../common/src/main/resources/assets/cubiqclient/e4mc'
+}

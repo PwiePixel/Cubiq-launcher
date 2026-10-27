@@ -1,0 +1,116 @@
+package dev.pwiepixel.cubiqclient.hud;
+
+import dev.pwiepixel.cubiqclient.CubiqClient;
+import dev.pwiepixel.cubiqclient.compat.Mc;
+import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
+import dev.pwiepixel.cubiqclient.core.redstone.RedstonePanels;
+import dev.pwiepixel.cubiqclient.core.redstone.RedstoneTools;
+import dev.pwiepixel.cubiqclient.core.redstone.SignalOverlay;
+import dev.pwiepixel.cubiqclient.core.ui.TextWidth;
+import dev.pwiepixel.cubiqclient.ui.Gfx;
+import dev.pwiepixel.cubiqclient.ui.GfxCanvas;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+
+/**
+ * Redstone-Anzeigen im HUD: Signalstärke, Takt-Messer und das Welt-Overlay über dem Staub.
+ * Gezeichnet wird versionsunabhängig in {@code core.redstone} – hier nur die Anbindung.
+ */
+public final class RedstoneHuds {
+	/** Textbreite mit der Schrift des Spiels (einmal angelegt, kein Objekt je Frame). */
+	private static final TextWidth MEASURE = new TextWidth() {
+		@Override
+		public int width(String text) {
+			return Minecraft.getInstance().font.width(text);
+		}
+	};
+
+	private RedstoneHuds() {
+	}
+
+	/** Signalstärke des angeschauten Bauteils. */
+	public static final class Signal extends HudElement {
+		private final RedstonePanels.Signal panel;
+
+		public Signal(CubiqModules modules, RedstoneTools tools) {
+			super(modules.redstoneSignal);
+			this.panel = new RedstonePanels.Signal(modules, tools);
+		}
+
+		@Override
+		public boolean visible() {
+			return panel.visible();
+		}
+
+		@Override
+		public int width(Font font, boolean preview) {
+			return panel.width(MEASURE, preview);
+		}
+
+		@Override
+		public int height(Font font, boolean preview) {
+			return panel.height(preview);
+		}
+
+		@Override
+		public void draw(Gfx g, Font font, boolean preview) {
+			panel.draw(GfxCanvas.of(g, font), MEASURE, preview);
+		}
+	}
+
+	/** Takt-Messer mit Oszilloskop. */
+	public static final class Clock extends HudElement {
+		private final RedstonePanels.Clock panel;
+
+		public Clock(CubiqModules modules, RedstoneTools tools) {
+			super(modules.redstoneClock);
+			this.panel = new RedstonePanels.Clock(modules, tools);
+		}
+
+		@Override
+		public boolean visible() {
+			return panel.visible();
+		}
+
+		@Override
+		public int width(Font font, boolean preview) {
+			return panel.width(MEASURE, preview);
+		}
+
+		@Override
+		public int height(Font font, boolean preview) {
+			return panel.height(preview);
+		}
+
+		@Override
+		public void draw(Gfx g, Font font, boolean preview) {
+			panel.draw(GfxCanvas.of(g, font), MEASURE, preview);
+		}
+	}
+
+	/** Zahlen über dem Redstone-Staub (eigene Projektion ins HUD, wie die Wegpunkte). */
+	public static final class Overlay {
+		private final CubiqModules modules;
+		private final RedstoneTools tools;
+		private final SignalOverlay painter = new SignalOverlay();
+
+		public Overlay(CubiqModules modules, RedstoneTools tools) {
+			this.modules = modules;
+			this.tools = tools;
+		}
+
+		public void render(Gfx g, Font font) {
+			Minecraft mc = Minecraft.getInstance();
+			if (mc.player == null || mc.level == null) return;
+			// Schaltungs-Vorlage (Geisterblöcke + Fortschritt), gleiche Projektion wie das Signal-Overlay
+			if (dev.pwiepixel.cubiqclient.core.circuit.Circuits.get().wantsDraw()) {
+				dev.pwiepixel.cubiqclient.core.circuit.Circuits.get().draw(GfxCanvas.of(g, font), Mc.cameraX(), Mc.cameraY(),
+						Mc.cameraZ(), Mc.cameraYaw(), Mc.cameraPitch(), CubiqClient.get().worldFov(), g.width(), g.height());
+			}
+			if (!modules.redstoneOverlay.isEnabled() || tools.cache().size() == 0) return;
+			painter.draw(GfxCanvas.of(g, font), tools.cache().entries(), Mc.cameraX(), Mc.cameraY(), Mc.cameraZ(),
+					Mc.cameraYaw(), Mc.cameraPitch(), CubiqClient.get().worldFov(), g.width(), g.height(),
+					modules.redstoneOverlayZero.get());
+		}
+	}
+}

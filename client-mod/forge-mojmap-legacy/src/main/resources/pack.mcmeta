@@ -1,0 +1,6 @@
+{
+	"pack": {
+		"description": "Cubiq Client resources",
+		"pack_format": ${packFormat}
+	}
+}

@@ -1,0 +1,770 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+/*
+ * Cubiq-Look: schlichte, dunkle Flächen mit einem Hauch Grün als Grund, das Grün
+ * aus dem Logo (#71a330) für Aktionen und ein helleres Lime für alles, was gerade
+ * läuft (Spiel gestartet, Download aktiv).
+ */
+@theme {
+  --color-base-950: #0c100e;
+  --color-base-900: #111613;
+  --color-base-850: #161c18;
+  --color-base-800: #1d2520;
+  --color-base-700: #29332c;
+  --color-base-600: #3d4a41;
+  --color-base-500: #5f6d63;
+  --color-base-400: #869489;
+  --color-base-300: #a6b2a9;
+  --color-base-200: #c5d0c8;
+  --color-base-100: #dbe3dd;
+  --color-base-50: #eef4ef;
+
+  --color-primary-200: #cde8a6;
+  --color-primary-300: #a9d46b;
+  --color-primary-400: #88bb45;
+  --color-primary-500: #71a330;
+  --color-primary-600: #5c8726;
+  --color-primary-900: #1a2810;
+  /* Text auf Flächen in der Akzentfarbe (Knöpfe, Zähler): dunkel auf hellen Akzenten, hell auf dunklen. */
+  --color-on-primary: #0b1405;
+
+  --color-live-200: #e4f8c4;
+  --color-live-300: #d0f29b;
+  --color-live-400: #b4e46a;
+  --color-live-900: #22300f;
+
+  /* Hinweise, Warnungen und „ausstehend“: warmes Bernstein, klar getrennt vom Grün für „läuft“. */
+  --color-caution-200: #fde7b8;
+  --color-caution-300: #f8cd7a;
+  --color-caution-400: #f0b44c;
+  --color-caution-500: #d99a2b;
+  --color-caution-900: #33260c;
+
+  /* Fehler, Löschen, Sperren – bleibt rot, egal welche Akzentfarbe gewählt ist. */
+  --color-danger-200: #fecdcd;
+  --color-danger-300: #fda4a4;
+  --color-danger-400: #f87171;
+  --color-danger-500: #e5484d;
+  --color-danger-600: #c62f35;
+  --color-danger-900: #3b1215;
+
+  --color-ok: #6fd88f;
+  --color-warn: #f0b44c;
+
+  --font-sans: "Inter Variable", "Segoe UI Variable Text", "Segoe UI", system-ui, "Cantarell", "Noto Sans", "Ubuntu", "DejaVu Sans", sans-serif;
+  --font-display: "Inter Variable", "Segoe UI Variable Display", "Segoe UI", system-ui, "Noto Sans", sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, "JetBrains Mono", "Noto Sans Mono", "DejaVu Sans Mono", "Liberation Mono", ui-monospace, monospace;
+
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-pop: pop 0.18s ease-out;
+  --animate-live: live 2.4s ease-in-out infinite;
+  --animate-sheet: sheet-up 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes live {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+  @keyframes sheet-up {
+    from { transform: translateY(40%); opacity: 0.4; }
+    to { transform: none; opacity: 1; }
+  }
+}
+
+/*
+ * Bewegung: Die Launcher-Einstellung „Animationen“ entscheidet, nicht die
+ * Media-Query allein (Windows meldet „reduziert“ schon bei ausgeschalteten
+ * Animationseffekten). `data-reduced-motion` auf <html> setzt `utils/motion.ts`
+ * – auch für „Wie System“. Deshalb nie die Media-Query für reduzierte Bewegung
+ * direkt verwenden, sondern `:root[data-reduced-motion] …` bzw. `motion-reduce:`
+ * (tests/motion.test.ts passt darauf auf).
+ */
+@custom-variant motion-reduce (:root[data-reduced-motion] &);
+@custom-variant motion-safe (:root:not([data-reduced-motion]) &);
+
+/*
+ * Handy-Oberfläche (Android/iOS, `is-mobile` setzt plugins/os.client.ts): `mobile:…`
+ * greift nur dort – der Desktop-Launcher bleibt Pixel für Pixel unverändert.
+ * Ränder für Notch/Gestenleiste: `--safe-top/-bottom/-left/-right`.
+ */
+@custom-variant mobile (:root.is-mobile &);
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  /* Höhe der Tab-Leiste unten (ohne Gestenleiste) – Sheets und Toasts halten Abstand. */
+  --mobile-tabbar: 3.5rem;
+  /* Weicher Schein hinter Inhalten der Akzentfarbe (Szene, Knöpfe). */
+  --glow-primary: color-mix(in srgb, var(--color-primary-500) 35%, transparent);
+}
+
+/*
+ * Farbschemata: überschreiben nur die Grundskala. „Dunkel“ ist der Standard oben;
+ * OLED geht auf echtes Schwarz, Hell dreht die Skala um.
+ */
+:root[data-theme="oled"] {
+  --color-base-950: #000000;
+  --color-base-900: #050706;
+  --color-base-850: #0a0d0b;
+  --color-base-800: #121714;
+  --color-base-700: #1f2721;
+  --color-base-600: #354038;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-base-950: #eef2ef;
+  --color-base-900: #ffffff;
+  --color-base-850: #f5f8f6;
+  --color-base-800: #e5ebe6;
+  --color-base-700: #d2dbd4;
+  --color-base-600: #a8b5ab;
+  --color-base-500: #828f86;
+  --color-base-400: #5d6b61;
+  --color-base-300: #45514a;
+  --color-base-200: #2c3530;
+  --color-base-100: #1d2420;
+  --color-base-50: #0f1411;
+  --color-primary-300: #4d7a1c;
+  --color-primary-200: #3b5e15;
+  --color-primary-900: #e6f2d6;
+  --color-live-300: #4f7a12;
+  --color-live-200: #3d5f0d;
+  --color-live-900: #edf7dc;
+  --color-caution-300: #8a5a00;
+  --color-caution-200: #6e4800;
+  --color-caution-900: #fdf1d8;
+  --color-danger-300: #b42318;
+  --color-danger-200: #8f1c13;
+  --color-danger-900: #fde4e1;
+}
+
+/* Akzentfarben: ersetzen die Primärskala (Aktionen, aktive Punkte). Ab Werk Cubiq-Grün. */
+:root[data-accent="amber"] {
+  --color-primary-200: #ffe2b0;
+  --color-primary-300: #ffd48a;
+  --color-primary-400: #ffb84d;
+  --color-primary-500: #e0900c;
+  --color-primary-600: #b06e00;
+  --color-primary-900: #3d2a0c;
+}
+:root[data-accent="emerald"] {
+  --color-primary-200: #bbf7d0;
+  --color-primary-300: #86efac;
+  --color-primary-400: #4ade80;
+  --color-primary-500: #17a34a;
+  --color-primary-600: #15803d;
+  --color-primary-900: #0c2a17;
+}
+:root[data-accent="lapis"] {
+  --color-on-primary: #ffffff;
+  --color-primary-200: #c9d8ff;
+  --color-primary-300: #9dbaff;
+  --color-primary-400: #6b95ff;
+  --color-primary-500: #3563e9;
+  --color-primary-600: #2447b8;
+  --color-primary-900: #0f1c42;
+}
+:root[data-accent="amethyst"] {
+  --color-on-primary: #ffffff;
+  --color-primary-200: #ecdcff;
+  --color-primary-300: #dcbcff;
+  --color-primary-400: #c38cfb;
+  --color-primary-500: #9b4ddf;
+  --color-primary-600: #7a2fc0;
+  --color-primary-900: #2b1442;
+}
+:root[data-accent="ice"] {
+  --color-primary-200: #d9f2ff;
+  --color-primary-300: #b8e7ff;
+  --color-primary-400: #7fd3ff;
+  --color-primary-500: #2b97d6;
+  --color-primary-600: #1c74ad;
+  --color-primary-900: #0b2638;
+}
+:root[data-accent="orange"] {
+  --color-primary-200: #ffe0c6;
+  --color-primary-300: #ffc89a;
+  --color-primary-400: #ff9a52;
+  --color-primary-500: #e8702a;
+  --color-primary-600: #b8521c;
+  --color-primary-900: #3a1c0e;
+}
+:root[data-accent][data-theme="light"] {
+  --color-primary-300: color-mix(in srgb, var(--color-primary-600) 82%, black);
+  --color-primary-200: color-mix(in srgb, var(--color-primary-600) 70%, black);
+  --color-primary-900: color-mix(in srgb, var(--color-primary-500) 14%, white);
+}
+
+/*
+ * Event „Halloween“ (`data-event` setzt stores/events.ts, nur solange ein Event für
+ * den Spieler läuft – kommt vom Cubiq-Server): überlagert Akzent und Palette zur
+ * Laufzeit. Die gespeicherte Einstellung (data-accent) bleibt unberührt.
+ */
+@font-face {
+  font-family: "IM Fell English SC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/im-fell-english-sc-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/cormorant-garamond-latin-500-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/cormorant-garamond-latin-ext-500-italic.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+:root[data-event="halloween"] {
+  --hw-night: #07060c;
+  --hw-fog: #13101f;
+  --hw-plum: #3a1f5c;
+  --hw-violet: #8e6cc9;
+  --hw-violet-2: #b9a2ea;
+  --hw-silver: #cfd5e3;
+  --hw-silver-2: #f3f5fb;
+  --hw-pumpkin: #e08a3c;
+  --hw-blood: #7a0f18;
+  --hw-blood-2: #c9424a;
+  --hw-soul: #9fd6e6;
+  --hw-serif: "IM Fell English SC", "Iowan Old Style", Georgia, serif;
+  --hw-italic: "Cormorant Garamond", Georgia, serif;
+  --font-display: var(--hw-serif);
+  --color-on-primary: #ffffff;
+  --color-primary-300: #b9a2ea;
+  --color-primary-400: #a68ad8;
+  --color-primary-500: #8e6cc9;
+  --color-primary-600: #6c4ca6;
+  --color-primary-900: #24163a;
+  /* „Läuft“ ist zu Halloween Mondlicht. */
+  --color-live-300: #f3f5fb;
+  --color-live-400: #cfd5e3;
+  --color-live-900: #1d1b2a;
+}
+:root[data-event="halloween"]:not([data-theme="light"]) {
+  --color-base-950: #07060c;
+  --color-base-900: #0c0a14;
+  --color-base-850: #13101f;
+  --color-base-800: #1b1629;
+  --color-base-700: #2a2440;
+  --color-base-600: #3b3358;
+  --color-base-400: #9a94b4;
+  --color-base-200: #c3bdd8;
+  --color-base-50: #ece9f5;
+}
+:root[data-event="halloween"][data-theme="oled"] {
+  --color-base-950: #000000;
+  --color-base-900: #050409;
+  --color-base-850: #0a0812;
+}
+:root[data-event="halloween"][data-theme="light"] {
+  --color-primary-300: #5b3b94;
+  --color-primary-900: #ece4fa;
+  --color-live-300: #4a4f63;
+  --color-live-400: #6f7590;
+  --color-live-900: #eceef4;
+}
+/* Untertitel zu Halloween: Cormorant kursiv. */
+.hw-italic {
+  font-family: var(--hw-italic, Georgia, serif);
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* „Erweitertes Rendering“ aus: keine Unschärfe-Effekte. */
+:root.no-blur *,
+:root.no-blur *::before,
+:root.no-blur *::after {
+  backdrop-filter: none !important;
+}
+
+html,
+body,
+#__nuxt {
+  height: 100%;
+}
+
+body {
+  background: var(--color-base-950);
+  color: var(--color-base-50);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+textarea {
+  user-select: text;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-primary-500) 35%, transparent);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-base-700);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-base-600);
+}
+
+/* Seitenwechsel: kurz genug, um nicht aufzuhalten, aber mit sanftem Aufziehen. */
+.page-enter-active {
+  transition: opacity 0.18s ease-out, transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.page-leave-active {
+  transition: opacity 0.1s ease-in, transform 0.1s ease-in;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px) scale(0.995);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-[background-color,color,box-shadow,transform] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+  }
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-400 active:bg-primary-600;
+    color: var(--color-on-primary);
+    font-weight: 600;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+  }
+  .btn-primary:not(:disabled):hover {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 6px 18px -8px var(--glow-primary);
+  }
+  .btn-ghost {
+    @apply bg-base-800 text-base-200 hover:bg-base-700 hover:text-base-50;
+  }
+  .btn-danger {
+    @apply bg-transparent text-danger-300 ring-1 ring-danger-600/60 hover:bg-danger-900;
+  }
+  .field {
+    @apply w-full rounded-lg border border-base-700 bg-base-900 px-3 py-2 text-sm text-base-50 outline-none transition-[border-color,box-shadow] placeholder:text-base-400 focus:border-primary-500;
+  }
+  .field:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium text-base-400;
+  }
+  .card {
+    @apply rounded-xl border border-base-800 bg-base-900;
+  }
+  /*
+   * Halloween: Spinnweben in der rechten oberen Ecke jeder Karte (als Hintergrundbild,
+   * damit keine Karte ihre Position ändert; Verläufe aus Utilities gewinnen weiter).
+   */
+  :where(:root[data-event="halloween"]) .card {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 54 54'%3E%3Cg fill='none' stroke='%23cfd5e3' stroke-opacity='.5' stroke-width='.6'%3E%3Cpath d='M54 0 L10 54 M54 0 L30 54 M54 0 L0 30 M54 0 L0 8'/%3E%3Cpath d='M44 0 Q42 9 54 12 M34 0 Q30 18 54 22 M22 0 Q18 28 54 34 M12 0 Q8 38 54 46'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: top right;
+    background-size: 54px 54px;
+  }
+  /* Knöpfe im Mondnacht-Stil: Pflaume mit Silberkante. */
+  :where(:root[data-event="halloween"]:not([data-theme="light"])) .btn-primary {
+    background-image: linear-gradient(180deg, rgba(58, 31, 92, 0.85), rgba(20, 16, 33, 0.95));
+    background-color: #2a1a44;
+    color: #f3f5fb;
+    box-shadow: inset 0 0 0 1px #5a4c80;
+  }
+  :where(:root[data-event="halloween"]:not([data-theme="light"])) .btn-primary:not(:disabled):hover {
+    background-color: #3a1f5c;
+    box-shadow: inset 0 0 0 1px #cfd5e3, 0 0 18px rgba(207, 213, 227, 0.18), 0 0 22px rgba(224, 138, 60, 0.18);
+  }
+  .card-hover {
+    @apply relative transition-[border-color,background-color,box-shadow] duration-150 hover:border-base-700 hover:bg-base-850;
+  }
+  .card-hover:hover {
+    box-shadow: 0 10px 30px -18px rgb(0 0 0 / 0.6), 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 22%, transparent);
+  }
+  /*
+   * Klickbare Karten (Knöpfe/Links) heben sich beim Drüberfahren leicht an und
+   * geben beim Drücken nach. Nur für Elemente ohne Dialoge darin – `translate`
+   * macht das Element zum Bezugsrahmen für `position: fixed`.
+   */
+  .card-lift {
+    @apply transition-[border-color,background-color,translate,scale,box-shadow] duration-150 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
+  }
+  .btn-icon {
+    @apply inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-base-800 text-base-200 transition-[background-color,border-color,color,fill,stroke,scale] hover:bg-base-700 hover:text-base-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+  }
+  .badge {
+    @apply inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full bg-base-800 px-2.5 py-1 text-xs text-base-200;
+  }
+  .menu {
+    @apply absolute z-40 min-w-48 rounded-xl border border-base-700 bg-base-850 p-1 shadow-xl shadow-black/40;
+    animation: menu-in 0.14s ease-out;
+    transform-origin: top;
+  }
+  .menu-item {
+    @apply flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-base-200 transition-colors hover:bg-base-700 hover:text-base-50 disabled:opacity-40;
+  }
+  .section-title {
+    @apply text-sm font-semibold text-base-50;
+  }
+  .display {
+    font-family: var(--font-display);
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+  /* Abschnittstitel auf der Startseite: kräftig, klar über dem Inhalt. */
+  .heading {
+    font-family: var(--font-display);
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    @apply text-lg leading-tight text-base-50;
+  }
+  /* Früher Pixel-Ecken; heute weich gerundet wie alle Flächen (`--notch` bleibt als Maß). */
+  .pixel-corners {
+    border-radius: calc(var(--notch, 4px) * 2.5);
+  }
+  /* Grundfläche der Seiten. */
+  .surface {
+    background-color: var(--color-base-950);
+  }
+  /* Hintergrund-Szene hinter allen Seiten (Einstellung „Animierter Hintergrund“). */
+  .app-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.9;
+  }
+  /* Über der Szene: halbdurchsichtiger Schleier, damit Inhalte lesbar bleiben. */
+  .surface.surface-over-scene {
+    background-color: color-mix(in srgb, var(--color-base-950) 72%, transparent);
+  }
+  /* Platzhalter, während Daten laden: ruhiger Schimmer über der Fläche. */
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-base-850;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      color-mix(in srgb, var(--color-base-50) 5%, transparent) 50%,
+      transparent 80%
+    );
+    transform: translateX(-100%);
+    animation: skeleton-sweep 1.6s ease-in-out infinite;
+  }
+  .seg {
+    @apply px-3 py-1.5 text-base-400 transition-colors hover:text-base-50;
+  }
+  .seg-on {
+    @apply bg-base-700 text-base-50;
+  }
+  .tab {
+    @apply relative rounded-full px-3.5 py-1.5 text-sm font-medium text-base-400 transition-colors hover:bg-base-850 hover:text-base-50;
+  }
+  /* Team-Bereich: Listenzeile mit aktivem Eintrag (j/k) und Auswahl. */
+  .adm-row {
+    @apply transition-[border-color,background-color] duration-150 hover:border-base-700 hover:bg-base-850;
+  }
+  .adm-row-active {
+    box-shadow: inset 3px 0 0 var(--color-primary-500);
+  }
+  .adm-row-selected {
+    background: color-mix(in srgb, var(--color-primary-900) 45%, var(--color-base-900));
+  }
+  .tab-on {
+    @apply bg-base-800 text-base-50 hover:bg-base-800;
+  }
+  /* Skins-Seite: Karten-Raster der Skin-Figuren. */
+  .skin-grid {
+    @apply grid gap-2.5;
+    grid-template-columns: repeat(auto-fill, minmax(6.75rem, 1fr));
+  }
+}
+
+/* Bereinigtes Markdown von Modrinth (Beschreibungen, Changelogs). */
+.prose-md {
+  @apply text-sm leading-relaxed text-base-200 select-text;
+  overflow-wrap: anywhere;
+}
+.prose-md > :first-child {
+  margin-top: 0;
+}
+.prose-md :where(p, ul, ol, pre, blockquote, table, details) {
+  margin: 0.75em 0;
+}
+.prose-md :where(h1, h2, h3, h4, h5, h6) {
+  @apply font-semibold text-base-50;
+  margin: 1.4em 0 0.5em;
+  line-height: 1.3;
+}
+.prose-md h1 {
+  font-size: 1.35rem;
+}
+.prose-md h2 {
+  font-size: 1.15rem;
+}
+.prose-md h3 {
+  font-size: 1rem;
+}
+.prose-md a {
+  @apply text-primary-300 underline decoration-primary-500/40 underline-offset-2 hover:decoration-primary-300;
+  cursor: pointer;
+}
+.prose-md :where(ul) {
+  list-style: disc;
+  padding-left: 1.4em;
+}
+.prose-md :where(ol) {
+  list-style: decimal;
+  padding-left: 1.4em;
+}
+.prose-md li + li {
+  margin-top: 0.25em;
+}
+.prose-md img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+.prose-md :where(code) {
+  @apply rounded bg-base-800 px-1 py-0.5 font-mono text-[0.85em] text-primary-300;
+}
+.prose-md pre {
+  @apply overflow-x-auto rounded-lg bg-base-950 p-3;
+}
+.prose-md pre code {
+  @apply bg-transparent p-0 text-base-200;
+}
+.prose-md blockquote {
+  @apply border-l-2 border-base-600 pl-3 text-base-400;
+}
+.prose-md hr {
+  @apply my-5 border-base-800;
+}
+.prose-md table {
+  @apply block overflow-x-auto text-xs;
+  border-collapse: collapse;
+}
+.prose-md :where(th, td) {
+  @apply border border-base-800 px-2 py-1;
+}
+.prose-md center,
+.prose-md [align="center"] {
+  text-align: center;
+}
+.prose-md summary {
+  @apply cursor-pointer font-medium text-base-50;
+}
+
+:root[data-reduced-motion] *,
+:root[data-reduced-motion] *::before,
+:root[data-reduced-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* --- Bewegung im ganzen Launcher ------------------------------------------- */
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Ein Verlauf läuft einmal über die Breite (Seitenwechsel). */
+@keyframes progress-run {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+/* Seitenwechsel: ein dünner Ladebalken läuft oben am Inhalt entlang. */
+.route-signal {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 5;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.route-signal::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 30%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--color-primary-500), var(--color-primary-300), transparent);
+  animation: progress-run 0.6s cubic-bezier(0.3, 0.6, 0.4, 1) 1 forwards;
+}
+
+:root[data-reduced-motion] .skeleton::after,
+:root[data-reduced-motion] .route-signal::after,
+:root[data-reduced-motion] .menu {
+  animation: none;
+}
+
+/*
+ * Linux (WebKitGTK): Auswahllisten zeichnet GTK sonst im hellen System-Stil –
+ * weißer Kasten mit weißer Schrift. Eigener Pfeil statt nativer Darstellung;
+ * Windows (WebView2) bleibt unverändert.
+ */
+html.os-linux select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--color-base-900);
+  color: var(--color-base-50);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23869489' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.55rem center;
+  background-size: 0.9rem;
+  padding-right: 1.9rem;
+}
+html.os-linux select option {
+  background-color: var(--color-base-900);
+  color: var(--color-base-50);
+}
+html.os-linux:not([data-theme="light"]) {
+  color-scheme: dark;
+}
+/* Kontrollkästchen: WebKitGTK kennt `accent-color` nicht und zeichnet weiße Kästchen. */
+html.os-linux input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid var(--color-base-600);
+  border-radius: 0.25rem;
+  background-color: var(--color-base-900);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 0.75rem;
+  cursor: pointer;
+}
+html.os-linux input[type="checkbox"]:checked {
+  border-color: var(--color-primary-500);
+  background-color: var(--color-primary-500);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E");
+}
+html.os-linux input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+html.os-linux input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/*
+ * Handy-Oberfläche: Fingerbedienung statt Maus. Mindestens 44 px große Ziele,
+ * 16-px-Felder (iOS zoomt sonst beim Tippen hinein), kein Hover – was am Desktop
+ * erst beim Überfahren erscheint, ist hier immer sichtbar.
+ */
+:root.is-mobile {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+:root.is-mobile body {
+  overscroll-behavior: none;
+}
+:root.is-mobile .btn {
+  min-height: 44px;
+}
+:root.is-mobile .btn-icon {
+  width: 44px;
+  height: 44px;
+}
+:root.is-mobile .field {
+  min-height: 44px;
+  font-size: 16px;
+}
+:root.is-mobile .menu-item {
+  min-height: 44px;
+}
+:root.is-mobile .tab {
+  min-height: 40px;
+  white-space: nowrap;
+}
+:root.is-mobile .group .group-hover\:opacity-100 {
+  opacity: 1;
+}
+:root.is-mobile .group .group-hover\:pointer-events-auto {
+  pointer-events: auto;
+}
+:root.is-mobile .group .group-hover\:translate-y-0 {
+  --tw-translate-y: 0;
+}
+/* Waagerecht wischbare Leisten (Reiter, Filter-Chips) ohne sichtbaren Balken. */
+:root.is-mobile .mobile-scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+:root.is-mobile .mobile-scroll-x::-webkit-scrollbar {
+  display: none;
+}

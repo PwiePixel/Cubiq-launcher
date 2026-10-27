@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "dev.pwiepixel.cubiqclient.mixin",
+	"plugin": "dev.pwiepixel.cubiqclient.CubiqMixinPlugin",
+	"compatibilityLevel": "${mixinJava}",
+	"client": [
+		${mixins}
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

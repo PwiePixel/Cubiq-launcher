@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "cubiqclient",
+	"version": "${version}",
+	"name": "Cubiq Client",
+	"description": "In-Game-Client des Cubiq Launchers: HUD (FPS, CPS, Tastenanzeige, Ping), Zoom, Fullbright und ein eigenes Menü (Rechte Umschalttaste).",
+	"authors": [
+		"PwiePixel"
+	],
+	"contact": {
+		"sources": "https://github.com/PwiePixel/Cubiq-launcher"
+	},
+	"license": "GPL-3.0-only",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"dev.pwiepixel.cubiqclient.CubiqClient"
+		],
+		"preLaunch": [
+			"dev.pwiepixel.cubiqclient.CubiqPreLaunch"
+		]
+	},
+	"mixins": [
+		{
+			"config": "cubiqclient.mixins.json",
+			"environment": "client"
+		}
+	],
+	"custom": {
+		"badoptimizations:cache_hooks": {
+			"lightmap": "dev.pwiepixel.cubiqclient.compat.BadOptLightmapHook"
+		}
+	},
+	"depends": {
+		"fabricloader": ">=${loader}",
+		"minecraft": "${minecraft}",
+		"java": ">=${java}",
+		${fapiDepends}
+	}
+}

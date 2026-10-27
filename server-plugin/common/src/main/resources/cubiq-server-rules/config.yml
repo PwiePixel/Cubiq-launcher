@@ -1,0 +1,89 @@
+# =====================================================================================================
+#  Cubiq Server Rules – control Cubiq Client features on your server.
+#  https://github.com/PwiePixel/Cubiq-launcher  ·  GPL-3.0
+# =====================================================================================================
+#
+# How it works: the Cubiq Client says hello when a player joins; this plugin answers with the rules below
+# (again after a world/server change and after /cubiqrules reload). Players without the Cubiq Client are
+# not affected (see "missing-client" to notify or kick them). Vanilla and other clients never see anything.
+#
+# NOTE – Cubiq team bypass (documented on purpose, not a hidden feature):
+#   Members of the Cubiq team with the team permission "serverrules.bypass" (granted by the Cubiq team in the
+#   Cubiq account system, not by this server) can override these rules in their own client after an in-game
+#   confirmation ("This server locks X – use it anyway as Cubiq team?"). The server is not told about it and
+#   cannot switch it off. It only affects that one player's own client.
+#
+# Changes take effect with: /cubiqrules reload   (permission: cubiqrules.admin)
+# Unknown module ids or broken entries are reported in the server log and skipped.
+
+config-version: 1
+
+# -----------------------------------------------------------------------------------------------------
+# modules – lock whole Cubiq Client modules for everybody.
+#   false = forced off (the player cannot turn it on)
+#   true  = forced on  (the player cannot turn it off)
+#   not listed (or commented out) = the player decides.
+# Remove the "# " in front of a line to activate it. Everything commented out = nothing locked.
+# -----------------------------------------------------------------------------------------------------
+modules:
+%MODULE_LIST%
+
+# -----------------------------------------------------------------------------------------------------
+# settings – lock single module settings. Key: <module>.<setting> (setting ids as in the Cubiq Client).
+#   <module>.<setting>: true / 4.0 / SMOOTH     a bare value forces it (bool, number, or choice by enum name)
+#   <module>.<setting>: {value: SMOOTH}         same, long form
+#   <module>.<setting>: {min: 2, max: 4}        clamp a number (one bound is enough, e.g. {max: 4})
+# Examples:
+#   zoom.factor: {max: 4}                  # zoom at most 4x
+#   fullbright.level: {max: 200}           # brightness at most 200 %
+#   cinematic.freecamFairPlay: true        # freecam may not look through walls
+# -----------------------------------------------------------------------------------------------------
+settings:
+  # zoom.factor: {max: 4}
+  # cinematic.freecamFairPlay: true
+
+# -----------------------------------------------------------------------------------------------------
+# %SCOPE_KEY% – different rules per %SCOPE_KEY%.
+%SCOPE_HELP%
+# Each section may contain modules, settings and message (same format as above).
+# Example:
+#   %SCOPE_KEY%:
+#     %SCOPE_EXAMPLE%:
+#       modules: {zoom: false, freelook: false, minimap: false}
+#       settings: {fullbright.level: {max: 100}}
+#       message: "PvP area: zoom, freelook and minimap are disabled."
+#     %SCOPE_EXAMPLE_2%:
+#       modules: {minimap: free}     # 'free' lifts a global lock here
+# -----------------------------------------------------------------------------------------------------
+%SCOPE_KEY%: {}
+
+# Optional short text the Cubiq Client shows once when the rules arrive (plain text, "" = none).
+message: ""
+
+# -----------------------------------------------------------------------------------------------------
+# missing-client – players whose client does not answer with a Cubiq Client hello within the timeout.
+#   action: ignore   nothing happens (default)
+#           notify   send notify-message once
+#           kick     disconnect with kick-message (use only if your server really requires the Cubiq Client)
+# Messages support & color codes and \n for a new line. Players with the bypass permission are exempt.
+# -----------------------------------------------------------------------------------------------------
+missing-client:
+  action: ignore
+  timeout-seconds: 10
+  notify-message: "&cThis server is made for the &fCubiq Client&c. &7Get it free at &fhttps://github.com/PwiePixel/Cubiq-launcher"
+  kick-message: "&cThis server requires the &fCubiq Client&c.\n&7Get it free at &fhttps://github.com/PwiePixel/Cubiq-launcher"
+
+# -----------------------------------------------------------------------------------------------------
+# Bypass – players who get no rules at all (empty rule set) and are exempt from missing-client.
+# (This is your server's own bypass – unrelated to the Cubiq team note at the top.)
+# -----------------------------------------------------------------------------------------------------
+# Players with this server permission. Set to "" to disable.
+# Fabric server mod: needs a permissions mod (e.g. LuckPerms); NeoForge/Forge: not used (see below).
+bypass-permission: cubiqrules.bypass
+
+# Players listed by name or UUID (works everywhere), e.g. [Notch, 069a79f4-44e9-4726-a5be-fca90e38aaf5]
+bypass-players: []
+
+# Fabric/NeoForge/Forge server mods: operators with at least this OP level (1-4). 0 = off.
+# (Plugin platforms ignore it – give the bypass permission instead.)
+bypass-op-level: 0

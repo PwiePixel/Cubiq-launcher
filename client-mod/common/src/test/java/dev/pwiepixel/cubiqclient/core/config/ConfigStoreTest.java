@@ -1,0 +1,145 @@
+package dev.pwiepixel.cubiqclient.core.config;
+
+import dev.pwiepixel.cubiqclient.core.hud.HudAnchor;
+import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class ConfigStoreTest {
+
+	@TempDir
+	Path dir;
+
+	@Test
+	void missingFileGivesDefaultsAndCreatesFile() {
+		Path file = dir.resolve("config/cubiqclient.json");
+		CubiqModules m = new CubiqModules();
+		assertEquals(ConfigStore.Status.CREATED, new ConfigStore(file).load(m.registry));
+		assertTrue(Files.exists(file));
+		assertTrue(m.fps.isEnabled());
+		assertFalse(m.fullbright.isEnabled());
+		assertEquals(4.0, m.zoomFactor.get());
+		assertEquals(HudAnchor.TOP_LEFT, m.fps.position().anchor);
+	}
+
+	@Test
+	void secondaryWindowNeverWritesTheSharedConfig() throws IOException {
+		Path file = dir.resolve("cubiqclient.json");
+		CubiqModules a = new CubiqModules();
+		ConfigStore store = new ConfigStore(file);
+		store.load(a.registry);
+		a.fps.setEnabled(false);
+		store.save(a.registry);
+		String before = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+		try {
+			ConfigStore.readOnlyForTest(true);
+			CubiqModules other = new CubiqModules();
+			ConfigStore second = new ConfigStore(file);
+			second.load(other.registry);
+			other.fps.setEnabled(true);
+			other.fullbright.setEnabled(true);
+			second.save(other.registry);
+			second.saveLater(other.registry);
+			second.flush();
+			assertEquals(before, new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+			// Auch eine fehlende Datei legt das Zweitfenster nicht an.
+			Path missing = dir.resolve("other/cubiqclient.json");
+			new ConfigStore(missing).load(new CubiqModules().registry);
+			assertFalse(Files.exists(missing));
+		} finally {
+			ConfigStore.readOnlyForTest(null);
+		}
+	}
+
+	@Test
+	void saveAndLoadRoundTrip() throws IOException {
+		Path file = dir.resolve("cubiqclient.json");
+		CubiqModules a = new CubiqModules();
+		ConfigStore store = new ConfigStore(file);
+		store.load(a.registry);
+		a.fps.setEnabled(false);
+		a.fullbright.setEnabled(true);
+		a.zoomFactor.set(6.5);
+		a.keystrokesShowCps.set(false);
+		a.ping.textColor.set(0xE0281E);
+		a.cps.position().anchor = HudAnchor.BOTTOM_CENTER;
+		a.cps.position().offsetX = 0.125;
+		a.cps.position().offsetY = -0.25;
+		store.save(a.registry);
+
+		CubiqModules b = new CubiqModules();
+		assertEquals(ConfigStore.Status.LOADED, new ConfigStore(file).load(b.registry));
+		assertFalse(b.fps.isEnabled());
+		assertTrue(b.fullbright.isEnabled());
+		assertEquals(6.5, b.zoomFactor.get());
+		assertFalse(b.keystrokesShowCps.get());
+		assertEquals(0xE0281E, b.ping.textColor.rgb());
+		assertEquals(HudAnchor.BOTTOM_CENTER, b.cps.position().anchor);
+		assertEquals(0.125, b.cps.position().offsetX);
+		assertEquals(-0.25, b.cps.position().offsetY);
+		assertFalse(Files.exists(file.resolveSibling("cubiqclient.json.tmp")));
+	}
+
+	@Test
+	void corruptFileFallsBackToDefaultsAndKeepsBackup() throws IOException {
+		Path file = dir.resolve("cubiqclient.json");
+		Files.writeString(file, "{ \"modules\": { \"fps\": { \"enabled\": fal", StandardCharsets.UTF_8);
+		CubiqModules m = new CubiqModules();
+		ConfigStore store = new ConfigStore(file);
+		assertEquals(ConfigStore.Status.RECOVERED, store.load(m.registry));
+		assertTrue(m.fps.isEnabled());
+		assertTrue(Files.exists(store.brokenFile()));
+		// Neue, gültige Datei wurde geschrieben.
+		assertEquals(ConfigStore.Status.LOADED, new ConfigStore(file).load(new CubiqModules().registry));
+	}
+
+	@Test
+	void wrongTypesCountAsCorrupt() throws IOException {
+		Path file = dir.resolve("cubiqclient.json");
+		Files.writeString(file, "{ \"modules\": [1, 2, 3] }", StandardCharsets.UTF_8);
+		CubiqModules m = new CubiqModules();
+		assertEquals(ConfigStore.Status.RECOVERED, new ConfigStore(file).load(m.registry));
+		assertEquals(4.0, m.zoomFactor.get());
+	}
+
+	@Test
+	void emptyFileCountsAsCorrupt() throws IOException {
+		Path file = dir.resolve("cubiqclient.json");
+		Files.writeString(file, "", StandardCharsets.UTF_8);
+		assertEquals(ConfigStore.Status.RECOVERED, new ConfigStore(file).load(new CubiqModules().registry));
+	}
+
+	@Test
+	void partialFileFillsMissingValuesWithDefaults() throws IOException {
+		Path file = dir.resolve("cubiqclient.json");
+		Files.writeString(file, """
+				{
+				  "modules": {
+				    "zoom": { "numbers": { "factor": 99.0 } },
+				    "ping": { "enabled": false, "colors": { "textColor": "kaputt" }, "flags": null },
+				    "fps": { "anchor": "NOPE", "offsetX": "NaN" },
+				    "unbekannt": { "enabled": true }
+				  }
+				}
+				""", StandardCharsets.UTF_8);
+		CubiqModules m = new CubiqModules();
+		assertEquals(ConfigStore.Status.LOADED, new ConfigStore(file).load(m.registry));
+		assertEquals(10.0, m.zoomFactor.get(), "auf Maximum begrenzt");
+		assertTrue(m.zoom.isEnabled());
+		assertTrue(m.zoomSmooth.get());
+		assertFalse(m.ping.isEnabled());
+		assertEquals(0xFFFFFF, m.ping.textColor.rgb());
+		assertTrue(m.ping.background.get());
+		assertEquals(HudAnchor.TOP_LEFT, m.fps.position().anchor);
+		assertEquals(0.0, m.fps.position().offsetX);
+	}
+}

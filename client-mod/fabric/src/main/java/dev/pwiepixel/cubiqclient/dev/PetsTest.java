@@ -1,0 +1,885 @@
+package dev.pwiepixel.cubiqclient.dev;
+
+import dev.pwiepixel.cubiqclient.CubiqClient;
+import dev.pwiepixel.cubiqclient.compat.Mc;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.DevPets;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSim;
+import dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat;
+import dev.pwiepixel.cubiqclient.core.i18n.I18n;
+import dev.pwiepixel.cubiqclient.core.module.HudModule;
+import dev.pwiepixel.cubiqclient.core.module.Module;
+import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
+import dev.pwiepixel.cubiqclient.core.online.OnlineFeatures;
+import dev.pwiepixel.cubiqclient.core.ui.wardrobe.WardrobeUi;
+import dev.pwiepixel.cubiqclient.core.wardrobe.CosmeticCatalog;
+import dev.pwiepixel.cubiqclient.core.wardrobe.WardrobeContext;
+import dev.pwiepixel.cubiqclient.online.OnlineHooks;
+import dev.pwiepixel.cubiqclient.screen.WardrobeScreen;
+import net.minecraft.client.Minecraft;
+
+import java.util.List;
+
+/**
+ * Selbsttest „Winter-Kosmetik“ ({@code -PcubiqAutotestOnly=pets}, mit {@code scripts/mock-winter-api.mjs}): baut eine
+ * Szene in der Luft (Schnee, Eisbahn, Wasserbecken, 1-Block-Stufe), legt nacheinander Mütze (Bart an/aus), Schneewolke,
+ * Schnee-/Eisflügel und Pinguine an und fotografiert: Pinguine folgen, rutschen, schwimmen, springen, eigene Pinguine in
+ * der Ich-Perspektive, Garderobe mit Begleiter-Fach und Bart-Schalter. Teile kommen aus dem Katalog der Attrappe
+ * (synthetisch {@code test_*} oder – mit {@code WINTER_REAL_DIR} – die echten Teile).
+ */
+public final class PetsTest {
+	private int phase;
+	private int wait;
+	private int tries;
+	private int ticks;
+	private CosmeticCatalog catalog;
+	private WardrobeUi ui;
+	private double bx, by, bz;
+	private String hat, cloud, snowWings, iceWings, pet;
+
+	/** Ein Tick; true = noch nicht fertig. */
+	public boolean step(Minecraft mc, CubiqModules modules, CapeTest.Actions actions) {
+		if (mc.player == null) return false;
+		if (wait > 0) {
+			wait--;
+			return true;
+		}
+		OnlineFeatures<Object> f = OnlineHooks.features();
+		if (phase >= 60) return escort(mc, f, actions);
+		if (phase >= 40) return fix(mc, f, actions);
+		switch (phase) {
+			case 0: {
+				actions.command("gamerule logAdminCommands false");
+				actions.command("gamerule sendCommandFeedback false");
+				actions.command("gamerule doDaylightCycle false");
+				actions.command("time set day");
+				actions.command("weather clear");
+				actions.command("gamemode creative @p");
+				//? if >=1.17 {
+				actions.command("item replace entity @p armor.head with air");
+				//?} else
+				/*actions.command("replaceitem entity @p armor.head air");*/
+				bx = Math.floor(Mc.x(mc.player)) + 0.5;
+				bz = Math.floor(Mc.z(mc.player)) + 0.5;
+				by = Math.floor(Mc.y(mc.player)) + 40;
+				// Prüfung der Fehlerbehebungen: feste Höhe (die Testwelt merkt sich die letzte Position nach der Bootsfahrt)
+				if (Boolean.getBoolean("cubiqclient.autotest.petsFix")) by = 120;
+				int x = (int) Math.floor(bx), y = (int) by, z = (int) Math.floor(bz);
+				// Boden aus Schnee, Eisbahn nach Süden, Wasserbecken im Osten, Stufe im Westen
+				cmd(actions, "fill %d %d %d %d %d %d air", x - 24, y - 4, z - 24, x + 24, y + 8, z + 24);
+				cmd(actions, "fill %d %d %d %d %d %d snow_block", x - 24, y - 1, z - 24, x + 24, y - 1, z + 24);
+				cmd(actions, "fill %d %d %d %d %d %d ice", x - 2, y - 1, z + 2, x + 2, y - 1, z + 22);
+				cmd(actions, "fill %d %d %d %d %d %d stone", x + 6, y - 4, z - 7, x + 16, y - 1, z + 7);
+				cmd(actions, "fill %d %d %d %d %d %d water", x + 7, y - 3, z - 6, x + 15, y - 1, z + 6);
+				cmd(actions, "fill %d %d %d %d %d %d snow_block", x - 16, y, z - 6, x - 8, y, z + 6);
+				for (Module m : modules.registry.all()) {
+					if (m instanceof HudModule) m.setEnabled(false);
+				}
+				modules.crosshair.setEnabled(false);
+				Mc.setScreen(null);
+				Mc.setHudHidden(true);
+				catalog = CosmeticCatalog.shared(new WardrobeContext(I18n.configDir(), "Cubiq-Client", f));
+				catalog.refresh(true);
+				phase = 1;
+				wait = 20;
+				return true;
+			}
+			case 1: {
+				CosmeticCatalog.State s = catalog.state();
+				if (!s.loaded && tries++ < 400) {
+					if (tries % 100 == 0) catalog.refresh(true);
+					return true;
+				}
+				for (CosmeticCatalog.Item it : s.items) {
+					if ("hat".equals(it.slot) && hat == null) hat = it.id;
+					if ("companion".equals(it.slot)) cloud = it.id;
+					if ("wings".equals(it.slot) && it.id.contains("snow")) snowWings = it.id;
+					if ("wings".equals(it.slot) && it.id.contains("ice")) iceWings = it.id;
+					if ("pet".equals(it.slot)) pet = it.id;
+				}
+				CubiqClient.LOGGER.info("[Autotest] Winter: Katalog {} – Mütze {}, Wolke {}, Flügel {}/{}, Begleiter {}",
+						s.loaded ? "geladen" : "FEHLT", hat, cloud, snowWings, iceWings, pet);
+				if (Boolean.getBoolean("cubiqclient.autotest.petsFix")) {
+					// Nur die Prüfung der Fehlerbehebungen: Flossen je Zustand, Flügel/Pinguine vor Wasser, Boot
+					phase = 40;
+					tries = 0;
+					return true;
+				}
+				if (Boolean.getBoolean("cubiqclient.autotest.petsEscort")) {
+					// Nur das Gefolge (Attrappe mit WINTER_PET_EXTRAS=1): 1 Pinguin + 3 verschiedene, einer größer
+					phase = 60;
+					tries = 0;
+					return true;
+				}
+				place(mc, 0, 0, 0f);
+				catalog.wear(hat);
+				tries = 0;
+				phase = 2;
+				wait = 5;
+				return true;
+			}
+			case 2: {
+				place(mc, 0, 0, 0f);
+				V2Hat<Object> h = f.hatV2(mc.player.getUUID(), false);
+				if ((h == null || !h.model.id.equals(hat)) && tries++ < 600) {
+					if (tries % 200 == 0) f.online().refreshSelf();
+					return true;
+				}
+				CubiqClient.LOGGER.info("[Autotest] Winter: Mütze {} nach {} Ticks, Optionen {}", h != null ? "geladen" : "FEHLT", tries,
+						h == null ? "-" : h.model.options.size());
+				CubiqClient.get().setForceZoom(true);
+				CubiqClient.get().pvp().forceFreelook(180F);
+				camera(mc, 160F, 6F);
+				phase = 3;
+				wait = 12;
+				return true;
+			}
+			case 3:
+				place(mc, 0, 0, 0f);
+				actions.shot("cubiqclient-winter-beard-on");
+				// Bart aus (PUT options) und warten, bis der eigene Lookup ihn ohne Bart liefert
+				catalog.setOption("hat", "beard", false, CosmeticCatalog.optionsOf(catalog.state(), catalog.state().item(hat)));
+				tries = 0;
+				phase = 4;
+				return true;
+			case 4: {
+				place(mc, 0, 0, 0f);
+				V2Hat<Object> h = f.hatV2(mc.player.getUUID(), false);
+				if ((h == null || h.hiddenBones == 0L) && tries++ < 400) {
+					if (tries % 100 == 0) f.online().refreshSelf();
+					return true;
+				}
+				CubiqClient.LOGGER.info("[Autotest] Winter: Bart aus {} nach {} Ticks (Knochen-Maske {})", h != null && h.hiddenBones != 0
+						? "ok" : "FEHLT", tries, h == null ? 0 : Long.toBinaryString(h.hiddenBones));
+				phase = 5;
+				wait = 6;
+				return true;
+			}
+			case 5:
+				place(mc, 0, 0, 0f);
+				actions.shot("cubiqclient-winter-beard-off");
+				catalog.setOption("hat", "beard", true, CosmeticCatalog.optionsOf(catalog.state(), catalog.state().item(hat)));
+				if (cloud != null) catalog.wearCompanion(cloud);
+				tries = 0;
+				phase = 6;
+				wait = 5;
+				return true;
+			case 6: {
+				place(mc, 0, 0, 0f);
+				V2Hat<Object> c = f.companionV2(mc.player.getUUID(), false);
+				if (cloud != null && (c == null || !c.model.id.equals(cloud)) && tries++ < 400) {
+					if (tries % 100 == 0) f.online().refreshSelf();
+					return true;
+				}
+				CubiqClient.get().setForceZoom(false);
+				camera(mc, 150F, 12F);
+				phase = 7;
+				wait = 12;
+				return true;
+			}
+			case 7:
+				place(mc, 0, 0, 0f);
+				actions.shot("cubiqclient-winter-cloud");
+				// Sprung: Mütze und Wolke spielen „air“
+				dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.forced = dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.AIR;
+				phase = 8;
+				wait = 8;
+				return true;
+			case 8:
+				place(mc, 0, 0, 0f);
+				actions.shot("cubiqclient-winter-cloud-air");
+				dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.forced = -1;
+				if (snowWings != null) catalog.wearWings(snowWings);
+				tries = 0;
+				phase = 9;
+				return true;
+			case 9:
+			case 11: {
+				place(mc, 0, 0, 0f);
+				String want = phase == 9 ? snowWings : iceWings;
+				V2Hat<Object> w = f.wingsV2(mc.player.getUUID(), true, false, 0);
+				if (want != null && (w == null || !w.model.id.equals(want)) && tries++ < 400) {
+					if (tries % 100 == 0) f.online().refreshSelf();
+					return true;
+				}
+				camera(mc, 20F, 10F);
+				if (phase == 11) actions.command("time set midnight");
+				phase++;
+				wait = 14;
+				return true;
+			}
+			case 10:
+				place(mc, 0, 0, 0f);
+				actions.shot("cubiqclient-winter-snow-wings");
+				if (iceWings != null) catalog.wearWings(iceWings);
+				tries = 0;
+				phase = 11;
+				return true;
+			case 12:
+				place(mc, 0, 0, 0f);
+				actions.shot("cubiqclient-winter-ice-wings-night");
+				actions.command("time set day");
+				catalog.wearWings(null);
+				catalog.wearCompanion(null);
+				if (pet != null) catalog.wearPet(pet);
+				DevPets.forcedCount = 3;
+				PetSim.forceSlide = 0;
+				tries = 0;
+				phase = 13;
+				return true;
+			case 13: {
+				place(mc, 0, 0, 0f);
+				List<Pet> pets = f.pets().pets(mc.player.getUUID());
+				boolean drawn = f.petFrame(null, Mc.cameraX(), Mc.cameraY(), Mc.cameraZ(), Mc.cameraYaw(), Mc.cameraPitch()) > 0;
+				if ((pets.isEmpty() || !drawn) && tries++ < 600) {
+					if (tries % 200 == 0) f.online().refreshSelf();
+					return true;
+				}
+				CubiqClient.LOGGER.info("[Autotest] Winter: {} Pinguine nach {} Ticks ({})", pets.size(), tries, drawn ? "gezeichnet" : "FEHLT");
+				ticks = 0;
+				phase = 14;
+				return true;
+			}
+			case 14:
+				// Folgen: 6 Blöcke nach Süden laufen (0,2 je Tick), Kamera schräg von vorne oben
+				place(mc, 0, Math.min(6, ticks * 0.2), 0f);
+				camera(mc, 145F, 28F);
+				if (++ticks == 50) {
+					actions.shot("cubiqclient-winter-pets-follow");
+					log(f, mc, "folgen");
+				}
+				if (ticks < 52) return true;
+				ticks = 0;
+				phase = 15;
+				return true;
+			case 15:
+				// Rutschen: auf der Eisbahn nach Süden, Rutschen erzwungen
+				PetSim.forceSlide = 1;
+				place(mc, 0, 6 + Math.min(12, ticks * 0.3), 0f);
+				camera(mc, 160F, 25F);
+				if (++ticks == 22) {
+					actions.shot("cubiqclient-winter-pets-slide");
+					log(f, mc, "rutschen");
+				}
+				if (ticks < 30) return true;
+				PetSim.forceSlide = 0;
+				ticks = 0;
+				phase = 16;
+				return true;
+			case 16:
+				// Schwimmen: ins Becken (Osten), Spieler an der Oberfläche festhalten
+				place(mc, 11, 0, 0f, -0.4);
+				camera(mc, 130F, 35F);
+				if (++ticks == 90) {
+					actions.shot("cubiqclient-winter-pets-swim");
+					log(f, mc, "schwimmen");
+				}
+				if (ticks < 92) return true;
+				ticks = 0;
+				phase = 17;
+				return true;
+			case 17: {
+				// Springen: nach Westen auf die Stufe (ab x − 8 einen Block höher), die Pinguine springen hinterher
+				double dx = -2 - Math.min(10, ticks * 0.15);
+				place(mc, dx, 0, 90f, dx < -7.7 ? 1.0 : 0.0);
+				camera(mc, 90F, 30F);
+				ticks++;
+				if (ticks > 75 && f.pets().pets(mc.player.getUUID()).stream().anyMatch(p -> p.state() == Pet.AIR) || ticks == 220) {
+					actions.shot("cubiqclient-winter-pets-jump");
+					log(f, mc, "springen");
+					ticks = 0;
+					phase = 18;
+				}
+				return true;
+			}
+			case 18:
+				// Ich-Perspektive, umgedreht (nach Osten): die eigenen Pinguine sind zu sehen
+				CubiqClient.get().pvp().forceFreelook(Float.NaN);
+				Mc.setCameraMode(0);
+				place(mc, -12, 0, 270f, 1.0);
+				// nach unten schauen (Pinguine stehen am Boden vor der Kamera)
+				//? if >=1.17 {
+				mc.player.setXRot(35);
+				//?} else
+				/*mc.player.xRot = 35;*/
+				if (++ticks < 30) return true;
+				actions.shot("cubiqclient-winter-pets-firstperson");
+				ticks = 0;
+				phase = 19;
+				return true;
+			case 19:
+				// Garderobe: Begleiter-Fach und Bart-Schalter
+				Mc.setHudHidden(false);
+				Mc.setScreen(WardrobeScreen.create(null));
+				ui = WardrobeScreen.last;
+				ui.category("cosmetics");
+				ui.selectCosmetic(pet);
+				tries = 0;
+				phase = 20;
+				wait = 10;
+				return true;
+			case 20:
+				if (!catalog.state().previews.containsKey(pet) && tries++ < 300) return true;
+				phase = 21;
+				wait = 20;
+				return true;
+			case 21:
+				actions.shot("cubiqclient-winter-wardrobe-pet");
+				ui.selectCosmetic(hat);
+				tries = 0;
+				phase = 22;
+				wait = 5;
+				return true;
+			case 22:
+				if (!catalog.state().previews.containsKey(hat) && tries++ < 300) return true;
+				phase = 23;
+				wait = 20;
+				return true;
+			case 23:
+				actions.shot("cubiqclient-winter-wardrobe-hat");
+				Mc.setScreen(null);
+				DevPets.forcedCount = 0;
+				PetSim.forceSlide = Double.NaN;
+				CubiqClient.get().setForceZoom(false);
+				return false;
+			default:
+				return false;
+		}
+	}
+
+	// =====================================================================================================
+	// Prüfung der Fehlerbehebungen 0.21.1 (-PcubiqSys.cubiqclient.autotest.petsFix=true): Flossen je Zustand wie in der
+	// Studio-Werkbank (gleiche Zeitpunkte wie tools/shots.mjs --t=…), Flügel im Sprung, Wasser vor/hinter Pinguinen und
+	// Flügeln, Bootsfahrt mit 8 Blöcken je Sekunde.
+	// =====================================================================================================
+
+	private static final int[] FIX_STATES = { Pet.IDLE, Pet.WALK, Pet.SLIDE, Pet.SWIM, Pet.AIR };
+	private static final long[] FIX_TIMES = { 4100, 140, 300, 0, 0 };
+	private int fixIndex;
+	private int startTeleports, lastTeleports;
+	private double boatY;
+
+	private boolean fix(Minecraft mc, OnlineFeatures<Object> f, CapeTest.Actions actions) {
+		java.util.UUID me = mc.player.getUUID();
+		switch (phase) {
+			case 40: {
+				int x = (int) Math.floor(bx), y = (int) by, z = (int) Math.floor(bz);
+				// Kanal für die Bootsfahrt nach Süden (5 tief)
+				cmd(actions, "fill %d %d %d %d %d %d stone", x - 8, y - 6, z + 26, x + 8, y - 1, z + 110);
+				cmd(actions, "fill %d %d %d %d %d %d water", x - 6, y - 5, z + 26, x + 6, y - 1, z + 110);
+				catalog.wear(hat);
+				if (cloud != null) catalog.wearCompanion(cloud);
+				if (snowWings != null) catalog.wearWings(snowWings);
+				if (pet != null) catalog.wearPet(pet);
+				DevPets.forcedCount = 1;
+				PetSim.forceSlide = 0;
+				tries = 0;
+				phase = 41;
+				return true;
+			}
+			case 41: {
+				place(mc, 0, 0, 0f);
+				V2Hat<Object> w = f.wingsV2(me, true, false, 0);
+				boolean drawn = f.petFrame(null, Mc.cameraX(), Mc.cameraY(), Mc.cameraZ(), Mc.cameraYaw(), Mc.cameraPitch()) > 0;
+				boolean wingsOk = snowWings == null || w != null && w.model.id.equals(snowWings);
+				if ((!drawn || !wingsOk) && tries++ < 600) {
+					if (tries % 200 == 0) f.online().refreshSelf();
+					return true;
+				}
+				CubiqClient.LOGGER.info("[Autotest] Fix: Pinguin {}, Flügel {} nach {} Ticks", drawn ? "gezeichnet" : "FEHLT",
+						wingsOk ? "geladen" : "FEHLEN", tries);
+				CubiqClient.get().setForceZoom(true);
+				fixIndex = 0;
+				phase = 42;
+				return true;
+			}
+			case 42:
+			case 43:
+			case 44: {
+				// Ein Zustand: Pinguin steht still 3 Blöcke vor der Kamera (Ich-Perspektive, Zoom), feste Animationszeit
+				int st = FIX_STATES[fixIndex];
+				boolean swim = st == Pet.SWIM;
+				PetSim.frozen = true;
+				PetSim.forceState = st;
+				PetSim.forceTimeMs = FIX_TIMES[fixIndex];
+				CubiqClient.get().pvp().forceFreelook(Float.NaN);
+				Mc.setCameraMode(0);
+				// Becken: Wasser y−3…y−1, Oberfläche by − 0,1; Schwimmhöhe 0,3 darunter
+				double px = swim ? bx + 9.5 : bx, py = swim ? by - 0.4 : by, pz = swim ? bz : bz + 3.0;
+				if (swim) look(mc, 5.5, 0, 270f, 28f);
+				else look(mc, 0, 0, 0f, 24f);
+				float front = swim ? 90f : 180f;
+				if (phase == 42) {
+					f.pets().debugPose(me, px, py, pz, front);
+					phase = 43;
+					wait = 8;
+				} else if (phase == 43) {
+					actions.shot("cubiqclient-fix-pet-" + Pet.stateNameOf(st) + "-front");
+					f.pets().debugPose(me, px, py, pz, front - 35f);
+					phase = 44;
+					wait = 4;
+				} else {
+					actions.shot("cubiqclient-fix-pet-" + Pet.stateNameOf(st) + "-three");
+					fixIndex++;
+					phase = fixIndex < FIX_STATES.length ? 42 : 45;
+				}
+				return true;
+			}
+			case 45:
+				// Flügel im Sprung (Zustand air, feste Zeit), Kamera von hinten
+				PetSim.frozen = false;
+				PetSim.forceState = -1;
+				PetSim.forceTimeMs = -1;
+				CubiqClient.get().setForceZoom(false);
+				dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.forced = dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.AIR;
+				OnlineFeatures.v2Clock = () -> 180L;
+				place(mc, 0, 0, 0f);
+				camera(mc, 20F, 10F);
+				phase = 46;
+				wait = 10;
+				return true;
+			case 46:
+				place(mc, 0, 0, 0f);
+				actions.shot("cubiqclient-fix-snow-wings-air");
+				OnlineFeatures.v2Clock = null;
+				dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.forced = -1;
+				DevPets.forcedCount = 3;
+				ticks = 0;
+				phase = 47;
+				return true;
+			case 47:
+				// Im Becken stehen: Pinguine schwimmen um den Spieler, Flügel vor dem Wasser
+				place(mc, 11, 0, 0f, -0.4);
+				ticks++;
+				if (ticks < 80) camera(mc, 15F, 38F);
+				if (ticks == 80) {
+					actions.shot("cubiqclient-fix-water-stand-back");
+					if (iceWings != null) catalog.wearWings(iceWings);
+				}
+				if (ticks > 80 && ticks < 300 && iceWings != null) {
+					V2Hat<Object> w = f.wingsV2(me, true, false, 0);
+					if (w == null || !w.model.id.equals(iceWings)) {
+						if (ticks % 100 == 0) f.online().refreshSelf();
+						return true;
+					}
+					if (ticks < 1000) ticks = 1000;
+				}
+				if (ticks == 1012) actions.shot("cubiqclient-fix-water-stand-back-ice");
+				if (ticks == 1013) camera(mc, 140F, 30F);
+				if (ticks == 1024) {
+					actions.shot("cubiqclient-fix-water-stand-front-ice");
+					log(f, mc, "im Becken");
+					if (snowWings != null) catalog.wearWings(snowWings);
+				}
+				if (ticks < 1060 && ticks >= 1000 || ticks < 300) return true;
+				// Boot: Spieler an den Kanal, Boot setzen, einsteigen
+				place(mc, 0, 28, 0f);
+				// Boote früherer Läufe entfernen (sonst steigt der Spieler in ein altes Boot)
+				actions.command("kill @e[type=" + boatType() + "]");
+				//? if >=1.21.2 {
+				cmd(actions, "summon oak_boat %.2f %.2f %.2f {Rotation:[0f,0f]}", bx, by - 0.45, bz + 30);
+				//?} else
+				/*cmd(actions, "summon boat %.2f %.2f %.2f {Rotation:[0f,0f]}", bx, by - 0.45, bz + 30);*/
+				tries = 0;
+				phase = 48;
+				wait = 5;
+				return true;
+			case 48: {
+				net.minecraft.world.entity.Entity v = mc.player.getVehicle();
+				if (v == null) {
+					if (tries % 20 == 0) actions.command("ride @p mount @e[type=" + boatType() + ",limit=1,sort=nearest]");
+					if (tries++ < 120) {
+						place(mc, 0, 29.5, 0f);
+						return true;
+					}
+					CubiqClient.LOGGER.info("[Autotest] Fix: Boot FEHLT (kein Einsteigen)");
+					return finish();
+				}
+				boatY = Mc.y(v);
+				startTeleports = lastTeleports = teleports(f, me);
+				CubiqClient.LOGGER.info("[Autotest] Fix: im Boot nach {} Ticks (y {})", tries, String.format(java.util.Locale.ROOT, "%.2f", boatY));
+				ticks = 0;
+				phase = 49;
+				return true;
+			}
+			case 49: {
+				// Bootsfahrt nach Süden: erst 2 s stehen, dann 8 Blöcke je Sekunde (0,4 je Tick)
+				net.minecraft.world.entity.Entity v = mc.player.getVehicle();
+				if (v == null) return finish();
+				double z = bz + 30 + Math.max(0, ticks - 40) * 0.4;
+				v.setPos(bx, boatY, z);
+				v.setDeltaMovement(0, 0, 0);
+				//? if >=1.17 {
+				v.setYRot(0f);
+				mc.player.setYRot(0f);
+				//?} else {
+				/*v.yRot = 0f;
+				mc.player.yRot = 0f;
+				*///?}
+				ticks++;
+				int tp = teleports(f, me);
+				if (tp != lastTeleports || ticks % 40 == 0) {
+					logBoat(f, mc, v, String.format(java.util.Locale.ROOT, "Tick %d, Boot z %.1f, Teleports %d", ticks, Mc.z(v) - bz,
+							tp - startTeleports));
+					lastTeleports = tp;
+				}
+				if (ticks < 150) camera(mc, 18F, 26F);
+				if (ticks == 150) {
+					actions.shot("cubiqclient-fix-boat-follow");
+					logBoat(f, mc, v, "Fahrt");
+				}
+				if (ticks == 151) camera(mc, 95F, 18F);
+				if (ticks == 165) actions.shot("cubiqclient-fix-boat-side");
+				if (ticks == 166) camera(mc, 160F, 30F);
+				if (ticks == 182) {
+					actions.shot("cubiqclient-fix-boat-front");
+					logBoat(f, mc, v, "Ende");
+					CubiqClient.LOGGER.info("[Autotest] Fix: Boot – Teleports während der Fahrt: {}", teleports(f, me) - startTeleports);
+					actions.command("ride @p dismount");
+					return finish();
+				}
+				return true;
+			}
+			default:
+				return finish();
+		}
+	}
+
+	// =====================================================================================================
+	// Gefolge eines Creators (-PcubiqSys.cubiqclient.autotest.petsEscort=true, Attrappe mit WINTER_PET_EXTRAS=1): Haupt-
+	// Pinguin + 3 Extras (Kaiserpinguin 1,25), folgen, rutschen, schwimmen, stehen, Garderobe mit dem ganzen Gefolge.
+	// =====================================================================================================
+
+	private boolean escort(Minecraft mc, OnlineFeatures<Object> f, CapeTest.Actions actions) {
+		java.util.UUID me = mc.player.getUUID();
+		switch (phase) {
+			case 60:
+				place(mc, 0, 0, 0f);
+				if (pet != null) catalog.wearPet(pet);
+				PetSim.forceSlide = 0;
+				tries = 0;
+				phase = 61;
+				return true;
+			case 61: {
+				place(mc, 0, 0, 0f);
+				List<Pet> pets = f.pets().pets(me);
+				int drawn = f.petFrame(null, Mc.cameraX(), Mc.cameraY(), Mc.cameraZ(), Mc.cameraYaw(), Mc.cameraPitch());
+				if ((pets.size() < 5 || drawn < 1) && tries++ < 600) {
+					if (tries % 200 == 0) f.online().refreshSelf();
+					return true;
+				}
+				StringBuilder sb = new StringBuilder();
+				for (Pet p : pets) sb.append(p.kind).append('×').append(p.scale).append(" kann ").append(p.abilities()).append(' ');
+				CubiqClient.LOGGER.info("[Autotest] Gefolge: {} Begleiter, {} gezeichnet nach {} Ticks (kind×Größe: {}), Garderobe {} Extras",
+						pets.size(), drawn, tries, sb, catalog.state().petExtras.size());
+				ticks = 0;
+				phase = 62;
+				return true;
+			}
+			case 62:
+				// Folgen: 6 Blöcke nach Süden, Kamera schräg von vorne oben
+				place(mc, 0, Math.min(6, ticks * 0.2), 0f);
+				camera(mc, 145F, 28F);
+				if (++ticks == 50) {
+					actions.shot("cubiqclient-escort-follow");
+					log(f, mc, "Gefolge folgt");
+				}
+				if (ticks < 52) return true;
+				ticks = 0;
+				phase = 63;
+				return true;
+			case 63:
+				// Rutschen auf der Eisbahn
+				PetSim.forceSlide = 1;
+				place(mc, 0, 6 + Math.min(12, ticks * 0.3), 0f);
+				camera(mc, 160F, 25F);
+				if (++ticks == 22) {
+					actions.shot("cubiqclient-escort-slide");
+					log(f, mc, "Gefolge rutscht");
+				}
+				if (ticks < 30) return true;
+				PetSim.forceSlide = 0;
+				ticks = 0;
+				phase = 64;
+				return true;
+			case 64:
+				// Schwimmen im Becken
+				place(mc, 11, 0, 0f, -0.4);
+				camera(mc, 130F, 35F);
+				if (++ticks == 90) {
+					actions.shot("cubiqclient-escort-swim");
+					log(f, mc, "Gefolge schwimmt");
+				}
+				if (ticks < 92) return true;
+				ticks = 0;
+				phase = 65;
+				return true;
+			case 65:
+				// Stehen auf dem Schnee (Größen im Vergleich), Kamera von vorne
+				place(mc, -4, -6, 0f);
+				camera(mc, 165F, 20F);
+				if (++ticks == 80) {
+					actions.shot("cubiqclient-escort-stand");
+					log(f, mc, "Gefolge steht");
+				}
+				if (ticks < 82) return true;
+				ticks = 0;
+				phase = 70;
+				return true;
+			case 70:
+			case 71:
+			case 72:
+			case 73:
+			case 74:
+				return heist(mc, f, actions);
+			case 75:
+				// Garderobe: Vorschau mit dem ganzen Gefolge
+				Mc.setHudHidden(false);
+				Mc.setScreen(WardrobeScreen.create(null));
+				ui = WardrobeScreen.last;
+				ui.category("cosmetics");
+				ui.selectCosmetic(pet);
+				tries = 0;
+				phase = 66;
+				wait = 10;
+				return true;
+			case 66: {
+				CosmeticCatalog.State s = catalog.state();
+				boolean all = s.previews.containsKey(pet) && !s.petExtras.isEmpty();
+				for (dev.pwiepixel.cubiqclient.core.online.HatInfo e : s.petExtras) all &= s.previews.containsKey(e.id);
+				if (!all && tries++ < 300) return true;
+				CubiqClient.LOGGER.info("[Autotest] Gefolge: Garderobe {} nach {} Ticks ({} Extras)", all ? "geladen" : "FEHLT", tries,
+						s.petExtras.size());
+				phase = 67;
+				wait = 20;
+				return true;
+			}
+			case 67:
+				actions.shot("cubiqclient-escort-wardrobe");
+				Mc.setScreen(null);
+				return finish();
+			default:
+				return finish();
+		}
+	}
+
+	/**
+	 * Ich-Perspektive an (Szene + dx, Szene + dz), Blick knapp NEBEN den Begleiter (18° seitlich, also kein „Hände hoch“),
+	 * damit er groß im Bild ist.
+	 */
+	private void aimNear(Minecraft mc, Pet h, double dx, double dz) {
+		CubiqClient.get().pvp().forceFreelook(Float.NaN);
+		Mc.setCameraMode(0);
+		mc.player.setPos(bx + dx, by, bz + dz);
+		mc.player.setDeltaMovement(0, 0, 0);
+		double ex = bx + dx, ey = by + mc.player.getEyeHeight(), ez = bz + dz;
+		double vx = h.x(1f) - ex, vy = h.y(1f) + 0.4 * h.scale - ey, vz = h.z(1f) - ez;
+		float yaw = (float) Math.toDegrees(Math.atan2(-vx, vz)) + 18f;
+		float pitch = (float) -Math.toDegrees(Math.atan2(vy, Math.hypot(vx, vz)));
+		//? if >=1.17 {
+		mc.player.setYRot(yaw);
+		mc.player.setXRot(pitch);
+		//?} else {
+		/*mc.player.yRot = yaw;
+		mc.player.xRot = pitch;
+		*///?}
+		mc.player.yHeadRot = yaw;
+		mc.player.yBodyRot = yaw;
+	}
+
+	/** Schleichen-Taste halten/loslassen. */
+	private static void sneak(boolean down) {
+		//? if >=1.15 {
+		Mc.sneakKey().setDown(down);
+		//?} else
+		/*((dev.pwiepixel.cubiqclient.mixin.KeyMappingAccessor) Mc.sneakKey()).cubiqclient$setDown(down);*/
+	}
+
+	/** Das „Schwarze Schaf“ (Überfall-Begleiter: kann schnappen) im eigenen Gefolge oder null. */
+	private static Pet heistPet(OnlineFeatures<Object> f, java.util.UUID me) {
+		for (Pet p : f.pets().pets(me)) if ((p.abilities() & Pet.CAN_GRAB) != 0) return p;
+		return null;
+	}
+
+	/**
+	 * Überfall-Begleiter (Anhang E): schleichen (Besitzer schleicht nach Süden), Beute schnappen + Flucht (erzwungen),
+	 * Hände hoch (Ich-Perspektive, Blick auf ihn). Je ein Bild.
+	 */
+	private boolean heist(Minecraft mc, OnlineFeatures<Object> f, CapeTest.Actions actions) {
+		java.util.UUID me = mc.player.getUUID();
+		Pet h = heistPet(f, me);
+		if (h == null) {
+			CubiqClient.LOGGER.info("[Autotest] Gefolge: kein Überfall-Begleiter (Modell ohne grab?) – Schritte übersprungen");
+			sneak(false);
+			ticks = 0;
+			phase = 75;
+			return true;
+		}
+		switch (phase) {
+			case 70:
+				// Schleichen: 4 Blöcke nach Süden, Schleichen-Taste gedrückt, Kamera von der Seite
+				sneak(true);
+				aimNear(mc, h, -4, -6 + Math.min(4, ticks * 0.05));
+				ticks++;
+				if (ticks == 70) {
+					actions.shot("cubiqclient-heist-sneak");
+					CubiqClient.LOGGER.info("[Autotest] Überfall: schleichen – Zustand {}", h.stateName());
+				}
+				if (ticks < 72) return true;
+				sneak(false);
+				ticks = 0;
+				phase = 71;
+				return true;
+			case 71:
+				// stehen lassen, bis er ruhig steht, dann Schnappen erzwingen
+				aimNear(mc, h, -4, -2);
+				if (++ticks < 40) return true;
+				PetSim.forceGrab = true;
+				if (h.state() != Pet.GRAB && ticks < 200) return true;
+				PetSim.forceGrab = false;
+				CubiqClient.LOGGER.info("[Autotest] Überfall: schnappen nach {} Ticks – Zustand {}", ticks, h.stateName());
+				ticks = 0;
+				phase = 72;
+				return true;
+			case 72:
+				// mitten im Schnappen (≈ 1,2 s), danach Flucht
+				aimNear(mc, h, -4, -2);
+				ticks++;
+				if (ticks == 22) {
+					actions.shot("cubiqclient-heist-grab");
+					CubiqClient.LOGGER.info("[Autotest] Überfall: Bild schnappen – Zustand {}", h.stateName());
+				}
+				if (h.state() == Pet.FLEE && ticks > 22 || ticks > 120) {
+					ticks = 0;
+					phase = 73;
+				}
+				return true;
+			case 73:
+				aimNear(mc, h, -4, -2);
+				if (++ticks == 8) {
+					actions.shot("cubiqclient-heist-flee");
+					CubiqClient.LOGGER.info("[Autotest] Überfall: Bild Flucht – Zustand {}", h.stateName());
+				}
+				if (ticks < 100) return true;
+				ticks = 0;
+				phase = 74;
+				return true;
+			case 74: {
+				// Hände hoch: Ich-Perspektive, Blick genau auf ihn (vorher eine Abklingzeit lang daneben geschaut)
+				CubiqClient.get().pvp().forceFreelook(Float.NaN);
+				Mc.setCameraMode(0);
+				mc.player.setPos(bx - 4, by, bz - 2);
+				mc.player.setDeltaMovement(0, 0, 0);
+				double ex = bx - 4, ey = by + mc.player.getEyeHeight(), ez = bz - 2;
+				double dx = h.x(1f) - ex, dy = h.y(1f) + 0.4 * h.scale - ey, dz = h.z(1f) - ez;
+				float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+				float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz)));
+				//? if >=1.17 {
+				mc.player.setYRot(yaw);
+				mc.player.setXRot(pitch);
+				//?} else {
+				/*mc.player.yRot = yaw;
+				mc.player.xRot = pitch;
+				*///?}
+				mc.player.yHeadRot = yaw;
+				ticks++;
+				if (h.state() == Pet.HANDSUP && ticks > 20 || ticks == 120) {
+					actions.shot("cubiqclient-heist-handsup");
+					CubiqClient.LOGGER.info("[Autotest] Überfall: Hände hoch nach {} Ticks – Zustand {} ({} Blöcke)", ticks, h.stateName(),
+							String.format(java.util.Locale.ROOT, "%.1f", Math.sqrt(dx * dx + dy * dy + dz * dz)));
+					ticks = 0;
+					phase = 75;
+				}
+				return true;
+			}
+			default:
+				phase = 75;
+				return true;
+		}
+	}
+
+	private static String boatType() {
+		//? if >=1.21.2 {
+		return "oak_boat";
+		//?} else
+		/*return "boat";*/
+	}
+
+	private boolean finish() {
+		PetSim.frozen = false;
+		PetSim.forceState = -1;
+		PetSim.forceTimeMs = -1;
+		OnlineFeatures.v2Clock = null;
+		dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.forced = -1;
+		DevPets.forcedCount = 0;
+		PetSim.forceSlide = Double.NaN;
+		PetSim.forceGrab = false;
+		CubiqClient.get().setForceZoom(false);
+		phase = 99;
+		return false;
+	}
+
+	private static int teleports(OnlineFeatures<Object> f, java.util.UUID me) {
+		int n = 0;
+		for (Pet p : f.pets().pets(me)) n += p.teleports;
+		return n;
+	}
+
+	private static void logBoat(OnlineFeatures<Object> f, Minecraft mc, net.minecraft.world.entity.Entity v, String what) {
+		StringBuilder sb = new StringBuilder();
+		for (Pet p : f.pets().pets(mc.player.getUUID())) {
+			sb.append(p.stateName()).append(String.format(java.util.Locale.ROOT, " %.1f Blöcke; ",
+					Math.hypot(p.x(1f) - Mc.x(v), p.z(1f) - Mc.z(v))));
+		}
+		CubiqClient.LOGGER.info("[Autotest] Fix: Boot {} – {}", what, sb);
+	}
+
+	/** Spieler hinstellen und Blick (Gieren, Nicken) setzen. */
+	private void look(Minecraft mc, double dx, double dz, float yaw, float pitch) {
+		place(mc, dx, dz, yaw);
+		//? if >=1.17 {
+		mc.player.setXRot(pitch);
+		//?} else
+		/*mc.player.xRot = pitch;*/
+	}
+
+	private void place(Minecraft mc, double dx, double dz, float yaw) {
+		place(mc, dx, dz, yaw, 0);
+	}
+
+	/** Spieler an (Szene + dx, by + dy, Szene + dz) halten, Blick {@code yaw} (Kopf gerade). */
+	private void place(Minecraft mc, double dx, double dz, float yaw, double dy) {
+		mc.player.setPos(bx + dx, by + dy, bz + dz);
+		mc.player.setDeltaMovement(0, 0, 0);
+		//? if >=1.17 {
+		mc.player.setYRot(yaw);
+		mc.player.setXRot(0);
+		//?} else {
+		/*mc.player.yRot = yaw;
+		mc.player.xRot = 0;
+		*///?}
+		mc.player.yHeadRot = yaw;
+		mc.player.yBodyRot = yaw;
+	}
+
+	private static void cmd(CapeTest.Actions actions, String fmt, Object... args) {
+		actions.command(String.format(java.util.Locale.ROOT, fmt, args));
+	}
+
+	private static void log(OnlineFeatures<Object> f, Minecraft mc, String what) {
+		StringBuilder sb = new StringBuilder();
+		for (Pet p : f.pets().pets(mc.player.getUUID())) {
+			sb.append(p.stateName()).append(String.format(java.util.Locale.ROOT, "@%.1f/%.2f/%.1f ", p.x(1f), p.y(1f), p.z(1f)));
+		}
+		CubiqClient.LOGGER.info("[Autotest] Winter: Pinguine {} – {}(Spieler {}/{}/{})", what, sb,
+				String.format(java.util.Locale.ROOT, "%.1f", Mc.x(mc.player)), String.format(java.util.Locale.ROOT, "%.2f", Mc.y(mc.player)),
+				String.format(java.util.Locale.ROOT, "%.1f", Mc.z(mc.player)));
+	}
+
+	/** Kamera: Freelook-Winkel relativ zur Figur ({@code 180} = von vorne, {@code 0} = von hinten), 3. Person. */
+	private static void camera(Minecraft mc, float yawOffset, float pitch) {
+		CubiqClient.get().pvp().forceFreelook(180F);
+		CubiqClient.get().pvp().freelook().start(yawOffset, pitch);
+		Mc.setCameraMode(1);
+	}
+}
