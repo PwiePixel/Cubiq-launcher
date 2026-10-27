@@ -156,9 +156,13 @@ Releases entstehen von selbst. Nach jedem grünen CI-Lauf auf `main` prüft
 hat. Wenn ja,
 
 1. erhöht der Workflow die Version (Commits mit `feat:` → Minor, `feat!:` → Major, alles andere → Patch),
-2. schreibt den neuen Abschnitt in [CHANGELOG.md](CHANGELOG.md) auf Englisch und Deutsch – aus deinen Punkten unter
-   `## Unreleased`, falls vorhanden, sonst aus den Commit-Nachrichten ([so geht's](CONTRIBUTING.md#changelog)),
-3. committet „Release vX.Y.Z“, setzt das Tag und startet [`release.yml`](.github/workflows/release.yml).
+2. schreibt den neuen Abschnitt in [CHANGELOG.md](CHANGELOG.md) auf Englisch und Deutsch – aus den Spieler-Texten in
+   [`changes/`](changes/README.md) (eine Datei je Änderung), sonst aus den Commit-Nachrichten
+   ([so geht's](CONTRIBUTING.md#release-notes)),
+3. zeichnet das Bild des Release passend zum Text (eine kleine Voxel-Szene, z. B. ein Schraubenschlüssel für
+   Fehlerbehebungen oder eine Rakete für einen Start – `scripts/release-art.mjs`); Launcher, Website und GitHub-Release
+   zeigen es mit dem Update,
+4. committet „Release vX.Y.Z“, setzt das Tag und startet [`release.yml`](.github/workflows/release.yml).
 
 `release.yml` baut den Windows-Installer (`Cubiq-Launcher_<version>_x64-setup.exe`), eine portable ZIP und die
 Linux-Pakete und veröffentlicht sie als GitHub-Release „Cubiq Launcher X.Y.Z“ mit dem Changelog als Beschreibung –
@@ -178,6 +182,10 @@ aktualisiert er auch den Update-Kanal, sodass sich installierte Launcher selbst 
 - **Von Hand:** Actions → Auto release → Run workflow (Versionssprung wählbar) oder ein Tag wie `v0.2.0` pushen, zu
   dessen Version es einen Abschnitt in CHANGELOG.md gibt. Ein vorhandenes Tag neu bauen: Actions → Release → Run
   workflow.
+- **Keine Merge-Konflikte:** Branches ändern nie `CHANGELOG.md` oder Versionsnummern, sondern legen nur Dateien in
+  `changes/` an; [`pr-sync.yml`](.github/workflows/pr-sync.yml) mergt `main` nach jedem Merge in offene Pull Requests.
+- **Release-Texte bleiben aktuell:** Ändert sich `CHANGELOG.md` oder ein Release-Bild auf `main`, schreibt
+  [`release-notes.yml`](.github/workflows/release-notes.yml) die betroffenen GitHub-Releases neu.
 - **Pausieren:** Repo-Variable `CUBIQ_AUTO_RELEASE` auf `false` setzen.
 - **Geschützter `main`:** Dürfen nur Pull Requests `main` ändern, wird der Release-Commit abgelehnt – dann GitHub
   Actions von dieser Regel ausnehmen.

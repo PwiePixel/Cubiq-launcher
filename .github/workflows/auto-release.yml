@@ -4,10 +4,14 @@ name: Auto release
 # hat (scripts/release.mjs):
 #   1. Versionsnummer erhöhen (feat → Minor, sonst Patch, feat!/BREAKING CHANGE → Major) – in package.json,
 #      tauri.conf.json, Cargo.toml und Cargo.lock.
-#   2. Abschnitt in CHANGELOG.md schreiben (Englisch + Deutsch): Punkte unter „## Unreleased“, sonst die erste Zeile
-#      jedes Commits seit dem letzten Release. Den Text zeigt der Launcher unter „Was ist neu“.
-#   3. Commit „Release vX.Y.Z“ + Tag auf main pushen und release.yml starten: Installer bauen, GitHub-Release mit
-#      Titel („Cubiq Launcher X.Y.Z“) und Beschreibung aus dem Changelog, Update-Kanal für den Auto-Updater.
+#   2. Abschnitt in CHANGELOG.md schreiben (Englisch + Deutsch): die Spieler-Texte aus changes/*.md (je Änderung
+#      eine Datei, danach gelöscht), sonst die erste Zeile jedes Commits seit dem letzten Release. Den Text zeigt der
+#      Launcher unter „Was ist neu“.
+#   3. Bild des Release zeichnen (scripts/release-art.mjs → public/news/<version>/banner.png), passend zum Text.
+#   4. Commit „Release vX.Y.Z“ + Tag auf main pushen und release.yml starten: Installer bauen, GitHub-Release mit
+#      Titel („Cubiq Launcher X.Y.Z“), Bild und Beschreibung aus dem Changelog, Update-Kanal für den Auto-Updater.
+# Der Release-Commit ändert nur CHANGELOG.md (neuer Abschnitt oben), die Versionsnummern, public/news/<version>/ und
+# changes/ – Branches schreiben ihre Texte in eigene Dateien unter changes/, daher gibt es keine Merge-Konflikte.
 #
 # Von Hand: Actions → Auto release → Run workflow (Sprung wählbar, wartet nicht auf CI).
 # Abschalten: Repo-Variable CUBIQ_AUTO_RELEASE = false (Settings → Secrets and variables → Actions → Variables).
@@ -139,7 +143,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+          git add -A -- CHANGELOG.md package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock public/news changes
           # Erstes Release einer schon eingetragenen Version: evtl. nichts zu committen.
           git diff --cached --quiet || git commit -m "Release $TAG"
           git tag -a "$TAG" -m "Cubiq Launcher ${TAG#v}"

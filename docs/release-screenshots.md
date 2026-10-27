@@ -2,12 +2,13 @@
 
 A launcher release can show screenshots of its new features: in the launcher (update card, news, "What's new" – a
 dialog with banner, gallery and notes), on the website blog and in the GitHub release notes. They are optional –
-automatic releases have none until you add them. Add them to the version's section in `CHANGELOG.md` before the release
-(write the notes under `## Unreleased` yourself, the automatic release keeps the comments there), or later by hand.
+automatic releases have none until you add them. Put the comment at the top of your player note in `changes/` (above
+`### English`, see `changes/README.md` – the automatic release keeps it), or add it to the version's section in
+`CHANGELOG.md` later on `main`.
 
-The update banner works the same way: `<!-- banner: accent=#71a330 -->` shows the Cubiq logo in the release colour;
-`motif=/news/<version>/banner.png` (a picture with a transparent background in `public/news/<version>/`) replaces the
-logo.
+The update banner gets its picture automatically: the release draws a small voxel scene that matches the notes
+(`scripts/release-art.mjs` → `public/news/<version>/banner.png`, written into the banner line as
+`motif=/news/<version>/banner.png`). Replace the file with your own picture (transparent background) if you like.
 
 ## Where they go
 

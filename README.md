@@ -151,9 +151,12 @@ Releases make themselves. After every green CI run on `main`, [`auto-release.yml
 checks whether anything changed for players since the last release. If so, it
 
 1. raises the version (`feat:` commits → minor, `feat!:` → major, everything else → patch),
-2. writes the new section of [CHANGELOG.md](CHANGELOG.md) in English and German – from your points under
-   `## Unreleased` if there are any, otherwise from the commit messages ([how](CONTRIBUTING.md#changelog)),
-3. commits "Release vX.Y.Z", tags it and starts [`release.yml`](.github/workflows/release.yml).
+2. writes the new section of [CHANGELOG.md](CHANGELOG.md) in English and German – from the player notes in
+   [`changes/`](changes/README.md) (one file per change), otherwise from the commit messages
+   ([how](CONTRIBUTING.md#release-notes)),
+3. draws the picture of the release to match its notes (a small voxel scene, e.g. a wrench for fixes or a rocket for a
+   launch – `scripts/release-art.mjs`); the launcher, the website and the GitHub release show it with the update,
+4. commits "Release vX.Y.Z", tags it and starts [`release.yml`](.github/workflows/release.yml).
 
 `release.yml` builds the Windows installer (`Cubiq-Launcher_<version>_x64-setup.exe`), a portable ZIP and the Linux
 packages and publishes them as the GitHub release "Cubiq Launcher X.Y.Z" with the changelog as description – the
@@ -170,6 +173,10 @@ update channel, so installed launchers update themselves.
 - **CI red:** no release; the run "Auto release" is then called "Kein Release – CI …" and names the failed jobs.
 - **By hand:** Actions → Auto release → Run workflow (pick the version step), or push a tag like `v0.2.0` whose
   version has a section in CHANGELOG.md. To build an existing tag again: Actions → Release → Run workflow.
+- **No merge conflicts:** branches never edit `CHANGELOG.md` or version numbers, only add files in `changes/`;
+  [`pr-sync.yml`](.github/workflows/pr-sync.yml) merges `main` into open pull requests after every merge.
+- **Release texts stay current:** when `CHANGELOG.md` or a release picture changes on `main`,
+  [`release-notes.yml`](.github/workflows/release-notes.yml) rewrites the affected GitHub releases.
 - **Pause:** set the repository variable `CUBIQ_AUTO_RELEASE` to `false`.
 - **Protected `main`:** if only pull requests may change `main`, the release commit is rejected – let GitHub Actions
   bypass that rule.

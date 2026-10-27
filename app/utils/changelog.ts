@@ -8,10 +8,10 @@
 //   ## 0.5.0 – 2026-09-25 – The Clip Update | Das Clip-Update
 //
 // Das Banner jedes Updates hat einen festen Stil (dunkle Fläche, weicher Schein, feines Würfel-Raster); je
-// Version ändern sich nur Akzentfarbe und Motiv (ein freigestelltes Bild, z. B. ein Item). Ohne Motiv zeigt der
-// Launcher das Cubiq-Logo – so legt die Release-Automatik (scripts/release.mjs) das Banner an:
-//   <!-- banner: accent=#71a330 -->
-//   <!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png -->
+// Version ändern sich nur Akzentfarbe und Motiv (ein freigestelltes Bild). Das Motiv zeichnet die
+// Release-Automatik für jede Version passend zum Inhalt (scripts/release-art.mjs); ohne Motiv zeigt der Launcher
+// das Cubiq-Logo:
+//   <!-- banner: accent=#71a330 motif=/news/0.1.2/banner.png -->
 //
 // Screenshots der Neuerungen stehen als zweiter Kommentar direkt darunter – je Zeile eine Datei aus
 // public/news/<version>/ (PNG oder WebP, höchstens SHOTS_MAX), optional mit Bildunterschrift auf
@@ -24,11 +24,7 @@
 // Einzeilig geht auch, Einträge dann mit „;“ trennen: <!-- shots: /news/0.6.5/a.png | A | A ; /news/0.6.5/b.png -->
 // Ältere Beiträge haben Bilder noch als eigene Zeile „![Bildunterschrift](/news/<version>/<datei>.png)“ im
 // Text – postContent() sammelt beides in einer Galerie.
-//
-// Mitwirkende (GitHub-Namen, ohne „@“) trägt der Release-Build als eigene Zeile in den Abschnitt ein
-// (scripts/contributors.mjs → scripts/changelog.mjs set-contributors); dieselbe Zeile steht am Ende des
-// GitHub-Release-Texts, dort liest die Website sie:
-//   <!-- contributors: alice,bob-builder -->
+
 
 export interface ChangelogEntry {
   /** z. B. „0.4.4“; der Abschnitt „Unreleased“ hat `null`. */
@@ -44,8 +40,6 @@ export interface ChangelogEntry {
   shots: UpdateShot[]
   /** Einträge im Kommentar „shots:“, die nicht gelesen werden konnten (meldet scripts/changelog.mjs check). */
   shotIssues: string[]
-  /** GitHub-Namen der Mitwirkenden (Kommentar „contributors:“, ohne „@“), sonst leer. */
-  contributors: string[]
 }
 
 export interface UpdateBanner {
@@ -68,10 +62,6 @@ export const SHOTS_MAX = 8
 const BANNER_COMMENT = /^<!-- *banner: *(.*?) *-->$/
 /** Platzhalter für gesicherte Banner-Zeilen, bevor die übrigen Kommentare entfernt werden. */
 const BANNER_MARK = '\u0001banner '
-const CONTRIBUTORS_COMMENT = /^<!-- *contributors: *(.*?) *-->$/
-const CONTRIBUTORS_MARK = '\u0001contributors '
-/** GitHub-Benutzername: 1–39 Zeichen, Buchstaben, Ziffern und Bindestriche, nicht am Anfang. */
-export const GITHUB_LOGIN = /^[A-Za-z0-9][A-Za-z0-9-]{0,38}$/
 /** Kommentar „shots:“ – nur, wenn er am Zeilenanfang beginnt und am Zeilenende schließt. */
 const SHOTS_COMMENT = /^[ \t]*<!--\s*shots:([\s\S]*?)-->[ \t]*$/gm
 const SHOT_MARK = '\u0001shot '
@@ -101,27 +91,6 @@ export function parseShot(raw: string): UpdateShot | null {
   return { src, caption: en || de ? { en: en || de, de: de || en } : null }
 }
 
-/**
- * „alice, @bob,Alice“ → ["alice", "bob"]: nur gültige GitHub-Namen, ohne „@“, jeder nur einmal (Groß-/Kleinschreibung
- * egal), in der angegebenen Reihenfolge.
- */
-export function parseContributors(raw: string): string[] {
-  const out: string[] = []
-  const seen = new Set<string>()
-  for (const part of raw.split(/[\s,]+/)) {
-    const name = part.replace(/^@/, '')
-    if (!GITHUB_LOGIN.test(name) || seen.has(name.toLowerCase())) continue
-    seen.add(name.toLowerCase())
-    out.push(name)
-  }
-  return out
-}
-
-/** Die maschinenlesbare Zeile für CHANGELOG.md und den GitHub-Release-Text: „<!-- contributors: a,b -->“. */
-export function contributorsComment(names: string[]): string {
-  return `<!-- contributors: ${parseContributors(names.join(',')).join(',')} -->`
-}
-
 const VERSION_HEADING =
   /^## +(?:\[?v?(\d+\.\d+\.\d+(?:-[\w.]+)?)\]?|(Unreleased))(?: +[–-] +(\d{4}-\d{2}-\d{2}))?(?: +[–-] +(.+?))? *$/i
 
@@ -147,9 +116,7 @@ export function parseChangelog(text: string): ChangelogEntry[] {
     .split(/\r?\n/)
     .map((line) => {
       const m = BANNER_COMMENT.exec(line.trim())
-      if (m) return BANNER_MARK + m[1]
-      const c = CONTRIBUTORS_COMMENT.exec(line.trim())
-      return c ? CONTRIBUTORS_MARK + c[1] : line
+      return m ? BANNER_MARK + m[1] : line
     })
     .join('\n')
     .replace(/<!--[\s\S]*?-->/g, '')
@@ -175,7 +142,6 @@ export function parseChangelog(text: string): ChangelogEntry[] {
         banner: null,
         shots: [],
         shotIssues: [],
-        contributors: [],
       }
       lang = null
       continue
@@ -190,10 +156,6 @@ export function parseChangelog(text: string): ChangelogEntry[] {
     if (!current) continue
     if (line.startsWith(BANNER_MARK)) {
       current.banner ??= parseBanner(line.slice(BANNER_MARK.length))
-      continue
-    }
-    if (line.startsWith(CONTRIBUTORS_MARK)) {
-      current.contributors = parseContributors([...current.contributors, line.slice(CONTRIBUTORS_MARK.length)].join(','))
       continue
     }
     if (line.startsWith(SHOT_MARK)) {
@@ -301,12 +263,14 @@ export function postContent(
   return { markdown: text.join('\n\n'), shots: shots.slice(0, SHOTS_MAX) }
 }
 
-/** Für GitHub: „/news/…“-Bilder auf die Datei im Repo zum Tag der Version zeigen lassen. */
-function githubImages(markdown: string, version: string): string {
-  return markdown.replace(
-    /\]\((\/news\/[\w.-]+\/[\w.-]+\.(?:png|webp|jpe?g))\)/g,
-    (_, path: string) => `](https://raw.githubusercontent.com/PwiePixel/Cubiq-launcher/v${version}/public${path})`,
-  )
+/** Adresse einer Datei aus public/ im Repo (zum Tag der Version oder z. B. zu `main`). */
+function githubFile(path: string, ref: string): string {
+  return `https://raw.githubusercontent.com/PwiePixel/Cubiq-launcher/${ref}/public${path}`
+}
+
+/** Für GitHub: „/news/…“-Bilder auf die Datei im Repo zeigen lassen. */
+function githubImages(markdown: string, ref: string): string {
+  return markdown.replace(/\]\((\/news\/[\w.-]+\/[\w.-]+\.(?:png|webp|jpe?g))\)/g, (_, path: string) => `](${githubFile(path, ref)})`)
 }
 
 /** Screenshots aus dem Kommentar „shots:“ als Bildzeilen unter den Text einer Sprache. */
@@ -316,52 +280,25 @@ function withShots(markdown: string, entry: Pick<ChangelogEntry, 'shots'>, lang:
 }
 
 /**
- * Dank an die Mitwirkenden am Ende des GitHub-Release-Texts: „@name“ (GitHub verlinkt sie und zeigt die Avatare),
- * darunter die maschinenlesbare Zeile für die Website. Ohne Mitwirkende: leer.
+ * Text für GitHub-Release und Auto-Update: das Bild des Updates, dann Update-Name, Englisch und Deutsch – jeweils mit
+ * Screenshots. Nur Text für die Spieler, keine Namen oder Danksagungen. `ref` = Stand im Repo, aus dem die Bilder
+ * kommen (Standard: der Tag der Version).
  */
-function thanksSection(entry: Pick<ChangelogEntry, 'contributors'>): string {
-  const names = parseContributors(entry.contributors.join(','))
-  if (!names.length) return ''
-  return `\n## Thanks to / Danke an\n\n${names.map((n) => `@${n}`).join(', ')}\n\n${contributorsComment(names)}\n`
-}
-
-/**
- * Text für GitHub-Release und Auto-Update: Update-Name, dann Englisch, dann Deutsch – jeweils mit Screenshots –
- * und zum Schluss der Dank an die Mitwirkenden.
- */
-export function releaseNotes(entry: ChangelogEntry): string {
+export function releaseNotes(entry: ChangelogEntry, { ref }: { ref?: string } = {}): string {
   const version = entry.version ?? ''
-  const en = githubImages(withShots(entry.en, entry, 'en'), version)
-  const de = githubImages(withShots(entry.de, entry, 'de'), version)
-  const thanks = thanksSection(entry)
-  if (entry.title) return `# ${entry.title.en}\n\n${en}\n\n# ${entry.title.de}\n\n${de}\n${thanks}`
-  return `## What's new\n\n${en}\n\n## Neu in dieser Version\n\n${de}\n${thanks}`
+  const at = ref ?? `v${version}`
+  const en = githubImages(withShots(entry.en, entry, 'en'), at)
+  const de = githubImages(withShots(entry.de, entry, 'de'), at)
+  const motif = entry.banner?.motif
+  const picture = motif ? `<p align="center"><img src="${githubFile(motif, at)}" alt="" width="220"></p>\n\n` : ''
+  if (entry.title) return `${picture}# ${entry.title.en}\n\n${en}\n\n# ${entry.title.de}\n\n${de}\n`
+  return `${picture}## What's new\n\n${en}\n\n## Neu in dieser Version\n\n${de}\n`
 }
 
 /** Titel des GitHub-Release: „Cubiq Launcher 0.4.4“, mit Update-Namen „Cubiq Launcher 0.5.0 – The Clip Update“. */
 export function releaseTitle(entry: Pick<ChangelogEntry, 'title'> | null, version: string): string {
   const name = `Cubiq Launcher ${version.replace(/^v/, '')}`
   return entry?.title ? `${name} – ${entry.title.en}` : name
-}
-
-/**
- * Schreibt die Mitwirkenden in den Abschnitt einer Version (vor „### English“, sonst direkt unter die Überschrift)
- * und ersetzt eine vorhandene Zeile. Ohne gültige Namen bleibt der Text unverändert – so bleibt eine von Hand
- * eingetragene Zeile stehen, wenn die GitHub-API im Release-Build nicht antwortet. Fehlt der Abschnitt: Fehler.
- */
-export function setContributors(text: string, version: string, names: string[]): string {
-  const wanted = version.replace(/^v/, '')
-  const lines = text.split(/\r?\n/)
-  const start = lines.findIndex((line) => VERSION_HEADING.exec(line)?.[1] === wanted)
-  if (start < 0) throw new Error(`CHANGELOG.md has no section "## ${wanted}"`)
-  const valid = parseContributors(names.join(','))
-  if (!valid.length) return text
-  let end = lines.findIndex((line, i) => i > start && /^## /.test(line))
-  if (end < 0) end = lines.length
-  const section = lines.slice(start + 1, end).filter((line) => !CONTRIBUTORS_COMMENT.test(line.trim()))
-  const english = section.findIndex((line) => /^### +english *$/i.test(line))
-  section.splice(english < 0 ? 0 : english, 0, contributorsComment(valid))
-  return [...lines.slice(0, start + 1), ...section, ...lines.slice(end)].join(text.includes('\r\n') ? '\r\n' : '\n')
 }
 
 /** Fester Startwert für die Szene eines Updates – jede Version sieht anders, aber immer gleich aus. */

@@ -4665,7 +4665,6 @@
     "imageOf": "Obraz {n} z {total}",
     "versions": "Wersje",
     "more": "Więcej obrazów: {n}",
-    "thanks": "Dziękujemy za wkład w tę aktualizację: {names}.",
     "openRelease": "Zobacz wydanie na GitHubie"
   },
   "clips": {

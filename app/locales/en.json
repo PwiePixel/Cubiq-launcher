@@ -4733,7 +4733,6 @@
     "imageOf": "Image {n} of {total}",
     "versions": "Versions",
     "more": "{n} more images",
-    "thanks": "Thanks to {names} for contributing to this update.",
     "openRelease": "View release on GitHub"
   },
   "clips": {

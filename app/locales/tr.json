@@ -4665,7 +4665,6 @@
     "imageOf": "Görsel {n} / {total}",
     "versions": "Sürümler",
     "more": "{n} görsel daha",
-    "thanks": "Bu güncellemeye katkıları için teşekkürler: {names}.",
     "openRelease": "Sürümü GitHub'da görüntüle"
   },
   "clips": {

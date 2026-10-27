@@ -4665,7 +4665,6 @@
     "imageOf": "Afbeelding {n} van {total}",
     "versions": "Versies",
     "more": "Nog {n} afbeeldingen",
-    "thanks": "Dank aan {names} voor hun bijdrage aan deze update.",
     "openRelease": "Release op GitHub bekijken"
   },
   "clips": {

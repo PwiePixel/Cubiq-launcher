@@ -2,7 +2,13 @@
 // Changelog-Punkte (Englisch + Deutsch) und den Versionssprung ableiten und den Abschnitt in CHANGELOG.md
 // anlegen. Reine Funktionen – die Tests (tests/release.test.ts) prüfen sie ohne Git.
 //
-// Commit-Nachrichten → Changelog:
+// Spieler-Texte → Changelog (Vorrang vor den Commits):
+//   - Je Änderung eine Datei changes/<thema>.md mit „### English“ und „### Deutsch“ (siehe changes/README.md).
+//     Eigene Dateien statt Einträgen in CHANGELOG.md: so ändern Branches nie dieselbe Stelle wie die
+//     Release-Commits auf main – keine Merge-Konflikte. Das Release übernimmt sie und löscht die Dateien.
+//   - Ältere Branches dürfen noch Punkte unter „## Unreleased“ in CHANGELOG.md haben; die kommen dazu.
+//
+// Commit-Nachrichten → Changelog (nur, wenn es keine Spieler-Texte gibt):
 //   - Die erste Zeile wird zum Punkt, für beide Sprachen gleich. Eigene Texte je Sprache: Zeilen „EN: …“ und
 //     „DE: …“ im Commit-Text.
 //   - „feat: …“ (oder „neu: …“) = neue Funktion → fett und Minor-Sprung; „fix: …“ = Fehlerbehebung.
@@ -16,7 +22,7 @@ const TYPE_PREFIX = /^(feat|feature|neu|new|fix|fixed|perf)(\([^)]*\))?!?:\s*/i
 const RELEASE_COMMIT = /^Release v\d+\.\d+\.\d+/i
 const DEPENDENCY_BUMP = /^bump \S+ from \S+ to \S+/i
 const SKIP_MARKER = /\[(skip changelog|no changelog|skip release)\]/i
-/** Standard-Banner automatischer Releases: Cubiq-Grün, Motiv ist dann das Logo (siehe UpdateBanner.vue). */
+/** Standard-Banner automatischer Releases: Cubiq-Grün; das Motiv trägt scripts/release.mjs danach ein (setBannerMotif). */
 const BANNER = '<!-- banner: accent=#71a330 -->'
 /** Dateien, die nicht im Launcher landen: Doku, Tests, Workflows, Skripte, Server-Teile, Repo-Pflege. */
 const NOT_FOR_PLAYERS =
@@ -144,6 +150,41 @@ export function setReleaseDate(text, version, date) {
   return text.replace(heading, (_, title) => `## ${version} – ${date}${title}`)
 }
 
+/**
+ * Spieler-Text einer Datei aus changes/: Punkte unter „### English“ und „### Deutsch“, Kommentare davor (z. B.
+ * „<!-- shots: … -->“) als `preamble`. Fehlt eine Sprache, gilt die andere. Ohne Punkte: `null`.
+ * @param {string} text
+ * @returns {{ preamble: string[], en: string[], de: string[] } | null}
+ */
+export function parseChangeNote(text) {
+  const lines = ['## Unreleased', ...String(text ?? '').split(/\r?\n/)]
+  const parts = unreleasedParts(lines, { start: 0, end: lines.length })
+  if (!parts.en.length && !parts.de.length) return null
+  return { preamble: parts.preamble, en: parts.en.length ? parts.en : parts.de, de: parts.de.length ? parts.de : parts.en }
+}
+
+/**
+ * Motiv des Update-Banners einer Version eintragen: ergänzt oder ersetzt „motif=…“ in der Banner-Zeile ihres
+ * Abschnitts; ohne Banner-Zeile kommt eine mit Cubiq-Grün unter die Überschrift. Ohne Abschnitt: Text unverändert.
+ */
+export function setBannerMotif(text, version, motif) {
+  const nl = text.includes('\r\n') ? '\r\n' : '\n'
+  const lines = text.split(/\r?\n/)
+  const heading = new RegExp(`^## +\\[?v?${version.replace(/\./g, '\\.')}\\]?(?: |$)`)
+  const start = lines.findIndex((line) => heading.test(line))
+  if (start < 0) return text
+  let end = lines.findIndex((line, i) => i > start && /^## /.test(line))
+  if (end < 0) end = lines.length
+  const at = lines.findIndex((line, i) => i > start && i < end && /^<!--\s*banner:/i.test(line.trim()))
+  if (at < 0) {
+    lines.splice(start + 1, 0, `<!-- banner: accent=#71a330 motif=${motif} -->`)
+  } else {
+    const line = lines[at].replace(/\s+motif=\S+/, '')
+    lines[at] = line.replace(/\s*-->\s*$/, ` motif=${motif} -->`)
+  }
+  return lines.join(nl)
+}
+
 /** Hat „## Unreleased“ von Hand geschriebene Punkte (mindestens in einer Sprache)? */
 export function unreleasedReady(text) {
   const lines = text.split(/\r?\n/)
@@ -154,27 +195,27 @@ export function unreleasedReady(text) {
 }
 
 /**
- * CHANGELOG.md für eine neue Version vorbereiten. Von Hand geschriebene Punkte unter „## Unreleased“ haben
- * Vorrang und werden zur Version (fehlt eine Sprache, gilt die andere); sonst entsteht der Abschnitt aus den
- * Commits. `null` = es gibt nichts zu veröffentlichen.
+ * CHANGELOG.md für eine neue Version vorbereiten. Spieler-Texte – Dateien aus changes/ (`notes`, siehe
+ * parseChangeNote) und Punkte unter „## Unreleased“ – haben Vorrang und werden zur Version (fehlt eine Sprache,
+ * gilt die andere); sonst entsteht der Abschnitt aus den Commits. `null` = es gibt nichts zu veröffentlichen.
  * @param {string} text
  * @param {string} version
  * @param {string} date
  * @param {ReturnType<typeof changelogItem>[]} items
+ * @param {ReturnType<typeof parseChangeNote>[]} [notes]
  */
-export function prepareChangelog(text, version, date, items) {
+export function prepareChangelog(text, version, date, items, notes = []) {
   const nl = text.includes('\r\n') ? '\r\n' : '\n'
   const lines = text.split(/\r?\n/)
   const range = unreleasedRange(lines)
   let section = null
-  if (range) {
-    const parts = unreleasedParts(lines, range)
-    if (parts.en.length || parts.de.length) {
-      const en = parts.en.length ? parts.en : parts.de
-      const de = parts.de.length ? parts.de : parts.en
-      const preamble = parts.preamble.some((line) => /^<!--\s*banner:/i.test(line.trim())) ? parts.preamble : [BANNER, ...parts.preamble]
-      section = [`## ${version} – ${date}`, ...preamble, '', '### English', ...en, '', '### Deutsch', ...de, '']
-    }
+  const parts = [range ? unreleasedParts(lines, range) : null, ...notes]
+    .filter((p) => p && (p.en.length || p.de.length))
+    .map((p) => ({ preamble: p.preamble, en: p.en.length ? p.en : p.de, de: p.de.length ? p.de : p.en }))
+  if (parts.length) {
+    const preamble = parts.flatMap((p) => p.preamble)
+    const banner = preamble.some((line) => /^<!--\s*banner:/i.test(line.trim())) ? [] : [BANNER]
+    section = [`## ${version} – ${date}`, ...banner, ...preamble, '', '### English', ...parts.flatMap((p) => p.en), '', '### Deutsch', ...parts.flatMap((p) => p.de), '']
   }
   if (!section) {
     const real = items.filter(Boolean)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseChangelog } from '../app/utils/changelog'
-import { BLOG_BASE_URL, blogPostUrl, contributorNames, postLang, postTitle, shotKey, stepShot } from '../app/utils/updatePost'
+import { BLOG_BASE_URL, blogPostUrl, postLang, postTitle, shotKey, stepShot } from '../app/utils/updatePost'
 
 describe('Update-Beitrag im Launcher', () => {
   it('verlinkt die GitHub-Release-Seite der Version', () => {
@@ -41,13 +41,4 @@ describe('Update-Beitrag im Launcher', () => {
     expect(shotKey('ArrowRight', 0, 1)).toBeNull()
   })
 
-  it('dankt den Mitwirkenden nur mit Namen – ohne „@“, in der Sprache des Lesers', () => {
-    const [entry] = parseChangelog('## 1.0.0 – 2026-01-01\n<!-- contributors: @alice,bob,carl -->\n### English\n- a\n### Deutsch\n- b')
-    expect(contributorNames(entry!, 'en')).toBe('alice, bob, and carl')
-    expect(contributorNames(entry!, 'de')).toBe('alice, bob und carl')
-    expect(contributorNames({ contributors: ['alice'] }, 'es')).toBe('alice')
-    expect(contributorNames({ contributors: [] }, 'de')).toBeNull()
-    // Ungültige Sprache: trotzdem eine lesbare Liste.
-    expect(contributorNames({ contributors: ['a', 'b'] }, 'no_such-locale!')).toBe('a, b')
-  })
 })

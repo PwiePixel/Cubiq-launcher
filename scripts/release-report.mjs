@@ -183,12 +183,9 @@ function cmdFinish() {
   const winStatus = readJson(join(art, 'windows', 'status-windows.json'))
   const linuxStatus = readJson(join(art, 'linux', 'status-linux.json'))
 
-  // Hinweise wie im Launcher (mit Dank an die Mitwirkenden), sofern CHANGELOG.md für die Version passt.
+  // Hinweise wie im Launcher (Bild des Release, Englisch, Deutsch), sofern CHANGELOG.md für die Version passt.
   let notes = ''
-  if (process.env.CHANGELOG === 'ok') {
-    if (process.env.CONTRIBUTORS) node('changelog.mjs', ['set-contributors', version, process.env.CONTRIBUTORS])
-    notes = node('changelog.mjs', ['notes', version])
-  }
+  if (process.env.CHANGELOG === 'ok') notes = node('changelog.mjs', ['notes', version])
   writeFileSync(join(root, 'release-notes.md'), notes)
 
   // Update-Kanal nur mit signierten Teilen für Windows UND Linux (sonst fänden manche Launcher kein Update).
