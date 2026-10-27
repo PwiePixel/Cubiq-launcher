@@ -164,6 +164,17 @@ public final class Kit {
 		c.fill(x, barY, x + 2, barY + barH, t.border);
 	}
 
+	/** Knopf für endgültige Aktionen (Löschen, Sperren), siehe {@link Paint#dangerButton}. */
+	public void dangerButton(Canvas c, int x, int y, int w, int h, String label, boolean enabled, int mx, int my,
+			Runnable action) {
+		if (!enabled) {
+			button(c, x, y, w, h, label, false, false, mx, my, action);
+			return;
+		}
+		Paint.dangerButton(c, x, y, w, h, label, inside(mx, my, x, y, w, h));
+		area(x, y, w, h, action);
+	}
+
 	/** Kleines Zahlen-Abzeichen (Akzent-Pille, in den Jahreszeit-Designs eine Laterne); Rückgabe: Breite. */
 	public static int badge(Canvas c, int right, int y, int count) {
 		if (count <= 0) return 0;

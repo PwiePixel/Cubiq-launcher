@@ -762,7 +762,7 @@ public final class HostingUi extends WindowUi {
 			});
 			int bw = Math.min(100, (w - 6) / 2);
 			int by = y + h - 18;
-			kit.button(c, x + w - bw, by, bw, 18, I18n.tr("hosting.ban.button"), false, true, mx, my, new Runnable() {
+			kit.dangerButton(c, x + w - bw, by, bw, 18, I18n.tr("hosting.ban.button"), true, mx, my, new Runnable() {
 				@Override
 				public void run() {
 					close();

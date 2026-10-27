@@ -7,6 +7,7 @@ import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.ui.Anim;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.CubiqMark;
 import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
@@ -99,12 +100,18 @@ public final class AccountsUi extends UiScreen {
 		Paint.windowHeader(c, px, py, pw, HEADER_H, t.surfaceHigh, t.border);
 		int lx = px + PAD;
 		int ly = py + (HEADER_H - PixelFont.HEIGHT * 2) / 2;
-		List<int[]> rects = PixelFont.rects("CUBIQ");
-		int glow = ColorMath.withAlpha(t.glow, 40);
-		for (int[] r : rects) c.fill(lx + r[0] * 2 - 1, ly + r[1] * 2 - 1, lx + r[2] * 2 + 1, ly + r[3] * 2 + 1, glow);
-		int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
-		for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
-		int titleX = lx + PixelFont.width("CUBIQ") * 2 + 5;
+		int titleX;
+		if (t.winter || t.fox || t.halloween) {
+			List<int[]> rects = PixelFont.rects("CUBIQ");
+			int glow = ColorMath.withAlpha(t.glow, 40);
+			for (int[] r : rects) c.fill(lx + r[0] * 2 - 1, ly + r[1] * 2 - 1, lx + r[2] * 2 + 1, ly + r[3] * 2 + 1, glow);
+			int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
+			for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
+			titleX = lx + PixelFont.width("CUBIQ") * 2 + 5;
+		} else {
+			// Cubiq: Zeichen und Schriftzug wie in der Kopfzeile des Cubiq-Menüs.
+			titleX = lx + CubiqMark.lockup(c, lx, ly, 2, 1f) + 5;
+		}
 		int closeSize = 16;
 		int closeX = px + pw - PAD - closeSize;
 		Paint.textClipped(c, I18n.tr("accounts.title"), titleX, py + (HEADER_H - 8) / 2, closeX - titleX - 6, t.text, false);

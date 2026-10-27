@@ -55,6 +55,8 @@ public final class MenuSkin {
 	private static final int BEVEL_DARK = 0xFF0C100E;
 	/** Tiefster Grund (base-950) für Schleier und Felder. */
 	private static final int DEEP = 0xFF0C100E;
+	/** Linke Kante des Zeichens in der Kopfleiste (GUI-Pixel). */
+	private static final int HEADER_LOGO_X = 8;
 
 	// Winternacht: Eis- und Schneeplatten (immer dunkel – Vanilla schreibt weiß).
 	private static final int ICE = 0xFF1C2C48;
@@ -132,11 +134,19 @@ public final class MenuSkin {
 	 * @param footerTop obere Kante der Fußleiste (≥ height = keine)
 	 */
 	public static void background(Canvas c, int width, int height, boolean inWorld, int headerH, int footerTop) {
+		background(c, width, height, inWorld, headerH, footerTop, true);
+	}
+
+	/**
+	 * Wie {@link #background(Canvas, int, int, boolean, int, int)}; {@code logo} = Cubiq-Zeichen links in der Kopfleiste
+	 * (aus, wenn dort Bedienelemente liegen, siehe {@link #headerLogoFits}).
+	 */
+	public static void background(Canvas c, int width, int height, boolean inWorld, int headerH, int footerTop, boolean logo) {
 		long start = System.nanoTime();
 		Theme t = Theme.get();
 		float time = seconds();
 		if (t.halloween) {
-			halloweenBackground(c, width, height, inWorld, headerH, footerTop, time);
+			halloweenBackground(c, width, height, inWorld, headerH, footerTop, logo);
 			measure(start);
 			return;
 		}
@@ -166,7 +176,7 @@ public final class MenuSkin {
 		} else {
 			scene(c, width, height, time);
 		}
-		if (headerH > 0) header(c, width, headerH, inWorld);
+		if (headerH > 0) header(c, width, headerH, inWorld, logo);
 		if (footerTop < height) footer(c, width, footerTop, height, inWorld);
 		measure(start);
 	}
@@ -175,7 +185,7 @@ public final class MenuSkin {
 	 * Halloween: ohne Welt die Mondnacht (gedämpft, damit Vanilla-Schrift lesbar bleibt), in der Welt ein Pflaumen-Schleier
 	 * mit Nebelschein von unten. Darüber Kopf-/Fußleiste und die Horror-Schicht (Vignette, Korn, Blitz).
 	 */
-	private static void halloweenBackground(Canvas c, int width, int height, boolean inWorld, int headerH, int footerTop, float time) {
+	private static void halloweenBackground(Canvas c, int width, int height, boolean inWorld, int headerH, int footerTop, boolean logo) {
 		if (inWorld) {
 			c.fill(0, 0, width, height, 0x9E07060C);
 			for (int i = 0; i < 6; i++) {
@@ -188,7 +198,7 @@ public final class MenuSkin {
 			NightScene.shared().draw(c, width, height, dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated());
 			c.fill(0, 0, width, height, 0x6607060C);
 		}
-		if (headerH > 0) header(c, width, headerH, inWorld);
+		if (headerH > 0) header(c, width, headerH, inWorld, logo);
 		if (footerTop < height) footer(c, width, footerTop, height, inWorld);
 		HorrorLayer.draw(c, width, height, inWorld);
 	}
@@ -224,15 +234,20 @@ public final class MenuSkin {
 
 	/** Kopfleiste mit dem kleinen Cubiq-Zeichen und Schriftzug links, feine Linie unten. */
 	public static void header(Canvas c, int width, int h, boolean inWorld) {
+		header(c, width, h, inWorld, true);
+	}
+
+	/** Kopfleiste; {@code logo} = Cubiq-Zeichen links zeichnen (aus, wenn dort Bedienelemente liegen). */
+	public static void header(Canvas c, int width, int h, boolean inWorld, boolean logo) {
 		Theme t = Theme.get();
 		if (t.halloween) {
 			c.fill(0, 0, width, h, inWorld ? 0x8C07060C : 0xD80A0812);
 			c.fill(0, 0, width, 1, 0x40CFD5E3);
 			c.fill(0, h - 1, width, h, 0x803B3358);
-			int lx = 8;
+			int lx = HEADER_LOGO_X;
 			int ly = (h - PixelFont.HEIGHT * 2) / 2;
-			logo(c, lx, ly, 2, 1f);
-			HalloweenLook.menuHeader(c, 0, 0, width, h, lx + PixelFont.width("CUBIQ") * 2 + 2, seconds());
+			if (logo) logo(c, lx, ly, 2, 1f);
+			HalloweenLook.menuHeader(c, 0, 0, width, h, logo ? lx + PixelFont.width("CUBIQ") * 2 + 2 : 0, seconds());
 			return;
 		}
 		c.fill(0, 0, width, h, barFill(t, inWorld));
@@ -242,7 +257,21 @@ public final class MenuSkin {
 		} else {
 			c.fill(0, h - 1, width, h, EDGE);
 		}
-		logo(c, 8, (h - PixelFont.HEIGHT * 2) / 2, 2, 1f);
+		if (logo) logo(c, HEADER_LOGO_X, (h - PixelFont.HEIGHT * 2) / 2, 2, 1f);
+	}
+
+	/**
+	 * Hat das Cubiq-Zeichen links in der Kopfleiste Platz? Nein, sobald ein Bedienelement in den Bereich ragt, den es
+	 * bräuchte – z. B. die Reiter von „Neue Welt“ oder „Mit Code beitreten“ in der Serverliste; dann bleibt es weg, statt
+	 * halb verdeckt zu sein. {@code rects} = {x, y, Breite, Höhe} der sichtbaren Bedienelemente.
+	 */
+	public static boolean headerLogoFits(List<int[]> rects, int headerH) {
+		int right = HEADER_LOGO_X + logoWidth(2) + 6;
+		for (int[] r : rects) {
+			if (r == null || r.length < 4 || r[2] <= 0 || r[3] <= 0) continue;
+			if (r[0] < right && r[0] + r[2] > 0 && r[1] < headerH && r[1] + r[3] > 0) return false;
+		}
+		return true;
 	}
 
 	/** Fußleiste (Knopfbereich unter einer Liste). */

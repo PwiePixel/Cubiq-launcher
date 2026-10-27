@@ -3,6 +3,7 @@ package dev.pwiepixel.cubiqclient.core.ui.menus;
 import dev.pwiepixel.cubiqclient.core.ui.Anim;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.CubiqMark;
 import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.PixelFont;
@@ -70,12 +71,18 @@ public abstract class WindowUi extends UiScreen {
 		Paint.windowHeader(c, px, py, pw, HEADER_H, t.surfaceHigh, t.border);
 		int lx = px + PAD;
 		int ly = py + (HEADER_H - PixelFont.HEIGHT * 2) / 2;
-		List<int[]> rects = PixelFont.rects("CUBIQ");
-		int glow = ColorMath.withAlpha(t.glow, 40);
-		for (int[] r : rects) c.fill(lx + r[0] * 2 - 1, ly + r[1] * 2 - 1, lx + r[2] * 2 + 1, ly + r[3] * 2 + 1, glow);
-		int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
-		for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
-		int titleX = lx + PixelFont.width("CUBIQ") * 2 + 5;
+		int titleX;
+		if (t.winter || t.fox || t.halloween) {
+			List<int[]> rects = PixelFont.rects("CUBIQ");
+			int glow = ColorMath.withAlpha(t.glow, 40);
+			for (int[] r : rects) c.fill(lx + r[0] * 2 - 1, ly + r[1] * 2 - 1, lx + r[2] * 2 + 1, ly + r[3] * 2 + 1, glow);
+			int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
+			for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
+			titleX = lx + PixelFont.width("CUBIQ") * 2 + 5;
+		} else {
+			// Cubiq: Zeichen und Schriftzug wie in der Kopfzeile des Cubiq-Menüs.
+			titleX = lx + CubiqMark.lockup(c, lx, ly, 2, 1f) + 5;
+		}
 		int closeSize = 16;
 		int closeX = px + pw - PAD - closeSize;
 		int closeY = py + (HEADER_H - closeSize) / 2;
@@ -120,6 +127,18 @@ public abstract class WindowUi extends UiScreen {
 	protected void iconButton(Canvas c, int x, int y, int size, String icon, boolean primary, int mx, int my, final Runnable action) {
 		Paint.iconButton(c, x, y, size, icon, inside(mx, my, x, y, size, size), primary);
 		hits.add(x, y, size, size, new Runnable() {
+			@Override
+			public void run() {
+				playClick();
+				action.run();
+			}
+		});
+	}
+
+	/** Knopf für endgültige Aktionen (Löschen) inklusive Klickfläche, siehe {@link Paint#dangerButton}. */
+	protected void dangerButton(Canvas c, int x, int y, int w, int h, String label, int mx, int my, final Runnable action) {
+		Paint.dangerButton(c, x, y, w, h, label, inside(mx, my, x, y, w, h));
+		hits.add(x, y, w, h, new Runnable() {
 			@Override
 			public void run() {
 				playClick();

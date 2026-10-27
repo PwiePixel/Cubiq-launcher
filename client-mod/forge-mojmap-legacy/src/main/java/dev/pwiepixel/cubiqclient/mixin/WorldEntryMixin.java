@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 *///?} elif >=1.16
 import com.mojang.blaze3d.vertex.PoseStack;
 
-/** Welten-Liste im Redstone-Stil: Karte hinter jedem Vanilla-Eintrag (Inhalt bleibt von Minecraft). */
+/** Welten-Liste im Cubiq-Stil: Karte hinter jedem Vanilla-Eintrag (Inhalt bleibt von Minecraft). */
 @Mixin(WorldSelectionList.WorldListEntry.class)
 public abstract class WorldEntryMixin {
 	//? if >=26.1 {

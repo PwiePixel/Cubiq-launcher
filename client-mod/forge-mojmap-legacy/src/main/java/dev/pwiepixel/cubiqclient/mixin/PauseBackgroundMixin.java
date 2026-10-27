@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Ab 26.1 zeichnet das Pausenmenü seinen Hintergrund selbst (ohne Screen#extractBackground) – hier ebenso
- * durch den Redstone-Hintergrund ersetzen. Davor reicht {@link MenuScreenMixin}; dann nicht in der Liste.
+ * durch den Cubiq-Hintergrund ersetzen. Davor reicht {@link MenuScreenMixin}; dann nicht in der Liste.
  */
 @Mixin(PauseScreen.class)
 public abstract class PauseBackgroundMixin {

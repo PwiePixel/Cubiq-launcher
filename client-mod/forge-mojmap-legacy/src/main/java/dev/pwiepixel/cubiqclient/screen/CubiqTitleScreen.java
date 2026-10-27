@@ -46,7 +46,7 @@ public final class CubiqTitleScreen extends CubiqUiScreen {
 
 	@Override
 	protected void drawBackground(Gfx g, float partialTick) {
-		// Den Hintergrund zeichnet TitleUi (Redstone-Schaltung).
+		// Den Hintergrund zeichnet TitleUi (Würfel-Szene).
 	}
 
 	@Override

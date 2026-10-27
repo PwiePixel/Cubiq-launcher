@@ -74,13 +74,16 @@ public final class Dialogs {
 			if (detail != null) paragraph(c, detail, x, y + used + 3, w, ColorMath.lerp(t.textDim, t.accent, 0.35f));
 			int bw = Math.min(90, (w - 6) / 2);
 			int by = y + h - 18;
-			kit.button(c, x + w - bw, by, bw, 18, yes, !danger, true, mx, my, new Runnable() {
+			Runnable confirm = new Runnable() {
 				@Override
 				public void run() {
 					close();
 					action.run();
 				}
-			});
+			};
+			// Endgültiges (Entfernen, Blockieren, Löschen) als roter Gefahr-Knopf, sonst der Hauptknopf.
+			if (danger) kit.dangerButton(c, x + w - bw, by, bw, 18, yes, true, mx, my, confirm);
+			else kit.button(c, x + w - bw, by, bw, 18, yes, true, true, mx, my, confirm);
 			kit.button(c, x + w - bw * 2 - 6, by, bw, 18, I18n.tr("social.cancel"), false, true, mx, my, new Runnable() {
 				@Override
 				public void run() {
@@ -444,7 +447,7 @@ public final class Dialogs {
 					}
 				});
 				if (owner) {
-					kit.button(c, x + bw + 4, by, bw, 18, I18n.tr("social.group.delete"), false, true, mx, my, new Runnable() {
+					kit.dangerButton(c, x + bw + 4, by, bw, 18, I18n.tr("social.group.delete"), true, mx, my, new Runnable() {
 						@Override
 						public void run() {
 							confirmer.confirm(new Confirm(I18n.tr("social.group.deleteTitle"), I18n.tr("social.group.deleteText",

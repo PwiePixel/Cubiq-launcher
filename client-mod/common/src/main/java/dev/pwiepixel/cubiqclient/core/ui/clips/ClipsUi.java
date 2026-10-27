@@ -978,7 +978,7 @@ public final class ClipsUi extends WindowUi {
 		Paint.textClipped(c, I18n.tr("clips.shared.deleteHint"), x + 10, y + 35, w - 20, t.textDim, false);
 		int bw = (w - 30) / 2;
 		button(c, x + 10, y + h - 26, bw, 18, I18n.tr("common.cancel"), false, true, mx, my, () -> confirmShare = null);
-		button(c, x + 20 + bw, y + h - 26, bw, 18, I18n.tr("clips.delete.confirm"), true, true, mx, my, () -> {
+		dangerButton(c, x + 20 + bw, y + h - 26, bw, 18, I18n.tr("clips.delete.confirm"), mx, my, () -> {
 			confirmShare = null;
 			dev.pwiepixel.cubiqclient.core.social.Social s = dev.pwiepixel.cubiqclient.core.clips.ScreenshotShare.social();
 			if (s == null) {
@@ -1078,7 +1078,7 @@ public final class ClipsUi extends WindowUi {
 				confirmDelete = null;
 			}
 		});
-		button(c, x + 20 + bw, y + h - 26, bw, 18, I18n.tr("clips.delete.confirm"), true, true, mx, my, new Runnable() {
+		dangerButton(c, x + 20 + bw, y + h - 26, bw, 18, I18n.tr("clips.delete.confirm"), mx, my, new Runnable() {
 			@Override
 			public void run() {
 				confirmDelete = null;

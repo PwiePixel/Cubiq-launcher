@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Ab 1.20.5 zeichnen Listen eigenen Hintergrund und Trennlinien (Texturen) – in gestylten Menüs stattdessen
- * eine Redstone-Mulde und Staubleitungen. Bis 1.20.4 schaltet {@link VanillaMenus} den Listen-Hintergrund ab
+ * eine Mulde und feine Linien. Bis 1.20.4 schaltet {@link VanillaMenus} den Listen-Hintergrund ab
  * (dann steht dieser Mixin nicht in der Liste).
  */
 @Mixin(AbstractSelectionList.class)

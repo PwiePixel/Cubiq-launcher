@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Redstone-Stil für Vanilla-Menüs unter Minecraft 1.8.9–1.12.2 (ohne Mixins, nur Forge-Ereignisse):
+ * Cubiq-Stil für Vanilla-Menüs unter Minecraft 1.8.9–1.12.2 (ohne Mixins, nur Forge-Ereignisse):
  * Hintergrund von Pausenmenü und Einstellungen ({@code BackgroundDrawnEvent}), Knopfflächen im Stil
  * (nach dem Vanilla-Zeichnen übermalt, Beschriftung neu), Ladebildschirme komplett, Cubiq-Knöpfe im
  * Pausenmenü. Formulare (Direkt verbinden, Server hinzufügen/bearbeiten) bekommen eine Fläche hinter den
@@ -290,7 +290,7 @@ public final class LegacyMenus {
 		if (next != null) Mc.setScreen(next);
 	}
 
-	/** Nach dem Vanilla-Hintergrund (drawDefaultBackground): Redstone-Hintergrund darüber. */
+	/** Nach dem Vanilla-Hintergrund (drawDefaultBackground): Cubiq-Hintergrund darüber. */
 	@SubscribeEvent
 	public void onBackground(GuiScreenEvent.BackgroundDrawnEvent event) {
 		GuiScreen s = Mc.eventGui(event);

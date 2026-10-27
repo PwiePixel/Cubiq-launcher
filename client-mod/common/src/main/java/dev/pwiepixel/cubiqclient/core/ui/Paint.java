@@ -528,6 +528,25 @@ public final class Paint {
 		accentFill(c, x, y, w, h, ColorMath.lerp(t.accent, t.accentHover, v), ColorMath.lerp(t.faceOnEdge, t.accent, v), 1f);
 	}
 
+	/** Gefahr-Knopf: Rand ({@code danger-600} zu 60 %) und Fläche unter der Maus ({@code danger-900}) wie im Launcher. */
+	private static final int DANGER_EDGE = 0x99C62F35;
+	private static final int DANGER_HOVER_DARK = 0xFF3B1215;
+	private static final int DANGER_HOVER_LIGHT = 0xFFFDE4E1;
+
+	/**
+	 * Knopf für endgültige Aktionen (Löschen, Sperren – wie {@code .btn-danger} im Launcher): durchsichtig mit feinem
+	 * roten Rand und roter Schrift, unter der Maus eine dunkelrote Fläche. In allen Designs gleich, damit Gefahr immer
+	 * gleich aussieht.
+	 */
+	public static void dangerButton(Canvas c, int x, int y, int w, int h, String label, boolean hover) {
+		Theme t = Theme.get();
+		int r = radius(w, h);
+		if (hover) roundRect(c, x, y, w, h, r, t.light ? DANGER_HOVER_LIGHT : DANGER_HOVER_DARK);
+		roundOutline(c, x, y, w, h, r, DANGER_EDGE);
+		String s = c.clip(label, w - 6);
+		c.text(s, x + (w - c.textWidth(s)) / 2, y + (h - 8) / 2 + (h >= 16 ? 0 : 1), t.danger, false);
+	}
+
 	/** Fläche eines Nebenknopfs (wie {@code .btn-ghost} im Launcher); {@code hover} 0..1 hellt Fläche und Kante auf. */
 	public static void secondaryFace(Canvas c, int x, int y, int w, int h, float hover) {
 		Theme t = Theme.get();

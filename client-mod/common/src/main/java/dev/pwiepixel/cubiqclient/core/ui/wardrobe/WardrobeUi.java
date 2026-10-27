@@ -21,6 +21,7 @@ import dev.pwiepixel.cubiqclient.core.skin.SkinModelSpec;
 import dev.pwiepixel.cubiqclient.core.ui.Anim;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.ColorMath;
+import dev.pwiepixel.cubiqclient.core.ui.CubiqMark;
 import dev.pwiepixel.cubiqclient.core.ui.FadeCanvas;
 import dev.pwiepixel.cubiqclient.core.ui.Icons;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
@@ -718,10 +719,16 @@ public final class WardrobeUi extends UiScreen {
 		Paint.windowHeader(c, px, py, pw, HEADER_H, t.surfaceHigh, t.border);
 		int lx = px + PAD + 2;
 		int ly = py + (HEADER_H - PixelFont.HEIGHT * 2) / 2;
-		List<int[]> rects = PixelFont.rects("CUBIQ");
-		int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
-		for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
-		int titleX = lx + PixelFont.width("CUBIQ") * 2 + 5;
+		int titleX;
+		if (t.winter || t.fox || t.halloween) {
+			List<int[]> rects = PixelFont.rects("CUBIQ");
+			int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
+			for (int[] r : rects) c.fill(lx + r[0] * 2, ly + r[1] * 2, lx + r[2] * 2, ly + r[3] * 2, r[1] == 0 ? light : t.accent);
+			titleX = lx + PixelFont.width("CUBIQ") * 2 + 5;
+		} else {
+			// Cubiq: Zeichen und Schriftzug wie in der Kopfzeile des Cubiq-Menüs.
+			titleX = lx + CubiqMark.lockup(c, lx, ly, 2, 1f) + 5;
+		}
 		int closeSize = 16;
 		int closeX = px + pw - PAD - closeSize;
 		String title = I18n.tr(editing ? "wardrobe.editor.title" : "wardrobe.title");

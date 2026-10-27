@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Redstone-Stil für Vanilla-Menüs – die Minecraft-Seite: welches Menü welche Art ist, Hintergrund und Knöpfe
+ * Cubiq-Stil für Vanilla-Menüs – die Minecraft-Seite: welches Menü welche Art ist, Hintergrund und Knöpfe
  * zeichnen (aus den Mixins), Cubiq-Knöpfe im Pausenmenü, Anheften in der Serverliste, Ladebildschirme,
  * Formulare (Direkt verbinden, Server hinzufügen) mit Fläche und Textfeldern im Stil, Dialoge im Stil ihres
  * Menüs. Die
@@ -212,7 +212,7 @@ public final class VanillaMenus {
 		/*return s instanceof GenericDirtMessageScreen;*/
 	}
 
-	/** Wird dieses Menü im Redstone-Stil gezeichnet? */
+	/** Wird dieses Menü im Cubiq-Stil gezeichnet? */
 	public static boolean styled(Screen s) {
 		MenuStyle.Kind k = kind(s);
 		return k != null && MenuStyle.enabled(k);
@@ -240,13 +240,15 @@ public final class VanillaMenus {
 			final int[] list = lists.isEmpty() ? null : lists.get(0);
 			final int header = headerless(s, k) ? 0 : (list != null ? Math.max(0, list[1]) : MenuSkin.HEADER);
 			final int footer = list != null ? Math.min(h, list[3]) : h;
+			// Liegen oben links Bedienelemente (Reiter von „Neue Welt“, „Mit Code beitreten“), bleibt das Zeichen weg.
+			final boolean logo = header > 0 && MenuSkin.headerLogoFits(headerRects(s, header), header);
 			final int[] form = serverForm(s) ? formBounds(s, header) : null;
 			final boolean world = inWorld();
 			final Canvas c = canvas(g);
 			g.managed(new Runnable() {
 				@Override
 				public void run() {
-					MenuSkin.background(c, w, h, world, header, footer);
+					MenuSkin.background(c, w, h, world, header, footer, logo);
 					//? if <1.20.5 {
 					/*for (int[] l : lists) MenuSkin.listWell(c, l[0], l[1], l[2], l[3], world);
 					*///?}
@@ -269,6 +271,29 @@ public final class VanillaMenus {
 			if (child instanceof AbstractSelectionList) return bounds((AbstractSelectionList<?>) child);
 		}
 		return null;
+	}
+
+	/**
+	 * {x, y, Breite, Höhe} der sichtbaren Bedienelemente, die in die Kopfleiste ragen – auch in Behältern (die Reiter von
+	 * „Neue Welt“ stecken in einer Reiterleiste). Listen werden nicht durchsucht.
+	 */
+	static List<int[]> headerRects(Screen s, int header) {
+		List<int[]> out = new ArrayList<>();
+		headerRects(s.children(), header, out, 0);
+		return out;
+	}
+
+	private static void headerRects(List<? extends GuiEventListener> children, int header, List<int[]> out, int depth) {
+		for (GuiEventListener child : children) {
+			if (child instanceof AbstractSelectionList) continue;
+			if (child instanceof AbstractWidget) {
+				AbstractWidget b = (AbstractWidget) child;
+				if (b.visible && y(b) < header) out.add(rect(b));
+			} else if (depth < 2 && child instanceof net.minecraft.client.gui.components.events.ContainerEventHandler) {
+				headerRects(((net.minecraft.client.gui.components.events.ContainerEventHandler) child).children(), header, out,
+						depth + 1);
+			}
+		}
 	}
 
 	/** Lage aller Listen des Bildschirms (z. B. zwei nebeneinander bei den Ressourcenpaketen). */
@@ -323,7 +348,7 @@ public final class VanillaMenus {
 	// --- Nach dem Zeichnen: Ladebildschirme ---
 
 	/**
-	 * Nach dem ganzen Bildschirm (inkl. Tooltips): Ladebildschirme komplett im Redstone-Stil, darüber die
+	 * Nach dem ganzen Bildschirm (inkl. Tooltips): Ladebildschirme komplett im Cubiq-Stil, darüber die
 	 * Sozial-Benachrichtigungen (Toasts) auf jedem Bildschirm.
 	 */
 	public static void afterRender(Screen s, Gfx g, int mouseX, int mouseY) {
@@ -404,7 +429,7 @@ public final class VanillaMenus {
 		host.cubiqclient$addWidget(b);
 	}
 
-	/** Verbinden-Bildschirm ohne Redstone-Stil: Zeile von „Schnell verbinden“ unter Vanillas Status. */
+	/** Verbinden-Bildschirm ohne Cubiq-Stil: Zeile von „Schnell verbinden“ unter Vanillas Status. */
 	private static void connectStatus(Screen s, Gfx g) {
 		if (!(s instanceof ConnectScreen) || (MenuStyle.enabled(MenuStyle.Kind.LOADING) && loading(s))) return;
 		try {
@@ -487,7 +512,7 @@ public final class VanillaMenus {
 	// --- Knöpfe ---
 
 	/**
-	 * Aus dem Knopf-Mixin: Fläche im Redstone-Stil zeichnen, wenn der offene Bildschirm gestylt ist.
+	 * Aus dem Knopf-Mixin: Fläche im Cubiq-Stil zeichnen, wenn der offene Bildschirm gestylt ist.
 	 * Rückgabe true = Vanilla-Fläche nicht zeichnen.
 	 */
 	public static boolean drawButton(Object widget, Gfx g, int x, int y, int w, int h, boolean hover, boolean active) {
@@ -515,7 +540,7 @@ public final class VanillaMenus {
 	}
 
 	/**
-	 * Aus dem Textfeld-Mixin, bevor Vanilla den Rahmen zeichnet: Fläche im Redstone-Stil, wenn der offene
+	 * Aus dem Textfeld-Mixin, bevor Vanilla den Rahmen zeichnet: Fläche im Cubiq-Stil, wenn der offene
 	 * Bildschirm gestylt ist. Rückgabe true = Vanilla-Rahmen weglassen (Text und Schreibmarke bleiben Vanilla).
 	 */
 	public static boolean drawTextField(Gfx g, int x, int y, int w, int h, boolean focused, boolean hover, boolean active) {
@@ -632,7 +657,7 @@ public final class VanillaMenus {
 		}
 	}
 
-	/** Bis 1.20.4 zeichnen Listen Erde hinter sich und oben/unten – das übernimmt der Redstone-Hintergrund
+	/** Bis 1.20.4 zeichnen Listen Erde hinter sich und oben/unten – das übernimmt der Cubiq-Hintergrund
 	 * (1.16.2/1.16.3 haben die Schalter noch nicht, dort bleibt die Erde in der Liste). */
 	static void plainList(AbstractSelectionList<?> l) {
 		//? if >=1.16.4 && <1.20.5 {
@@ -1014,7 +1039,7 @@ public final class VanillaMenus {
 		return drawn;
 	}
 
-	/** Ressourcen-Überblendung im Redstone-Stil (Menü-Stil → Ladebildschirme an)? */
+	/** Ressourcen-Überblendung im Cubiq-Stil (Menü-Stil → Ladebildschirme an)? */
 	public static boolean resourceOverlayStyled() {
 		return MenuStyle.enabled(MenuStyle.Kind.LOADING);
 	}
