@@ -165,8 +165,19 @@ Linux-Pakete und veröffentlicht sie als GitHub-Release „Cubiq Launcher X.Y.Z�
 denselben Text zeigt der Launcher nach dem Update („Was ist neu“). Mit dem Signaturschlüssel in den Secrets
 aktualisiert er auch den Update-Kanal, sodass sich installierte Launcher selbst aktualisieren.
 
+- **Status sofort:** Sobald der Build startet, steht auf der Release-Seite ein Entwurf „wird gebaut“. Fehlt am Ende
+  der Windows-Installer, bleibt das Release ein Entwurf (nur für dich sichtbar) mit dem Grund ganz oben – ein
+  fehlgeschlagener Build-Schritt mit seinen Fehlerzeilen, ein unvollständiger Abschnitt in CHANGELOG.md – und einem
+  Link zum Log. Die Zusammenfassung des Laufs zeigt, was gebaut wurde, ob die Update-Signatur geklappt hat und warum
+  etwas fehlt.
+- **Signaturschlüssel:** wird vor dem Build geprüft (`scripts/check-signing.mjs`); Einfügefehler wie ein Zeilenumbruch
+  am Ende werden automatisch korrigiert. Ein falscher Schlüssel oder ein falsches Passwort stoppt den Build nicht –
+  der Installer entsteht ohne Update-Signatur, und die Zusammenfassung sagt, was nicht stimmt.
+- **CI rot:** kein Release; der Lauf „Auto release“ heißt dann „Kein Release – CI …“ und nennt die fehlgeschlagenen
+  Jobs.
 - **Von Hand:** Actions → Auto release → Run workflow (Versionssprung wählbar) oder ein Tag wie `v0.2.0` pushen, zu
-  dessen Version es einen Abschnitt in CHANGELOG.md gibt.
+  dessen Version es einen Abschnitt in CHANGELOG.md gibt. Ein vorhandenes Tag neu bauen: Actions → Release → Run
+  workflow.
 - **Pausieren:** Repo-Variable `CUBIQ_AUTO_RELEASE` auf `false` setzen.
 - **Geschützter `main`:** Dürfen nur Pull Requests `main` ändern, wird der Release-Commit abgelehnt – dann GitHub
   Actions von dieser Regel ausnehmen.

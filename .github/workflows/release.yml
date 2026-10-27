@@ -3,8 +3,15 @@ name: Release
 # Baut bei jedem Versions-Tag (v1.2.3) den Windows-Installer und die Linux-Pakete (AppImage, .deb, .rpm), legt das
 # GitHub-Release an (Titel und Beschreibung aus CHANGELOG.md) und aktualisiert den Update-Kanal, den der eingebaute
 # Auto-Updater abfragt. Gestartet wird es meist von auto-release.yml (setzt Tag + Changelog), sonst per Tag-Push.
-# Ohne Secret TAURI_SIGNING_PRIVATE_KEY gibt es Installer und Pakete trotzdem, nur ohne Update-Signatur – dann
-# kein latest.json (kein Auto-Update). `latest.json` entsteht erst, wenn Windows UND Linux signiert gebaut sind.
+#
+# Ablauf und Bericht (scripts/release-report.mjs):
+# - „prepare“ prüft CHANGELOG.md und den Signaturschlüssel (scripts/check-signing.mjs) und legt sofort einen
+#   Release-Entwurf „wird gebaut“ an – auf der Release-Seite sieht man gleich, dass etwas passiert.
+# - Ist der Signaturschlüssel falsch oder fehlt er, wird trotzdem gebaut – nur ohne Update-Signatur (dann kein
+#   latest.json, kein Auto-Update); der Grund steht in der Zusammenfassung des Laufs.
+# - „publish“ veröffentlicht das Release, sobald der Windows-Installer da ist. Fehlt er, bleibt es ein Entwurf (nur
+#   für Maintainer sichtbar) mit dem Grund ganz oben und einem Link zum Log; der Lauf endet dann rot.
+# - `latest.json` entsteht nur, wenn Windows UND Linux signiert gebaut sind.
 # Dazu die mobile App: signierte Android-APK und unsigniertes iOS-IPA im Kanal `mobile` (mobile.json + AltStore-Quelle).
 on:
   push:
@@ -15,12 +22,13 @@ on:
         description: "Vorhandenes Tag, z. B. v0.1.0"
         required: true
 
-# Nur der Job „publish“ darf schreiben.
+# Nur „prepare“ (Entwurf) und „publish“ dürfen schreiben.
 permissions:
   contents: read
 
 env:
   TAG: ${{ inputs.tag || github.ref_name }}
+  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
 jobs:
   # Mitwirkende seit dem vorherigen Release-Tag (GitHub-Namen, ohne Maintainer und Bots) – für den Dank im
@@ -60,9 +68,88 @@ jobs:
           fi
           echo "list=$list" >> "$GITHUB_OUTPUT"
 
+  # Vorab prüfen, was den Release sonst erst nach dem langen Build kippen würde, und den Entwurf anlegen.
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      changelog: ${{ steps.changelog.outputs.status }}
+      changelog-reason: ${{ steps.changelog.outputs.reason }}
+      signing: ${{ steps.signing.outputs.status }}
+      signing-reason: ${{ steps.signing.outputs.reason }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Nur die Tauri-CLI (Probe-Signatur) – ohne Nuxt-Vorbereitung.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: CHANGELOG.md for this version
+        id: changelog
+        run: |
+          if node --experimental-strip-types scripts/changelog.mjs check "${TAG#v}" 2> "$RUNNER_TEMP/changelog.txt"; then
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          else
+            cat "$RUNNER_TEMP/changelog.txt"
+            echo "::error title=CHANGELOG.md::$(head -1 "$RUNNER_TEMP/changelog.txt")"
+            echo "status=invalid" >> "$GITHUB_OUTPUT"
+            echo "reason=$(tr '\n' ' ' < "$RUNNER_TEMP/changelog.txt" | cut -c1-500)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update signature
+        id: signing
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: node scripts/check-signing.mjs
+
+      # Was in diesem Build an ist – ohne Werte, nur ob gesetzt.
+      - name: Settings overview
+        env:
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+          CUBIQ_MSA_CLIENT_ID: ${{ vars.CUBIQ_MSA_CLIENT_ID }}
+          CUBIQ_API_BASE: ${{ vars.CUBIQ_API_BASE }}
+          CUBIQ_DISCORD_APP_ID: ${{ vars.CUBIQ_DISCORD_APP_ID }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          SIGNING: ${{ steps.signing.outputs.status }}
+          SIGNING_REASON: ${{ steps.signing.outputs.reason }}
+        run: |
+          set_or_not() { if [ -n "$2" ]; then echo "| $1 | ✅ gesetzt |"; else echo "| $1 | ⚪ nicht gesetzt – $3 |"; fi; }
+          {
+            echo "### Einstellungen für $TAG"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            if [ "$SIGNING" = "ok" ]; then echo "| Update-Signatur (TAURI_SIGNING_PRIVATE_KEY + _PASSWORD) | ✅ $SIGNING_REASON |"
+            else echo "| Update-Signatur (TAURI_SIGNING_PRIVATE_KEY + _PASSWORD) | ⚠️ $SIGNING_REASON Gebaut wird ohne Update-Signatur. |"; fi
+            set_or_not "Secret CURSEFORGE_API_KEY" "$CURSEFORGE_API_KEY" "nur Modrinth"
+            set_or_not "Variable CUBIQ_MSA_CLIENT_ID" "$CUBIQ_MSA_CLIENT_ID" "keine Microsoft-Anmeldung"
+            set_or_not "Variable CUBIQ_API_BASE" "$CUBIQ_API_BASE" "Cubiq-Dienste aus"
+            set_or_not "Variable CUBIQ_DISCORD_APP_ID" "$CUBIQ_DISCORD_APP_ID" "kein Discord-Status"
+            set_or_not "Secret ANDROID_KEYSTORE_BASE64" "$ANDROID_KEYSTORE_BASE64" "Android-APK wird nicht veröffentlicht"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Draft release „building“
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: node scripts/release-report.mjs start
+
   build:
     name: Windows
-    needs: contributors
+    needs: [contributors, prepare]
+    if: needs.prepare.outputs.changelog == 'ok'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -94,19 +181,27 @@ jobs:
           CONTRIBUTORS: ${{ needs.contributors.outputs.list }}
         run: node --experimental-strip-types scripts/changelog.mjs set-contributors "${TAG#v}" "$CONTRIBUTORS"
 
-      # Ohne Changelog-Eintrag (Englisch + Deutsch) für diese Version kein Release –
-      # vor dem langen Build prüfen. Der Text landet im Release und im Auto-Update.
+      # Der Text landet im Release und im Auto-Update (geprüft schon in „prepare“).
       - name: Release notes from CHANGELOG.md
+        id: notes
         shell: bash
         run: node --experimental-strip-types scripts/changelog.mjs notes "${TAG#v}" > release-notes.md
 
-      # Nur bauen und signieren – veröffentlicht wird im Job „publish“. Fehlt das Secret mit dem Signaturschlüssel,
-      # entsteht der Installer trotzdem, nur ohne Update-Signatur (diese Version kommt dann nicht per Auto-Update).
-      - name: Build installer
+      # Schlüssel prüfen und bereinigt für den Build bereitstellen; ist er unbrauchbar, wird ohne Signatur gebaut.
+      - name: Update signature
+        id: signing
         shell: bash
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: node scripts/check-signing.mjs --export
+
+      # Nur bauen und signieren – veröffentlicht wird im Job „publish“. Das Log geht in den Release-Bericht.
+      - name: Build installer
+        id: tauri
+        shell: bash
+        env:
+          SIGNING: ${{ steps.signing.outputs.status }}
           # Ohne Secret bleibt CurseForge im Build ausgeschaltet (siehe crates/core/build.rs).
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
           # Eigene, öffentliche Kennungen als Repo-Variablen (Settings → Secrets and variables →
@@ -117,14 +212,15 @@ jobs:
           CUBIQ_API_BASE: ${{ vars.CUBIQ_API_BASE }}
           CUBIQ_DISCORD_APP_ID: ${{ vars.CUBIQ_DISCORD_APP_ID }}
         run: |
-          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            pnpm tauri build
+          set -o pipefail
+          if [ "$SIGNING" = "ok" ]; then
+            pnpm tauri build 2>&1 | tee "$RUNNER_TEMP/tauri-build.log"
           else
-            echo "::warning title=Update-Signatur fehlt::Secret TAURI_SIGNING_PRIVATE_KEY fehlt – Installer ohne Update-Signatur."
-            pnpm tauri build --config src-tauri/tauri.unsigned.conf.json
+            pnpm tauri build --config src-tauri/tauri.unsigned.conf.json 2>&1 | tee "$RUNNER_TEMP/tauri-build.log"
           fi
 
       - name: Collect release files
+        id: collect
         shell: bash
         run: |
           set -euo pipefail
@@ -186,15 +282,29 @@ jobs:
           Compress-Archive -Path "$stage/*" -DestinationPath $zip -CompressionLevel Optimal
           Get-Item $zip | Format-List Name, Length
 
+      # Immer: was gebaut wurde und warum nicht – liest „publish“ für den Bericht.
+      - name: Status
+        if: always()
+        shell: bash
+        env:
+          STEP_NOTES: ${{ steps.notes.outcome }}
+          STEP_BUILD: ${{ steps.tauri.outcome }}
+          STEP_COLLECT: ${{ steps.collect.outcome }}
+          SIGNING: ${{ steps.signing.outputs.status }}
+          BUILD_LOG: ${{ runner.temp }}/tauri-build.log
+        run: node scripts/release-report.mjs job windows
+
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: windows
           path: out/
-          if-no-files-found: error
+          if-no-files-found: warn
 
   linux:
     name: Linux
-    needs: contributors
+    needs: [contributors, prepare]
+    if: needs.prepare.outputs.changelog == 'ok'
     # Ältestes unterstütztes Ubuntu-LTS: das glibc hier ist die Untergrenze für
     # AppImage, .deb und .rpm (neuere Distributionen laufen damit alle).
     runs-on: ubuntu-22.04
@@ -231,14 +341,21 @@ jobs:
           CONTRIBUTORS: ${{ needs.contributors.outputs.list }}
         run: node --experimental-strip-types scripts/changelog.mjs set-contributors "${TAG#v}" "$CONTRIBUTORS"
 
-      # Gleiche Prüfung wie unter Windows – ohne Eintrag bricht der Release früh ab.
       - name: Release notes from CHANGELOG.md
+        id: notes
         run: node --experimental-strip-types scripts/changelog.mjs notes "${TAG#v}" > /dev/null
 
-      - name: Build AppImage, .deb and .rpm
+      - name: Update signature
+        id: signing
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: node scripts/check-signing.mjs --export
+
+      - name: Build AppImage, .deb and .rpm
+        id: tauri
+        env:
+          SIGNING: ${{ steps.signing.outputs.status }}
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
           CUBIQ_MSA_CLIENT_ID: ${{ vars.CUBIQ_MSA_CLIENT_ID }}
           CUBIQ_API_BASE: ${{ vars.CUBIQ_API_BASE }}
@@ -247,17 +364,17 @@ jobs:
           APPIMAGE_EXTRACT_AND_RUN: "1"
           NO_STRIP: "true"
         run: |
-          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            pnpm tauri build --bundles appimage,deb,rpm
+          set -o pipefail
+          if [ "$SIGNING" = "ok" ]; then
+            pnpm tauri build --bundles appimage,deb,rpm 2>&1 | tee "$RUNNER_TEMP/tauri-build.log"
           else
-            echo "::warning title=Update-Signatur fehlt::Secret TAURI_SIGNING_PRIVATE_KEY fehlt – Pakete ohne Update-Signatur."
-            pnpm tauri build --bundles appimage,deb,rpm --config src-tauri/tauri.unsigned.conf.json
+            pnpm tauri build --bundles appimage,deb,rpm --config src-tauri/tauri.unsigned.conf.json 2>&1 | tee "$RUNNER_TEMP/tauri-build.log"
           fi
 
       - name: Collect release files
+        id: collect
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          SIGNING: ${{ steps.signing.outputs.status }}
         run: |
           set -euo pipefail
           version="${TAG#v}"
@@ -272,8 +389,9 @@ jobs:
           # Ohne die mitgebündelten libwayland-* (sonst leeres Fenster auf Arch/Fedora),
           # danach neu signieren – die Signatur von tauri build passt nicht mehr.
           bash scripts/fix-appimage.sh "out/$appimage"
-          # Der Auto-Updater kann sich unter Linux nur als AppImage selbst ersetzen – nur mit Signaturschlüssel.
-          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+          # Der Auto-Updater kann sich unter Linux nur als AppImage selbst ersetzen – nur mit Signaturschlüssel
+          # (bereinigt aus dem Schritt „Update signature“).
+          if [ "$SIGNING" = "ok" ]; then
             pnpm tauri signer sign "out/$appimage" > /dev/null
             test -s "out/$appimage.sig"
             node scripts/updater-manifest.mjs platform linux-x86_64 "out/$appimage" > out/platform-linux.json
@@ -283,19 +401,30 @@ jobs:
           node scripts/aur.mjs --version "$version" --deb "out/$deb" --out out/aur
           ls -la out out/aur
 
+      - name: Status
+        if: always()
+        env:
+          STEP_NOTES: ${{ steps.notes.outcome }}
+          STEP_BUILD: ${{ steps.tauri.outcome }}
+          STEP_COLLECT: ${{ steps.collect.outcome }}
+          SIGNING: ${{ steps.signing.outputs.status }}
+          BUILD_LOG: ${{ runner.temp }}/tauri-build.log
+        run: node scripts/release-report.mjs job linux
+
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: linux
           path: out/
-          if-no-files-found: error
+          if-no-files-found: warn
           # .SRCINFO (AUR) beginnt mit einem Punkt – ohne das lässt upload-artifact@v4 sie weg.
           include-hidden-files: true
 
+  # Veröffentlichen – oder, wenn der Windows-Installer fehlt, als Entwurf mit dem Grund stehen lassen.
   publish:
     name: Publish
-    needs: [build, linux]
-    # Windows ist Pflicht; fehlen die Linux-Pakete, erscheint das Release trotzdem (ohne sie).
-    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    needs: [contributors, prepare, build, linux]
+    if: ${{ !cancelled() && needs.prepare.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -303,56 +432,30 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.TAG }}
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
+      # Fehlt ein Build, fehlen seine Dateien – der Bericht erklärt das.
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           path: artifacts
-
-      - name: Assemble release files and latest.json
-        run: |
-          set -euo pipefail
-          mkdir -p out
-          cp artifacts/windows/Cubiq-Launcher_* out/
-          if [ -d artifacts/linux ]; then
-            cp artifacts/linux/Cubiq-Launcher* artifacts/linux/SHA256SUMS-linux.txt out/
-            # PKGBUILD + .SRCINFO für das AUR als eigene Dateien im Release.
-            cp artifacts/linux/aur/PKGBUILD out/cubiq-launcher-bin.PKGBUILD
-            cp artifacts/linux/aur/.SRCINFO out/cubiq-launcher-bin.SRCINFO
-          fi
-          cp artifacts/windows/release-notes.md .
-          # Update-Kanal nur mit signierten Paketen für Windows UND Linux.
-          if [ -f artifacts/windows/platform-windows.json ] && [ -f artifacts/linux/platform-linux.json ]; then
-            node scripts/updater-manifest.mjs merge "${TAG#v}" release-notes.md "$GITHUB_REPOSITORY" "$TAG" \
-              artifacts/windows/platform-windows.json artifacts/linux/platform-linux.json > out/latest.json
-            cat out/latest.json
-          else
-            echo "::warning title=Kein Auto-Update::Ohne Update-Signaturen kein latest.json – diese Version kommt nicht per Auto-Update."
-          fi
-          ls -la out
 
       - name: Publish release and update channel
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          # Titel aus CHANGELOG.md: „Cubiq Launcher 0.2.0“ bzw. mit Update-Namen.
-          title=$(node --experimental-strip-types scripts/changelog.mjs title "${TAG#v}")
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" out/* --clobber
-            gh release edit "$TAG" --title "$title" --notes-file release-notes.md
-          else
-            gh release create "$TAG" out/* --latest --title "$title" --notes-file release-notes.md
-          fi
-          # Der Updater fragt einen festen Kanal ab (Release "updater"), damit er jede Version findet.
-          if [ -f out/latest.json ]; then
-            gh release view updater >/dev/null 2>&1 || gh release create updater --prerelease --title "Update-Kanal" \
-              --notes "Wird automatisch gepflegt – enthält nur latest.json für den Auto-Updater."
-            gh release upload updater out/latest.json --clobber
-          fi
+          GH_REPO: ${{ github.repository }}
+          CHANGELOG: ${{ needs.prepare.outputs.changelog }}
+          CHANGELOG_REASON: ${{ needs.prepare.outputs.changelog-reason }}
+          SIGNING: ${{ needs.prepare.outputs.signing }}
+          SIGNING_REASON: ${{ needs.prepare.outputs.signing-reason }}
+          CONTRIBUTORS: ${{ needs.contributors.outputs.list }}
+          WINDOWS_RESULT: ${{ needs.build.result }}
+          LINUX_RESULT: ${{ needs.linux.result }}
+        run: node scripts/release-report.mjs finish
 
   # --- Android/iOS (Kanal "mobile") ---------------------------------------------------------------------------------
   # Unabhängig vom Desktop-Release: Schlägt hier etwas fehl, sind Installer und latest.json trotzdem draußen.
@@ -360,7 +463,8 @@ jobs:
   # ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD. Fehlen sie, wird die APK gebaut, aber nicht veröffentlicht.
   android:
     name: Android
-    needs: contributors
+    needs: [contributors, prepare]
+    if: needs.prepare.outputs.changelog == 'ok'
     runs-on: ubuntu-latest
     env:
       NDK_VERSION: 28.2.13676358
@@ -469,7 +573,8 @@ jobs:
 
   ios:
     name: iOS
-    needs: contributors
+    needs: [contributors, prepare]
+    if: needs.prepare.outputs.changelog == 'ok'
     runs-on: macos-latest
     env:
       # Swift-Pakete der Plugins nutzen APIs ab iOS 14; die App verlangt iOS 15.
@@ -530,8 +635,9 @@ jobs:
   # Wartet auf "publish", damit das Versions-Release schon existiert.
   mobile:
     name: Publish mobile
-    needs: [publish, android, ios, ios-engine]
-    if: needs.android.outputs.signed == 'true'
+    needs: [prepare, publish, android, ios, ios-engine]
+    # mobile.json wird mit dem Update-Schlüssel signiert – ohne gültigen Schlüssel kein Mobile-Kanal.
+    if: needs.android.outputs.signed == 'true' && needs.prepare.outputs.signing == 'ok'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -554,10 +660,13 @@ jobs:
         with:
           path: artifacts
 
-      - name: mobile.json and AltStore source
+      - name: Update signature
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: node scripts/check-signing.mjs --export
+
+      - name: mobile.json and AltStore source
         run: |
           set -euo pipefail
           version="${TAG#v}"
