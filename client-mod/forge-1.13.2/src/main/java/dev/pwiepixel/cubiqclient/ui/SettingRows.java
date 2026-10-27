@@ -41,7 +41,7 @@ public final class SettingRows {
 				int sx = right - 24;
 				boolean hover = inside(mx, my, sx, y + 1, 24, 11);
 				Brand.rect(sx, y + 1, 24, 11, c.argb());
-				Brand.outline(sx - 1, y, 26, 13, hover ? Brand.AMBER : Brand.BORDER);
+				Brand.outline(sx - 1, y, 26, 13, hover ? Brand.ON : Brand.BORDER);
 				hot.add(sx, y + 1, 24, 11, c::cycle);
 			} else if (s instanceof ChoiceSetting) {
 				final ChoiceSetting<?> c = (ChoiceSetting<?>) s;
@@ -50,8 +50,8 @@ public final class SettingRows {
 				int cx = right - cw;
 				boolean hover = inside(mx, my, cx, y + 1, cw, 11);
 				Brand.rect(cx, y + 1, cw, 11, hover ? Brand.SURFACE_HOVER : Brand.BG);
-				Brand.outline(cx, y + 1, cw, 11, hover ? Brand.AMBER : Brand.BORDER);
-				Brand.text(font, label, cx + 4, y + 3, Brand.AMBER, false);
+				Brand.outline(cx, y + 1, cw, 11, hover ? Brand.ON : Brand.BORDER);
+				Brand.text(font, label, cx + 4, y + 3, Brand.ON, false);
 				hot.add(cx, y + 1, cw, 11, () -> c.cycle(1));
 				hot.add(cx, y + 1, cw, 11, 1, () -> c.cycle(-1));
 			}
@@ -68,14 +68,14 @@ public final class SettingRows {
 		int minusX = valueX - box;
 		small(font, minusX, y, box, "-", mx, my);
 		hot.add(minusX, y, box, box, () -> n.nudge(-1));
-		Brand.centered(font, n.display(), valueX + valueW / 2, y + 2, Brand.AMBER, true);
+		Brand.centered(font, n.display(), valueX + valueW / 2, y + 2, Brand.ON, true);
 		small(font, plusX, y, box, "+", mx, my);
 		hot.add(plusX, y, box, box, () -> n.nudge(1));
 	}
 
 	private static void small(FontRenderer font, int x, int y, int size, String label, int mx, int my) {
 		boolean hover = inside(mx, my, x, y, size, size);
-		Brand.rect(x, y, size, size, hover ? Brand.RED : Brand.OFF);
+		Brand.rect(x, y, size, size, hover ? Brand.ACCENT : Brand.OFF);
 		Brand.centered(font, label, x + size / 2 + 1, y + 2, Brand.TEXT, true);
 	}
 

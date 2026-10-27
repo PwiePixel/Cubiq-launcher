@@ -93,7 +93,7 @@ public final class PackScreen extends CubiqScreen {
 		int py = panelY();
 		g.fill(px, py, px + pw, py + ph, Brand.BG);
 		g.fill(px, py, px + pw, py + 26, Brand.SURFACE);
-		g.fill(px, py, px + 3, py + 26, Brand.RED);
+		g.fill(px, py, px + 3, py + 26, Brand.ACCENT);
 		Brand.outline(g, px - 1, py - 1, pw + 2, ph + 2, Brand.BORDER);
 		g.text(font, TITLE, px + 11, py + 9, Brand.TEXT, false);
 		String count = I18n.tr("packs.count", enabledCount(), entries.size());
@@ -104,7 +104,7 @@ public final class PackScreen extends CubiqScreen {
 		int sy = py + 30;
 		int sw = pw - 20 - 96;
 		g.fill(sx, sy, sx + sw, sy + 16, 0xFF000000);
-		Brand.outline(g, sx, sy, sw, 16, Brand.AMBER);
+		Brand.outline(g, sx, sy, sw, 16, Brand.ON);
 		boolean caret = (System.currentTimeMillis() / 500) % 2 == 0;
 		if (query.isEmpty()) {
 			g.text(font, I18n.tr("packs.searchHint"), sx + 4, sy + 4, Brand.TEXT_DIM, false);
@@ -170,7 +170,7 @@ public final class PackScreen extends CubiqScreen {
 		boolean on = enabledIds.contains(e.id());
 		boolean hover = mouseInList && inside(mx, my, x, y, w, ROW_H - 2);
 		g.fill(x + 1, y + 1, x + w - 1, y + ROW_H - 1, hover ? Brand.SURFACE_HOVER : Brand.SURFACE);
-		g.fill(x + 1, y + 1, x + 3, y + ROW_H - 1, on ? Brand.AMBER : Brand.OFF);
+		g.fill(x + 1, y + 1, x + 3, y + ROW_H - 1, on ? Brand.ON : Brand.OFF);
 		int textRight = x + w - 8 - 26 - (on ? 30 : 0);
 		String title = e.title() + (e.compatible() ? "" : "  " + I18n.tr("packs.incompatible"));
 		g.text(font, Gfx.trim(font, title, textRight - x - 10), x + 8, y + 4, e.compatible() ? Brand.TEXT : 0xFFFF8080, false);
@@ -198,7 +198,7 @@ public final class PackScreen extends CubiqScreen {
 
 	private void arrow(Gfx g, int x, int y, String label, int mx, int my, boolean mouseInList, Runnable action) {
 		boolean hover = mouseInList && inside(mx, my, x, y, 11, 15);
-		g.fill(x, y, x + 11, y + 15, hover ? Brand.RED : Brand.OFF);
+		g.fill(x, y, x + 11, y + 15, hover ? Brand.ACCENT : Brand.OFF);
 		g.centered(font, label, x + 6, y + 4, Brand.TEXT);
 		if (mouseInList) hot.add(x, y, 11, 15, action);
 	}

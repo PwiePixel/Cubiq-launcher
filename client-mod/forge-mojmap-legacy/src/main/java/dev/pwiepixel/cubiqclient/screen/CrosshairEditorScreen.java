@@ -39,7 +39,7 @@ public final class CrosshairEditorScreen extends CubiqScreen {
 		g.fill(px, py, px + pw, py + ph, Brand.BG);
 		Brand.outline(g, px - 1, py - 1, pw + 2, ph + 2, Brand.BORDER);
 		g.fill(px, py, px + pw, py + 24, Brand.SURFACE);
-		g.fill(px, py, px + 3, py + 24, Brand.RED);
+		g.fill(px, py, px + 3, py + 24, Brand.ACCENT);
 		g.text(font, TITLE, px + 11, py + 8, Brand.TEXT, false);
 		int pillX = px + pw - 36;
 		Brand.pill(g, font, pillX, py + 7, module.isEnabled(), inside(mouseX, mouseY, pillX, py + 7, 26, 11));

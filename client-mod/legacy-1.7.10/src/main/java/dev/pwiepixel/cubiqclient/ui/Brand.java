@@ -10,23 +10,25 @@ import org.lwjgl.opengl.GL11;
 
 /** Markenfarben (ARGB) und kleine Zeichenhilfen im Cubiq-Stil (1.7.10-Variante, GL11 direkt). */
 public final class Brand {
-	/** Tiefenschiefer – Hintergrund. */
-	public static final int BG = 0xFF17171E;
-	/** Tiefenschiefer – Flächen/Karten. */
-	public static final int SURFACE = 0xFF1D1D26;
-	public static final int SURFACE_HOVER = 0xFF262631;
-	public static final int BORDER = 0xFF2E2E3B;
-	/** Redstone-Rot – Akzent. */
-	public static final int RED = 0xFFE0281E;
-	public static final int RED_HOVER = 0xFFF0463C;
-	/** Lampen-Bernstein – "aktiv/an". */
-	public static final int AMBER = 0xFFFFB84D;
-	public static final int OFF = 0xFF3A3A48;
-	public static final int TEXT = 0xFFECECF1;
-	public static final int TEXT_DIM = 0xFF8C8C9E;
+	/** Hintergrund (base-900 des Launchers). */
+	public static final int BG = 0xFF111613;
+	/** Flächen/Karten (base-800), unter der Maus heller; feine Kante (base-700). */
+	public static final int SURFACE = 0xFF1D2520;
+	public static final int SURFACE_HOVER = 0xFF242D27;
+	public static final int BORDER = 0xFF29332C;
+	/** Cubiq-Grün – Akzent (Hauptknöpfe, Markierungen). */
+	public static final int ACCENT = 0xFF71A330;
+	public static final int ACCENT_HOVER = 0xFF88BB45;
+	/** Schrift auf dem Akzent (dunkel wie im Launcher). */
+	public static final int ON_ACCENT = 0xFF0B1405;
+	/** Helles Grün – "aktiv/an", Werte und Fokus. */
+	public static final int ON = 0xFFA9D46B;
+	public static final int OFF = 0xFF3D4A41;
+	public static final int TEXT = 0xFFEEF4EF;
+	public static final int TEXT_DIM = 0xFF869489;
 	/** Halbtransparenter HUD-Hintergrund. */
-	public static final int HUD_BG = 0x9017171E;
-	public static final int HUD_BG_PRESSED = 0xE0FFB84D;
+	public static final int HUD_BG = 0x90111613;
+	public static final int HUD_BG_PRESSED = 0xE071A330;
 
 	private Brand() {
 	}
@@ -66,25 +68,25 @@ public final class Brand {
 		String label = on ? I18n.tr("common.on") : I18n.tr("common.off");
 		int w = 26;
 		int h = 11;
-		int bg = on ? AMBER : (hover ? 0xFF4A4A5A : OFF);
+		int bg = on ? ACCENT : (hover ? 0xFF4A574D : OFF);
 		rect(x, y, w, h, bg);
 		// Kleiner "Schalter"-Knopf
 		int knobX = on ? x + w - 4 : x + 1;
-		rect(knobX, y + 1, 3, h - 2, on ? 0xFFFFE2B0 : 0xFF6A6A7A);
+		rect(knobX, y + 1, 3, h - 2, on ? 0xFFFFFFFF : 0xFF869489);
 		int tx = on ? x + 3 : x + 6;
-		text(font, label, tx, y + 2, on ? BG : TEXT, false);
+		text(font, label, tx, y + 2, on ? ON_ACCENT : TEXT, false);
 		return w;
 	}
 
 	/** Umrandeter Text-Button. */
 	public static void button(FontRenderer font, int x, int y, int w, int h, String label, boolean primary, boolean hover) {
 		if (primary) {
-			rect(x, y, w, h, hover ? RED_HOVER : RED);
+			rect(x, y, w, h, hover ? ACCENT_HOVER : ACCENT);
 		} else {
 			rect(x, y, w, h, hover ? SURFACE_HOVER : SURFACE);
 			outline(x, y, w, h, hover ? TEXT_DIM : BORDER);
 		}
-		centered(font, label, x + w / 2, y + (h - 8) / 2, primary ? 0xFFFFFFFF : TEXT, primary);
+		centered(font, label, x + w / 2, y + (h - 8) / 2, primary ? ON_ACCENT : TEXT, false);
 	}
 
 	/** Zeichnen auf das Rechteck (GUI-Koordinaten, x2/y2 exklusiv) beschränken. */

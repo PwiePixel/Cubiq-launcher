@@ -39,7 +39,7 @@ public final class TextField {
 
 	public void draw(Gfx g, FontRenderer font, int x, int y, int w, int h, String placeholder) {
 		g.fill(x, y, x + w, y + h, Brand.SURFACE);
-		Brand.outline(g, x, y, w, h, focused ? Brand.AMBER : Brand.BORDER);
+		Brand.outline(g, x, y, w, h, focused ? Brand.ON : Brand.BORDER);
 		int textY = y + (h - 8) / 2;
 		if (value.isEmpty() && !focused) {
 			g.text(font, font.trimStringToWidth(placeholder, w - 8), x + 4, textY, Brand.TEXT_DIM, false);

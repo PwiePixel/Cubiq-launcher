@@ -38,7 +38,7 @@ public final class SettingRows {
 				int sx = right - 24;
 				boolean hover = inside(mx, my, sx, y + 1, 24, 11);
 				g.fill(sx, y + 1, sx + 24, y + 12, c.argb());
-				Brand.outline(g, sx - 1, y, 26, 13, hover ? Brand.AMBER : Brand.BORDER);
+				Brand.outline(g, sx - 1, y, 26, 13, hover ? Brand.ON : Brand.BORDER);
 				hot.add(sx, y + 1, 24, 11, c::cycle);
 			} else if (s instanceof ChoiceSetting<?>) {
 				ChoiceSetting<?> c = (ChoiceSetting<?>) s;
@@ -47,8 +47,8 @@ public final class SettingRows {
 				int cx = right - cw;
 				boolean hover = inside(mx, my, cx, y + 1, cw, 11);
 				g.fill(cx, y + 1, cx + cw, y + 12, hover ? Brand.SURFACE_HOVER : Brand.BG);
-				Brand.outline(g, cx, y + 1, cw, 11, hover ? Brand.AMBER : Brand.BORDER);
-				g.text(font, label, cx + 4, y + 3, Brand.AMBER, false);
+				Brand.outline(g, cx, y + 1, cw, 11, hover ? Brand.ON : Brand.BORDER);
+				g.text(font, label, cx + 4, y + 3, Brand.ON, false);
 				hot.add(cx, y + 1, cw, 11, () -> c.cycle(1));
 				hot.add(cx, y + 1, cw, 11, 1, () -> c.cycle(-1));
 			}
@@ -65,14 +65,14 @@ public final class SettingRows {
 		int minusX = valueX - box;
 		small(g, font, minusX, y, box, "-", mx, my);
 		hot.add(minusX, y, box, box, () -> n.nudge(-1));
-		g.centered(font, n.display(), valueX + valueW / 2, y + 2, Brand.AMBER);
+		g.centered(font, n.display(), valueX + valueW / 2, y + 2, Brand.ON);
 		small(g, font, plusX, y, box, "+", mx, my);
 		hot.add(plusX, y, box, box, () -> n.nudge(1));
 	}
 
 	private static void small(Gfx g, Font font, int x, int y, int size, String label, double mx, double my) {
 		boolean hover = inside(mx, my, x, y, size, size);
-		g.fill(x, y, x + size, y + size, hover ? Brand.RED : Brand.OFF);
+		g.fill(x, y, x + size, y + size, hover ? Brand.ACCENT : Brand.OFF);
 		g.centered(font, label, x + size / 2 + 1, y + 2, Brand.TEXT);
 	}
 

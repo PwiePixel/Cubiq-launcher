@@ -58,7 +58,7 @@ public final class WaypointEditScreen extends CubiqScreen {
 			int cx = x + i * (swatch + 4);
 			int rgb = ColorSetting.PALETTE[i];
 			g.fill(cx, y + 60, cx + swatch, y + 60 + swatch, 0xFF000000 | rgb);
-			Brand.outline(g, cx - 1, y + 59, swatch + 2, swatch + 2, rgb == color ? Brand.AMBER : Brand.BORDER);
+			Brand.outline(g, cx - 1, y + 59, swatch + 2, swatch + 2, rgb == color ? Brand.ON : Brand.BORDER);
 			final int picked = rgb;
 			hot.add(cx, y + 60, swatch, swatch, () -> color = picked);
 		}

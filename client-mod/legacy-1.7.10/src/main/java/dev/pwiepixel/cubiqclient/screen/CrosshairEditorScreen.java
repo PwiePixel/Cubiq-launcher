@@ -40,7 +40,7 @@ public final class CrosshairEditorScreen extends GuiScreen {
 		Brand.rect(px, py, pw, ph, Brand.BG);
 		Brand.outline(px - 1, py - 1, pw + 2, ph + 2, Brand.BORDER);
 		Brand.rect(px, py, pw, 24, Brand.SURFACE);
-		Brand.rect(px, py, 3, 24, Brand.RED);
+		Brand.rect(px, py, 3, 24, Brand.ACCENT);
 		Brand.text(fontRendererObj, TITLE, px + 11, py + 8, Brand.TEXT, false);
 		int pillX = px + pw - 36;
 		Brand.pill(fontRendererObj, pillX, py + 7, module.isEnabled(), SettingRows.inside(mouseX, mouseY, pillX, py + 7, 26, 11));
