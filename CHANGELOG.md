@@ -27,6 +27,25 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
+## 0.2.0 – 2026-10-27
+<!-- banner: accent=#71a330 motif=/news/0.2.0/banner.png -->
+
+### English
+- **Green where it belongs.** A few spots still showed red although nothing was wrong: the storage bar on the clips
+  page, presets without their own color and the hint in the touch-controls editor. They now use the Cubiq green, so
+  red only ever means a real problem.
+- **Clearer message when a shared mod file is missing.** When you join a friend's world that uses mods and the host
+  doesn't share one of the files (anymore), the launcher now tells you exactly that instead of only saying
+  "connection closed" – so you know to ask your friend to share the file again.
+
+### Deutsch
+- **Grün, wo es hingehört.** Ein paar Stellen waren noch rot, obwohl nichts falsch war: der Speicherplatz-Balken auf
+  der Clips-Seite, Presets ohne eigene Farbe und der Hinweis im Editor für die Touch-Steuerung. Sie sind jetzt
+  Cubiq-grün – Rot bedeutet damit immer ein echtes Problem.
+- **Klarere Meldung, wenn eine geteilte Mod-Datei fehlt.** Trittst du der Welt eines Freundes mit Mods bei und der
+  Host teilt eine der Dateien nicht (mehr), sagt dir der Launcher jetzt genau das statt nur „Verbindung getrennt“ –
+  so weißt du, dass dein Freund die Datei wieder freigeben muss.
+
 ## 0.1.1 – 2026-10-27
 <!-- banner: accent=#71a330 motif=/news/0.1.1/banner.png -->
 
