@@ -2,6 +2,7 @@ package dev.pwiepixel.cubiqclient.core.cosmetic.pet;
 
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSimTest.FakeWorld;
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2;
+import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2Renderer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -351,10 +352,46 @@ class PetPickTest {
 		assertArrayEquals(new float[] { -3, -2.5f, -3, 3, 3.5f, 3 }, PetPick.bounds(CosmeticV2.parse(tiny)), 1e-4f);
 		assertSame(PetPick.DEFAULT_BOX, PetPick.bounds(null));
 		assertArrayEquals(new float[] { -5.6f, 0, -5.6f, 5.6f, 12.8f, 5.6f }, PetPick.DEFAULT_BOX, 1e-4f);
-		// der Fuchs: steht auf y = 0 (−1 mit Rand) und ist länger als breit
-		float[] fox = PetPick.bounds(PetActionsFormatTest.foxModel());
-		assertEquals(-1, fox[1], 1e-3, "untere Kante");
-		assertTrue(fox[4] > 10 && fox[4] < 14, "Höhe " + fox[4]);
-		assertTrue(fox[5] - fox[2] > fox[3] - fox[0], "länger als breit");
+		// die Füchse: der Umriss ist die Ruhe-Pose ihrer Würfel + 1 px Rand (jede Achse ist größer als 6 px); versteckte
+		// Herzchen/Krümel (fx-Knochen, in Ruhe im Körper) machen ihn nicht größer. Er steht auf y = 0 (−1 mit Rand) und ist
+		// länger als breit.
+		for (String file : PetActionsFormatTest.FOXES) {
+			CosmeticV2 m = PetActionsFormatTest.foxModel(file);
+			float[] fox = PetPick.bounds(m);
+			double[] all = restExtent(m, false), body = restExtent(m, true);
+			for (int a = 0; a < 3; a++) {
+				assertEquals(all[a] - 1, fox[a], 1e-4, file + " min " + a);
+				assertEquals(all[a + 3] + 1, fox[a + 3], 1e-4, file + " max " + a);
+				assertTrue(fox[a + 3] - fox[a] > PetPick.MIN_SIZE_PX, file);
+				assertEquals(body[a], all[a], 1e-9, file + ": fx-Würfel liegen im Körper");
+				assertEquals(body[a + 3], all[a + 3], 1e-9, file);
+			}
+			assertEquals(-1, fox[1], 1e-3, file + ": untere Kante");
+			assertTrue(fox[5] - fox[2] > fox[3] - fox[0], file + ": länger als breit");
+		}
+	}
+
+	/** Ausdehnung {minX, minY, minZ, maxX, maxY, maxZ} der Würfel in Ruhe (Pixel), ohne {@code fx_*}-Knochen auf Wunsch. */
+	static double[] restExtent(CosmeticV2 m, boolean skipFx) {
+		CosmeticV2Renderer r = new CosmeticV2Renderer();
+		r.pose(m, 0, false);
+		double[] e = { Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE };
+		for (CosmeticV2.Cube c : m.cubes) {
+			if (skipFx && m.bones.get(c.bone).id.startsWith("fx_")) continue;
+			double[] w = r.world(c.bone);
+			for (double x : new double[] { c.x0 - c.inflate, c.x1 + c.inflate }) {
+				for (double y : new double[] { c.y0 - c.inflate, c.y1 + c.inflate }) {
+					for (double z : new double[] { c.z0 - c.inflate, c.z1 + c.inflate }) {
+						double[] p = { w[0] * x + w[4] * y + w[8] * z + w[12], w[1] * x + w[5] * y + w[9] * z + w[13],
+								w[2] * x + w[6] * y + w[10] * z + w[14] };
+						for (int a = 0; a < 3; a++) {
+							e[a] = Math.min(e[a], p[a]);
+							e[a + 3] = Math.max(e[a + 3], p[a]);
+						}
+					}
+				}
+			}
+		}
+		return e;
 	}
 }

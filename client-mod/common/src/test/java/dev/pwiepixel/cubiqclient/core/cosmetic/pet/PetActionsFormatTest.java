@@ -1,5 +1,7 @@
 package dev.pwiepixel.cubiqclient.core.cosmetic.pet;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2;
@@ -24,12 +26,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class PetActionsFormatTest {
 	/**
-	 * Eingefrorene Kopie des generierten {@code fox_kit.json} der Website (Stand c1575f0, noch ohne Aktionen) plus ein
-	 * handgeschriebener, gültiger Block {@code actions} (pet 2200 ms, eat 2600 ms).
+	 * Zwei Füchse als Prüfstücke, beide müssen bestehen – die Tests leiten ab, was sie erwarten (Längen, Spuren, Knochen),
+	 * statt Werte eines Stücks festzuschreiben:
+	 * <ul>
+	 * <li>{@code fox_kit.json}: eingefrorene Kopie des generierten Fuchses der Website (Stand c1575f0, noch ohne Aktionen)
+	 * plus ein handgeschriebener, gültiger Block {@code actions} (pet 2200 ms, eat 2600 ms) – ohne fx-Knochen, grab
+	 * wiederholt sich.</li>
+	 * <li>{@code fox_kit.generated.json}: der fertige, so ausgelieferte Fuchs der Website (Stand 7f82183) mit seinen
+	 * echten Aktionen, Herzchen und Krümeln auf {@code fx_*}-Knochen und grab mit {@code loop: false}.</li>
+	 * </ul>
 	 */
-	static String fox() throws IOException {
-		try (InputStream in = PetActionsFormatTest.class.getResourceAsStream("/cosmetic-v2/fox_kit.json")) {
-			assertNotNull(in, "fox_kit.json");
+	static final String[] FOXES = { "fox_kit.json", "fox_kit.generated.json" };
+
+	/** Ein Fuchs aus den Test-Ressourcen ({@link #FOXES}). */
+	static String fox(String file) throws IOException {
+		try (InputStream in = PetActionsFormatTest.class.getResourceAsStream("/cosmetic-v2/" + file)) {
+			assertNotNull(in, file);
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			byte[] buf = new byte[8192];
 			int n;
@@ -38,17 +50,23 @@ class PetActionsFormatTest {
 		}
 	}
 
-	/** Derselbe Fuchs ohne den Block {@code actions} (so liefert ihn die Website heute aus). */
-	static String foxWithout() throws IOException {
-		JsonObject m = new JsonParser().parse(fox()).getAsJsonObject();
+	/** Derselbe Fuchs ohne den Block {@code actions} (so lesen ihn ältere Clients). */
+	static String foxWithout(String file) throws IOException {
+		JsonObject m = new JsonParser().parse(fox(file)).getAsJsonObject();
 		m.remove("actions");
 		return m.toString();
 	}
 
-	static CosmeticV2 foxModel() throws IOException {
-		CosmeticV2.Check c = check(fox());
-		assertTrue(c.ok(), c.errors.toString());
+	static CosmeticV2 foxModel(String file) throws IOException {
+		CosmeticV2.Check c = check(fox(file));
+		assertTrue(c.ok(), file + ": " + c.errors);
 		return c.model;
+	}
+
+	/** Index eines Knochens nach seiner id. */
+	static int bone(CosmeticV2 m, String id) {
+		for (int i = 0; i < m.bones.size(); i++) if (m.bones.get(i).id.equals(id)) return i;
+		throw new AssertionError(id);
 	}
 
 	static CosmeticV2.Check check(String json) {
@@ -88,28 +106,58 @@ class PetActionsFormatTest {
 	// --- der Fuchs mit Aktionen -------------------------------------------------------------------------------
 
 	@Test
-	void foxKitActionsAreReadWithoutAnyWarning() throws IOException {
-		CosmeticV2.Check c = check(fox());
-		assertTrue(c.ok(), c.errors.toString());
-		assertEquals(Collections.<String>emptyList(), c.warnings, "gültige Aktionen melden nichts");
-		CosmeticV2 m = c.model;
-		assertEquals(10, m.animations.size(), "animations unverändert (ältere Clients sehen genau diese)");
-		assertEquals(2, m.actions.size());
-		CosmeticV2.Animation pet = m.action(CosmeticV2.DRIVER_PET);
-		CosmeticV2.Animation eat = m.action(CosmeticV2.DRIVER_EAT);
-		assertNotNull(pet);
-		assertNotNull(eat);
-		assertEquals("pet", pet.id);
-		assertEquals(CosmeticV2.DRIVER_PET, pet.driver);
-		assertEquals(2200, pet.lengthMs);
-		assertFalse(pet.loop);
-		assertEquals(0, pet.offsetMs);
-		assertEquals(6, pet.tracks.length);
-		assertEquals(CosmeticV2.SMOOTH, pet.tracks[0].interpolation, "optionale Interpolation wie bei animations");
-		assertEquals(2600, eat.lengthMs);
-		assertTrue(m.hasDriver(CosmeticV2.DRIVER_PET));
-		assertTrue(m.hasDriver(CosmeticV2.DRIVER_EAT));
-		assertNull(m.action(CosmeticV2.DRIVER_IDLE), "Aktionen nur über ihre eigenen Treiber");
+	void everyFoxReadsItsActionsExactlyAsWrittenWithoutAnyWarning() throws IOException {
+		java.util.List<String> channels = java.util.Arrays.asList("rotation", "position", "scale");
+		java.util.List<String> interpolations = java.util.Arrays.asList("linear", "smooth", "step");
+		for (String file : FOXES) {
+			String json = fox(file);
+			JsonObject raw = new JsonParser().parse(json).getAsJsonObject();
+			CosmeticV2.Check c = check(json);
+			assertTrue(c.ok(), file + ": " + c.errors);
+			assertEquals(Collections.<String>emptyList(), c.warnings, file + ": gültige Aktionen melden nichts");
+			CosmeticV2 m = c.model;
+			assertEquals(raw.getAsJsonArray("animations").size(), m.animations.size(),
+					file + ": animations unverändert (ältere Clients sehen genau diese)");
+			JsonArray acts = raw.getAsJsonArray("actions");
+			assertEquals(acts.size(), m.actions.size(), file);
+			int abilities = 0;
+			for (JsonElement e : raw.getAsJsonArray("animations")) {
+				String d = e.getAsJsonObject().get("driver").getAsString();
+				if (d.equals("sneak")) abilities |= Pet.CAN_SNEAK;
+				if (d.equals("grab")) abilities |= Pet.CAN_GRAB;
+				if (d.equals("flee")) abilities |= Pet.CAN_FLEE;
+				if (d.equals("handsup")) abilities |= Pet.CAN_HANDSUP;
+			}
+			for (JsonElement e : acts) {
+				JsonObject a = e.getAsJsonObject();
+				String what = file + " " + a.get("id").getAsString();
+				int driver = CosmeticV2.driverIndex(a.get("driver").getAsString());
+				CosmeticV2.Animation got = m.action(driver);
+				assertNotNull(got, what);
+				assertEquals(a.get("id").getAsString(), got.id, what);
+				assertEquals(driver, got.driver, what);
+				assertEquals(a.get("lengthMs").getAsInt(), got.lengthMs, what);
+				assertEquals(got.lengthMs, Pet.actionMs(m, driver), what);
+				assertFalse(got.loop, what);
+				assertEquals(0, got.offsetMs, what);
+				assertTrue(m.hasDriver(driver), what);
+				abilities |= driver == CosmeticV2.DRIVER_PET ? Pet.CAN_PET : Pet.CAN_EAT;
+				JsonArray tracks = a.getAsJsonArray("tracks");
+				assertEquals(tracks.size(), got.tracks.length, what);
+				for (int i = 0; i < tracks.size(); i++) {
+					JsonObject t = tracks.get(i).getAsJsonObject();
+					assertEquals(bone(m, t.get("bone").getAsString()), got.tracks[i].bone, what + " tracks[" + i + "]");
+					assertEquals(channels.indexOf(t.get("channel").getAsString()), got.tracks[i].channel, what);
+					int interp = t.has("interpolation") ? interpolations.indexOf(t.get("interpolation").getAsString()) : CosmeticV2.LINEAR;
+					assertEquals(interp, got.tracks[i].interpolation, what + ": optionale Interpolation wie bei animations");
+					assertEquals(t.getAsJsonArray("keys").size(), got.tracks[i].t.length, what);
+				}
+			}
+			assertNull(m.action(CosmeticV2.DRIVER_IDLE), "Aktionen nur über ihre eigenen Treiber");
+			// Fähigkeiten für die Simulation: aus den Treibern im JSON
+			assertEquals(abilities, Pet.abilitiesOf(m), file);
+			assertEquals(Pet.CAN_PET | Pet.CAN_EAT, abilities & (Pet.CAN_PET | Pet.CAN_EAT), file + ": beide Aktionen");
+		}
 
 		// Treiber/Zustände: pet/eat hinter den Bewegungs-Treibern, Reihenfolge wie Website und Launcher
 		assertEquals(10, CosmeticV2.driverIndex("pet"));
@@ -128,30 +176,26 @@ class PetActionsFormatTest {
 		assertFalse(CosmeticV2.oneShot(CosmeticV2.DRIVER_IDLE));
 		assertFalse(CosmeticV2.oneShot(CosmeticV2.DRIVER_FLEE));
 		assertFalse(CosmeticV2.oneShot(CosmeticV2.DRIVER_HANDSUP));
-
-		// Fähigkeiten und Längen für die Simulation
-		int heist = Pet.CAN_SNEAK | Pet.CAN_GRAB | Pet.CAN_FLEE | Pet.CAN_HANDSUP;
-		assertEquals(heist | Pet.CAN_PET | Pet.CAN_EAT, Pet.abilitiesOf(m));
-		assertEquals(2200, Pet.actionMs(m, CosmeticV2.DRIVER_PET));
-		assertEquals(2600, Pet.actionMs(m, CosmeticV2.DRIVER_EAT));
 	}
 
 	@Test
 	void validActionsLeaveTheCheckExactlyAsWithoutThem() throws IOException {
-		CosmeticV2.Check with = check(fox());
-		CosmeticV2.Check without = check(foxWithout());
-		assertTrue(without.ok(), without.errors.toString());
-		assertEquals(without.errors, with.errors);
-		assertEquals(without.warnings, with.warnings);
-		assertEquals(without.model.animations.size(), with.model.animations.size());
-		assertEquals(without.model.bones.size(), with.model.bones.size());
-		assertEquals(without.model.cubes.size(), with.model.cubes.size());
-		assertEquals(without.model.faceCount, with.model.faceCount);
-		// ohne Block: keine Aktion, keine Fähigkeit, Länge 0 (Begleiter steht dann still, Herzchen statt Animation)
-		assertTrue(without.model.actions.isEmpty());
-		assertFalse(without.model.hasDriver(CosmeticV2.DRIVER_PET));
-		assertEquals(0, Pet.actionMs(without.model, CosmeticV2.DRIVER_EAT));
-		assertEquals(0, Pet.abilitiesOf(without.model) & (Pet.CAN_PET | Pet.CAN_EAT));
+		for (String file : FOXES) {
+			CosmeticV2.Check with = check(fox(file));
+			CosmeticV2.Check without = check(foxWithout(file));
+			assertTrue(without.ok(), file + ": " + without.errors);
+			assertEquals(without.errors, with.errors, file);
+			assertEquals(without.warnings, with.warnings, file);
+			assertEquals(without.model.animations.size(), with.model.animations.size(), file);
+			assertEquals(without.model.bones.size(), with.model.bones.size(), file);
+			assertEquals(without.model.cubes.size(), with.model.cubes.size(), file);
+			assertEquals(without.model.faceCount, with.model.faceCount, file);
+			// ohne Block: keine Aktion, keine Fähigkeit, Länge 0 (Begleiter steht dann still, Herzchen statt Animation)
+			assertTrue(without.model.actions.isEmpty(), file);
+			assertFalse(without.model.hasDriver(CosmeticV2.DRIVER_PET), file);
+			assertEquals(0, Pet.actionMs(without.model, CosmeticV2.DRIVER_EAT), file);
+			assertEquals(0, Pet.abilitiesOf(without.model) & (Pet.CAN_PET | Pet.CAN_EAT), file);
+		}
 		assertEquals(0, Pet.actionMs(null, CosmeticV2.DRIVER_PET));
 	}
 
