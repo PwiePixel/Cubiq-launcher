@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Der ganze Update-Beitrag im Launcher: Update-Banner (feste Vorlage + Motiv als drehbares 3D-Modell), Screenshot-Galerie der
+// Der ganze Update-Beitrag im Launcher: Update-Banner (feste Vorlage + Motiv), Screenshot-Galerie der
 // Neuerungen, die Versionshinweise und „Auf Website ansehen“ (Blog-Beitrag im Browser).
 // Mehrere Versionen (z. B. „Was ist neu“ nach einem Sprung über mehrere Updates) → Umschalter im Fuß.
 // Text läuft über MarkdownView (DOMPurify); Bilder nur aus dem mitgelieferten Ordner /news/.
@@ -46,9 +46,8 @@ function openWebsite() {
 <template>
   <BaseDialog :title="heading ?? title" huge @close="emit('close')">
     <div ref="body">
-      <!-- Das Motiv als drehbares 3D-Modell (ohne WebGL oder am Handy das Bild). -->
-      <div class="-mx-5 -mt-4 mb-5 h-52 mobile:h-44">
-        <UpdateBanner :kicker="kicker" :title="title" :accent="entry.banner?.accent" :motif="entry.banner?.motif" :anim="entry.banner?.anim" tag="p" model3d />
+      <div class="-mx-5 -mt-4 mb-5 h-44">
+        <UpdateBanner :kicker="kicker" :title="title" :accent="entry.banner?.accent" :motif="entry.banner?.motif" :anim="entry.banner?.anim" tag="p" />
       </div>
       <UpdateShotGallery v-if="content.shots.length" v-model="shotIndex" :shots="content.shots" :accent="entry.banner?.accent" class="mb-6" />
       <p v-if="englishOnly" class="mb-3 text-xs text-base-400">{{ t('whatsNew.englishOnly') }}</p>

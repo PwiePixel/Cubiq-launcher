@@ -1,5 +1,5 @@
-//! Anbindung an die Cubiq API (`cubiq-launcher.invalid`, früher nur
-//! `api.cubiq-launcher.invalid` – beide Adressen bleiben gültig; Vertrag: `api/API.md`).
+//! Anbindung an die Cubiq API (Adresse: [`DEFAULT_BASE`], beim Bauen per `CUBIQ_API_BASE`;
+//! Vertrag: `api/API.md`). Der Cubiq Client im Spiel bekommt dieselbe Adresse als Start-Argument.
 //!
 //! - **Anmeldung je Minecraft-Account** wie bei einem Minecraft-Server:
 //!   `challenge` → Mojang `join` mit dem Minecraft-Token des Accounts →
@@ -69,12 +69,31 @@ use store::Store;
 use types::{ApiChallenge, ApiMe, ApiVerify};
 
 /// Adresse der Cubiq API (dort liegt auch die Website). Ein eigener Server wird beim Bauen
-/// mit `CUBIQ_API_BASE=https://…` eingetragen. Ohne Angabe bleibt die Adresse unter `.invalid`
-/// (RFC 6761, löst nie auf) – dann sind die Online-Dienste ganz aus, siehe [`is_configured`].
-pub const DEFAULT_BASE: &str = match option_env!("CUBIQ_API_BASE") {
+/// mit `CUBIQ_API_BASE=https://…` eingetragen (`build.rs` prüft sie und setzt `CUBIQ_SITE`). Ohne
+/// Angabe bleibt die Adresse unter `.invalid` (RFC 6761, löst nie auf) – dann sind die Online-Dienste
+/// ganz aus, siehe [`is_configured`].
+pub const DEFAULT_BASE: &str = match option_env!("CUBIQ_SITE") {
     Some(base) => base,
     None => "https://cubiq-launcher.invalid",
 };
+
+/// Adresse, mit der dieser Launcher spricht (ohne Schrägstrich am Ende). Debug-Builds dürfen per
+/// Umgebungsvariable `CUBIQ_API_BASE` gegen eine lokale API testen.
+pub fn configured_base() -> String {
+    std::env::var("CUBIQ_API_BASE")
+        .ok()
+        .filter(|b| cfg!(debug_assertions) && (b.starts_with("http://127.0.0.1:") || b.starts_with("https://")))
+        .unwrap_or_else(|| DEFAULT_BASE.to_owned())
+        .trim_end_matches('/')
+        .to_owned()
+}
+
+/// Start-Argument für den Cubiq Client: dieselbe Adresse wie im Launcher. Ohne eingerichteten Server
+/// keins – dann bleibt der Mod bei seiner eigenen (ebenfalls abgeschalteten) Standardadresse.
+pub fn client_mod_jvm_arg() -> Option<String> {
+    let base = configured_base();
+    is_configured(&base).then(|| format!("-Dcubiqclient.api.url={base}"))
+}
 
 /// Zeigt `base` auf einen echten Server? Platzhalter unter `.invalid` zählen nicht.
 pub fn is_configured(base: &str) -> bool {
@@ -85,7 +104,9 @@ pub fn is_configured(base: &str) -> bool {
 /// (z. B. aus älteren Antworten oder Caches) gelten weiter als vertrauenswürdig.
 pub const LEGACY_BASE: &str = "https://api.cubiq-launcher.invalid";
 /// Anmeldeseite der Website (Microsoft §24.1 oder Cubiq Launcher §29, Bestätigung in `web_login`).
-pub const WEBSITE_LOGIN_URL: &str = "https://cubiq-launcher.invalid/login";
+pub fn website_login_url() -> String {
+    format!("{DEFAULT_BASE}/login")
+}
 /// Alle Adressen, unter denen die echte Cubiq API läuft.
 pub const KNOWN_BASES: [&str; 2] = [DEFAULT_BASE, LEGACY_BASE];
 pub const MOJANG_SESSION: &str = "https://sessionserver.mojang.com";
@@ -277,7 +298,7 @@ pub(crate) fn api_error(status: u16, code: &str, retry_after: Option<u64>) -> Er
             crate::msg!(
                 "cubiqApi.web_login_removed",
                 "Die Anmeldung per Launcher-Code gibt es nicht mehr – melde dich auf der Website mit Microsoft an: {url}",
-                url = WEBSITE_LOGIN_URL
+                url = website_login_url()
             ),
         ),
         // Welt-Hosting ohne Relay auf dem Server (503) ist kein „offline“.
@@ -563,12 +584,7 @@ impl CubiqApi {
     }
 
     pub fn new(paths: Paths) -> Result<Self> {
-        // Debug-Builds dürfen gegen eine lokale API testen.
-        let base = std::env::var("CUBIQ_API_BASE")
-            .ok()
-            .filter(|b| cfg!(debug_assertions) && (b.starts_with("http://127.0.0.1:") || b.starts_with("https://")))
-            .unwrap_or_else(|| DEFAULT_BASE.to_owned());
-        Self::with_endpoints(paths, &base, MOJANG_SESSION, MOJANG_API)
+        Self::with_endpoints(paths, &configured_base(), MOJANG_SESSION, MOJANG_API)
     }
 
     /// Wie [`Self::new`], mit eigenen Endpunkten (Tests).

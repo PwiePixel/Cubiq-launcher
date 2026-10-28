@@ -343,7 +343,11 @@ impl Launcher {
         };
         spec.controls_dir = Some(crate::controls::dir(&self.paths));
         if cubiq_client && let Some(build) = client_mod::build_for(catalog.builds(), instance.loader.kind, &instance.game_version) {
-            let extra = client_mod::bundled_jvm_args(&self.paths, build, instance).await;
+            let mut extra = client_mod::bundled_jvm_args(&self.paths, build, instance).await;
+            // Der Cubiq Client spricht mit demselben Server wie der Launcher – nur mit Zustimmung (wie cubiq-api.json).
+            if cubiq_enabled {
+                extra.extend(crate::cubiq_api::client_mod_jvm_arg());
+            }
             for arg in extra {
                 let key = arg.split('=').next().unwrap_or(&arg).to_owned();
                 if !spec.jvm_args.iter().any(|a| a.split('=').next() == Some(key.as_str())) {

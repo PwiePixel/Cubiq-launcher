@@ -2,6 +2,7 @@ import { z } from 'zod'
 // Relativ importiert, damit Tests die Datei ohne Nuxt laden können.
 import { t } from './i18n'
 import { compareText, formatRelative, formatShortDate, loaderLabels } from './format'
+import { CUBIQ_SITE } from './site'
 import { myTeamSchema } from './teamAccess'
 
 // Cubiq-Dienste (Umhänge, Freunde, Verwaltung): Schemas für das, was der Kern
@@ -595,9 +596,9 @@ export function cubiqDate(iso: string | null | undefined): string {
 }
 
 /**
- * Adresse der Cubiq API und der Website. Die alte Adresse `api.cubiq-launcher.invalid`
- * bleibt parallel erreichbar; alle Anfragen stellt ohnehin der Kern.
+ * Host der Cubiq API und der Website (z. B. für „Anmelden auf …“), aus der Adresse in `site.ts`. Alle Anfragen
+ * stellt ohnehin der Kern.
  */
-export const CUBIQ_HOST = 'cubiq-launcher.invalid'
+export const CUBIQ_HOST = new URL(CUBIQ_SITE).host
 
 export const CUBIQ_PRIVACY_URL ='https://github.com/PwiePixel/Cubiq-launcher/blob/main/PRIVACY.md#cubiq-services'

@@ -6,12 +6,12 @@ Cubiq Launcher se ejecuta en tu ordenador. **No tiene telemetría, analíticas, 
 envía información a un servidor del proyecto Cubiq Launcher si activas los [servicios Cubiq](#servicios-cubiq) opcionales
 (capas, amigos, estado en línea, chat). Sin tu consentimiento, el launcher no envía nada allí.
 
-> [!IMPORTANT]
-> **Todavía no hay ningún servidor Cubiq configurado.** Mientras una versión no tenga uno configurado, los servicios
-> Cubiq están ocultos y el launcher no envía nada para ellos. Los apartados sobre los servicios Cubiq describen lo que
-> envían el launcher y el Cubiq Client cuando una versión se conecta a un servidor Cubiq. Dónde funciona ese servidor,
-> qué encargados del tratamiento usa y cómo contactar con quien lo gestiona debe añadirlo su responsable aquí antes de
-> activar los servicios.
+> [!NOTE]
+> **El servidor Cubiq** funciona en `launcher.cubiq.studio`, junto con el sitio web de Cubiq. Quién lo gestiona y cómo
+> contactar con su responsable figura en el aviso legal: <https://launcher.cubiq.studio/imprint>; dónde funciona y qué
+> encargados del tratamiento usa se describe en [Alojamiento y encargados del
+> tratamiento](#alojamiento-y-encargados-del-tratamiento). Las versiones sin un servidor Cubiq configurado (por ejemplo,
+> una versión propia de este código) ocultan los servicios Cubiq y no envían nada para ellos.
 
 El launcher solo se conecta a otros servicios cuando hace falta para algo que tú le has pedido:
 
@@ -22,7 +22,7 @@ El launcher solo se conecta a otros servicios cuando hace falta para algo que t�
 | Servidor de sesiones de Mojang (`sessionserver.mojang.com`) | Al iniciar sesión en los servicios Cubiq (solo si lo has aceptado) | La misma solicitud «join» que usa el inicio de sesión en un servidor de Minecraft: tu token de acceso, tu UUID y un desafío de un solo uso |
 | Servicios de perfil de Mojang (`api.mojang.com`, `sessionserver.mojang.com`, `textures.minecraft.net`) | Al importar un skin por nombre de jugador y al mostrar caras de jugadores (amigos, búsqueda de administración) | El nombre de jugador o UUID buscado; la descarga de esa imagen de skin |
 | El sitio web de un enlace que introduces | Solo al importar un skin «por enlace» | Una solicitud de descarga normal de esa imagen (solo HTTPS, sin cookies ni cuentas) |
-| Servicios Cubiq (el servidor Cubiq configurado para la versión; de momento ninguno) | Solo si lo has aceptado, ver [más abajo](#servicios-cubiq) | Tu UUID, tu nombre, la capa que eliges, tus amigos, tu estado en línea, los mensajes e imágenes que envías en el chat y las denuncias |
+| Servicios Cubiq (`launcher.cubiq.studio`, a través de Cloudflare) | Solo si lo has aceptado, ver [más abajo](#servicios-cubiq) | Tu UUID, tu nombre, la capa que eliges, tus amigos, tu estado en línea, los mensajes e imágenes que envías en el chat y las denuncias |
 | Servidores maven/meta de Fabric, Quilt, Forge y NeoForge | Al instalar un cargador de mods | Solicitudes de descarga |
 | Modrinth (`api.modrinth.com`, `cdn.modrinth.com`) | Al explorar, instalar o actualizar contenido | Búsquedas y los hashes de los mods instalados (para buscar actualizaciones) |
 | CurseForge (`api.curseforge.com`; archivos e imágenes de `edge.forgecdn.net`, `mediafilez.forgecdn.net`, `media.forgecdn.net`) | Solo si eliges CurseForge como fuente, instalas un modpack de CurseForge, tienes instalado contenido de CurseForge o importas una instancia de CurseForge a la que le faltan archivos | Búsquedas y filtros, los ID de proyecto y de archivo del contenido instalado desde CurseForge (para los detalles y la búsqueda de actualizaciones) y solicitudes de descarga. Como en cualquier solicitud web, se incluye tu dirección IP. No necesitas una cuenta de CurseForge: el launcher se identifica con su propia clave de API, no con datos sobre ti. |
@@ -590,8 +590,10 @@ seguro (art. 6.1.f del RGPD). No hay publicidad, ni elaboración de perfiles, ni
 
 ### Alojamiento y encargados del tratamiento
 
-- **Dónde funciona el servidor Cubiq y qué encargados del tratamiento usa** (alojamiento, CDN o proxy, transferencias
-  fuera de la UE): lo añade su responsable antes de activar los servicios.
+- **Alojamiento:** el servidor Cubiq funciona en un servidor alquilado en Alemania a Skrime (Einzelunternehmen Tom Gewiese, Obernaglbach 2, 94259 Kirchberg im Wald, Alemania, <https://skrime.eu>).
+- **Cloudflare** (Cloudflare, Inc., EE. UU.) está delante del servidor Cubiq como proxy y CDN: cada solicitud a
+  `launcher.cubiq.studio` pasa por Cloudflare, que ve tu dirección IP y la solicitud y filtra ataques. Cloudflare puede
+  tratar estos datos fuera de la UE; participa en el EU-U.S. Data Privacy Framework.
 - **Mojang/Microsoft** confirma el inicio de sesión (ver arriba): tu ordenador envía la solicitud «join» directamente a
   Mojang, y el servidor Cubiq consulta a Mojang con tu nombre de jugador y el desafío de un solo uso (`hasJoined`).
 - **Los servidores de Minecraft de las invitaciones del chat** reciben una consulta del servidor Cubiq (ping de la lista

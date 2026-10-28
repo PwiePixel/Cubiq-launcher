@@ -5,8 +5,9 @@
 // Neuigkeiten), die Website im Blog und GitHub im Release-Text.
 //
 // Zwei Dateien je Version: `banner.png` (ruhig) und `banner-anim.png` – dieselbe Szene als animiertes PNG
-// (16 Bilder, 1,6 s, endlos): Cubi wippt und blinzelt, der Gegenstand bewegt sich, es funkelt. Bei „Weniger
-// Animationen“ zeigen Launcher und Website das ruhige Bild; es ist zugleich das erste Bild der Animation.
+// (16 Bilder, 1,6 s, endlos; ein Sonderthema kann eine eigene, längere Schleife haben): Cubi wippt und blinzelt, der
+// Gegenstand bewegt sich, es funkelt. Bei „Weniger Animationen“ zeigen Launcher und Website das ruhige Bild; es ist
+// zugleich das erste Bild der Animation.
 //
 // - Thema: aus dem englischen Text des Abschnitts (fette Überschriften zählen dreifach), siehe TOPICS.
 // - Jede Version sieht etwas anders aus (Form der Insel, Blumen, Funkeln und schwebende Würfel hängen an der
@@ -111,6 +112,57 @@ const C = Object.fromEntries(
     carrot: '#f08a2c',
     hat: '#272c36',
     hatHi: '#3c4352',
+    // Neue Kosmetik (Sonderthema „cosmetics“): Farben der Teile auf der Website. Schwarz ist etwas heller, sonst
+    // verschwände es im Umriss.
+    penguinHi: '#46557c',
+    penguin: '#313d5e',
+    penguinDark: '#232c45',
+    belly: '#f6f5f0',
+    beak: '#f39a2b',
+    beakDark: '#c96619',
+    scarf: '#d63e4a',
+    scarfDark: '#a72d38',
+    scarfStripe: '#f5e9d3',
+    furHi: '#f39b4c',
+    fur: '#e2702c',
+    furDark: '#b9501d',
+    cream: '#f8f0e5',
+    sock: '#3c2a24',
+    axolotlHi: '#ffd2de',
+    axolotl: '#f6b3c6',
+    axolotlDark: '#e091a8',
+    gill: '#d9467b',
+    gillHi: '#f0709e',
+    puff: '#ff86b5',
+    blush: '#f48aa8',
+    lip: '#a64a66',
+    beanie: '#2aa894',
+    beanieDark: '#1f7f70',
+    seam: '#d6f5a3',
+    ice: '#78d6f2',
+    iceDark: '#4fb3d6',
+    twig: '#8a6143',
+    bug: '#47455a',
+    shell: '#e8603d',
+    lampHi: '#ffffe0',
+    lamp: '#f2ff8a',
+    lampDark: '#c9e85a',
+    wing: '#b9d8f2',
+    // Polarlicht (Federflügel), wie das Launcher-Design „Polarlicht“: Saum, Cubiq-Grün, Türkis, Eis-Cyan
+    auroraCore: '#effff0',
+    auroraHem: '#d6f5a3',
+    auroraGreenHi: '#a6db6a',
+    auroraGreen: '#71a330',
+    auroraTeal: '#2aa894',
+    auroraTealHi: '#4ebfc5',
+    auroraIce: '#78d6f2',
+    auroraIceHi: '#b4ecfa',
+    auroraDeep: '#16564f',
+    puffHi: '#ffd0e2',
+    starHi: '#fff3a8',
+    star: '#ffd23f',
+    starDark: '#e8a317',
+    starFace: '#8a4a10',
     // Karte (Papier, Wasser, Sand, Wiese, Route)
     parchment: '#f1e2b6',
     parchmentShade: '#dcc68f',
@@ -141,10 +193,18 @@ export const TOPICS = [
 ]
 /** Ohne passendes Thema: ein Geschenk (neue Version). */
 export const DEFAULT_TOPIC = { id: 'update', subject: 'gift' }
-/** Sonderthemen für ein bestimmtes Release: nur mit `--topic` gezeichnet, nie aus dem Text gewählt. */
+/**
+ * Sonderthemen für ein bestimmtes Release: nur mit `--topic` gezeichnet, nie aus dem Text gewählt. Wahlweise mit
+ * `hero: 'middle'` (Cubi mitten auf der Insel), `wide` (Insel breiter), `cubes`/`sparkles` (wie viele schwebende
+ * Würfel und Funken), `float` (Insel schwebt auf und ab) und `frames`/`frameMs` (eigene Schleife).
+ */
 export const SPECIAL_TOPICS = [
   // 0.2.51: Der Launcher wird wieder grün – Cubi streicht den großen Würfel vom Navy zurück in Cubiq-Grün.
   { id: 'green', subject: 'roller' },
+  // 0.3.0: Neun neue Kosmetik-Teile – Cubi mit Polarlichtflügeln mitten auf der breiteren, schwebenden Insel, um ihn
+  // herum die neuen Begleiter; statt der schwebenden Würfel fliegt Mini-Cubi, statt der Funken leuchten eigene Sterne.
+  // Längere, flüssigere Schleife.
+  { id: 'cosmetics', subject: 'companions', hero: 'middle', wide: 8, cubes: 0, sparkles: 0, float: 1, frames: 32, frameMs: 80 },
   // 0.3.1: Das Karten-Update – neben Cubi steht eine große aufgefaltete Karte, eine grüne Route führt zum Wegpunkt.
   { id: 'map', subject: 'map' },
 ]
@@ -247,10 +307,13 @@ function cubi(f, x, { sprites = CUBI, mirror = false, phase = 0 } = {}) {
 
 const FLOWERS = ['gold', 'pink', 'blue', 'paper', 'violet']
 
-/** Schwebende Grasinsel (oder verschneit): oben Gras, darunter Erde, nach unten schmaler mit Steinen und Wurzeln. */
-function island(rnd, { snowy = false } = {}) {
+/**
+ * Schwebende Grasinsel (oder verschneit): oben Gras, darunter Erde, nach unten schmaler mit Steinen und Wurzeln.
+ * `wide` macht sie um so viele Punkte breiter (Platz für mehr Figuren); die Unterseite läuft dann schneller zu.
+ */
+function island(rnd, { snowy = false, wide = 0 } = {}) {
   const c = layer()
-  const width = 46 + Math.floor(rnd() * 5)
+  const width = 46 + Math.floor(rnd() * 5) + wide
   const left = Math.floor((SIZE - width) / 2)
   const right = left + width - 1
   const top = snowy ? [C.snow, C.snow, C.snowShade] : [C.grassHi, C.grass, C.grass]
@@ -282,8 +345,8 @@ function island(rnd, { snowy = false } = {}) {
   let r = right - 1
   const bottom = []
   for (let y = GROUND + 7; y < SIZE - 1 && r - l > 1; y++) {
-    l += 1 + Math.floor(rnd() * 3)
-    r -= 1 + Math.floor(rnd() * 3)
+    l += 1 + Math.floor(rnd() * 3) + (wide ? 1 : 0)
+    r -= 1 + Math.floor(rnd() * 3) + (wide ? 1 : 0)
     if (r < l) break
     for (let x = l; x <= r; x++) {
       const deep = y - GROUND - 7
@@ -480,9 +543,417 @@ function gear(c, cx, cy, r, teeth, angle, color) {
   }
 }
 
+// ---------------------------------------------------------------- Neue Kosmetik (Sonderthema „cosmetics“)
+//
+// Eigene, längere Schleife (`frames`, `frameMs` am Thema): Cubi hüpft im Takt mit Stauchen und Strecken, seine
+// gefiederten Polarlichtflügel schlagen dazu, Mini-Cubi umkreist seinen Kopf, die Sternschnuppe zieht einmal über den
+// Himmel, und jeder Begleiter auf der Insel bewegt sich auf seine Art. Alles rechnet mit dem Anteil der Schleife
+// (f / n), damit sie nahtlos bleibt.
+
+/** Schwingung über eine Schleife aus `n` Bildern: −1 … 1, `periods`-mal je Schleife (wie `wave`, mit eigener Bildzahl). */
+const swing = (f, n, phase = 0, periods = 1) => Math.sin(((f / n) * periods + phase) * 2 * Math.PI)
+
+/** Die neuen Begleiter im Kleinformat: Farben wie auf der Website, Formen wie auf den Karten (von vorn). */
+const PET = {
+  // Watschelpinguin: Frack, weißes Gesicht mit zwei Bögen um die Augen, Bäckchen, Schnabel, rot-weißer Schal
+  penguin: sprite(
+    ['...K...', '.hKKKk.', 'hWWKWWk', 'KWEWEWk', 'KPWBWPk', '.KWbWk.', 'RRSRRSr', 'hWWWWRk', 'hWWWWSk', 'KWWWWRk', '.kKKKk.'],
+    {
+      K: C.penguin, k: C.penguinDark, h: C.penguinHi, W: C.belly, E: C.pupil, P: C.cheek,
+      B: C.beak, b: C.beakDark, R: C.scarf, r: C.scarfDark, S: C.scarfStripe,
+    },
+  ),
+  penguinFoot: sprite(['OO'], { O: C.beak }),
+  // Füchschen (sitzt): spitze Ohren mit dunklen Spitzen, helle Wangen und Schnauze, schwarze Nase und Söckchen
+  fox: sprite(
+    ['.D...D.', '.Oe.eO.', 'hOOOOOo', 'OKOOOKo', 'CCOOOCC', '.CCNCC.', '.OCCCO.', 'hOCCCOo', 'hOOCOOo', '.ss.ss.'],
+    { D: C.sock, e: C.sock, O: C.fur, h: C.furHi, o: C.furDark, K: C.pupil, C: C.cream, N: C.pupil, s: C.sock },
+  ),
+  // Buschiger Schwanz (hinter dem Körper, rechts): drei Stellungen zum kräftigen Wedeln, die Spitze hell
+  foxTail: [
+    ['.TT..', '.TT..', '.OO..', '.OOo.', '..Oo.', '..Oo.', '.Oo..', 'Oo...'],
+    ['.....', '...TT', '...TT', '..OOo', '..OOo', '..Oo.', '.Oo..', 'Oo...'],
+    ['.....', '.....', '.....', '.....', '...TT', '..OOT', '.OOo.', 'Oo...'],
+  ].map((rows) => sprite(rows, { T: C.cream, O: C.fur, o: C.furDark })),
+  // Axolotl von vorn: breiter rosa Kopf mit Lächeln, Bäckchen und kleinen schwarzen Augen, vorn zwei Füßchen
+  axolotl: sprite(['.aaaaa.', 'aAAAAAd', 'AEAAAEd', 'APMAMPd', '.ddMdd.', '.A...A.'], {
+    a: C.axolotlHi, A: C.axolotl, d: C.axolotlDark, E: C.pupil, P: C.blush, M: C.lip,
+  }),
+  // Schneemännchen: Mütze in Türkis mit hellgrünem Streifen und Bommel, Karottennase, hellblauer Schal
+  snowman: sprite(
+    [
+      '...o...', '..TTT..', '.lllll.', '.ccccc.', '.SKSKs.', '.SSNn..', '..SSs..', 'IIWIIWi',
+      '.SSSSIs', '.SSKSWs', '..SKSs.', '.SSSSSs', 'SSSSSSs', 'SSSSSSs', '.sssss.',
+    ],
+    {
+      o: C.snow, T: C.beanie, l: C.seam, c: C.beanieDark, S: C.snow, s: C.snowShade, K: C.coal,
+      N: C.carrot, n: C.orange, I: C.ice, i: C.iceDark, W: C.white,
+    },
+  ),
+  // Mini-Cubi: winziger Cubi, sein Pflänzchen ist ein Propeller (vier Stellungen = eine Umdrehung)
+  miniCubi: sprite(['.TTTTTt.', 'HGWGGWGS', 'HGKGGKGS', 'HPGMMGPS', '.BBBBBB.'], {
+    T: C.cubiTop, t: C.cubiTopShade, H: C.cubiHi, G: C.cubi, S: C.cubiSide, B: C.cubiBottom, W: C.eye, K: C.pupil, P: C.cheek, M: C.mouth,
+  }),
+  propeller: [
+    ['LL.ll', '..s..'],
+    ['.L.l.', '..s..'],
+    ['ll.LL', '..s..'],
+    ['.l.L.', '..s..'],
+  ].map((rows) => sprite(rows, { L: C.leafHi, l: C.leaf, s: C.stem })),
+  miniFeet: [sprite(['.F....F.'], { F: C.cubiBottom }), sprite(['..F..F..'], { F: C.cubiBottom })],
+  // Sternschnuppe: vierzackiger Stern mit Gesicht
+  star: sprite(['....a....', '....b....', '...bYb...', '..bYYYb..', 'abYEYEYba', '..bYmYb..', '...bYb...', '....b....', '....a....'], {
+    a: C.starDark, b: C.star, Y: C.starHi, E: C.starFace, m: C.starFace,
+  }),
+  // Glühwürmchen (schaut nach links): dunkler Kopf mit großen Augen, oranger Halsschild, Fühler, Flügel, Laterne
+  firefly: sprite(['.r.r....', '..b.b...', '.ccccww.', 'bWbWbbLL', '.bbbb.LL'], {
+    r: C.shell, b: C.bug, c: C.shell, w: C.wing, W: C.white, L: C.lamp,
+  }),
+  // Cubis Pflänzchen beim Hüpfen: beim Ausholen platt gedrückt, im Flug nach oben geweht
+  sprout: {
+    flat: sprite(['.....', 'LLsll', '..s..'], { L: C.leafHi, l: C.leaf, s: C.stem }),
+    up: sprite(['L...l', '.LsL.', '..s..'], { L: C.leafHi, l: C.leaf, s: C.stem }),
+  },
+}
+
+// ---------------------------------------------------------------- Cubi hüpft (Stauchen und Strecken)
+
+/** Ein Hüpfer in 8 Bildern [Breite, Höhe, Höhe über dem Boden]: Ruhe, ausholen, abspringen, steigen, oben, fallen, landen. */
+const HOP = [
+  [16, 13, 0],
+  [18, 11, 0],
+  [14, 15, 1],
+  [14, 15, 4],
+  [16, 13, 6],
+  [16, 13, 5],
+  [14, 15, 2],
+  [18, 11, 0],
+]
+
+/** Cubis Körper im Bild f eines Hüpfers – die Mitte bleibt über hero + 7,5, landet auf jedem 8. Bild (dem Takt). */
+function hopBody(f, hero) {
+  const [w, h, lift] = HOP[f % HOP.length]
+  const left = hero + (16 - w) / 2
+  const bottom = GROUND - 1 - lift
+  return { left, right: left + w - 1, top: bottom - h + 1, bottom, w, h, lift, phase: f % HOP.length }
+}
+
+/** Cubi im Hüpf-Bild: Deckel, Glanz links, Schatten rechts, Gesicht und Füße wie im Sprite, nur neu verteilt. */
+function hoppingCubi(f, n, b) {
+  const c = layer()
+  for (let y = b.top; y <= b.bottom; y++) {
+    for (let x = b.left; x <= b.right; x++) {
+      const row = y - b.top
+      if ((row === 0 || y === b.bottom) && (x === b.left || x === b.right)) continue
+      let col = C.cubi
+      if (row === 0) col = x === b.right - 1 ? C.cubiTopShade : C.cubiTop
+      else if (row === 1) col = x >= b.right - 1 ? C.cubiTopShade : C.cubiTop
+      else if (y === b.bottom) col = C.cubiBottom
+      else if (x === b.left) col = C.cubiHi
+      else if (x >= b.right - 1) col = C.cubiSide
+      c.set(x, y, col)
+    }
+  }
+  // Gesicht: Augen (blinzeln einmal je Schleife), Bäckchen, Lächeln – mittig, gestaucht etwas tiefer
+  const mid = b.left + (b.w - 1) / 2
+  const eye = b.top + Math.floor((b.h - 13) / 2 + 4.5)
+  for (const ex of [mid - 4.5, mid + 2.5]) {
+    if (f === n / 2) c.rect(ex, eye + 2, 2, 1, C.pupil)
+    else c.rect(ex, eye, 2, 3, C.eye).rect(ex + 1, eye + 1, 1, 2, C.pupil)
+  }
+  c.rect(mid - 5.5, eye + 3, 2, 1, C.cheek).rect(mid + 3.5, eye + 3, 2, 1, C.cheek)
+  c.set(mid - 1.5, eye + 4, C.mouth)
+  c.set(mid + 1.5, eye + 4, C.mouth)
+  c.rect(mid - 0.5, eye + 5, 2, 1, C.mouth)
+  // Füße: am Boden in der untersten Reihe, in der Luft baumeln sie darunter
+  const feet = b.lift > 1 ? b.bottom + 1 : GROUND - 1
+  c.rect(mid - 5.5, feet, 3, 1, C.cubiBottom).rect(mid + 3.5, feet, 3, 1, C.cubiBottom)
+  // Pflänzchen: beim Ausholen und Landen platt, beim Steigen nach oben geweht, sonst wie immer
+  const sprout = b.w > 16 ? PET.sprout.flat : b.phase >= 2 && b.phase <= 4 ? PET.sprout.up : CUBI.sprout[b.phase === 5 || b.phase === 6 ? 1 : 0]
+  c.draw(sprout, mid - 1.5, b.top - 3)
+  return c.outline(C.outline)
+}
+
+// ---------------------------------------------------------------- Gefiederte Polarlichtflügel
+
+/**
+ * Linker Flügel in Punkten ab dem Schultergelenk (u nach außen, v nach unten); der rechte ist gespiegelt. Vom kurzen
+ * Arm fächern drei Reihen Federn auf: lange Schwungfedern (zur Spitze lang und flach nach außen, zum Körper kurz und
+ * nach unten), darüber kürzere Deckfedern und am Flügelbug kleine Federn. Je Feder: [Ansatz u, v, Richtung in Grad
+ * unter der Waagerechten nach außen, Länge] – von unten nach oben, so liegt jede Feder auf der darunter.
+ */
+const WING = {
+  arm: [[0, 0], [7, -6]],
+  rows: [
+    [
+      [1, -0.9, 62, 4], [2.5, -2.1, 50, 5.5], [4, -3.4, 38, 7], [5.5, -4.7, 27, 9],
+      [7, -6, 18, 11.5], [7, -6, 8, 14], [7, -6, -4, 15], [7, -6, -16, 14],
+    ],
+    [[1, -0.9, 58, 3.5], [2.5, -2.1, 42, 4.5], [4, -3.4, 28, 5.5], [5.5, -4.7, 14, 7], [7, -6, 0, 8.5], [7, -6, -12, 7]],
+    [[1.2, -1, 62, 2.5], [3, -2.6, 42, 3], [5, -4.3, 22, 3.5], [7, -6, 2, 4.5]],
+  ],
+}
+/** Farben je Reihe: Körper vom Ansatz zur Spitze, leuchtende Oberkante. */
+const WING_COLORS = [
+  { body: [C.auroraTeal, C.auroraTeal, C.auroraTeal, C.auroraTealHi, C.auroraIce], edge: C.auroraIce, tip: C.auroraIceHi },
+  { body: [C.auroraGreen, C.auroraGreen, C.auroraGreen, C.auroraTeal], edge: C.auroraGreenHi, tip: C.auroraTealHi },
+  { body: [C.auroraGreen, C.auroraGreenHi], edge: C.auroraHem, tip: C.auroraHem },
+]
+/** Schultergelenk im Bild des linken Flügels. */
+const WING_AT = 32
+/** Flügelschlag je Hüpf-Bild (Grad, + = hoch): oben beim Ausholen und Landen, ganz unten, wenn Cubi am höchsten ist. */
+const WING_UP = [10, 22, 13, -2, -10, -5, 4, 16]
+
+/**
+ * Der linke Flügel als eigenes Bild (Schulter bei WING_AT): `up` = Schlag in Grad, `drag` = wie stark die Federn
+ * nachhängen (Grad, beim Abschlag nach oben), `t` = Anteil der Schleife für die wandernden Lichtbänder.
+ */
+function featherWing(up, drag, t) {
+  const c = new Canvas(SIZE, SIZE)
+  const a = (up * Math.PI) / 180
+  // Drehung um die Schulter, dann ins Bild: u nach links, v nach unten
+  const place = (u, v) => [WING_AT - (u * Math.cos(a) + v * Math.sin(a)), WING_AT + (v * Math.cos(a) - u * Math.sin(a))]
+  const deep = new Set()
+  /**
+   * Eine Feder: spitz zulaufend, Oberkante und Spitze leuchten. Unter ihrer Spitzenhälfte bleibt zur Feder darunter
+   * ein dunkler Spalt – so setzen sich Federn und Reihen voneinander ab.
+   */
+  const feather = (u, v, dir, len, width, { body, edge, tip }) => {
+    const [bx, by] = place(u, v)
+    const d = ((dir - up + (drag * (u + len)) / 20) * Math.PI) / 180
+    const dx = -Math.cos(d) * len
+    const dy = Math.sin(d) * len
+    const hit = []
+    for (let y = Math.floor(Math.min(by, by + dy) - width); y <= Math.ceil(Math.max(by, by + dy) + width); y++) {
+      for (let x = Math.floor(Math.min(bx, bx + dx) - width); x <= Math.ceil(Math.max(bx, bx + dx) + width); x++) {
+        const s = Math.max(0, Math.min(1, ((x - bx) * dx + (y - by) * dy) / (len * len)))
+        const ox = x - (bx + s * dx)
+        const oy = y - (by + s * dy)
+        const dist = Math.hypot(ox, oy)
+        const half = (width / 2) * (1 - 0.5 * s) + 0.3
+        // Oberseite: zeigt (für einen Flügel nach links) nach oben
+        const upper = ox * -Math.sin(d) + oy * -Math.cos(d) > 0
+        if (dist <= half) hit.push([x, y, s, upper && dist > half - 0.6])
+        else if (s > 0.3 && !upper && dist <= half + 0.9 && c.get(x, y)) {
+          c.set(x, y, C.auroraDeep)
+          deep.add(`${x},${y}`)
+        }
+      }
+    }
+    for (const [x, y, s, rim] of hit) {
+      c.set(x, y, s > 0.9 ? tip : rim ? edge : body[Math.min(body.length - 1, Math.floor(s * body.length))])
+      deep.delete(`${x},${y}`)
+    }
+  }
+  WING.rows.forEach((row, r) => {
+    for (const [u, v, dir, len] of row) feather(u, v, dir, len, r === 2 ? 2.6 : 3.2, WING_COLORS[r])
+  })
+  // Leuchtender Flügelbug: der Arm von der Schulter zum Handgelenk
+  const [[u0, v0], [u1, v1]] = WING.arm
+  for (let k = 0; k <= 1; k += 0.05) {
+    const [x, y] = place(u0 + (u1 - u0) * k, v0 + (v1 - v0) * k - 0.8)
+    c.set(Math.round(x), Math.round(y), k > 0.7 ? C.auroraCore : C.auroraHem)
+  }
+  // Polarlicht-Bänder: wandern zweimal je Schleife von der Schulter nach außen – ein heller Kamm, davor grünes,
+  // dahinter eisblaues Licht
+  return c.map((col, x, y) => {
+    if (deep.has(`${x},${y}`)) return col
+    const p = 2 * Math.PI * ((WING_AT - x) / 11 + (y - WING_AT) / 24 - 2 * t - 0.25)
+    if (Math.cos(p) > 0.88) return mix(col, C.auroraCore, 0.35)
+    if (Math.cos(p) > 0.55) return mix(col, Math.sin(p) > 0 ? C.auroraGreenHi : C.auroraIceHi, 0.25)
+    return col
+  })
+}
+
+/** Beide Flügel hinter Cubi: an den oberen Ecken seines Körpers, schlagen im Takt der Hüpfer. */
+function auroraWings(f, n, b) {
+  const p = b.phase
+  const up = WING_UP[p]
+  const drag = ((WING_UP[(p + 1) % 8] - WING_UP[(p + 7) % 8]) / 2) * 0.9
+  const left = featherWing(up, drag, f / n)
+  const right = flip(featherWing(up, drag, f / n + 0.1))
+  const c = layer()
+  c.draw(left, b.left + 3 - WING_AT, b.top - WING_AT)
+  c.draw(right, b.right - 3 - (SIZE - 1 - WING_AT), b.top - WING_AT)
+  return c.outline(C.outline)
+}
+
+// ---------------------------------------------------------------- Begleiter auf der Insel
+
+/** Watschelpinguin: wiegt sich bei jedem Schritt zur Seite, der andere Fuß hebt sich, die Flosse auf der Seite schwingt hoch. */
+function penguinPet(f, n, x) {
+  const step = Math.round(swing(f, n, 0, 4) * 1.4)
+  const bx = x + step
+  const top = GROUND - 12 - Math.abs(step)
+  const c = layer().draw(PET.penguin, bx, top)
+  c.draw(PET.penguinFoot, x + 1, GROUND - 1 - (step > 0 ? 1 : 0))
+  c.draw(PET.penguinFoot, x + 4, GROUND - 1 - (step < 0 ? 1 : 0))
+  if (step > 0) for (const [dx, dy] of [[-1, 7], [-1, 6], [-2, 5], [-2, 4], [-2, 3]]) c.set(bx + dx, top + dy, C.penguinHi)
+  if (step < 0) for (const [dx, dy] of [[7, 7], [7, 6], [8, 5], [8, 4]]) c.set(bx + dx, top + dy, C.penguinDark)
+  return c.outline(C.outline)
+}
+
+/** Füchschen: wedelt kräftig mit dem buschigen Schwanz, ab und zu zuckt ein Ohr. */
+function foxPet(f, n, x) {
+  const top = GROUND - 10
+  const tail = layer().draw(PET.foxTail[[1, 2, 1, 0][Math.floor(f / 2) % 4]], x + 5, top - 1).outline(C.outline)
+  const body = layer().draw(PET.fox, x, top)
+  const twitch = f % (n / 2)
+  if (twitch === 10 || twitch === 11) {
+    body.erase(x + 5, top)
+    body.set(x + 6, top + 1, C.sock)
+  }
+  return tail.draw(body.outline(C.outline))
+}
+
+/** Axolotl: wackelt mit dem Kopf, die Kiemen pulsieren und leuchten rosa auf. */
+function axolotlPet(f, n, x) {
+  const c = layer()
+  const hop = swing(f, n, 0, 4) > 0.5 ? 1 : 0
+  const wiggle = f % 8 === 3 || f % 8 === 4 ? 1 : 0
+  const hx = x + 2 + wiggle
+  const hy = GROUND - 6 - hop
+  // Kiemen pulsieren viermal je Schleife: dunkel – rosa – hell leuchtend (dann mit längeren Spitzen)
+  const glow = (1 + swing(f, n, 0.1, 4)) / 2
+  const stalk = glow > 0.65 ? C.gillHi : C.gill
+  const tip = glow > 0.75 ? C.puffHi : glow > 0.35 ? C.puff : C.gillHi
+  for (const dir of [-1, 1]) {
+    const cx = dir < 0 ? hx : hx + 6
+    // drei Äste je Seite, von der oberen Ecke schräg nach oben und außen gefächert
+    for (const [dx, dy] of [[0, 0], [1, -1], [1, 1], [1, 2]]) c.set(cx + dir * dx, hy + dy, stalk)
+    for (const [dx, dy] of [[2, -2], [2, 0], [2, 2]]) c.set(cx + dir * dx, hy + dy, tip)
+    if (glow > 0.75) for (const [dx, dy] of [[2, -3], [2, -1], [2, 3]]) c.set(cx + dir * dx, hy + dy, C.puff)
+  }
+  c.draw(PET.axolotl, hx, hy)
+  return c.outline(C.outline)
+}
+
+/** Schneemännchen (leicht gedreht, ein Zweigarm zu sehen): wippt, der Bommel federt nach, der Arm winkt über dem Kopf. */
+function snowmanPet(f, n, x) {
+  const bobAt = (g) => (swing(g, n, 0.15, 2) > 0.3 ? 1 : 0)
+  const top = GROUND - 15 - bobAt(f)
+  const c = layer().draw(PET.snowman, x, top)
+  // Bommel kommt einen Moment zu spät: beim Hochwippen sitzt er tiefer, beim Absinken schwebt er kurz
+  c.erase(x + 3, top)
+  c.set(x + 3, GROUND - 15 - bobAt(f - 1) + (bobAt(f) > bobAt(f - 1) ? 1 : 0), C.snow)
+  // Winken: der Zweigarm schwingt um die Senkrechte, mit kleiner Gabel an der Hand
+  const a = ((87.5 + 17.5 * swing(f, n, 0, 4)) * Math.PI) / 180
+  const hx = x + 7 + Math.round(Math.cos(a) * 4)
+  const hy = top + 8 - Math.round(Math.sin(a) * 4)
+  c.line(x + 7, top + 8, hx, hy, C.twig)
+  c.set(hx + (Math.cos(a) > 0.1 ? -1 : 1), hy, C.twig)
+  return c.outline(C.outline)
+}
+
+// ---------------------------------------------------------------- Begleiter in der Luft
+
+/** Mini-Cubi umkreist Cubis Kopf: oben vor ihm, unten dahinter; der Propeller dreht sich, die Füßchen baumeln. */
+function miniCubiOrbit(f, n, hero) {
+  const a = (f / n) * 2 * Math.PI + Math.PI / 2
+  const x = Math.round(hero + 7.5 - 8 * Math.cos(a) - 4)
+  const y = Math.round(16 - 5 * Math.sin(a) - 4)
+  const c = layer()
+  c.draw(PET.propeller[f % 4], x + 2, y)
+  c.draw(PET.miniCubi, x, y + 2)
+  c.draw(PET.miniFeet[Math.floor(f / 2) % 2], x, y + 7)
+  c.outline(C.outline)
+  return Math.sin(a) > -0.1 ? { front: c } : { back: c }
+}
+
+/** Sternschnuppe: zieht einmal je Schleife in einem Bogen von rechts nach links und lässt verglimmende Funken zurück. */
+function shootingStar(f, n) {
+  const c = layer()
+  const span = (n * 3) / 4
+  const start = n - n / 8 - 2
+  const age = (f - start + n) % n
+  const at = (k) => {
+    const q = k / span
+    return [Math.round(56 - 31 * q), Math.round(9 - 3 * Math.sin(Math.PI * q))]
+  }
+  // Funken der Spur: alle drei Bilder einer, er leuchtet auf und verglimmt
+  for (let k = 0; k < span; k += 3) {
+    const g = age - k
+    const size = [0, 3, 3, 2, 2, 1, 1, 1][g] ?? 0
+    if (g < 0 || !size) continue
+    const [sx, sy] = at(k)
+    const s = SPARKLES[size - 1]
+    c.draw(s, sx - (s.w >> 1), sy - (s.h >> 1))
+  }
+  if (age >= span) return c
+  // Schweif direkt hinter dem Stern
+  for (let k = 1; k <= 4; k++) {
+    const [sx, sy] = at(Math.max(0, age - k * 0.6))
+    c.set(sx + 1, sy, k < 3 ? C.starHi : C.star)
+  }
+  const [x, y] = at(age)
+  if (age < 2 || age > span - 2) {
+    const s = SPARKLES[age < 1 || age > span - 1 ? 1 : 2]
+    return c.draw(s, x - (s.w >> 1), y - (s.h >> 1))
+  }
+  const star = layer().draw(PET.star, x - 4, y - 4)
+  if (f % 4 === 0) for (const [gx, gy] of [[x, y - 1], [x - 1, y - 2], [x + 1, y - 2]]) star.set(gx, gy, C.white)
+  return c.draw(star.outline(C.outline))
+}
+
+/**
+ * Funkelnde Sterne: Hier ist der Himmel so voll, dass die gewohnten Funken keinen Platz finden – darum feste Stellen,
+ * die in keinem Bild belegt sind (an den Rändern und unter der Insel). [x, y, Phase, größte Stufe], x ab Cubi bzw. Insel.
+ */
+function nightSky(f, { left, right, hero }) {
+  const c = layer()
+  const stars = [
+    [hero + 36, 14, 2, 3], [hero + 36, 4, 9, 3], [hero + 22, 11, 5, 2], [hero - 21, 2, 12, 2], [left + 2, 58, 3, 3], [right - 1, 59, 11, 3],
+  ]
+  for (const [x, y, phase, most] of stars) {
+    const size = Math.min(most, TWINKLE[(f + phase) % FRAMES])
+    if (!size) continue
+    const s = SPARKLES[size - 1]
+    c.draw(s, x - (s.w >> 1), y - (s.h >> 1))
+  }
+  return c
+}
+
+/** Glühwürmchen: fliegt eine kleine Acht, hinter ihm verglimmt eine Lichtspur, die Laterne pulsiert. */
+function fireflyFlight(f, n, x0, y0) {
+  const pos = (g) => {
+    const a = (g / n) * 2 * Math.PI
+    return [x0 + 5 * Math.sin(a), y0 + 2.5 * Math.sin(2 * a)]
+  }
+  const c = layer()
+  const [x, y] = pos(f)
+  const [px] = pos(f - 1)
+  const right = x > px
+  // Lichtspur: wo die Laterne eben noch war
+  ;[C.lampHi, C.lamp, C.lampDark, C.lampDark].forEach((col, k) => {
+    const [tx, ty] = pos(f - 1 - k)
+    c.set(Math.round(tx) + (right ? 1 : 6), Math.round(ty) + 3, col)
+  })
+  const bx = Math.round(x)
+  const by = Math.round(y)
+  const bug = layer().draw(right ? flip(PET.firefly) : PET.firefly, bx, by)
+  // Flügel flattern: jedes zweite Bild höher
+  if (f % 2) {
+    bug.erase(bx + (right ? 1 : 5), by + 2)
+    bug.set(bx + (right ? 1 : 5), by + 1, C.wing)
+  }
+  c.draw(bug.outline(C.outline))
+  // Laterne pulsiert: Licht wächst zu einem kleinen Stern und vergeht
+  const pulse = [0, 1, 2, 3, 3, 2, 1, 0][f % 8]
+  const lx = bx + (right ? 1 : 6)
+  const ly = by + 3
+  c.rect(lx, ly, 2, 2, pulse >= 2 ? C.lampHi : C.lamp)
+  for (let k = 1; k <= pulse; k++) {
+    const col = k === pulse ? C.lampDark : C.lamp
+    for (const [gx, gy] of [[lx - k, ly], [lx + 1 + k, ly + 1], [lx, ly - k], [lx + 1, ly + 1 + k]]) c.set(gx, gy, col)
+  }
+  return c
+}
+
 /**
  * Jeder Gegenstand: f → Ebenen. `layer` bekommt einen Umriss, `front` (Licht, Flammen, Funken) und `ground`
  * (Rauch, Schatten auf der Insel) nicht bzw. eigene. `x` = linker Rand des freien Platzes rechts von Cubi.
+ * Als zweites kommt die Lage von Insel und Cubi (`{ left, right, hero, frames }`); ein Gegenstand kann Cubi auch selbst
+ * zeichnen (`hero`) und Ebenen am Himmel liefern (`sky`), die nicht mit der Insel schweben.
  */
 const PROPS = {
   rocket(f) {
@@ -881,6 +1352,23 @@ const PROPS = {
   },
 
   /**
+   * Die neun neuen Kosmetik-Teile: Cubi hüpft in der Mitte (`hero: 'middle'`) und schlägt mit den gefiederten
+   * Polarlichtflügeln, links Pinguin und Füchschen, rechts Axolotl und Schneemännchen; Mini-Cubi umkreist seinen Kopf,
+   * die Sternschnuppe zieht über den Himmel, ein Glühwürmchen leuchtet in der Luft.
+   */
+  companions(f, { left, right, hero, frames: n }) {
+    const body = hopBody(f, hero)
+    const c = auroraWings(f, n, body)
+    c.draw(penguinPet(f, n, Math.max(left, 3)))
+    c.draw(foxPet(f, n, hero - 12))
+    c.draw(snowmanPet(f, n, Math.min(right - 6, SIZE - 11)))
+    c.draw(axolotlPet(f, n, hero + 18))
+    const mini = miniCubiOrbit(f, n, hero)
+    const sky = nightSky(f, { left, right, hero }).draw(fireflyFlight(f, n, left + 5, 6)).draw(shootingStar(f, n))
+    return { layer: c, hero: hoppingCubi(f, n, body), ground: mini.back, front: mini.front, sky }
+  },
+
+  /**
    * Große aufgefaltete Karte aus drei Feldern, im Zickzack gefaltet – so steht sie von selbst: die Falten vorn liegen
    * im Bild tiefer, das mittlere Feld liegt im Schatten, Flächen und Route knicken mit dem Papier. Eine gestrichelte
    * Route in Cubiq-Grün läuft von Cubis kleinem Würfel zum Wegpunkt (die Striche wandern), die rote Nadel darüber wippt
@@ -1025,17 +1513,19 @@ function occupied(layers, margin = 2) {
 /** Alle Bilder der Szene einer Version (je SIZE × SIZE), dazu das gewählte Thema. */
 export function releaseFrames(version, topicId) {
   const topic = [...TOPICS, ...SPECIAL_TOPICS, DEFAULT_TOPIC].find((t) => t.id === topicId) ?? DEFAULT_TOPIC
+  const count = topic.frames ?? FRAMES
   const rnd = random(seedFor(version))
   const snowy = topic.id === 'winter'
-  const ground = island(rnd, { snowy })
-  const prop = PROPS[topic.subject]
-  const heroX = ground.left + 3 + Math.floor(rnd() * 2)
+  const ground = island(rnd, { snowy, wide: topic.wide ?? 0 })
+  // Cubi steht links neben dem Gegenstand – bei `hero: 'middle'` mitten auf der Insel, der Gegenstand um ihn herum.
+  const heroX = topic.hero === 'middle' ? Math.floor((ground.left + ground.right + 1) / 2) - 8 : ground.left + 3 + Math.floor(rnd() * 2)
+  const prop = (f) => PROPS[topic.subject](f, { left: ground.left, right: ground.right, hero: heroX, frames: count })
 
   // Platz für Funkeln und Würfel: was in einem der Bilder belegt ist, bleibt frei.
   const busy = []
-  for (let f = 0; f < FRAMES; f += 3) {
+  for (let f = 0; f < count; f += 3) {
     const p = prop(f)
-    busy.push(cubi(f, heroX), p.layer, ...(p.front ? [p.front] : []), ...(p.ground ? [p.ground] : []))
+    busy.push(p.hero ?? cubi(f, heroX), p.layer, ...[p.front, p.ground, p.sky].filter(Boolean))
   }
   const blocked = occupied([ground.canvas, ...busy])
   const spots = []
@@ -1047,11 +1537,11 @@ export function releaseFrames(version, topicId) {
   const sparkles = []
   const cubes = []
   for (const [x, y] of spots) {
-    if (cubes.length < 2 && !blocked(x, y, 3) && y > 8 && !cubes.some((c) => Math.abs(c.x - x) < 14)) {
+    if (cubes.length < (topic.cubes ?? 2) && !blocked(x, y, 3) && y > 8 && !cubes.some((c) => Math.abs(c.x - x) < 14)) {
       cubes.push({ x: x - 2, y: y - 2, phase: rnd() })
       continue
     }
-    if (sparkles.length >= 5 || blocked(x, y, 2)) continue
+    if (sparkles.length >= (topic.sparkles ?? 5) || blocked(x, y, 2)) continue
     if (sparkles.some((s) => Math.hypot(s.x - x, s.y - y) < 9) || cubes.some((c) => Math.hypot(c.x + 2 - x, c.y + 2 - y) < 7)) continue
     // Etwa die Hälfte leuchtet im ersten Bild (dem ruhigen Bild), der Rest später.
     sparkles.push({ x, y, phase: [2, 9, 4, 12, 3][sparkles.length] })
@@ -1060,17 +1550,21 @@ export function releaseFrames(version, topicId) {
   const mini = MINI_CUBE(snowy)
 
   const frames = []
-  for (let f = 0; f < FRAMES; f++) {
+  for (let f = 0; f < count; f++) {
     const frame = layer()
     if (snowy) drawSnow(frame, f, flakes)
     for (const s of sparkles.slice(0, 2)) sparkle(frame, f, s)
     for (const c of cubes) frame.draw(layer().draw(mini, c.x, c.y + Math.round(wave(f, c.phase))).outline(C.outline))
-    frame.draw(ground.canvas)
+    // `float`: Die Insel schwebt auf und ab, alles darauf mit – nur der Himmel (`sky`) bleibt, wo er ist.
+    const dy = topic.float ? -Math.round(Math.sin((f / count) * 2 * Math.PI) * topic.float) : 0
+    frame.draw(ground.canvas, 0, dy)
     const p = prop(f)
-    if (p.ground) frame.draw(p.ground)
-    frame.draw(p.layer)
-    frame.draw(cubi(f, heroX))
-    if (p.front) frame.draw(p.front)
+    if (p.ground) frame.draw(p.ground, 0, dy)
+    frame.draw(p.layer, 0, dy)
+    // Ein Gegenstand kann Cubi selbst zeichnen (`hero`), etwa mit eigener Bewegung.
+    frame.draw(p.hero ?? cubi(f, heroX), 0, dy)
+    if (p.front) frame.draw(p.front, 0, dy)
+    if (p.sky) frame.draw(p.sky)
     for (const s of sparkles.slice(2)) sparkle(frame, f, s)
     frames.push(frame)
   }
@@ -1084,7 +1578,7 @@ export function releaseFrames(version, topicId) {
 export function releaseArt({ version, text = '', topic: topicId = null }) {
   const { frames, topic } = releaseFrames(version, topicId ?? pickTopic(text).id)
   const big = frames.map((frame) => upscale(frame, SCALE))
-  return { png: encodePng(big[0]), apng: encodeApng(big, big.map(() => FRAME_MS)), topic: topic.id }
+  return { png: encodePng(big[0]), apng: encodeApng(big, big.map(() => topic.frameMs ?? FRAME_MS)), topic: topic.id }
 }
 
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
