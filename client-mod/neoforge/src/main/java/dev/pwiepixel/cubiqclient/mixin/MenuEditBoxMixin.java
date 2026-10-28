@@ -18,7 +18,7 @@ import net.minecraft.client.gui.GuiGraphics;
 /*import com.mojang.blaze3d.vertex.PoseStack;*/
 
 /**
- * Textfelder im Redstone-Stil, solange ein gestyltes Vanilla-Menü offen ist (Direkt verbinden, Server
+ * Textfelder im Cubiq-Stil, solange ein gestyltes Vanilla-Menü offen ist (Direkt verbinden, Server
  * hinzufügen, Suche in den Welten …). In allen Versionen fragt das Feld zuerst {@code isBordered()} und
  * zeichnet nur dann den Rahmen (bis 1.20.1 zwei Rechtecke, danach ein Sprite): direkt davor zeichnen wir die
  * eigene Fläche und schalten den Rahmen für genau diesen Aufruf ab, direkt danach wieder an – Text,

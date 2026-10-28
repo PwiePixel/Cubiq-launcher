@@ -19,7 +19,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 /**
  * Bis 1.19.3 (ohne {@code Screen#renderWithTooltip}): Ladebildschirme nach ihrem eigenen Zeichnen im
- * Redstone-Stil übermalen. Ab 1.19.4 erledigt das {@link MenuScreenMixin}; dann ist diese Klasse leer und
+ * Cubiq-Stil übermalen. Ab 1.19.4 erledigt das {@link MenuScreenMixin}; dann ist diese Klasse leer und
  * steht nicht in der Mixin-Liste.
  */
 //? if <1.19.4 {

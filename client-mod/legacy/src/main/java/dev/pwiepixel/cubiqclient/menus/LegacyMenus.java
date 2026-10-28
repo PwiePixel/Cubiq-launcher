@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Redstone-Stil für Vanilla-Menüs unter Minecraft 1.8.9–1.12.2 (ohne Mixins, nur Forge-Ereignisse):
+ * Cubiq-Stil für Vanilla-Menüs unter Minecraft 1.8.9–1.12.2 (ohne Mixins, nur Forge-Ereignisse):
  * Hintergrund von Pausenmenü und Einstellungen ({@code BackgroundDrawnEvent}), Knopfflächen im Stil
  * (nach dem Vanilla-Zeichnen übermalt, Beschriftung neu), Ladebildschirme komplett, Cubiq-Knöpfe im
  * Pausenmenü. Formulare (Direkt verbinden, Server hinzufügen/bearbeiten) bekommen eine Fläche hinter den
@@ -330,7 +330,7 @@ public final class LegacyMenus {
 			Canvas c = canvas(s);
 			if (k == MenuStyle.Kind.LOADING) {
 				String title = I18n.tr(s instanceof GuiConnecting ? "menus.loading.connecting" : "menus.loading.terrain");
-				// „Abbrechen“ (h/4+132) freihalten: Logo, Titel und Lampen stehen darüber.
+				// „Abbrechen“ (h/4+132) freihalten: Logo, Titel und Fortschritt stehen darüber.
 				int top = Integer.MAX_VALUE;
 				int bottom = -1;
 				List<GuiButton> own = buttons.get(s);

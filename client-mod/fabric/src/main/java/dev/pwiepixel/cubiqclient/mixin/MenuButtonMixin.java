@@ -19,7 +19,7 @@ import net.minecraft.client.gui.GuiGraphics;
 *///?}
 
 /**
- * Knopfflächen im Redstone-Stil, solange ein gestyltes Vanilla-Menü offen ist. Ab 1.21.11 wird nur die
+ * Knopfflächen im Cubiq-Stil, solange ein gestyltes Vanilla-Menü offen ist. Ab 1.21.11 wird nur die
  * Standard-Fläche ersetzt (Beschriftung und Symbole bleiben die des Knopfs); davor wird die Fläche ersetzt
  * und die Vanilla-Beschriftung darüber gezeichnet. Knöpfe mit eigener Darstellung (auch von Mods) bleiben,
  * wie sie sind.
