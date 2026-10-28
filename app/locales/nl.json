@@ -4062,6 +4062,15 @@
         "flee": "Vlucht",
         "handsup": "Handen omhoog"
       },
+      "actions": "Interactie",
+      "action": {
+        "pet": "Aaien",
+        "eat": "Voeren"
+      },
+      "actionHint": {
+        "pet": "Voorbeeld van aaien – klik in het spel met een lege hand met rechts op je metgezel",
+        "eat": "Voorbeeld van voeren – klik in het spel met eten in je hand met rechts op je metgezel"
+      },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {
         "penguin": "{n} pinguïn | {n} pinguïns"
