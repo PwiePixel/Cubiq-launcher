@@ -96,7 +96,6 @@ async function knock() {
           </div>
         </div>
         <div class="mt-3 flex flex-wrap gap-1.5">
-          <span class="pool">{{ t('halloween.trick.pool.cape') }}</span>
           <span class="pool">{{ t('halloween.trick.pool.emotes') }}</span>
           <span class="pool">{{ t('halloween.trick.pool.stickers') }}</span>
           <span class="pool">{{ t('halloween.trick.pool.sour') }}</span>
@@ -117,7 +116,7 @@ async function knock() {
         <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-base-400">
           <span>{{ t('halloween.hunt.rewardLabel') }}</span>
           <span class="hw-badge"><HalloweenPixelSprite name="pk8" class="h-[18px] w-5" />{{ t('halloween.badges.pumpkinhunter2026') }}</span>
-          <span>{{ t('halloween.hunt.rewardCape') }}</span>
+          <span>{{ t('halloween.hunt.rewardWings') }}</span>
         </div>
       </section>
 

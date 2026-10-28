@@ -2427,7 +2427,7 @@
         "options": {
           "cubiq": {
             "name": "Cubiq",
-            "text": "Navy aus dem Logo mit Akzenten in Cubiq-Grün"
+            "text": "Dunkle Flächen mit einem Hauch Grün und Akzenten in Cubiq-Grün"
           },
           "winter": {
             "name": "Polarlicht",
@@ -3430,6 +3430,26 @@
     "preparing": "Minecraft wird vorbereitet",
     "crashed": "Das Spiel wurde unerwartet beendet – die Logs zeigen meist die Ursache."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Hüpf über die Blöcke, während Minecraft startet.",
+    "start": "Spielen",
+    "controls": "Leertaste, ↑ oder Klick zum Hüpfen – in der Luft noch einmal für einen Doppelsprung.",
+    "areaLabel": "Cubi Hop. Leertaste, Pfeil nach oben oder Klick zum Hüpfen.",
+    "score": "Punkte {score}",
+    "best": "Rekord {score}",
+    "newBest": "Neuer Rekord!",
+    "over": "Autsch! Klicken oder Leertaste für einen neuen Versuch.",
+    "paused": "Pause – klicken oder Leertaste zum Weitermachen.",
+    "result": "Vorbei. Punkte: {score}.",
+    "resultBest": "Vorbei. Punkte: {score} – neuer Rekord!",
+    "windowSoon": "Minecraft öffnet sein Fenster …",
+    "ready": "Minecraft ist bereit!",
+    "closesIn": "Schließt in {seconds} s",
+    "keepPlaying": "Weiterspielen",
+    "closeNow": "Schließen",
+    "close": "Minispiel schließen"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Darstellung",
@@ -3512,7 +3532,7 @@
       "button": "Mehr erfahren & einschalten",
       "shares": "Um Screenshots als Link zu teilen, meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
       "achievements": "Um deine Erfolge zu zeigen, meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
-      "cosmetics": "Für Cubiq-Kopf-Kosmetik meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
+      "cosmetics": "Für Cubiq-Kosmetik meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
       "remote": "Um deinen PC vom Handy aus zu steuern, meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
       "creator": "Das Creator-Programm (Codes, Fan-Symbole, Fan-Umhänge) braucht die Cubiq-Dienste."
     },
@@ -3933,7 +3953,6 @@
     "glows": "Leuchtet",
     "tryOn": "{name} anprobieren",
     "tryOnLocked": "{name} anprobieren (gesperrt)",
-    "empty": "Noch keine Kopf-Kosmetik verfügbar.",
     "offline": "Der Cubiq-Server ist gerade nicht erreichbar.",
     "previewFailed": "Die 3D-Vorschau dieses Teils konnte nicht geladen werden.",
     "how": {
@@ -3966,8 +3985,7 @@
     },
     "companion": {
       "title": "Begleiter",
-      "intro": "Fliegt zusätzlich zum Hut um deinen Kopf. Die Vorschau zeigt Hut, Begleiter und Umhang zusammen.",
-      "empty": "Noch keine Begleiter.",
+      "intro": "Fliegt um deinen Kopf. Die Vorschau zeigt Begleiter und Umhang zusammen.",
       "wearing": "Begleiter: {name}",
       "selectedWorn": "Fliegt mit – alle mit Cubiq Client sehen ihn.",
       "toasts": {
@@ -3977,8 +3995,7 @@
     },
     "wings": {
       "title": "Flügel",
-      "intro": "Sitzen zusätzlich zu Hut und Begleiter auf deinem Rücken. Die Vorschau zeigt sie am Boden, in der Luft und beim Schleichen.",
-      "empty": "Noch keine Flügel.",
+      "intro": "Sitzen zusätzlich zu einem Begleiter auf deinem Rücken. Die Vorschau zeigt sie am Boden, in der Luft und beim Schleichen.",
       "wearing": "Flügel: {name}",
       "selectedWorn": "Auf deinem Rücken – alle mit Cubiq Client sehen sie.",
       "toasts": {
@@ -3996,7 +4013,6 @@
       "title": "Begleiter am Boden",
       "intro": "Läuft neben dir her – alle mit Cubiq Client sehen ihn. Die Vorschau zeigt ihn neben deiner Figur.",
       "creatorHint": "Creator-Haustier: Fans bekommen es über die Codes des Creators, der Creator selbst läuft mit mehr je nach Fans (ab 10 zwei, ab 100 drei, ab 1000 vier).",
-      "empty": "Noch keine Begleiter am Boden.",
       "wearing": "Neben dir: {name}",
       "selectedWorn": "Läuft neben dir her – alle mit Cubiq Client sehen ihn.",
       "toasts": {
@@ -4756,6 +4772,10 @@
     "more": "{n} weitere Bilder",
     "openRelease": "Release auf GitHub ansehen"
   },
+  "updateModel": {
+    "label": "3D-Modell des Update-Bilds. Zum Drehen ziehen oder die Pfeiltasten nutzen.",
+    "hint": "Zum Drehen ziehen"
+  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} Clip oder Aufnahme | {n} Clips und Aufnahmen",
@@ -4972,6 +4992,53 @@
     "chatHint": "Nur Chat-Nachrichten",
     "allHint": "Wieder alles zeigen",
     "nothingSelected": "Keine Stufe ausgewählt – klick oben einen der Knöpfe an."
+  },
+  "perfLive": {
+    "title": "Live-Leistung",
+    "client": "Cubiq Client",
+    "expand": "Kurven zeigen",
+    "collapse": "Kurven ausblenden",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS nur mit dem Cubiq Client",
+    "fpsLimited": "Im Hintergrund gebremst",
+    "fpsWaiting": "Warte auf die ersten Bilder …",
+    "fpsStats": "Ø {avg} · min. {min}",
+    "heap": "Java: {used} von {max}",
+    "systemFree": "PC: {free} frei",
+    "cpuNote": "vom ganzen PC ({cores} Threads)",
+    "noData": "noch keine Werte",
+    "chartSummary": "{label} in der letzten Minute: jetzt {now}, Durchschnitt {avg}, niedrigster Wert {min}, höchster {max}",
+    "now": "jetzt",
+    "secondsAgo": "vor {seconds} s",
+    "dismissTip": "Tipp ausblenden",
+    "tips": {
+      "performanceAction": "Leistungs-Einstellungen",
+      "memory": {
+        "title": "Minecraft geht der Speicher aus",
+        "text": "Der Java-Speicher ist seit einer Weile fast voll. Das sorgt für Ruckler und kann das Spiel abstürzen lassen – gib dieser Instanz mehr Speicher.",
+        "action": "Speicher-Einstellungen"
+      },
+      "systemMemory": {
+        "title": "Dein PC hat kaum noch freien Speicher",
+        "text": "Nur noch {free} sind frei. Schließ Programme, die du gerade nicht brauchst – Minecraft noch mehr Speicher zu geben, würde es schlimmer machen."
+      },
+      "stutter": {
+        "title": "Kurze Ruckler",
+        "text": "Die Bildrate bricht immer wieder kurz ein. Senk die Sichtweite oder nutz die Cubiq-Optimierung – und ist der Java-Speicher fast voll, gib der Instanz mehr."
+      },
+      "lowFps": {
+        "title": "Niedrige Bildrate",
+        "text": "Senk die Sichtweite in den Grafikeinstellungen oder nutz den FPS-Boost im Spiel: Cubiq-Menü (rechte Umschalttaste) → Leistung.",
+        "boostOff": "Die Cubiq-Optimierung ist für diese Instanz aus. Schalt sie ein – Sodium und andere Leistungs-Mods bringen meist deutlich mehr FPS."
+      },
+      "cpu": {
+        "title": "Prozessor am Limit",
+        "text": "Minecraft nutzt fast den ganzen Prozessor. Senk Sicht- und Simulationsweite oder schließ Programme, die im Hintergrund laufen."
+      }
+    }
   },
   "logShare": {
     "qrLabel": "QR-Code des Links",
@@ -8077,7 +8144,6 @@
         "other": "Belohnung"
       },
       "pool": {
-        "cape": "Mondnacht-Umhang – zufällige Farbe, jeder nur einen",
         "emotes": "4 Emotes",
         "stickers": "6 Chat-Sticker",
         "sour": "Saures ≈ 1 von 4"
@@ -8087,10 +8153,10 @@
       "title": "Kürbis-Suche",
       "text": "13 Kürbisse, versteckt in Launcher, Website und Cubiq Client. Jeder Fund zählt fürs Konto (der Server prüft jeden Kürbis, doppelt zählt nicht).",
       "found": "Kürbis gefunden! {n}/{total}",
-      "complete": "Alle 13! Abzeichen „Kürbisjäger 2026“ und Umhang freigeschaltet.",
+      "complete": "Alle 13! Abzeichen „Kürbisjäger 2026“ freigeschaltet, dazu Halloween-Flügel deiner Wahl.",
       "pumpkinLabel": "Ein versteckter Kürbis",
       "rewardLabel": "Belohnung für alle 13:",
-      "rewardCape": "+ Umhang „Kürbisjäger“ und eine von 4 Halloween-Flügeln zur Wahl",
+      "rewardWings": "+ eine von 4 Halloween-Flügeln zur Wahl",
       "logLine": "[🎃] Zwischen diesen Zeilen grinst etwas …"
     },
     "badges": {

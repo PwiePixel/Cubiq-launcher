@@ -2386,7 +2386,7 @@
         "options": {
           "cubiq": {
             "name": "Cubiq",
-            "text": "Logonun lacivert tonu ve Cubiq yeşili vurgular"
+            "text": "Hafif yeşil tonlu koyu yüzeyler ve Cubiq yeşili vurgular"
           },
           "winter": {
             "name": "Kuzey Işıkları",
@@ -3385,6 +3385,26 @@
     "preparing": "Minecraft hazırlanıyor",
     "crashed": "Oyun beklenmedik şekilde kapandı – nedeni genellikle günlüklerde görünür."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Minecraft başlarken blokların üzerinden zıpla.",
+    "start": "Oyna",
+    "controls": "Zıplamak için Boşluk, ↑ veya tıkla – çift zıplama için havada bir kez daha bas.",
+    "areaLabel": "Cubi Hop. Zıplamak için Boşluk'a ya da yukarı oka bas veya tıkla.",
+    "score": "Puan {score}",
+    "best": "Rekor {score}",
+    "newBest": "Yeni rekor!",
+    "over": "Ah! Tekrar denemek için tıkla veya Boşluk'a bas.",
+    "paused": "Duraklatıldı – devam etmek için tıkla veya Boşluk'a bas.",
+    "result": "Oyun bitti. Puan: {score}.",
+    "resultBest": "Oyun bitti. Puan: {score} – yeni rekor!",
+    "windowSoon": "Minecraft penceresini açıyor…",
+    "ready": "Minecraft hazır!",
+    "closesIn": "{seconds} sn içinde kapanır",
+    "keepPlaying": "Oynamaya devam et",
+    "closeNow": "Kapat",
+    "close": "Mini oyunu kapat"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Arayüz",
@@ -3465,7 +3485,7 @@
       "button": "Daha fazla bilgi ve aç",
       "shares": "Ekran görüntülerini bağlantı olarak paylaşmak için başlatıcı Cubiq sunucusuna giriş yapar. Bu yalnızca onay verdiğinde olur.",
       "achievements": "Başarımlarını göstermek için launcher Cubiq sunucusuna giriş yapar. Bu yalnızca onay verdiğinde olur.",
-      "cosmetics": "Cubiq kafa kozmetiklerini göstermek için launcher Cubiq sunucusuna giriş yapar. Bu yalnızca sen onay verdikten sonra olur.",
+      "cosmetics": "Cubiq kozmetiklerini göstermek için launcher Cubiq sunucusuna giriş yapar. Bu yalnızca sen onay verdikten sonra olur.",
       "remote": "Bilgisayarını bu telefondan kontrol etmek için başlatıcı Cubiq sunucusunda oturum açar. Bu yalnızca sen onay verdikten sonra olur."
     },
     "account": {
@@ -3883,7 +3903,6 @@
     "glows": "Parlar",
     "tryOn": "Dene: {name}",
     "tryOnLocked": "Dene: {name} (kilitli)",
-    "empty": "Henüz kafa kozmetiği yok.",
     "offline": "Cubiq sunucusuna şu anda ulaşılamıyor.",
     "previewFailed": "Bu eşyanın 3D önizlemesi yüklenemedi.",
     "how": {
@@ -3915,8 +3934,7 @@
     },
     "companion": {
       "title": "Yoldaşlar",
-      "intro": "Şapkanın yanında başının etrafında uçar. Önizleme şapkayı, yoldaşı ve pelerini birlikte gösterir.",
-      "empty": "Henüz yoldaş yok.",
+      "intro": "Başının etrafında uçar. Önizleme yoldaşı ve pelerini birlikte gösterir.",
       "wearing": "Yoldaş: {name}",
       "selectedWorn": "Seninle uçuyor – Cubiq Client kullanan herkes görür.",
       "toasts": {
@@ -3928,7 +3946,6 @@
       "title": "Yerdeki yoldaşlar",
       "intro": "Yanında yürür – Cubiq Client kullanan herkes onu görür. Önizleme onu karakterinin yanında gösterir.",
       "creatorHint": "Creator evcil hayvanı: hayranlar onu creator'ın kodlarıyla alır, creator'ın kendisi hayran sayısına göre daha fazlasıyla dolaşır (10'dan itibaren iki, 100'den üç, 1000'den dört).",
-      "empty": "Henüz yerde yoldaş yok.",
       "wearing": "Yanında: {name}",
       "selectedWorn": "Yanında yürür – Cubiq Client kullanan herkes onu görür.",
       "toasts": {
@@ -4688,6 +4705,10 @@
     "more": "{n} görsel daha",
     "openRelease": "Sürümü GitHub'da görüntüle"
   },
+  "updateModel": {
+    "label": "Güncelleme görselinin 3B modeli. Döndürmek için sürükle veya ok tuşlarını kullan.",
+    "hint": "Döndürmek için sürükle"
+  },
   "clips": {
     "title": "Klipler",
     "subtitle": "{n} klip veya kayıt | {n} klip ve kayıt",
@@ -4904,6 +4925,53 @@
     "chatHint": "Yalnızca sohbet mesajları",
     "allHint": "Yeniden her şeyi göster",
     "nothingSelected": "Seviye seçilmedi – yukarıdaki düğmelerden birine tıkla."
+  },
+  "perfLive": {
+    "title": "Canlı performans",
+    "client": "Cubiq Client",
+    "expand": "Grafikleri göster",
+    "collapse": "Grafikleri gizle",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS yalnızca Cubiq Client ile",
+    "fpsLimited": "Arka planda sınırlı",
+    "fpsWaiting": "İlk kareler bekleniyor…",
+    "fpsStats": "Ort. {avg} · en düşük {min}",
+    "heap": "Java: {used} / {max}",
+    "systemFree": "PC: {free} boş",
+    "cpuNote": "tüm bilgisayarın ({cores} iş parçacığı)",
+    "noData": "henüz değer yok",
+    "chartSummary": "Son bir dakikada {label}: şu an {now}, ortalama {avg}, en düşük {min}, en yüksek {max}",
+    "now": "şu an",
+    "secondsAgo": "{seconds} sn önce",
+    "dismissTip": "İpucunu gizle",
+    "tips": {
+      "performanceAction": "Performans ayarları",
+      "memory": {
+        "title": "Minecraft'ın belleği bitiyor",
+        "text": "Java belleği bir süredir neredeyse dolu. Bu takılmalara yol açar ve oyunu çökertebilir – bu örneğe daha fazla bellek ver.",
+        "action": "Bellek ayarları"
+      },
+      "systemMemory": {
+        "title": "Bilgisayarının belleği neredeyse bitti",
+        "text": "Yalnızca {free} boş. Şu an ihtiyacın olmayan programları kapat – Minecraft'a daha da fazla bellek vermek durumu kötüleştirir."
+      },
+      "stutter": {
+        "title": "Kısa takılmalar",
+        "text": "Kare hızı tekrar tekrar bir anlığına düşüyor. Görüş mesafesini azalt veya Cubiq optimizasyonunu kullan – Java belleği neredeyse doluysa örneğe daha fazla bellek ver."
+      },
+      "lowFps": {
+        "title": "Düşük kare hızı",
+        "text": "Görüntü ayarlarında görüş mesafesini azalt veya oyunda FPS artışını kullan: Cubiq menüsü (Sağ Shift) → Performans.",
+        "boostOff": "Bu örnek için Cubiq optimizasyonu kapalı. Aç – Sodium ve diğer performans modları genellikle çok daha fazla FPS sağlar."
+      },
+      "cpu": {
+        "title": "İşlemci sınırda",
+        "text": "Minecraft işlemcinin neredeyse tamamını kullanıyor. Görüş ve simülasyon mesafesini azalt veya arka planda çalışan programları kapat."
+      }
+    }
   },
   "logShare": {
     "qrLabel": "Bağlantının QR kodu",

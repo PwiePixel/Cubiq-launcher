@@ -296,6 +296,10 @@ function openFolder() {
         </div>
         <CrashPanel v-else-if="game.lastExit?.crashed" :instance-id="instance.id" :exit-code="game.lastExit.exitCode" :diagnosis="game.lastExit.diagnosis" :crash-id="game.lastExit.crashId" class="mb-4 shrink-0" />
         <FpsBoostHint :instance="instance" />
+        <!-- Während Minecraft startet: „Cubi Hop“ zum Zeitvertreib. -->
+        <LaunchMiniGame :instance-id="instance.id" class="mb-4 shrink-0" />
+        <!-- Läuft das Spiel: FPS, RAM und CPU live, mit Tipps, wenn es ruckelt. -->
+        <PerfLivePanel :instance="instance" class="mb-4 shrink-0" @open-settings="settingsOpen = $event" />
 
         <PackUpdateNotice :instance-id="instance.id" @share="sharingPack = true" />
         <SharePackDialog v-if="sharingPack" :instance="instance" @close="sharingPack = false" />
@@ -339,7 +343,7 @@ function openFolder() {
 .crumb {
   @apply inline-flex w-fit items-center gap-1 rounded-lg py-0.5 pr-1.5 text-xs font-medium text-base-400 transition-colors hover:text-base-50;
 }
-/* Kopf: Karte wie die Bühne der Startseite – Titelbild rechts, Navy links für die Schrift. */
+/* Kopf: Karte wie die Bühne der Startseite – Titelbild rechts, dunkel links für die Schrift. */
 .head {
   @apply rounded-3xl border border-line bg-base-900;
   box-shadow: var(--edge-light), var(--elev-2);
@@ -393,7 +397,7 @@ function openFolder() {
   outline: 2px solid var(--color-primary-400);
   outline-offset: -2px;
 }
-/* Aktiver Reiter: Navy mit einem Hauch Grün und grüner Kante – wie jede Auswahl im Launcher. */
+/* Aktiver Reiter: Fläche mit einem Hauch Grün und grüner Kante – wie jede Auswahl im Launcher. */
 .itab-on,
 .itab-on:hover {
   @apply text-base-50;

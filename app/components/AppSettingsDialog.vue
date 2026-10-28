@@ -170,9 +170,9 @@ const winterPicture = computed(() => winterPreviewUrl(winterVariant.value))
 type SchemeLook = { frame: string; canvas: string; card: string; line: string; ink: string }
 const schemeLooks: Record<Design, Record<Exclude<Theme, 'system'>, SchemeLook>> = {
   cubiq: {
-    dark: { frame: '#04061a', canvas: '#070a1d', card: '#0c1028', line: '#1e2550', ink: '#283062' },
-    oled: { frame: '#000000', canvas: '#000000', card: '#05060f', line: '#151937', ink: '#1f2447' },
-    light: { frame: '#e1e5f1', canvas: '#edf0f8', card: '#ffffff', line: '#dde1ef', ink: '#d2d7e8' },
+    dark: { frame: '#080b09', canvas: '#0c100e', card: '#111613', line: '#212b24', ink: '#29332c' },
+    oled: { frame: '#000000', canvas: '#000000', card: '#050706', line: '#161d19', ink: '#1f2721' },
+    light: { frame: '#dfe7e2', canvas: '#eef2ef', card: '#ffffff', line: '#d9e3dd', ink: '#d2dbd4' },
   },
   winter: {
     dark: { frame: '#050913', canvas: '#070c18', card: '#0a1222', line: '#182840', ink: '#1e2e4a' },
@@ -920,24 +920,24 @@ async function allowFirewall() {
   color: var(--color-on-primary);
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
 }
-/* Die Cubiq-Vorschau zeigt immer Cubiqs eigene Farben (Navy, Grün) – auch während das Polarlicht aktiv ist. */
+/* Die Cubiq-Vorschau zeigt immer Cubiqs eigene Farben (grün getönte Flächen, Grün) – auch während das Polarlicht aktiv ist. */
 .look-cubiq {
   position: absolute;
   inset: 0;
-  --color-base-950: #070a1d;
-  --color-base-900: #0c1028;
+  --color-base-950: #0c100e;
+  --color-base-900: #111613;
   --color-primary-400: #88bb45;
   --color-primary-500: #71a330;
-  background: #070a1d;
+  background: #0c100e;
 }
 :root[data-theme="oled"] .look-cubiq {
   --color-base-950: #000000;
-  --color-base-900: #05060f;
+  --color-base-900: #050706;
   background: #000000;
 }
 :root[data-theme="light"] .look-cubiq {
-  --color-base-950: #edf0f8;
+  --color-base-950: #eef2ef;
   --color-base-900: #ffffff;
-  background: #edf0f8;
+  background: #eef2ef;
 }
 </style>

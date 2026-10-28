@@ -246,7 +246,7 @@ watch(
   position: fixed;
   inset: 0;
   z-index: 2147482000;
-  background: #070a1d;
+  background: #0c100e;
 }
 .messe-pitch-frame {
   display: block;

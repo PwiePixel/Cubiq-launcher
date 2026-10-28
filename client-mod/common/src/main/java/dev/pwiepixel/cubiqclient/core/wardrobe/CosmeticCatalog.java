@@ -253,6 +253,16 @@ public final class CosmeticCatalog {
 			return equipped;
 		}
 
+		/**
+		 * Gibt es in diesem Fach ein Teil – oder trägt man dort noch eins? Fächer ohne Teile (zurzeit die Hüte) blendet die
+		 * Garderobe ganz aus.
+		 */
+		public boolean hasSlot(String slot) {
+			if (equipped(slot) != null) return true;
+			for (Item i : items) if (slot.equals(i.slot)) return true;
+			return false;
+		}
+
 		/** Ist die Option {@code optionId} im Fach {@code slot} an? {@code fallback} = Standard des Modells. */
 		public boolean option(String slot, String optionId, boolean fallback) {
 			Map<String, Boolean> m = options.get(slot);

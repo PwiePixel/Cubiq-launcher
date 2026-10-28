@@ -5,7 +5,7 @@
 @import "./winter.css";
 
 /*
- * Cubiq-Design: Flächen im Navy des Logos (#0a0a30) mit klaren Höhenstufen, das Grün aus dem
+ * Cubiq-Design: dunkle Flächen mit einem Hauch Grün und klaren Höhenstufen, das Grün aus dem
  * Logo (#71a330) als einziger Akzent und ein helleres Lime für alles, was gerade läuft (Spiel
  * gestartet, Download aktiv). Formen kommen vom Würfel-Logo: weiche Rechtecke („Squircles“),
  * feine 1–2-px-Kanten und – sparsam – der isometrische Würfel als Zeichen (Abschnitte, Leer-
@@ -13,27 +13,27 @@
  */
 @theme {
   /*
-   * Navy-Skala. 950–700 sind Flächen und Kanten (Grund → Dock/Karten → Dialoge/Menüs →
+   * Grün-graue Skala. 950–700 sind Flächen und Kanten (Grund → Dock/Karten → Dialoge/Menüs →
    * Bedienelemente → kräftige Kanten), 600–50 sind Schrift: auch die leiseste Stufe (600)
    * hält auf Karten mindestens 4,5:1 Kontrast.
    */
-  --color-base-950: #070a1d;
-  --color-base-900: #0c1028;
-  --color-base-850: #121737;
-  --color-base-800: #1a2046;
-  --color-base-700: #283062;
-  --color-base-600: #7880ad;
-  --color-base-500: #8b93bd;
-  --color-base-400: #a1a8cd;
-  --color-base-300: #bcc2e0;
-  --color-base-200: #d2d6ee;
-  --color-base-100: #e3e6f7;
-  --color-base-50: #f2f4fd;
+  --color-base-950: #0c100e;
+  --color-base-900: #111613;
+  --color-base-850: #161c18;
+  --color-base-800: #1d2520;
+  --color-base-700: #29332c;
+  --color-base-600: #73877a;
+  --color-base-500: #889a8e;
+  --color-base-400: #9fada4;
+  --color-base-300: #b4c9bb;
+  --color-base-200: #cddad1;
+  --color-base-100: #e0e8e3;
+  --color-base-50: #f2f5f3;
   /* Kanten: fein (Karten, Leisten, Dock) und deutlich (Hover, gewählte Rahmen). */
-  --color-line: #1e2550;
-  --color-line-strong: #323b78;
+  --color-line: #212b24;
+  --color-line-strong: #39423c;
   /* Fensterrahmen um die Leinwand (Dock, obere Leiste): eine Stufe tiefer als der Grund der Seiten. */
-  --color-frame: #04061a;
+  --color-frame: #080b09;
 
   --color-primary-200: #cde8a6;
   --color-primary-300: #a9d46b;
@@ -132,10 +132,10 @@
   /* Weicher Schein hinter Inhalten der Akzentfarbe (Szene, Knöpfe). */
   --glow-primary: color-mix(in srgb, var(--color-primary-500) 35%, transparent);
   /*
-   * Höhenstufen: Schatten in tiefem Navy statt Schwarz, dazu eine feine helle Oberkante
+   * Höhenstufen: Schatten in tiefem Grün-Schwarz statt reinem Schwarz, dazu eine feine helle Oberkante
    * („Licht von oben“) auf gehobenen Flächen.
    */
-  --shadow-rgb: 2 4 20;
+  --shadow-rgb: 2 6 4;
   --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.045);
   --elev-1: 0 1px 2px rgb(var(--shadow-rgb) / 0.4);
   --elev-2: 0 14px 32px -14px rgb(var(--shadow-rgb) / 0.75);
@@ -151,43 +151,43 @@
 
 /*
  * Farbschemata: überschreiben nur die Grundskala. „Dunkel“ ist der Standard oben;
- * OLED geht auf echtes Schwarz (Flächen bleiben navy getönt), Hell dreht die Skala um.
+ * OLED geht auf echtes Schwarz (Flächen bleiben grün getönt), Hell dreht die Skala um.
  */
 :root[data-theme="oled"] {
   --color-base-950: #000000;
-  --color-base-900: #05060f;
-  --color-base-850: #0a0c1c;
-  --color-base-800: #12152c;
-  --color-base-700: #1f2447;
-  --color-line: #151937;
-  --color-line-strong: #262c58;
+  --color-base-900: #050706;
+  --color-base-850: #0a0d0b;
+  --color-base-800: #121714;
+  --color-base-700: #1f2721;
+  --color-line: #161d19;
+  --color-line-strong: #27332b;
   --color-frame: #000000;
 }
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-base-950: #edf0f8;
+  --color-base-950: #eef2ef;
   --color-base-900: #ffffff;
-  --color-base-850: #f6f7fc;
-  --color-base-800: #e6e9f4;
-  --color-base-700: #d2d7e8;
-  --color-base-600: #5a628c;
-  --color-base-500: #4e5680;
-  --color-base-400: #424a73;
-  --color-base-300: #333a62;
-  --color-base-200: #252b4f;
-  --color-base-100: #171c3a;
-  --color-base-50: #0a0e26;
-  --color-line: #dde1ef;
-  --color-line-strong: #c2c8de;
-  --color-frame: #e1e5f1;
-  --shadow-rgb: 34 42 92;
+  --color-base-850: #f5f8f6;
+  --color-base-800: #e5ebe6;
+  --color-base-700: #d2dbd4;
+  --color-base-600: #58685e;
+  --color-base-500: #4e5c52;
+  --color-base-400: #444f48;
+  --color-base-300: #363f39;
+  --color-base-200: #253129;
+  --color-base-100: #19201b;
+  --color-base-50: #0d110f;
+  --color-line: #d9e3dd;
+  --color-line-strong: #bacdc1;
+  --color-frame: #dfe7e2;
+  --shadow-rgb: 30 46 36;
   --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.8);
   --elev-2: 0 14px 30px -16px rgb(var(--shadow-rgb) / 0.3);
   --elev-3: 0 28px 60px -24px rgb(var(--shadow-rgb) / 0.38), 0 2px 8px rgb(var(--shadow-rgb) / 0.1);
   --pick-bg: color-mix(in srgb, var(--color-primary-500) 12%, var(--color-base-900));
   --pick-edge: color-mix(in srgb, var(--color-primary-600) 60%, transparent);
   --iso-line: color-mix(in srgb, var(--color-primary-600) 14%, transparent);
-  --iso-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='30' viewBox='0 0 52 30'%3E%3Cpath d='M0 0L52 30M0 30L52 0M0 0V30M26 0V30M52 0V30' stroke='%230a0e26' stroke-opacity='.06' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  --iso-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='30' viewBox='0 0 52 30'%3E%3Cpath d='M0 0L52 30M0 30L52 0M0 0V30M26 0V30M52 0V30' stroke='%230d110f' stroke-opacity='.06' stroke-width='1' fill='none'/%3E%3C/svg%3E");
   --color-primary-300: #46711a;
   --color-primary-200: #3b5e15;
   --color-primary-900: #e6f2d6;
@@ -319,7 +319,7 @@
   --color-base-850: #13101f;
   --color-base-800: #1b1629;
   --color-base-700: #2a2440;
-  /* 600/500 sind Schrift (leise, aber lesbar) – wie in der Navy-Skala. */
+  /* 600/500 sind Schrift (leise, aber lesbar) – wie in der Grundskala. */
   --color-base-600: #8a83a9;
   --color-base-500: #948eb2;
   --color-base-400: #9a94b4;
@@ -456,7 +456,7 @@ textarea {
       inset 0 -1px 0 rgb(0 0 0 / 0.16),
       0 8px 22px -10px var(--glow-primary);
   }
-  /* Neben-Aktionen: Navy-Fläche mit klarer 1-px-Kante. */
+  /* Neben-Aktionen: dunkle Fläche mit klarer 1-px-Kante. */
   .btn-ghost {
     @apply bg-base-800 text-base-200 hover:bg-base-700 hover:text-base-50;
     box-shadow: inset 0 0 0 1px var(--color-line-strong);
@@ -621,7 +621,7 @@ textarea {
   }
 
   /* --- Auswahl: Segmente und Reiter ----------------------------------------------- */
-  /* Gewählt heißt überall: Navy mit einem Hauch Grün und grüner Kante. */
+  /* Gewählt heißt überall: Fläche mit einem Hauch mehr Grün und grüner Kante. */
   .seg {
     @apply px-3 py-1.5 text-base-400 transition-colors hover:text-base-50;
   }
@@ -639,7 +639,7 @@ textarea {
     background: var(--pick-bg);
     box-shadow: inset 0 0 0 1px var(--pick-edge);
   }
-  /* Auswahl-Kacheln (Loader, Stufen, Presets, Optionen): gewählt wie alles andere – Navy mit Hauch Grün. */
+  /* Auswahl-Kacheln (Loader, Stufen, Presets, Optionen): gewählt wie alles andere – mit einem Hauch Grün. */
   .choice {
     @apply rounded-xl border border-line bg-base-900 text-base-400 transition-[border-color,background-color,color,box-shadow] hover:border-line-strong hover:text-base-50 disabled:cursor-not-allowed disabled:opacity-45;
   }

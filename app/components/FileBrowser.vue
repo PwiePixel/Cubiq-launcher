@@ -656,7 +656,7 @@ const nameDialogTitle = computed(() => {
 .file-icon {
   @apply flex size-6 shrink-0 items-center justify-center rounded-md bg-base-850;
 }
-/* Eigene Kästchen: das native weiße Kästchen passt nicht zu den Navy-Flächen. */
+/* Eigene Kästchen: das native weiße Kästchen passt nicht zu den dunklen Flächen. */
 .fcheck {
   appearance: none;
   display: inline-block;

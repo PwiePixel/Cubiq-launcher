@@ -28,6 +28,7 @@ import {
   CUBIQ_HOST,
   cubiqRedeemSchema,
   cubiqHatSchema,
+  cubiqSlotHidden,
 } from '../app/utils/cubiq'
 
 // Die meisten Erwartungen sind die deutschen Texte; Englisch wird extra geprüft.
@@ -325,5 +326,17 @@ describe('Kosmetik-Codes und Kopf-Kosmetik', () => {
   it('prüft Kopf-Kosmetik streng', () => {
     expect(cubiqHatSchema.parse({ id: 'rubber_duck', name: 'Quietscheente', template: 'duck', equipped: true }).equipped).toBe(true)
     expect(() => cubiqHatSchema.parse({ id: '../x', name: 'x', template: 'duck', equipped: false })).toThrow()
+  })
+
+  it('blendet Kosmetik-Fächer ohne Teile aus – Hüte erst, wenn es welche gibt', () => {
+    const items = [{ slot: 'wings' }, { slot: 'pet' }, { slot: 'pet' }]
+    expect(cubiqSlotHidden('hat', items)).toBe(true)
+    expect(cubiqSlotHidden('companion', items)).toBe(true)
+    expect(cubiqSlotHidden('wings', items)).toBe(false)
+    expect(cubiqSlotHidden('pet', items)).toBe(false)
+    expect(cubiqSlotHidden('hat', [...items, { slot: 'hat' }])).toBe(false)
+    // Noch nicht geladen (oder nicht angemeldet): die anderen Fächer zeigen ihren Hinweis, der Hut-Abschnitt nicht.
+    expect(cubiqSlotHidden('hat', null)).toBe(true)
+    expect(cubiqSlotHidden('pet', null)).toBe(false)
   })
 })

@@ -28,6 +28,135 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
+## 0.2.51 – 2026-10-28 – Back to green | Wieder grün
+<!-- banner: accent=#71a330 motif=/news/0.2.51/banner.png anim=/news/0.2.51/banner-anim.png -->
+<!-- shots:
+/news/0.2.51/green-again-home.png | The home screen in Cubiq green again | Der Startbildschirm wieder in Cubiq-Grün
+/news/0.2.51/green-again-settings.png | Settings → Appearance with the green colour schemes | Einstellungen → Aussehen mit den grünen Farbschemata
+-->
+<!-- shots:
+/news/0.2.51/launch-mini-game.png | Cubi Hop while Minecraft starts | Cubi Hop, während Minecraft startet
+-->
+<!-- shots:
+/news/0.2.51/live-performance.png | Live performance on the instance page | Live-Leistung auf der Instanzseite
+-->
+
+<!-- shots:
+/news/0.2.51/update-3d-model.png | The update picture as a 3D model in "What's new" | Das Update-Bild als 3D-Modell unter „Was ist neu“
+-->
+
+### English
+- **Cubiq green is back.** The launcher returns to its green colours: windows, cards, menus and dialogs sit on calm,
+  dark surfaces with a hint of green again instead of the navy blue of the last update, and Cubiq green stays the
+  colour for buttons, the page you are on and everything you can select. Everything else from the new look stays as it
+  is – the sidebar with names and groups, the home screen with the big play button and "Jump back in", the rounded
+  shapes and the animated update pictures. The light and OLED colour schemes are tinted green too, and under
+  Settings → Appearance you can still pick another accent colour or switch to the winter design "Northern Lights",
+  which stays as it was.
+- **The same green everywhere.** The menus, the title screen and the loading screens of the Cubiq Client in the game,
+  the touch controls on Android and the help screen of the iPhone app use the same green-tinted colours as the
+  launcher, so nothing jumps back to blue when you start a game.
+- **A mini-game while Minecraft starts.** When you press Play, a small card called "Cubi Hop" appears on the home
+  screen and on the instance page for as long as the launcher prepares and starts the game. Cubi runs along a strip of
+  grass under the Cubiq night sky, and you hop over grass and stone blocks with Space, the up arrow or a click (a tap
+  on touch screens) – press once more in the air for a double hop. Every block you clear counts, golden sparkles give
+  an extra point, and the game gets a little faster with each point. Your best score is saved for each account and
+  shown next to your current score, and the card also shows how far the start has come.
+- **Closes when the game is there.** As soon as the Minecraft window opens, the card says "Minecraft is ready!" and
+  closes after a few seconds – or click "Keep playing" to finish your run; the × closes it at any time. The game never
+  takes the focus away from Minecraft, pauses as soon as you switch to the game or another window, and only draws
+  while you can see it, so the start does not get any slower. Without "Reduce animations" Cubi shows you how it works
+  by hopping on his own until you take over; with "Reduce animations" (Settings → Appearance → Animations) nothing
+  moves until you click Play in the card.
+- **Live performance while you play.** While an instance is running, its page now shows "Live performance": three
+  small live charts for FPS, RAM and CPU covering the last minute, updated about once per second. Below each value you
+  see a useful detail – the average and lowest FPS, how full Minecraft's own Java memory is (for example "Java: 3.7 GB
+  of 4 GB") and that the CPU value means your whole PC. Point at a chart to read the value of any second. FPS and Java
+  memory come from the Cubiq Client in the game; without it you still get RAM and CPU. The arrow in the corner folds
+  the panel into a single line with the current numbers, and it only measures while the launcher window is visible.
+- **Tips when something is off.** If a problem lasts for a few seconds, the panel explains it and helps right away:
+  when Minecraft's Java memory stays almost full, "Memory settings" takes you straight to the memory of this instance;
+  when your PC itself runs out of free memory, it asks you to close other programs instead (more memory for the game
+  would make it worse). For low FPS or repeated short stutters it suggests the Cubiq optimization, with a button to the
+  setting, or the FPS boost in the game (Cubiq menu with Right Shift → Performance), and when the processor is at its
+  limit it suggests a lower render and simulation distance. Each tip can be hidden with ×.
+- **A tidier cosmetics tab.** The Cosmetics tab on the Skins page and the wardrobe of the Cubiq Client in the game now
+  only show the sections that actually have items. Head cosmetics are gone for now, so the "Head cosmetics" section
+  no longer appears as an empty box – you start right with wings, companions and ground companions. If a section gets
+  items again later, it comes back on its own.
+- **Halloween rewards without capes.** The Halloween card on the home page no longer lists capes:
+  knocking at the pumpkin can still bring emotes and chat stickers, and finding all 13 pumpkins unlocks the badge
+  "Pumpkin Hunter 2026" plus one of four Halloween wings of your choice. The setting in the Cubiq Client is now simply
+  called "Show Cubiq cosmetics".
+- **Update pictures in 3D.** The little pixel-art scene of every update – Cubi on his floating grass island next to the
+  object of the update – is now a real 3D model in "What's new" and on the update card on the home screen. The island
+  is a chunky block that gets narrower towards the bottom, Cubi and the objects stand on it as solid figures, and the
+  sparkles are thin glints. The model gently swings from side to side. Drag it with the mouse or your finger to turn it
+  all the way around, or select it with Tab and use the arrow keys (Home turns it back). A short click on it still
+  opens the update post, just like before. It works for every update, old and new, because the launcher builds the
+  model from the picture itself. If you chose "Reduce animations" under Settings → Appearance → Animations, the model
+  stands still until you turn it, and while Minecraft is starting or running it rests as well, so the game gets all
+  the power. On computers without graphics acceleration it only moves when you turn it; on phones and on the smaller
+  news cards you keep the flat picture.
+
+### Deutsch
+- **Cubiq-Grün ist zurück.** Der Launcher bekommt seine grünen Farben zurück: Fenster, Karten, Menüs und Dialoge
+  liegen wieder auf ruhigen, dunklen Flächen mit einem Hauch Grün statt auf dem Navy-Blau des letzten Updates, und
+  Cubiq-Grün bleibt die Farbe für Knöpfe, die Seite, auf der du bist, und alles, was du auswählen kannst. Alles andere
+  vom neuen Look bleibt, wie es ist – die Seitenleiste mit Namen und Gruppen, der Startbildschirm mit dem großen
+  Spielen-Knopf und „Weiterspielen“, die runden Formen und die animierten Update-Bilder. Auch die Farbschemata Hell und
+  OLED sind grün getönt, und unter Einstellungen → Aussehen kannst du weiterhin eine andere Akzentfarbe wählen oder zum
+  Winter-Design „Polarlicht“ wechseln, das bleibt, wie es war.
+- **Überall dasselbe Grün.** Die Menüs, der Startbildschirm und die Ladebildschirme des Cubiq Client im Spiel, die
+  Touch-Steuerung auf Android und der Hilfe-Bildschirm der iPhone-App nutzen dieselben grün getönten Farben wie der
+  Launcher – beim Spielstart springt also nichts zurück auf Blau.
+- **Ein Minispiel, während Minecraft startet.** Drückst du auf Spielen, erscheint im Startbildschirm und auf der
+  Instanzseite eine kleine Karte „Cubi Hop“, solange der Launcher das Spiel vorbereitet und startet. Cubi läuft über
+  einen Grasstreifen unter dem Cubiq-Nachthimmel, und du hüpfst mit der Leertaste, dem Pfeil nach oben oder einem
+  Klick (am Touchscreen mit Tippen) über Gras- und Steinblöcke – ein zweiter Druck in der Luft gibt einen
+  Doppelsprung. Jeder überwundene Block zählt, goldenes Funkeln bringt einen Extrapunkt, und mit jedem Punkt wird es
+  ein bisschen schneller. Dein Rekord wird je Konto gespeichert und neben den aktuellen Punkten angezeigt, und die
+  Karte zeigt auch, wie weit der Start schon ist.
+- **Schließt, wenn das Spiel da ist.** Sobald sich das Minecraft-Fenster öffnet, meldet die Karte „Minecraft ist
+  bereit!“ und schließt sich nach ein paar Sekunden – oder du klickst auf „Weiterspielen“, um deine Runde zu Ende zu
+  spielen; mit dem × schließt du sie jederzeit. Das Spiel nimmt Minecraft nie den Fokus, pausiert, sobald du ins
+  Spiel oder in ein anderes Fenster wechselst, und zeichnet nur, solange du es siehst – der Start wird dadurch nicht
+  langsamer. Ohne „Animationen reduzieren“ zeigt dir Cubi, wie es geht, und hüpft allein, bis du übernimmst; mit
+  „Animationen reduzieren“ (Einstellungen → Aussehen → Animationen) bewegt sich nichts, bis du in der Karte auf
+  Spielen klickst.
+- **Live-Leistung beim Spielen.** Läuft eine Instanz, zeigt ihre Seite jetzt „Live-Leistung“: drei kleine Live-Kurven
+  für FPS, RAM und CPU über die letzte Minute, etwa einmal je Sekunde aktualisiert. Unter jedem Wert steht eine
+  nützliche Angabe – die durchschnittlichen und niedrigsten FPS, wie voll Minecrafts eigener Java-Speicher ist (zum
+  Beispiel „Java: 3,7 GB von 4 GB“) und dass sich der CPU-Wert auf deinen ganzen PC bezieht. Zeig auf eine Kurve, um
+  den Wert jeder Sekunde abzulesen. FPS und Java-Speicher meldet der Cubiq Client im Spiel; ohne ihn bekommst du
+  trotzdem RAM und CPU. Der Pfeil in der Ecke klappt die Anzeige zu einer Zeile mit den aktuellen Zahlen zusammen, und
+  gemessen wird nur, solange das Launcher-Fenster zu sehen ist.
+- **Tipps, wenn etwas hakt.** Hält ein Problem ein paar Sekunden an, erklärt die Anzeige es und hilft gleich weiter:
+  Bleibt Minecrafts Java-Speicher fast voll, bringt dich „Speicher-Einstellungen“ direkt zum Speicher dieser Instanz;
+  geht deinem PC selbst der freie Speicher aus, rät sie stattdessen, andere Programme zu schließen (mehr Speicher fürs
+  Spiel würde es dann schlimmer machen). Bei niedrigen FPS oder immer wiederkehrenden kurzen Rucklern schlägt sie die
+  Cubiq-Optimierung vor, mit einem Knopf zur Einstellung, oder den FPS-Boost im Spiel (Cubiq-Menü mit der rechten
+  Umschalttaste → Leistung), und ist der Prozessor am Limit, eine geringere Sicht- und Simulationsweite. Jeden Tipp
+  kannst du mit dem × ausblenden.
+- **Aufgeräumte Kosmetik.** Der Reiter „Kosmetik“ auf der Skins-Seite und die Garderobe des Cubiq Client im Spiel
+  zeigen nur noch die Bereiche, in denen es auch Teile gibt. Kopf-Kosmetik gibt es vorerst nicht mehr, deshalb steht
+  der Bereich „Kopf-Kosmetik“ nicht mehr als leerer Kasten da – du landest direkt bei Flügeln, Begleitern und
+  Begleitern am Boden. Bekommt ein Bereich später wieder Teile, taucht er von selbst wieder auf.
+- **Halloween-Belohnungen ohne Umhänge.** Die Halloween-Karte auf der Startseite nennt keine Umhänge mehr:
+  Beim Anklopfen am Kürbis gibt es weiterhin Emotes und Chat-Sticker, und wer alle 13 Kürbisse findet, bekommt das
+  Abzeichen „Kürbisjäger 2026“ und dazu eine von vier Halloween-Flügeln zur Wahl. Die Einstellung im Cubiq Client
+  heißt jetzt einfach „Cubiq-Kosmetik anzeigen“.
+- **Update-Bilder in 3D.** Die kleine Pixel-Art-Szene jedes Updates – Cubi auf seiner schwebenden Grasinsel neben dem
+  Gegenstand des Updates – ist jetzt unter „Was ist neu“ und auf der Update-Karte im Startbildschirm ein echtes
+  3D-Modell. Die Insel ist ein kräftiger Block, der nach unten schmaler wird, Cubi und die Gegenstände stehen als feste
+  Figuren darauf, und das Funkeln sind dünne Lichtpunkte. Das Modell schwingt sanft hin und her. Zieh es mit der Maus
+  oder dem Finger, um es ganz herumzudrehen, oder wähl es mit Tab aus und nimm die Pfeiltasten (Pos1 dreht es zurück).
+  Ein kurzer Klick darauf öffnet wie bisher den Update-Beitrag. Das klappt für jedes Update, alte wie neue, denn der
+  Launcher baut das Modell aus dem Bild selbst. Hast du unter Einstellungen → Aussehen → Animationen „Animationen
+  reduzieren“ gewählt, steht das Modell still, bis du es drehst, und während Minecraft startet oder läuft, ruht es
+  ebenfalls, damit das Spiel die volle Leistung bekommt. Auf Rechnern ohne Grafikbeschleunigung bewegt es sich nur,
+  wenn du es drehst; am Handy und auf den kleineren Neuigkeiten-Karten bleibt das flache Bild.
+
 ## 0.2.5 – 2026-10-27
 <!-- banner: accent=#71a330 motif=/news/0.2.5/banner.png anim=/news/0.2.5/banner-anim.png -->
 

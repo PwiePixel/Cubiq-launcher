@@ -96,6 +96,13 @@ pub fn get_game_logs(launcher: State<'_, LauncherState>, id: String) -> Vec<LogL
     launcher.games().logs(&id)
 }
 
+/// Live-Leistung des laufenden Spiels (CPU-Zeit, Arbeitsspeicher, mit Cubiq Client auch FPS und Java-Speicher) –
+/// die Oberfläche fragt etwa einmal je Sekunde, solange die Anzeige zu sehen ist. `None`: Es läuft nicht.
+#[tauri::command]
+pub async fn game_perf(launcher: State<'_, LauncherState>, id: String) -> CommandResult<Option<cubiq_core::game_perf::GamePerf>> {
+    Ok(launcher.game_perf(&id).await)
+}
+
 /// Prüft alle Spieldateien per Prüfsumme und lädt beschädigte neu.
 #[tauri::command]
 pub async fn repair_instance(

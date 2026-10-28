@@ -188,7 +188,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', closeMenu))
   border-radius: calc(var(--radius-xl) - 0.375rem);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
 }
-/* Loader und Version auf dem Bild: kleines Navy-Schild mit feiner Kante. */
+/* Loader und Version auf dem Bild: kleines dunkles Schild mit feiner Kante. */
 .tile-chip {
   @apply inline-flex items-center gap-1.5 rounded-lg bg-base-950/75 px-2 py-0.5 text-[11px] leading-4 text-base-200 backdrop-blur;
   box-shadow: inset 0 0 0 1px var(--color-line-strong);
@@ -196,7 +196,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', closeMenu))
 .tile-play {
   box-shadow: 0 8px 20px -8px rgb(var(--shadow-rgb) / 0.9);
 }
-/* Menü-Knopf auf dem Bild: erscheint beim Überfahren (am Handy immer), Navy-Schild wie der Loader-Chip. */
+/* Menü-Knopf auf dem Bild: erscheint beim Überfahren (am Handy immer), dunkles Schild wie der Loader-Chip. */
 .tile-more {
   @apply grid size-7 place-items-center rounded-lg bg-base-950/75 text-base-200 opacity-0 backdrop-blur transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-base-800 hover:text-base-50 focus-visible:opacity-100;
   box-shadow: inset 0 0 0 1px var(--color-line-strong);

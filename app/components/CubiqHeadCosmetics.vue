@@ -37,6 +37,8 @@ const offline = ref(false)
 const busy = ref(false)
 
 const listed = computed(() => (items.value ?? []).filter((c) => c.slot === props.cosmeticSlot))
+/** Fach ohne ein einziges Teil (z. B. Hüte): ganz ausblenden statt leer zeigen. */
+const hidden = computed(() => cubiqSlotHidden(props.cosmeticSlot, items.value))
 const equipped = computed(() => listed.value.find((c) => c.equipped) ?? null)
 // Die Seite zeigt das getragene Teil in der Vorschau – so wie andere es im Spiel sehen.
 watch(equipped, (item) => emit('equipped', item), { immediate: true })
@@ -193,6 +195,7 @@ const howText = computed(() => {
 
 <template>
   <section
+    v-if="!hidden"
     :aria-labelledby="pick('cubiq-head-title', 'cubiq-companion-title', 'cubiq-wings-title', 'cubiq-pet-title')"
     :data-testid="pick('cubiq-head-cosmetics', 'cubiq-companions', 'cubiq-wings', 'cubiq-pets')"
   >
@@ -271,9 +274,6 @@ const howText = computed(() => {
             </button>
           </li>
         </ul>
-        <p v-if="!listed.length" class="card px-4 py-6 text-center text-sm text-base-400">
-          {{ tKey(pick('headCosmetics.empty', 'headCosmetics.companion.empty', 'headCosmetics.wings.empty', 'headCosmetics.pet.empty')) }}
-        </p>
 
         <!-- Aktionen für das angeprobte Teil -->
         <div v-if="selected" class="card mt-3 flex flex-wrap items-center gap-3 px-4 py-3" data-testid="cubiq-head-actions">

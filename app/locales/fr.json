@@ -2386,7 +2386,7 @@
         "options": {
           "cubiq": {
             "name": "Cubiq",
-            "text": "Bleu marine du logo avec des accents vert Cubiq"
+            "text": "Surfaces sombres avec une touche de vert et des accents vert Cubiq"
           },
           "winter": {
             "name": "Aurore boréale",
@@ -3385,6 +3385,26 @@
     "preparing": "Préparation de Minecraft",
     "crashed": "Le jeu s'est fermé de manière inattendue – les journaux indiquent généralement la cause."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Sautez par-dessus les blocs pendant que Minecraft démarre.",
+    "start": "Jouer",
+    "controls": "Espace, ↑ ou clic pour sauter – appuyez encore en l’air pour un double saut.",
+    "areaLabel": "Cubi Hop. Appuyez sur Espace, la flèche du haut ou cliquez pour sauter.",
+    "score": "Score {score}",
+    "best": "Record {score}",
+    "newBest": "Nouveau record !",
+    "over": "Aïe ! Cliquez ou appuyez sur Espace pour réessayer.",
+    "paused": "En pause – cliquez ou appuyez sur Espace pour continuer.",
+    "result": "Partie terminée. Score : {score}.",
+    "resultBest": "Partie terminée. Score : {score} – nouveau record !",
+    "windowSoon": "Minecraft ouvre sa fenêtre…",
+    "ready": "Minecraft est prêt !",
+    "closesIn": "Fermeture dans {seconds} s",
+    "keepPlaying": "Continuer à jouer",
+    "closeNow": "Fermer",
+    "close": "Fermer le mini-jeu"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Interface",
@@ -3465,7 +3485,7 @@
       "button": "En savoir plus et activer",
       "shares": "Pour partager des captures par lien, le launcher se connecte au serveur Cubiq. Cela n’arrive qu’après ton accord.",
       "achievements": "Pour afficher tes succès, le launcher se connecte au serveur Cubiq. Cela n'arrive qu'une fois que tu as accepté.",
-      "cosmetics": "Pour afficher les cosmétiques de tête Cubiq, le launcher se connecte au serveur Cubiq. Cela n’arrive qu’une fois que tu as donné ton accord.",
+      "cosmetics": "Pour afficher les cosmétiques Cubiq, le launcher se connecte au serveur Cubiq. Cela n’arrive qu’une fois que tu as donné ton accord.",
       "remote": "Pour contrôler ton PC depuis ce téléphone, le launcher se connecte au serveur Cubiq. Cela n’arrive qu’après ton accord."
     },
     "account": {
@@ -3883,7 +3903,6 @@
     "glows": "Brille",
     "tryOn": "Essayer {name}",
     "tryOnLocked": "Essayer {name} (verrouillé)",
-    "empty": "Aucun cosmétique de tête pour le moment.",
     "offline": "Le serveur Cubiq est injoignable pour le moment.",
     "previewFailed": "Impossible de charger l’aperçu 3D de cet objet.",
     "how": {
@@ -3915,8 +3934,7 @@
     },
     "companion": {
       "title": "Compagnons",
-      "intro": "Vole autour de ta tête en plus du chapeau. L’aperçu montre chapeau, compagnon et cape ensemble.",
-      "empty": "Pas encore de compagnon.",
+      "intro": "Vole autour de ta tête. L’aperçu montre compagnon et cape ensemble.",
       "wearing": "Compagnon : {name}",
       "selectedWorn": "Il vole avec toi – tous les joueurs avec le Cubiq Client le voient.",
       "toasts": {
@@ -3928,7 +3946,6 @@
       "title": "Compagnons au sol",
       "intro": "Marche à côté de toi – tous ceux qui ont Cubiq Client le voient. L’aperçu le montre à côté de ton personnage.",
       "creatorHint": "Compagnon de créateur : les fans l'obtiennent avec les codes du créateur, et le créateur en a plus selon ses fans (deux dès 10, trois dès 100, quatre dès 1000).",
-      "empty": "Pas encore de compagnons au sol.",
       "wearing": "À côté de toi : {name}",
       "selectedWorn": "Marche à côté de toi – tous ceux qui ont Cubiq Client le voient.",
       "toasts": {
@@ -4688,6 +4705,10 @@
     "more": "{n} images de plus",
     "openRelease": "Voir la version sur GitHub"
   },
+  "updateModel": {
+    "label": "Modèle 3D de l’image de la mise à jour. Faites-le glisser ou utilisez les flèches pour le faire pivoter.",
+    "hint": "Glisser pour pivoter"
+  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} clip ou enregistrement | {n} clips et enregistrements",
@@ -4904,6 +4925,53 @@
     "chatHint": "Seulement les messages du chat",
     "allHint": "Tout afficher à nouveau",
     "nothingSelected": "Aucun niveau sélectionné – clique sur un des boutons ci-dessus."
+  },
+  "perfLive": {
+    "title": "Performances en direct",
+    "client": "Cubiq Client",
+    "expand": "Afficher les courbes",
+    "collapse": "Masquer les courbes",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS uniquement avec le Cubiq Client",
+    "fpsLimited": "Limité en arrière-plan",
+    "fpsWaiting": "En attente des premières images…",
+    "fpsStats": "Moy. {avg} · min. {min}",
+    "heap": "Java : {used} sur {max}",
+    "systemFree": "PC : {free} libres",
+    "cpuNote": "de tout le PC ({cores} threads)",
+    "noData": "pas encore de valeurs",
+    "chartSummary": "{label} sur la dernière minute : maintenant {now}, moyenne {avg}, minimum {min}, maximum {max}",
+    "now": "maintenant",
+    "secondsAgo": "il y a {seconds} s",
+    "dismissTip": "Masquer le conseil",
+    "tips": {
+      "performanceAction": "Réglages de performance",
+      "memory": {
+        "title": "Minecraft manque de mémoire",
+        "text": "La mémoire Java est presque pleine depuis un moment. Cela provoque des saccades et peut faire planter le jeu – donnez plus de mémoire à cette instance.",
+        "action": "Réglages de mémoire"
+      },
+      "systemMemory": {
+        "title": "Votre PC n’a presque plus de mémoire",
+        "text": "Il ne reste que {free} de libre. Fermez les programmes dont vous n’avez pas besoin – donner encore plus de mémoire à Minecraft aggraverait la situation."
+      },
+      "stutter": {
+        "title": "Courtes saccades",
+        "text": "La fréquence d’images chute régulièrement un instant. Réduisez la distance d’affichage ou utilisez l’optimisation Cubiq – et si la mémoire Java est presque pleine, donnez-en plus à l’instance."
+      },
+      "lowFps": {
+        "title": "Fréquence d’images basse",
+        "text": "Réduisez la distance d’affichage dans les réglages vidéo ou utilisez le boost FPS en jeu : menu Cubiq (Maj droite) → Performances.",
+        "boostOff": "L’optimisation Cubiq est désactivée pour cette instance. Activez-la – Sodium et d’autres mods de performance apportent généralement beaucoup plus de FPS."
+      },
+      "cpu": {
+        "title": "Processeur à la limite",
+        "text": "Minecraft utilise presque tout votre processeur. Réduisez la distance d’affichage et de simulation, ou fermez les programmes qui tournent en arrière-plan."
+      }
+    }
   },
   "logShare": {
     "qrLabel": "QR code du lien",

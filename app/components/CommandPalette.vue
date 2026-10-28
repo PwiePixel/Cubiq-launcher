@@ -367,7 +367,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <!-- Suche: schwebende Navy-Fläche über abgedunkeltem Grund; die aktive Zeile trägt die grüne Auswahl-Kante. -->
+  <!-- Suche: schwebende dunkle Fläche über abgedunkeltem Grund; die aktive Zeile trägt die grüne Auswahl-Kante. -->
   <div ref="backdrop" class="palette-backdrop fixed inset-0 z-[70] flex justify-center p-6 pt-[12vh] mobile:p-0" @mousedown.self="close">
     <div
       data-motion-panel
@@ -466,7 +466,7 @@ onMounted(async () => {
 .palette-input:focus-visible {
   outline: none;
 }
-/* Aktive Zeile: Navy mit einem Hauch Grün und grüner Kante – wie jede Auswahl im Launcher. */
+/* Aktive Zeile: Fläche mit einem Hauch Grün und grüner Kante – wie jede Auswahl im Launcher. */
 .palette-on {
   background: var(--pick-bg);
   box-shadow: inset 0 0 0 1px var(--pick-edge);

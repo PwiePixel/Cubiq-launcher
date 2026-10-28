@@ -162,6 +162,52 @@ pub const FEATURE_CLIPS_OVERLAY: &str = "clips.overlay";
 /// Anfrage `clips.hud {buffer}`: Will der Spieler die Puffer-Anzeige sehen (Einstellung der Mod)?
 pub const OP_CLIPS_HUD: &str = "clips.hud";
 
+// --- Live-Leistung ------------------------------------------------------------
+
+/// Merkmal: Das Spiel meldet etwa einmal je Sekunde seine Leistung als Zeile
+/// `{"type":"perf","fps":…,"limited":…,"heapUsed":…,"heapMax":…}` (MB) – nur für die Live-Leistungsanzeige
+/// im Launcher, nie ein Befehl. Die Mod schickt sie nur, wenn der Launcher das Merkmal nennt.
+pub const FEATURE_PERF: &str = "perf.report";
+/// So lange gilt eine Meldung (danach meldet das Spiel nichts mehr, z. B. weil es hängt).
+const PERF_FRESH: Duration = Duration::from_secs(4);
+/// Schneller kommende Meldungen werden verworfen.
+const PERF_MIN_INTERVAL: Duration = Duration::from_millis(400);
+/// Obergrenzen: Bildrate und Java-Speicher (MB).
+const PERF_MAX_FPS: u64 = 10_000;
+const PERF_MAX_HEAP_MB: u64 = 1 << 20;
+
+/// Leistung, wie der Cubiq Client sie meldet (jedes Feld geprüft; fehlt es oder ist es unsinnig: `None`).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LinkPerf {
+    pub fps: Option<u32>,
+    /// Die Bildrate wird gerade absichtlich gebremst (Fenster im Hintergrund, „Dynamische FPS“).
+    pub limited: bool,
+    pub heap_used_mb: Option<u32>,
+    pub heap_max_mb: Option<u32>,
+}
+
+impl LinkPerf {
+    /// Aus einer `perf`-Zeile; `None`, wenn nichts Brauchbares darin steht.
+    fn parse(msg: &Incoming) -> Option<Self> {
+        fn number(value: Option<&serde_json::Value>, max: u64) -> Option<u32> {
+            let n = value?.as_f64().filter(|n| n.is_finite() && *n >= 0.0)?.round();
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            let n = n as u64;
+            (n <= max).then(|| u32::try_from(n).ok()).flatten()
+        }
+        let fps = number(msg.fps.as_ref(), PERF_MAX_FPS);
+        let heap_max = number(msg.heap_max.as_ref(), PERF_MAX_HEAP_MB).filter(|m| *m > 0);
+        // Belegt kann nie viel mehr sein als das Maximum.
+        let heap_used = number(msg.heap_used.as_ref(), PERF_MAX_HEAP_MB).filter(|u| heap_max.is_none_or(|m| u64::from(*u) <= u64::from(m) * 11 / 10));
+        let limited = matches!(&msg.limited, Some(serde_json::Value::Bool(true)));
+        if fps.is_none() && heap_used.is_none() && heap_max.is_none() {
+            return None;
+        }
+        Some(Self { fps, limited, heap_used_mb: heap_used, heap_max_mb: heap_max })
+    }
+}
+
 /// Was das Overlay des Launchers für ein Spiel anzeigen darf.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LinkHud {
@@ -531,6 +577,8 @@ struct Session {
     buffer_hud: bool,
     /// Lage des HUD-Elements „Clips“ (`clips.hud`).
     hud_place: Option<HudPlace>,
+    /// Letzte Leistungsmeldung des Spiels und wann sie kam.
+    perf: Option<(LinkPerf, Instant)>,
 }
 
 impl Session {
@@ -555,6 +603,7 @@ impl Session {
             overlay_live: 0,
             buffer_hud: true,
             hud_place: None,
+            perf: None,
         }
     }
 
@@ -650,6 +699,13 @@ impl Shared {
         {
             session.hosting_state = HostingDelivery::Pending { room_id: world.room_id.clone() };
             session.hosting = Some((world, Instant::now()));
+        }
+    }
+
+    /// Leistungsmeldung der Sitzung `sid` merken (nur für die Sitzung, mit der sich die Verbindung angemeldet hat).
+    fn record_perf(&self, instance_id: &str, sid: &str, perf: LinkPerf) {
+        if let Some(session) = self.hub().get_mut(instance_id).filter(|s| proto::ct_eq(s.sid.as_bytes(), sid.as_bytes())) {
+            session.perf = Some((perf, Instant::now()));
         }
     }
 
@@ -929,6 +985,13 @@ impl CubiqLink {
         session.hosting_state.clone()
     }
 
+    /// Letzte Leistungsmeldung des Cubiq Clients dieser Instanz – nur, wenn sie frisch ist.
+    pub fn perf(&self, instance_id: &str) -> Option<LinkPerf> {
+        let hub = self.shared.hub();
+        let (perf, at) = hub.get(instance_id)?.perf?;
+        (at.elapsed() <= PERF_FRESH).then_some(perf)
+    }
+
     /// Instanzen, deren Spiel gerade mit dem Cubiq Client verbunden ist
     /// (angemeldete v2-Verbindung offen; alte v1-Mods zählen nicht).
     pub fn linked(&self) -> Vec<String> {
@@ -1085,6 +1148,15 @@ struct Incoming {
     offset_x: Option<serde_json::Value>,
     #[serde(default, rename = "offsetY")]
     offset_y: Option<serde_json::Value>,
+    /// `perf`: Bildrate, gebremst?, Java-Speicher belegt/maximal (MB).
+    #[serde(default)]
+    fps: Option<serde_json::Value>,
+    #[serde(default)]
+    limited: Option<serde_json::Value>,
+    #[serde(default, rename = "heapUsed")]
+    heap_used: Option<serde_json::Value>,
+    #[serde(default, rename = "heapMax")]
+    heap_max: Option<serde_json::Value>,
 }
 
 /// Eine angemeldete Verbindung.
@@ -1182,7 +1254,7 @@ async fn handshake(
         "nonce": nl,
         "proof": proto::hex(&proto::launcher_proof(&key, &sid, &nc, &nl)),
         "features": ["clips", "accounts", FEATURE_CLIPS_ENABLE, FEATURE_CLIPS_PREVIEW, FEATURE_CLIPS_OPEN, FEATURE_HOSTING_JOIN,
-            FEATURE_HOSTING_MODS, FEATURE_HOSTING_OPEN, FEATURE_CLIPS_OVERLAY],
+            FEATURE_HOSTING_MODS, FEATURE_HOSTING_OPEN, FEATURE_CLIPS_OVERLAY, FEATURE_PERF],
     });
     write_json(write, &challenge).await?;
     tokio::time::timeout_at(deadline, read_line(reader, buf)).await.ok()??;
@@ -1513,6 +1585,7 @@ async fn serve(stream: TcpStream, peer: SocketAddr, port: u16, shared: Arc<Share
         let (conn, shared) = (conn.clone(), shared.clone());
         tokio::spawn(async move {
             let mut last_command = Instant::now().checked_sub(COMMAND_COOLDOWN).unwrap_or_else(Instant::now);
+            let mut last_perf: Option<Instant> = None;
             while read_line(&mut reader, &mut buf).await.is_some() {
                 let Ok(msg) = serde_json::from_slice::<Incoming>(&buf) else { continue };
                 match msg.kind.as_str() {
@@ -1524,6 +1597,16 @@ async fn serve(stream: TcpStream, peer: SocketAddr, port: u16, shared: Arc<Share
                             shared.command(&conn.instance_id, command);
                         } else {
                             tracing::debug!("Cubiq-Link: {command:?} verworfen (Sperrzeit)");
+                        }
+                    }
+                    // Leistung (nur v2, gebremst, jedes Feld geprüft) – reine Anzeige im Launcher.
+                    "perf" if conn.v2 => {
+                        if last_perf.is_some_and(|t| t.elapsed() < PERF_MIN_INTERVAL) || !conn.valid(&shared) {
+                            continue;
+                        }
+                        if let Some(perf) = LinkPerf::parse(&msg) {
+                            last_perf = Some(Instant::now());
+                            shared.record_perf(&conn.instance_id, &conn.marker, perf);
                         }
                     }
                     "req" => {

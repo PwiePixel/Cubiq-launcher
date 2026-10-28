@@ -2427,7 +2427,7 @@
         "options": {
           "cubiq": {
             "name": "Cubiq",
-            "text": "Azul marino del logo con acentos en verde Cubiq"
+            "text": "Superficies oscuras con un toque de verde y acentos en verde Cubiq"
           },
           "winter": {
             "name": "Aurora boreal",
@@ -3430,6 +3430,26 @@
     "preparing": "Preparando Minecraft",
     "crashed": "El juego se cerró inesperadamente: los registros suelen mostrar la causa."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Salta sobre los bloques mientras Minecraft se inicia.",
+    "start": "Jugar",
+    "controls": "Espacio, ↑ o clic para saltar; pulsa otra vez en el aire para un doble salto.",
+    "areaLabel": "Cubi Hop. Pulsa Espacio, la flecha arriba o haz clic para saltar.",
+    "score": "Puntos {score}",
+    "best": "Récord {score}",
+    "newBest": "¡Nuevo récord!",
+    "over": "¡Ay! Haz clic o pulsa Espacio para intentarlo de nuevo.",
+    "paused": "En pausa: haz clic o pulsa Espacio para continuar.",
+    "result": "Fin de la partida. Puntos: {score}.",
+    "resultBest": "Fin de la partida. Puntos: {score}. ¡Nuevo récord!",
+    "windowSoon": "Minecraft está abriendo su ventana…",
+    "ready": "¡Minecraft está listo!",
+    "closesIn": "Se cierra en {seconds} s",
+    "keepPlaying": "Seguir jugando",
+    "closeNow": "Cerrar",
+    "close": "Cerrar minijuego"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Interfaz",
@@ -3512,7 +3532,7 @@
       "button": "Más información y activar",
       "shares": "Para compartir capturas como enlace, el launcher inicia sesión en el servidor Cubiq. Eso solo ocurre cuando aceptas.",
       "achievements": "Para mostrar tus logros, el launcher inicia sesión en el servidor Cubiq. Eso solo ocurre cuando aceptas.",
-      "cosmetics": "Para los cosméticos de cabeza de Cubiq, el launcher inicia sesión en el servidor de Cubiq. Solo ocurre si das tu consentimiento.",
+      "cosmetics": "Para los cosméticos de Cubiq, el launcher inicia sesión en el servidor de Cubiq. Solo ocurre si das tu consentimiento.",
       "remote": "Para controlar tu PC desde este móvil, el launcher inicia sesión en el servidor de Cubiq. Eso solo ocurre cuando aceptas.",
       "creator": "El programa de creadores (códigos, símbolos de fan, capas de fan) necesita los servicios Cubiq."
     },
@@ -3933,7 +3953,6 @@
     "glows": "Brilla",
     "tryOn": "Probar {name}",
     "tryOnLocked": "Probar {name} (bloqueado)",
-    "empty": "Todavía no hay cosméticos de cabeza.",
     "offline": "El servidor de Cubiq no está disponible en este momento.",
     "previewFailed": "No se pudo cargar la vista previa 3D de este objeto.",
     "how": {
@@ -3966,8 +3985,7 @@
     },
     "companion": {
       "title": "Compañeros",
-      "intro": "Vuela alrededor de tu cabeza además del sombrero. La vista previa muestra sombrero, compañero y capa juntos.",
-      "empty": "Aún no hay compañeros.",
+      "intro": "Vuela alrededor de tu cabeza. La vista previa muestra compañero y capa juntos.",
       "wearing": "Compañero: {name}",
       "selectedWorn": "Vuela contigo: todos con Cubiq Client lo ven.",
       "toasts": {
@@ -3977,8 +3995,7 @@
     },
     "wings": {
       "title": "Alas",
-      "intro": "Van en tu espalda además del sombrero y el acompañante. La vista previa las muestra en el suelo, en el aire y agachado.",
-      "empty": "Aún no hay alas.",
+      "intro": "Van en tu espalda además del acompañante. La vista previa las muestra en el suelo, en el aire y agachado.",
       "wearing": "Alas: {name}",
       "selectedWorn": "En tu espalda: todos con Cubiq Client las ven.",
       "toasts": {
@@ -3996,7 +4013,6 @@
       "title": "Compañeros en el suelo",
       "intro": "Camina a tu lado: todos con Cubiq Client lo ven. La vista previa lo muestra junto a tu personaje.",
       "creatorHint": "Mascota de creador: los fans la consiguen con los códigos del creador, y el creador lleva más según sus fans (dos desde 10, tres desde 100, cuatro desde 1000).",
-      "empty": "Aún no hay compañeros en el suelo.",
       "wearing": "A tu lado: {name}",
       "selectedWorn": "Camina a tu lado: todos con Cubiq Client lo ven.",
       "toasts": {
@@ -4756,6 +4772,10 @@
     "more": "{n} imágenes más",
     "openRelease": "Ver la versión en GitHub"
   },
+  "updateModel": {
+    "label": "Modelo 3D de la imagen de la actualización. Arrástralo o usa las flechas para girarlo.",
+    "hint": "Arrastra para girar"
+  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} clip o grabación | {n} clips y grabaciones",
@@ -4972,6 +4992,53 @@
     "chatHint": "Solo mensajes del chat",
     "allHint": "Volver a mostrar todo",
     "nothingSelected": "Ningún nivel seleccionado: pulsa uno de los botones de arriba."
+  },
+  "perfLive": {
+    "title": "Rendimiento en vivo",
+    "client": "Cubiq Client",
+    "expand": "Mostrar gráficos",
+    "collapse": "Ocultar gráficos",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS solo con el Cubiq Client",
+    "fpsLimited": "Limitado en segundo plano",
+    "fpsWaiting": "Esperando los primeros fotogramas…",
+    "fpsStats": "Media {avg} · mín. {min}",
+    "heap": "Java: {used} de {max}",
+    "systemFree": "PC: {free} libres",
+    "cpuNote": "de todo el PC ({cores} hilos)",
+    "noData": "aún sin valores",
+    "chartSummary": "{label} en el último minuto: ahora {now}, media {avg}, mínimo {min}, máximo {max}",
+    "now": "ahora",
+    "secondsAgo": "hace {seconds} s",
+    "dismissTip": "Ocultar consejo",
+    "tips": {
+      "performanceAction": "Ajustes de rendimiento",
+      "memory": {
+        "title": "A Minecraft se le acaba la memoria",
+        "text": "La memoria de Java lleva un rato casi llena. Eso provoca tirones y puede cerrar el juego: dale más memoria a esta instancia.",
+        "action": "Ajustes de memoria"
+      },
+      "systemMemory": {
+        "title": "A tu PC casi no le queda memoria",
+        "text": "Solo quedan {free} libres. Cierra los programas que no necesites ahora: darle aún más memoria a Minecraft lo empeoraría."
+      },
+      "stutter": {
+        "title": "Tirones breves",
+        "text": "La tasa de fotogramas cae una y otra vez por un momento. Baja la distancia de renderizado o usa la optimización de Cubiq; y si la memoria de Java está casi llena, dale más a la instancia."
+      },
+      "lowFps": {
+        "title": "Tasa de fotogramas baja",
+        "text": "Baja la distancia de renderizado en los ajustes de vídeo o usa el impulso de FPS en el juego: menú de Cubiq (Mayús derecha) → Rendimiento.",
+        "boostOff": "La optimización de Cubiq está desactivada para esta instancia. Actívala: Sodium y otros mods de rendimiento suelen dar muchos más FPS."
+      },
+      "cpu": {
+        "title": "Procesador al límite",
+        "text": "Minecraft usa casi todo tu procesador. Baja la distancia de renderizado y de simulación o cierra los programas que se ejecutan en segundo plano."
+      }
+    }
   },
   "logShare": {
     "qrLabel": "Código QR del enlace",
@@ -8077,7 +8144,6 @@
         "other": "Recompensa"
       },
       "pool": {
-        "cape": "Capa Mondnacht – color aleatorio, solo una por jugador",
         "emotes": "4 emotes",
         "stickers": "6 stickers de chat",
         "sour": "Truco ≈ 1 de cada 4"
@@ -8087,10 +8153,10 @@
       "title": "Caza de calabazas",
       "text": "13 calabazas escondidas en el launcher, la web y el Cubiq Client. Cada hallazgo cuenta para tu cuenta (el servidor comprueba cada calabaza, las repetidas no cuentan).",
       "found": "¡Calabaza encontrada! {n}/{total}",
-      "complete": "¡Las 13! Insignia «Cazador de calabazas 2026» y capa desbloqueadas.",
+      "complete": "¡Las 13! Insignia «Cazador de calabazas 2026» desbloqueada, más unas alas de Halloween a elegir.",
       "pumpkinLabel": "Una calabaza escondida",
       "rewardLabel": "Recompensa por las 13:",
-      "rewardCape": "+ capa «Cazador de calabazas» y unas de 4 alas de Halloween a elegir",
+      "rewardWings": "+ unas de 4 alas de Halloween a elegir",
       "logLine": "[🎃] Algo sonríe entre estas líneas …"
     },
     "badges": {

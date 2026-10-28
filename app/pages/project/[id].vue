@@ -327,7 +327,7 @@ function back() {
 </template>
 
 <style scoped>
-/* Kopf der Projektseite: Navy mit einem grünen Schein oben links und dem feinen Würfel-Raster des Logos. */
+/* Kopf der Projektseite: dunkle Fläche mit einem grünen Schein oben links und dem feinen Würfel-Raster des Logos. */
 .project-hero {
   background:
     radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--color-primary-500) 13%, transparent), transparent 60%),

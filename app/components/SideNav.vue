@@ -275,7 +275,7 @@ function play(id: string) {
 <style scoped>
 @reference "~/assets/css/main.css";
 
-/* Das Dock liegt direkt im Fensterrahmen (tiefstes Navy); Inhalte sitzen rechts daneben auf der Leinwand. */
+/* Das Dock liegt direkt im Fensterrahmen (tiefste Stufe); Inhalte sitzen rechts daneben auf der Leinwand. */
 .dock {
   --frame: var(--color-frame);
   @apply h-full py-2;

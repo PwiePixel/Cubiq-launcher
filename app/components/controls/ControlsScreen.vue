@@ -173,13 +173,13 @@ const gridLines = computed(() => {
     >
       <!-- Joystick: Ring + Knauf -->
       <template v-if="d.b.action.type === 'joystick'">
-        <circle :cx="d.c.cx" :cy="d.c.cy" :r="d.c.r" fill="#0c1028" fill-opacity="0.55" stroke="#d2d6ee" stroke-width="3" />
-        <circle :cx="d.c.cx" :cy="d.c.cy" :r="d.c.r * 0.4" fill="#1a2046" stroke="#71a330" stroke-width="3" />
+        <circle :cx="d.c.cx" :cy="d.c.cy" :r="d.c.r" fill="#111613" fill-opacity="0.55" stroke="#cddad1" stroke-width="3" />
+        <circle :cx="d.c.cx" :cy="d.c.cy" :r="d.c.r * 0.4" fill="#1d2520" stroke="#71a330" stroke-width="3" />
         <text
           v-if="d.b.action.mode === 'camera'"
           :x="d.c.cx"
           :y="d.c.cy"
-          fill="#f2f4fd"
+          fill="#f2f5f3"
           :font-size="d.c.r * 0.28"
           font-family="ui-monospace, monospace"
           font-weight="700"
@@ -202,14 +202,14 @@ const gridLines = computed(() => {
         />
       </template>
       <template v-else>
-        <circle v-if="d.b.shape === 'round'" :cx="d.c.cx" :cy="d.c.cy" :r="d.c.r" fill="#0c1028" stroke="#283062" stroke-width="3" />
-        <rect v-else :x="d.r.x" :y="d.r.y" :width="d.r.w" :height="d.r.h" rx="6" fill="#0c1028" stroke="#283062" stroke-width="3" />
-        <rect v-for="(p, i) in d.px" :key="i" :x="p.x" :y="p.y" :width="p.s + 0.3" :height="p.s + 0.3" fill="#f2f4fd" />
+        <circle v-if="d.b.shape === 'round'" :cx="d.c.cx" :cy="d.c.cy" :r="d.c.r" fill="#111613" stroke="#29332c" stroke-width="3" />
+        <rect v-else :x="d.r.x" :y="d.r.y" :width="d.r.w" :height="d.r.h" rx="6" fill="#111613" stroke="#29332c" stroke-width="3" />
+        <rect v-for="(p, i) in d.px" :key="i" :x="p.x" :y="p.y" :width="p.s + 0.3" :height="p.s + 0.3" fill="#f2f5f3" />
         <text
           v-if="d.text"
           :x="d.c.cx"
           :y="d.c.cy"
-          fill="#f2f4fd"
+          fill="#f2f5f3"
           :font-size="fontFor(d)"
           font-family="ui-monospace, monospace"
           font-weight="700"

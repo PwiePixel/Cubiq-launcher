@@ -132,6 +132,11 @@ export const TOPICS = [
 ]
 /** Ohne passendes Thema: ein Geschenk (neue Version). */
 export const DEFAULT_TOPIC = { id: 'update', subject: 'gift' }
+/** Sonderthemen für ein bestimmtes Release: nur mit `--topic` gezeichnet, nie aus dem Text gewählt. */
+export const SPECIAL_TOPICS = [
+  // 0.2.51: Der Launcher wird wieder grün – Cubi streicht den großen Würfel vom Navy zurück in Cubiq-Grün.
+  { id: 'green', subject: 'roller' },
+]
 
 function count(haystack, needle) {
   let n = 0
@@ -759,6 +764,75 @@ const PROPS = {
     return { layer: c.draw(lid), front }
   },
 
+  /**
+   * Großer Würfel, halb schon wieder Cubiq-Grün, rechts noch im alten Navy. Eine Farbrolle fährt an der Grenze auf
+   * und ab, frische Farbe glänzt hinter ihr, ein Tropfen fällt, daneben steht der Eimer mit grüner Farbe.
+   */
+  roller(f) {
+    const navy = { top: hex('#3b4688'), front: hex('#283062'), dark: hex('#1a2046') }
+    const c = layer()
+    const x0 = 31
+    const x1 = 52
+    const top = GROUND - 24
+    const seam = 44
+    // Oberseite (4 Reihen) und Vorderseite; links von der Naht grün, rechts noch Navy.
+    for (let y = top; y < GROUND; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const green = x < seam
+        const face = y < top + 4 ? (green ? (y === top + 3 ? C.cubiTopShade : C.cubiTop) : navy.top) : green ? C.cubi : navy.front
+        c.set(x, y, face)
+      }
+    }
+    // Kanten: links Licht, rechts Schatten, unten der dunkle Rand.
+    for (let y = top + 4; y < GROUND; y++) {
+      c.set(x0, y, C.cubiHi)
+      c.set(x1, y, navy.dark)
+      c.set(x1 - 1, y, navy.dark)
+    }
+    for (let x = x0; x <= x1; x++) c.set(x, GROUND - 1, x < seam ? C.cubiSide : navy.dark)
+    c.outline(C.outline)
+
+    // Rolle: fährt einmal je Schleife hinunter und wieder hinauf.
+    const ry = top + 6 + Math.round((1 - Math.cos((f / FRAMES) * 2 * Math.PI)) * 6.5)
+    // Frische Farbe glänzt links neben der Rolle (auf dem Würfel, ohne eigenen Umriss).
+    for (let y = Math.max(top + 4, ry - 3); y <= Math.min(GROUND - 2, ry + 5); y++) {
+      for (let x = seam - 5; x < seam - 1; x++) c.set(x, y, mix(C.cubi, C.grassHi, y >= ry - 1 && y <= ry + 3 ? 0.6 : 0.3))
+    }
+    const front = layer()
+    front.rect(seam - 4, ry, 9, 4, C.cubiHi)
+    front.rect(seam - 4, ry, 9, 1, C.grassHi)
+    front.rect(seam - 4, ry + 3, 9, 1, C.cubiSide)
+    front.rect(seam - 4, ry + 1, 1, 2, C.cubi)
+    // Bügel und Stiel nach rechts oben
+    front.line(seam + 5, ry + 1, seam + 6, ry + 1, C.metalDark)
+    front.line(seam + 6, ry + 1, seam + 6, ry - 3, C.metalDark)
+    front.line(seam + 6, ry - 3, seam + 13, ry - 10, C.woodDark, 2)
+    front.outline(C.outline)
+    // Ein Tropfen löst sich alle halbe Schleife und fällt.
+    const t = f % 8
+    if (t >= 2) {
+      const dy = ry + 4 + (t - 2) * 2
+      if (dy < GROUND - 2) {
+        front.set(seam - 1, dy, C.cubi)
+        front.set(seam - 1, dy + 1, C.cubiSide)
+      }
+    }
+
+    // Farbeimer rechts neben dem Würfel
+    const ground = layer()
+    const bx = 55
+    ground.rect(bx, GROUND - 7, 7, 7, C.metal)
+    ground.rect(bx, GROUND - 7, 1, 7, C.metalHi)
+    ground.rect(bx + 6, GROUND - 7, 1, 7, C.metalDark)
+    ground.rect(bx, GROUND - 7, 7, 1, C.cubiHi)
+    ground.rect(bx + 1, GROUND - 8, 5, 1, C.cubi)
+    ground.set(bx + 2, GROUND - 6, C.cubi)
+    ground.set(bx + 2, GROUND - 5, C.cubi)
+    ground.line(bx, GROUND - 9, bx + 6, GROUND - 9, C.metalDark)
+    ground.outline(C.outline)
+    return { layer: c, front, ground }
+  },
+
   snowman(f) {
     const c = layer()
     const x = 45
@@ -807,7 +881,7 @@ function occupied(layers, margin = 2) {
 
 /** Alle Bilder der Szene einer Version (je SIZE × SIZE), dazu das gewählte Thema. */
 export function releaseFrames(version, topicId) {
-  const topic = [...TOPICS, DEFAULT_TOPIC].find((t) => t.id === topicId) ?? DEFAULT_TOPIC
+  const topic = [...TOPICS, ...SPECIAL_TOPICS, DEFAULT_TOPIC].find((t) => t.id === topicId) ?? DEFAULT_TOPIC
   const rnd = random(seedFor(version))
   const snowy = topic.id === 'winter'
   const ground = island(rnd, { snowy })
@@ -881,7 +955,7 @@ if (isMain) {
   if (opt('--sheet')) {
     const dir = opt('--sheet')
     mkdirSync(dir, { recursive: true })
-    for (const topic of [...TOPICS, DEFAULT_TOPIC]) {
+    for (const topic of [...TOPICS, ...SPECIAL_TOPICS, DEFAULT_TOPIC]) {
       const art = releaseArt({ version: `0.9.${topic.id.length}`, topic: topic.id })
       writeFileSync(join(dir, `${topic.id}.png`), art.png)
       writeFileSync(join(dir, `${topic.id}-anim.png`), art.apng)

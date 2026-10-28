@@ -906,7 +906,7 @@ public final class TitleUi extends UiScreen {
 		if (t.halloween) return 0x2407060C;
 		if (t.fox) return t.light ? 0x1CFFFFFF : 0x12120810;
 		if (t.winter) return t.light ? 0x26FFFFFF : 0x22070C18;
-		return t.light ? 0x22FFFFFF : 0x16070A1D;
+		return t.light ? 0x22FFFFFF : 0x160C100E;
 	}
 
 	/** Gedämpfte Schrift (Hinweise, Fußzeile) passend zum Design. */
@@ -1005,7 +1005,7 @@ public final class TitleUi extends UiScreen {
 		int subW = PixelFont.width("CLIENT") * small;
 		int sx = wx + (wordW - subW) / 2;
 		int sy = top + logoH + gapA;
-		int sub = t.winter ? (t.light ? 0xFF33455D : 0xFFBFCCE0) : (t.light ? 0xFF333A62 : 0xFFBCC2E0);
+		int sub = t.winter ? (t.light ? 0xFF33455D : 0xFFBFCCE0) : (t.light ? 0xFF45514A : 0xFFA6B2A9);
 		for (int[] r : PixelFont.rects("CLIENT")) {
 			c.fill(sx + r[0] * small, sy + r[1] * small, sx + r[2] * small, sy + r[3] * small, sub);
 		}

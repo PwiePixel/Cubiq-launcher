@@ -17,8 +17,8 @@ final class JitHelpView: UIView {
     self.txm = txm
     self.isEnabled = isEnabled
     super.init(frame: .zero)
-    // Navy und Grün wie im Launcher (base-900, primary-500/300, base-200, Schrift dunkel auf Grün).
-    backgroundColor = UIColor(red: 0.047, green: 0.063, blue: 0.157, alpha: 1)
+    // Grün getönte Flächen und Grün wie im Launcher (base-900, primary-500/300, base-200, Schrift dunkel auf Grün).
+    backgroundColor = UIColor(red: 0.067, green: 0.086, blue: 0.075, alpha: 1)
     build()
     if txm {
       JitHelpView.exportScript()
@@ -33,7 +33,7 @@ final class JitHelpView: UIView {
     let accent = UIColor(red: 0.443, green: 0.639, blue: 0.188, alpha: 1)
     let accentText = UIColor(red: 0.663, green: 0.831, blue: 0.420, alpha: 1)
     let onAccent = UIColor(red: 0.043, green: 0.078, blue: 0.020, alpha: 1)
-    let soft = UIColor(red: 0.824, green: 0.839, blue: 0.933, alpha: 1)
+    let soft = UIColor(red: 0.804, green: 0.855, blue: 0.820, alpha: 1)
 
     let title = UILabel()
     title.text = Strings.jitTitle

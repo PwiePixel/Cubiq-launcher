@@ -6,6 +6,11 @@ import dev.pwiepixel.cubiqclient.core.cape.PngDecoder;
 import dev.pwiepixel.cubiqclient.core.online.OnlineConfig;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -171,5 +176,27 @@ class CosmeticCatalogTest {
 		CosmeticCatalog.Art a = CosmeticCatalog.shrink(new PngDecoder.Image(400, 400, px));
 		assertTrue(a.width <= CosmeticCatalog.CARD_EDGE && a.height <= CosmeticCatalog.CARD_EDGE);
 		assertEquals(0xFF336699, a.argb[0]);
+	}
+
+	@Test
+	void hidesSlotsWithoutAnyItem() {
+		CosmeticCatalog.Item wings = CosmeticCatalog.parse(json("{\"id\":\"aurora_wings\",\"slot\":\"wings\",\"format\":2,\"model\":\"/v1/a\",\"texture\":\"/v1/b\"}"), CFG);
+		CosmeticCatalog.Item pet = CosmeticCatalog.parse(json("{\"id\":\"cubi\",\"slot\":\"pet\",\"format\":2,\"model\":\"/v1/a\",\"texture\":\"/v1/b\"}"), CFG);
+		assertNotNull(wings);
+		assertNotNull(pet);
+		List<CosmeticCatalog.Item> items = Arrays.asList(wings, pet);
+		CosmeticCatalog.State none = state(items, null);
+		assertFalse(none.hasSlot("hat"));
+		assertFalse(none.hasSlot("companion"));
+		assertTrue(none.hasSlot("wings"));
+		assertTrue(none.hasSlot("pet"));
+		// Ein noch getragener Hut, den es im Katalog nicht mehr gibt, lässt das Fach stehen – zum Absetzen.
+		assertTrue(state(items, "top_hat").hasSlot("hat"));
+	}
+
+	private static CosmeticCatalog.State state(List<CosmeticCatalog.Item> items, String hat) {
+		return new CosmeticCatalog.State(items, hat, null, null, null, true, false, true, null, null, false, 1,
+				Collections.<String, CosmeticCatalog.Art>emptyMap(), Collections.<String, CosmeticCatalog.Preview>emptyMap(),
+				Collections.<String>emptySet(), Collections.<String, Map<String, Boolean>>emptyMap(), 0);
 	}
 }
