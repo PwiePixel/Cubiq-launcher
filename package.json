@@ -1,7 +1,7 @@
 {
   "name": "cubiq-launcher",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.2.51",
   "type": "module",
   "scripts": {
     "dev": "nuxt dev",
