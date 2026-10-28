@@ -27,6 +27,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -73,6 +74,9 @@ public final class PetHooks {
 	 * Rechtsklick (Anfang von {@code Minecraft#startUseItem}, aus {@code PetUseMixin}): trifft der Blick zuerst den
 	 * eigenen Begleiter am Boden und ist die Hand leer oder hält Essen, wird er gestreichelt bzw. gefüttert – true =
 	 * Minecraft benutzt nichts (nichts wird gegessen, kein Paket an den Server). Sonst false = Minecraft wie immer.
+	 * Ein Block ohne Kollisionsform als Minecrafts Treffer (kurzes Gras, Farn, Blumen, Getreide, eine Schneeschicht –
+	 * Minecraft trifft deren Umriss vor dem Begleiter, der darin steht) zählt nicht, wenn seine Zelle den Begleiter
+	 * schneidet; das entscheidet {@code OnlineFeatures#petUse}.
 	 */
 	public static boolean onUse(Minecraft mc) {
 		OnlineFeatures<Object> f = OnlineHooks.features();
@@ -86,7 +90,16 @@ public final class PetHooks {
 			HitResult hit = mc.hitResult;
 			double vanilla = hit == null || hit.getType() == HitResult.Type.MISS ? Double.POSITIVE_INFINITY
 					: eye.distanceTo(hit.getLocation());
-			return f.petUse(eye.x, eye.y, eye.z, look.x, look.y, look.z, vanilla, held(p.getMainHandItem()),
+			boolean soft = false;
+			int bx = 0, by = 0, bz = 0;
+			if (hit instanceof BlockHitResult && hit.getType() == HitResult.Type.BLOCK) {
+				BlockPos pos = ((BlockHitResult) hit).getBlockPos();
+				soft = mc.level.getBlockState(pos).getCollisionShape(mc.level, pos).isEmpty();
+				bx = pos.getX();
+				by = pos.getY();
+				bz = pos.getZ();
+			}
+			return f.petUse(eye.x, eye.y, eye.z, look.x, look.y, look.z, vanilla, soft, bx, by, bz, held(p.getMainHandItem()),
 					held(p.getOffhandItem()), p.isShiftKeyDown(), p.isSpectator(), Mc.screen() != null);
 		} catch (RuntimeException e) {
 			f.online().reportError(e);

@@ -469,18 +469,21 @@ public final class OnlineFeatures<T> {
 	/**
 	 * Rechtsklick des eigenen Spielers (Spiel-Thread, bevor Minecraft etwas benutzt): Auge und Blickrichtung in Welt-
 	 * Koordinaten, {@code vanillaDist} = Entfernung bis zu Minecrafts eigenem Treffer (Block/Wesen; unendlich ohne
-	 * Treffer), was in Haupt- und Zweithand liegt ({@code PetInteract.HELD_*}), Schleichen, Zuschauer-Modus, offener
+	 * Treffer), {@code softBlock} = dieser Treffer ist ein Block ohne Kollisionsform (kurzes Gras, Blumen, Getreide,
+	 * Schneeschicht, Hebel …) in der Zelle ({@code blockX, blockY, blockZ}) – steht der Begleiter darin, zählt der Treffer
+	 * nicht –, was in Haupt- und Zweithand liegt ({@code PetInteract.HELD_*}), Schleichen, Zuschauer-Modus, offener
 	 * Bildschirm. Trifft der Blick zuerst einen eigenen Begleiter am Boden, wird er gestreichelt bzw. gefüttert
 	 * ({@code PetInteract}) und das Ergebnis ist true: Minecraft darf den Klick nicht benutzen – auch wenn der Begleiter
 	 * gerade nicht kann (Pause, Aktion läuft), sonst würde das Essen in der Hand gegessen. Nichts geht an den Server,
 	 * nichts wird verbraucht. false = Minecraft wie immer.
 	 */
-	public boolean petUse(double ex, double ey, double ez, double dx, double dy, double dz, double vanillaDist, int mainHeld,
-			int offHeld, boolean sneaking, boolean spectator, boolean screenOpen) {
+	public boolean petUse(double ex, double ey, double ez, double dx, double dy, double dz, double vanillaDist, boolean softBlock,
+			int blockX, int blockY, int blockZ, int mainHeld, int offHeld, boolean sneaking, boolean spectator, boolean screenOpen) {
 		if (!petsActive || Thread.currentThread() != gameThread || !modules.petInteract.get()) return false;
 		try {
-			return dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetInteract.use(pets, ex, ey, ez, dx, dy, dz, vanillaDist, mainHeld,
-					offHeld, sneaking, spectator, screenOpen, pets.alpha(System.nanoTime()), System.currentTimeMillis());
+			return dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetInteract.use(pets, ex, ey, ez, dx, dy, dz, vanillaDist, softBlock,
+					blockX, blockY, blockZ, mainHeld, offHeld, sneaking, spectator, screenOpen, pets.alpha(System.nanoTime()),
+					System.currentTimeMillis());
 		} catch (RuntimeException e) {
 			online.reportError(e);
 			return false;

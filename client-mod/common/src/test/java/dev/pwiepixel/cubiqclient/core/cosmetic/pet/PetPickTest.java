@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -209,6 +210,119 @@ class PetPickTest {
 		Pet only = sim.pets(OWNER).get(0);
 		put(only, 0.5, 2.5);
 		assertNull(sim.pick(0.5, 64.4, 0, 0, 0, 1, PetInteract.REACH, 1f));
+	}
+
+	// --- Minecrafts Treffer: Pflanzen, in denen der Begleiter steht -------------------------------------------
+
+	/** Umrisse in einer Blockzelle (Pixel 0…16), so wie Minecrafts Klick-Strahl sie trifft. */
+	static final double[] GRASS = { 2, 0, 2, 14, 13, 14 }, FLOWER = { 5, 0, 5, 11, 10, 11 }, FULL = { 0, 0, 0, 16, 16, 16 };
+
+	/** Eintritt des Strahls in den Umriss {@code px16} der Zelle (bx, by, bz) in Blöcken, unendlich ohne Treffer. */
+	static double outline(double[] eye, double[] dir, int bx, int by, int bz, double[] px16) {
+		double[] lo = { bx + px16[0] / 16, by + px16[1] / 16, bz + px16[2] / 16 };
+		double[] hi = { bx + px16[3] / 16, by + px16[4] / 16, bz + px16[5] / 16 };
+		double near = Double.NEGATIVE_INFINITY, far = Double.POSITIVE_INFINITY;
+		for (int a = 0; a < 3; a++) {
+			if (Math.abs(dir[a]) < 1e-12) {
+				if (eye[a] < lo[a] || eye[a] > hi[a]) return Double.POSITIVE_INFINITY;
+				continue;
+			}
+			double t1 = (lo[a] - eye[a]) / dir[a], t2 = (hi[a] - eye[a]) / dir[a];
+			near = Math.max(near, Math.min(t1, t2));
+			far = Math.min(far, Math.max(t1, t2));
+		}
+		return near > far || far < 0 ? Double.POSITIVE_INFINITY : Math.max(0, near);
+	}
+
+	/** Normierte Richtung von {@code from} nach {@code to}. */
+	static double[] dir(double[] from, double... to) {
+		double dx = to[0] - from[0], dy = to[1] - from[1], dz = to[2] - from[2], d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+		return new double[] { dx / d, dy / d, dz / d };
+	}
+
+	private static Pet pick(PetSim sim, double[] eye, double[] d, double vanilla, boolean soft, int bx, int by, int bz) {
+		return sim.pick(eye[0], eye[1], eye[2], d[0], d[1], d[2], vanilla, soft, bx, by, bz, 1f);
+	}
+
+	@Test
+	void theBoxCutsABlockCellOnlyWhereTheTurnedBoxReallyIs() {
+		// 8 × 12 × 8 px mitten in der Zelle (0, 64, 0): nur diese Zelle; Berühren (Boden darunter) zählt nicht
+		assertTrue(PetPick.overlapsCell(BOX, 0.5, 64, 0.5, 0, 1, 0, 64, 0));
+		assertFalse(PetPick.overlapsCell(BOX, 0.5, 64, 0.5, 0, 1, 1, 64, 0));
+		assertFalse(PetPick.overlapsCell(BOX, 0.5, 64, 0.5, 0, 1, 0, 63, 0), "der Block, auf dem er steht");
+		assertFalse(PetPick.overlapsCell(BOX, 0.5, 64, 0.5, 0, 1, 0, 65, 0), "darüber (0,75 hoch)");
+		assertTrue(PetPick.overlapsCell(BOX, 0.5, 64.5, 0.5, 0, 1, 0, 65, 0), "höher gestellt");
+		// nah am Rand: ragt in die Nachbarzelle
+		assertTrue(PetPick.overlapsCell(BOX, 0.9, 64, 0.5, 0, 1, 1, 64, 0));
+		// lang (z ±0,5): Gieren 0 entlang z, Gieren 90 entlang x
+		assertTrue(PetPick.overlapsCell(LONG, 0.5, 64, 0.6, 0, 1, 0, 64, 1));
+		assertFalse(PetPick.overlapsCell(LONG, 0.5, 64, 0.6, 0, 1, 1, 64, 0));
+		assertTrue(PetPick.overlapsCell(LONG, 0.6, 64, 0.5, 90, 1, 1, 64, 0));
+		assertFalse(PetPick.overlapsCell(LONG, 0.6, 64, 0.5, 90, 1, 0, 64, 1));
+		// Größe
+		assertTrue(PetPick.overlapsCell(BOX, 0.6, 64, 0.5, 0, 2, 1, 64, 0), "doppelt so groß: x bis 1,1");
+		assertFalse(PetPick.overlapsCell(BOX, 0.6, 64, 0.5, 0, 1, 1, 64, 0));
+		// 16 × 16 px um 45° gedreht (Raute): die Nachbarzelle an der Spitze ja, die schräge Nachbarzelle nein – obwohl der
+		// achsenparallele Kasten um die Raute sie streift
+		float[] square = { -8, 0, -8, 8, 8, 8 };
+		assertTrue(PetPick.overlapsCell(square, 0.5, 64, 0.5, 45, 1, 1, 64, 0));
+		assertFalse(PetPick.overlapsCell(square, 0.5, 64, 0.5, 45, 1, 1, 64, 1));
+		assertTrue(PetPick.overlapsCell(square, 0.5, 64, 0.5, 0, 1, 0, 64, 0));
+		assertTrue(PetPick.overlapsCell(null, 0.5, 64, 0.5, 0, 1, 0, 64, 0), "ohne Umriss: Radius/Höhe");
+	}
+
+	@Test
+	void aCompanionStandingInGrassIsStillPickedButBlocksInFrontStillWin() {
+		PetSim sim = new PetSim();
+		FakeWorld w = new FakeWorld();
+		PetSim.forceSlide = 0;
+		tick(sim, w, 0, false);
+		Pet a = sim.pets(OWNER).get(0), b = sim.pets(OWNER).get(1);
+		put(a, 0.5, 2.5); // mitten in der Zelle (0, 64, 2): 8 × 12 × 8 px passen ganz in den Umriss des Grases (12 × 13 × 12)
+		put(b, 6.5, 9.5);
+		double[] eye = { 0.5, 64 + 1.62, -0.5 };
+		double[] d = dir(eye, 0.5, 64.2, 2.5);
+		double pet = PetPick.ray(eye[0], eye[1], eye[2], d[0], d[1], d[2], 0.5, 64, 2.5, 0, 1, BOX);
+		assertTrue(pet > 2.5 && pet < 3.5, "Begleiter getroffen: " + pet);
+
+		// kurzes Gras in seiner Zelle: Minecraft trifft dessen Umriss zuerst
+		double grass = outline(eye, d, 0, 64, 2, GRASS);
+		assertTrue(grass < pet, "Gras vor dem Begleiter: " + grass + " < " + pet);
+		assertNull(sim.pick(eye[0], eye[1], eye[2], d[0], d[1], d[2], PetInteract.reach(grass), 1f), "bisher: verfehlt");
+		assertSame(a, pick(sim, eye, d, grass, true, 0, 64, 2), "Gras ohne Kollisionsform zählt nicht");
+		assertNull(pick(sim, eye, d, grass, false, 0, 64, 2), "mit Kollisionsform gewinnt der Block");
+
+		// fester Block in der Zelle davor gewinnt
+		double wall = outline(eye, d, 0, 64, 1, FULL);
+		assertTrue(wall < pet);
+		assertNull(pick(sim, eye, d, wall, false, 0, 64, 1));
+		// Block ohne Kollisionsform in einer ANDEREN Zelle davor (Hebel, Knopf, Blume): gewinnt weiter
+		double flower = outline(eye, d, 0, 64, 1, FLOWER);
+		assertTrue(flower < pet, "Blume davor: " + flower);
+		assertNull(pick(sim, eye, d, flower, true, 0, 64, 1));
+		// steht er am Rand der Zelle, schneidet er die davor – die Pflanze dort gehört zu ihm
+		put(a, 0.5, 2.1);
+		double[] d2 = dir(eye, 0.5, 64.2, 2.1);
+		double edge = outline(eye, d2, 0, 64, 1, GRASS);
+		assertTrue(edge < PetPick.ray(eye[0], eye[1], eye[2], d2[0], d2[1], d2[2], 0.5, 64, 2.1, 0, 1, BOX));
+		assertSame(a, pick(sim, eye, d2, edge, true, 0, 64, 1));
+		put(a, 0.5, 2.5);
+
+		// Blöcke hinter dem Begleiter spielen keine Rolle, fest oder nicht
+		double behind = outline(eye, d, 0, 64, 3, FULL);
+		assertTrue(behind > pet);
+		assertSame(a, pick(sim, eye, d, behind, false, 0, 64, 3));
+		assertSame(a, pick(sim, eye, d, outline(eye, d, 0, 64, 3, GRASS), true, 0, 64, 3));
+		assertSame(a, pick(sim, eye, d, Double.POSITIVE_INFINITY, false, 0, 0, 0), "kein Treffer");
+
+		// der Strahl muss den Begleiter selbst treffen: daneben ins Gras geschaut bleibt Minecrafts Klick
+		double[] beside = dir(eye, 0.2, 64.3, 2.2);
+		assertTrue(Double.isNaN(PetPick.ray(eye[0], eye[1], eye[2], beside[0], beside[1], beside[2], 0.5, 64, 2.5, 0, 1, BOX)));
+		assertNull(pick(sim, eye, beside, outline(eye, beside, 0, 64, 2, GRASS), true, 0, 64, 2));
+		// zu weit weg (mehr als 4,5 Blöcke): auch im Gras nicht
+		put(a, 0.5, 5.5);
+		double[] far = dir(eye, 0.5, 64.2, 5.5);
+		assertNull(pick(sim, eye, far, outline(eye, far, 0, 64, 5, GRASS), true, 0, 64, 5));
 	}
 
 	// --- Umriss aus dem Modell --------------------------------------------------------------------------------

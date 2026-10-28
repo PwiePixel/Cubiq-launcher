@@ -113,4 +113,44 @@ public final class PetPick {
 		if (far < 0) return Double.NaN;
 		return Math.max(0, near);
 	}
+
+	/**
+	 * Schneidet der Kasten {@code box} (Pixel im Modellraum) eines Begleiters mit Ursprung ({@code px, py, pz}), Gieren
+	 * {@code yawDeg} und Größe {@code scale} die Blockzelle ({@code bx, by, bz}), also den Würfel von (bx, by, bz) bis
+	 * (bx + 1, by + 1, bz + 1) in der Welt? Genau für den gedrehten Kasten (waagerecht zwei Trennachsen der Welt und zwei
+	 * des Modells, dazu die Höhe); bloßes Berühren zählt nicht.
+	 */
+	public static boolean overlapsCell(float[] box, double px, double py, double pz, double yawDeg, double scale, int bx, int by,
+			int bz) {
+		if (box == null) box = DEFAULT_BOX;
+		double s = scale > 0 && !Double.isInfinite(scale) ? scale : 1.0;
+		double k = s / 16.0; // Pixel → Blöcke
+		if (!(py + box[1] * k < by + 1 && py + box[4] * k > by)) return false;
+		double h = Math.toRadians(yawDeg);
+		double cos = Math.cos(h), sin = Math.sin(h);
+		// Achsen der Welt: Ecken des Kastens in die Welt (wie PetDraw#set: Modell x = links (cos, sin), z = vorne (−sin, cos))
+		double x0 = Double.POSITIVE_INFINITY, x1 = Double.NEGATIVE_INFINITY, z0 = Double.POSITIVE_INFINITY,
+				z1 = Double.NEGATIVE_INFINITY;
+		for (int i = 0; i < 4; i++) {
+			double mx = (i & 1) == 0 ? box[0] : box[3], mz = (i & 2) == 0 ? box[2] : box[5];
+			double wx = px + (mx * cos - mz * sin) * k, wz = pz + (mx * sin + mz * cos) * k;
+			x0 = Math.min(x0, wx);
+			x1 = Math.max(x1, wx);
+			z0 = Math.min(z0, wz);
+			z1 = Math.max(z1, wz);
+		}
+		if (!(x0 < bx + 1 && x1 > bx && z0 < bz + 1 && z1 > bz)) return false;
+		// Achsen des Modells: Ecken der Zelle in den Modellraum (wie ray)
+		double m0 = Double.POSITIVE_INFINITY, m1 = Double.NEGATIVE_INFINITY, n0 = Double.POSITIVE_INFINITY,
+				n1 = Double.NEGATIVE_INFINITY;
+		for (int i = 0; i < 4; i++) {
+			double cx = bx + (i & 1) - px, cz = bz + (i >> 1) - pz;
+			double mx = (cx * cos + cz * sin) / k, mz = (-cx * sin + cz * cos) / k;
+			m0 = Math.min(m0, mx);
+			m1 = Math.max(m1, mx);
+			n0 = Math.min(n0, mz);
+			n1 = Math.max(n1, mz);
+		}
+		return m0 < box[3] && m1 > box[0] && n0 < box[5] && n1 > box[2];
+	}
 }

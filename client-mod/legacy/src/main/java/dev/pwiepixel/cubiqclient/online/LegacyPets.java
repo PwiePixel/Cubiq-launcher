@@ -111,7 +111,9 @@ public final class LegacyPets {
 	/**
 	 * Rechtsklick (aus {@code CubiqClient.onMouse}: Taste gedrückt, kein Bildschirm offen): trifft der Blick zuerst den
 	 * eigenen Begleiter am Boden und ist die Hand leer oder hält Essen, wird er gestreichelt bzw. gefüttert – true =
-	 * Ereignis abbrechen (Minecraft benutzt nichts, nichts geht an den Server). Sonst false = Minecraft wie immer.
+	 * Ereignis abbrechen (Minecraft benutzt nichts, nichts geht an den Server). Sonst false = Minecraft wie immer. Ein
+	 * Block ohne Kollisions-Box unter dem Fadenkreuz (Gras, Blumen, Getreide, Schneeschicht …) zählt nicht, wenn seine
+	 * Zelle den Begleiter schneidet ({@code OnlineFeatures#petUse}).
 	 */
 	public static boolean onUse() {
 		OnlineFeatures<Object> f = LegacyOnline.features();
@@ -121,8 +123,10 @@ public final class LegacyPets {
 			// Auge und Blickrichtung wie Minecrafts eigener Treffer (getPositionEyes/getLook)
 			double yaw = Math.toRadians(p.rotationYaw), pitch = Math.toRadians(p.rotationPitch);
 			double dx = -Math.sin(yaw) * Math.cos(pitch), dy = -Math.sin(pitch), dz = Math.cos(yaw) * Math.cos(pitch);
-			return f.petUse(p.posX, p.posY + p.getEyeHeight(), p.posZ, dx, dy, dz, Mc.aimDistance(p), held(Mc.equipment(p, 4)),
-					held(Mc.offhand(p)), p.isSneaking(), p.isSpectator(), Mc.screen() != null);
+			BlockPos soft = Mc.aimSoftBlock();
+			return f.petUse(p.posX, p.posY + p.getEyeHeight(), p.posZ, dx, dy, dz, Mc.aimDistance(p), soft != null,
+					soft == null ? 0 : soft.getX(), soft == null ? 0 : soft.getY(), soft == null ? 0 : soft.getZ(),
+					held(Mc.equipment(p, 4)), held(Mc.offhand(p)), p.isSneaking(), p.isSpectator(), Mc.screen() != null);
 		} catch (RuntimeException e) {
 			f.online().reportError(e);
 			return false;

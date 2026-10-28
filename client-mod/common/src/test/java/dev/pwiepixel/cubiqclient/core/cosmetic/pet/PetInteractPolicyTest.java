@@ -143,6 +143,29 @@ class PetInteractPolicyTest {
 	}
 
 	@Test
+	void aCompanionInShortGrassIsFedInsteadOfMinecraftEatingTheFood() {
+		FakeWorld w = new FakeWorld();
+		PetSim sim = settled(w, OWNER, true);
+		Pet p = sim.pets(OWNER).get(0);
+		// mitten in einer Zelle mit kurzem Gras: sein Umriss (11,2 × 12,8 × 11,2 px) liegt ganz im Umriss des Grases
+		p.x = p.px = -0.5;
+		p.z = p.pz = -1.5;
+		p.yaw = p.pyaw = 0;
+		int bx = -1, by = 64, bz = -2;
+		double[] eye = { EX, EY, EZ };
+		double[] d = PetPickTest.dir(eye, p.x, p.y + 0.3, p.z);
+		double grass = PetPickTest.outline(eye, d, bx, by, bz, PetPickTest.GRASS);
+		assertTrue(grass < PetPick.ray(EX, EY, EZ, d[0], d[1], d[2], p.x, p.y, p.z, p.yaw, p.scale, p.box), "Gras zuerst getroffen");
+		long now = 59 * 50L + 20;
+		// Block mit Kollisionsform an derselben Stelle: Minecraft behält den Klick
+		assertFalse(PetInteract.use(sim, EX, EY, EZ, d[0], d[1], d[2], grass, false, bx, by, bz, F, E, false, false, false, 1f, now));
+		assertEquals(Pet.IDLE, p.state());
+		// das Gras: der Begleiter wird gefüttert, der Klick geschluckt (Minecraft isst nichts)
+		assertTrue(PetInteract.use(sim, EX, EY, EZ, d[0], d[1], d[2], grass, true, bx, by, bz, F, E, false, false, false, 1f, now));
+		assertEquals(Pet.EAT, p.state());
+	}
+
+	@Test
 	void anOwnCompanionThatIsNotDrawnDoesNotTakeTheClick() {
 		// Modell noch nicht geladen (owner() ohne Umriss): petFrame zeichnet ihn nicht – der Klick geht an Minecraft, als
 		// wäre dort nichts (sonst würde ein unsichtbarer Begleiter Klicks schlucken und Herzchen zeigen)

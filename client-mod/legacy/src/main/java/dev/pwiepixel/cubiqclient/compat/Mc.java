@@ -370,6 +370,31 @@ public final class Mc {
 		return player.getPositionEyes(1.0F).distanceTo(hit.hitVec);
 	}
 
+	/**
+	 * Zelle des Blocks unter dem Fadenkreuz, wenn er keine Kollisions-Box hat (kurzes Gras, Farn, Blumen, Getreide,
+	 * Hebel, Knopf …; eine einzelne Schneeschicht hat eine flache Box ohne Höhe – ab 1.13 eine leere Form – und zählt
+	 * mit), sonst null: kein Block unter dem Fadenkreuz, oder einer, der etwas aufhält.
+	 */
+	public static BlockPos aimSoftBlock() {
+		World w = world();
+		//? if >=1.9 {
+		/*net.minecraft.util.math.RayTraceResult hit = mc().objectMouseOver;
+		if (w == null || hit == null || hit.typeOfHit != net.minecraft.util.math.RayTraceResult.Type.BLOCK) return null;
+		BlockPos pos = hit.getBlockPos();
+		if (pos == null) return null;
+		net.minecraft.util.math.AxisAlignedBB box = w.getBlockState(pos).getCollisionBoundingBox(w, pos);
+		*///?} else {
+		net.minecraft.util.MovingObjectPosition hit = mc().objectMouseOver;
+		if (w == null || hit == null || hit.typeOfHit != net.minecraft.util.MovingObjectPosition.MovingObjectType.BLOCK) return null;
+		BlockPos pos = hit.getBlockPos();
+		if (pos == null) return null;
+		net.minecraft.block.state.IBlockState state = w.getBlockState(pos);
+		state.getBlock().setBlockBoundsBasedOnState(w, pos);
+		net.minecraft.util.AxisAlignedBB box = state.getBlock().getCollisionBoundingBox(w, pos, state);
+		//?}
+		return box == null || box.maxY <= box.minY ? pos : null;
+	}
+
 	/** Gegenstand in der Zweithand (ab 1.9) oder null: leer bzw. vor 1.9 (keine Zweithand). */
 	public static ItemStack offhand(EntityPlayer player) {
 		//? if >=1.9 {
