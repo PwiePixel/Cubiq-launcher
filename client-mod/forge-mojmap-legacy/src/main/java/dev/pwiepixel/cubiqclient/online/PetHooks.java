@@ -5,14 +5,20 @@ package dev.pwiepixel.cubiqclient.online;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.pwiepixel.cubiqclient.compat.Mc;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetDraw;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetInteract;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSim;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetWorld;
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2Renderer;
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat;
 import dev.pwiepixel.cubiqclient.core.online.OnlineFeatures;
+import dev.pwiepixel.cubiqclient.dev.HookStats;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
@@ -21,6 +27,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
@@ -31,6 +39,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * Auch der eigene Begleiter ist sichtbar (auch in der Ich-Perspektive). Licht am Standort, Entfernungs-Grenze und
  * Obergrenze gesamt kommen aus {@code OnlineFeatures#petFrame}; gezeichnet wird mit den Render-Typen der Kopf-Kosmetik
  * ({@link HatHooks}). Die Kamera-Pose bleibt unverändert – {@link PetDraw#wrap} rechnet die Ecken selbst in die Welt um.
+ * Rechtsklick auf den eigenen Begleiter (Streicheln/Füttern): {@link #onUse} aus {@code PetUseMixin}.
  */
 public final class PetHooks {
 	private static final Blocks2 BLOCKS = new Blocks2();
@@ -53,6 +62,45 @@ public final class PetHooks {
 					BLOCKS);
 		}
 		f.petsEnd();
+		// Herzchen über Begleitern, die gestreichelt/gefüttert werden, aber keine eigene Aktion im Modell haben (nur hier)
+		for (int i = 0, n = f.petFxCount(); i < n; i++) {
+			PetSim.Fx fx = f.petFx(i);
+			level.addParticle(ParticleTypes.HEART, fx.x, fx.y, fx.z, 0.0, 0.0, 0.0);
+		}
+	}
+
+	/**
+	 * Rechtsklick (Anfang von {@code Minecraft#startUseItem}, aus {@code PetUseMixin}): trifft der Blick zuerst den
+	 * eigenen Begleiter am Boden und ist die Hand leer oder hält Essen, wird er gestreichelt bzw. gefüttert – true =
+	 * Minecraft benutzt nichts (nichts wird gegessen, kein Paket an den Server). Sonst false = Minecraft wie immer.
+	 */
+	public static boolean onUse(Minecraft mc) {
+		OnlineFeatures<Object> f = OnlineHooks.features();
+		Player p = mc.player;
+		if (f == null || p == null || mc.level == null) return false;
+		HookStats.petUse++;
+		try {
+			// Wie Minecrafts eigener Treffer: vom Auge in Blickrichtung (auch in der 3. Person)
+			Vec3 eye = p.getEyePosition(1.0F);
+			Vec3 look = p.getViewVector(1.0F);
+			HitResult hit = mc.hitResult;
+			double vanilla = hit == null || hit.getType() == HitResult.Type.MISS ? Double.POSITIVE_INFINITY
+					: eye.distanceTo(hit.getLocation());
+			return f.petUse(eye.x, eye.y, eye.z, look.x, look.y, look.z, vanilla, held(p.getMainHandItem()),
+					held(p.getOffhandItem()), p.isShiftKeyDown(), p.isSpectator(), Mc.screen() != null);
+		} catch (RuntimeException e) {
+			f.online().reportError(e);
+			return false;
+		}
+	}
+
+	/** Was in einer Hand liegt – Essen wie in {@code HungerHooks} (ab 1.20.5 die Komponente FOOD, davor isEdible). */
+	private static int held(ItemStack stack) {
+		if (stack.isEmpty()) return PetInteract.HELD_EMPTY;
+		//? if >=1.20.5 {
+		/*return stack.get(net.minecraft.core.component.DataComponents.FOOD) != null ? PetInteract.HELD_FOOD : PetInteract.HELD_OTHER;
+		*///?} else
+		return stack.getItem().isEdible() ? PetInteract.HELD_FOOD : PetInteract.HELD_OTHER;
 	}
 
 	//? if >=1.21.9 {

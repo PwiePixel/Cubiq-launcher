@@ -351,6 +351,34 @@ public final class Mc {
 		//?}
 	}
 
+	/**
+	 * Entfernung vom Auge des Spielers bis zu Minecrafts aktuellem Treffer (Block oder Wesen unter dem Fadenkreuz),
+	 * unendlich ohne Treffer.
+	 */
+	public static double aimDistance(EntityPlayer player) {
+		//? if >=1.9 {
+		/*net.minecraft.util.math.RayTraceResult hit = mc().objectMouseOver;
+		if (hit == null || hit.hitVec == null || hit.typeOfHit == net.minecraft.util.math.RayTraceResult.Type.MISS) {
+			return Double.POSITIVE_INFINITY;
+		}
+		*///?} else {
+		net.minecraft.util.MovingObjectPosition hit = mc().objectMouseOver;
+		if (hit == null || hit.hitVec == null || hit.typeOfHit == net.minecraft.util.MovingObjectPosition.MovingObjectType.MISS) {
+			return Double.POSITIVE_INFINITY;
+		}
+		//?}
+		return player.getPositionEyes(1.0F).distanceTo(hit.hitVec);
+	}
+
+	/** Gegenstand in der Zweithand (ab 1.9) oder null: leer bzw. vor 1.9 (keine Zweithand). */
+	public static ItemStack offhand(EntityPlayer player) {
+		//? if >=1.9 {
+		/*ItemStack stack = player.getHeldItemOffhand();
+		return isEmpty(stack) ? null : stack;
+		*///?} else
+		return null;
+	}
+
 	/** Benutzt der Spieler gerade einen Gegenstand (Bogen, Essen, Block …)? */
 	public static boolean usingItem(EntityPlayer player) {
 		//? if >=1.9 {
