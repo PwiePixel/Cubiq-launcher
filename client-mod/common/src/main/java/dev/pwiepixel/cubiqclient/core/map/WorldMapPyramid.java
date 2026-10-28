@@ -22,8 +22,8 @@ import java.util.Set;
 final class WorldMapPyramid {
 	static final int MIN_LEVEL = 2;
 	static final int MAX_LEVEL = 6;
-	/** Farbe „wird geladen“: etwas heller als der Hintergrund der Weltkarte (0xFF0B0A0E = unerkundet). */
-	static final int LOADING = 0xFF1B1922;
+	/** Farbe „wird geladen“: etwas heller als der Hintergrund der Weltkarte ({@link MapStyle#VOID} = unerkundet). */
+	static final int LOADING = MapStyle.LOADING;
 
 	private MapLayer tilesOf;
 	private int tilesGeneration = Integer.MIN_VALUE;

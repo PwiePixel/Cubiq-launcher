@@ -177,6 +177,58 @@ describe('Bild je Release', () => {
     expect(Buffer.from(decode(apng).rgba).equals(Buffer.from(decode(png).rgba))).toBe(true)
   })
 
+  it('Sonderthema „map“ (0.3.1): große Karte mit Route zum Wegpunkt – 16 feste Bilder, ganz im Bild, bewegt', () => {
+    // Nur auf Wunsch (`--topic`): ein Text über Karten bekommt das allgemeine Welt-Motiv, nie die große Karte.
+    const notes = [
+      '- **The map update.** The minimap and the world map of the Cubiq Client get a calm new frame, a compass and a view cone.',
+      '- **Chunk grid, scale bar and ruler.** Measure distances on the world map.',
+      '- **Go to coordinates.** Type coordinates on the world map and a waypoint shows the way.',
+    ].join('\n')
+    expect(pickTopic(notes).id).toBe('worlds')
+    expect(TOPICS.map((t) => t.id)).not.toContain('map')
+    expect(SPECIAL_TOPICS.map((t) => t.id)).toContain('map')
+
+    const { frames, topic } = releaseFrames('0.3.1', 'map')
+    expect(topic.id).toBe('map')
+    expect(frames).toHaveLength(FRAMES)
+    // Fest: noch einmal gezeichnet, Punkt für Punkt dieselben Bilder.
+    const again = releaseFrames('0.3.1', 'map').frames
+    frames.forEach((frame: Canvas, i: number) => expect(Buffer.from(frame.data).equals(Buffer.from(again[i]!.data))).toBe(true))
+    // Ganz im Bild: nichts reicht bis an den Rand, also wird auch nichts abgeschnitten. Bei anderen Versionen darf nur
+    // die Insel (ihre Wurzeln) die untere Zeile erreichen.
+    const atEdge = (frame: Canvas) => {
+      const hits: string[] = []
+      for (let i = 0; i < frame.w; i++) {
+        for (const [x, y] of [[i, 0], [i, frame.h - 1], [0, i], [frame.w - 1, i]]) if (frame.get(x!, y!)) hits.push(`${x},${y}`)
+      }
+      return hits
+    }
+    for (const frame of frames) expect(atEdge(frame)).toEqual([])
+    for (const version of ['0.1.0', '0.9.3', '1.0.0', '2.7.11']) {
+      for (const frame of releaseFrames(version, 'map').frames) expect(atEdge(frame).filter((p) => !p.endsWith(',63'))).toEqual([])
+    }
+    // Bewegt: alle 16 Bilder sind verschieden, und auf der Karte wandern die Striche der Route (Cubiq-Grün rechts von
+    // Cubi) – nach 2 Bildern verschoben, nach 8 wieder wie am Anfang: die Schleife ist nahtlos.
+    expect(new Set(frames.map((frame: Canvas) => Buffer.from(frame.data).toString('base64'))).size).toBe(FRAMES)
+    const route = (frame: Canvas) => {
+      const dots: string[] = []
+      for (let y = 0; y < frame.h; y++) {
+        for (let x = 31; x < frame.w; x++) {
+          const c = frame.get(x, y)
+          if (c && c[0] === 0x71 && c[1] === 0xa3 && c[2] === 0x30) dots.push(`${x},${y}`)
+        }
+      }
+      return dots.join(' ')
+    }
+    expect(route(frames[0])).not.toBe('')
+    expect(route(frames[0])).not.toBe(route(frames[2]))
+    expect(route(frames[0])).toBe(route(frames[8]))
+    // Animiertes PNG mit allen 16 Bildern; das erste ist das ruhige Bild.
+    const { png, apng } = releaseArt({ version: '0.3.1', topic: 'map' })
+    expect(chunks(apng).find((c) => c.type === 'acTL')!.data.readUInt32BE(0)).toBe(FRAMES)
+    expect(Buffer.from(decode(apng).rgba).equals(Buffer.from(decode(png).rgba))).toBe(true)
+  })
+
   it('nutzt denselben Startwert wie die Szenen im Launcher', () => {
     for (const v of ['0.1.0', '0.2.0', '1.10.3']) expect(seedFor(v)).toBe(versionSeed(v))
   })
