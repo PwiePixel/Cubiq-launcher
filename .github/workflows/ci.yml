@@ -256,7 +256,9 @@ jobs:
   launcher-ios:
     needs: changes
     if: needs.changes.outputs.mobile == 'true'
-    runs-on: macos-latest
+    # Fest auf macos-15 wie die iOS-Engine (ios-engine.yml): Jobs auf macos-latest bekamen zeitweise keinen Runner
+    # mehr und hingen in der Warteschlange; ein festes Image hält den Build außerdem reproduzierbar.
+    runs-on: macos-15
     timeout-minutes: 90
     env:
       # Swift-Pakete der Plugins nutzen APIs ab iOS 14; die App verlangt iOS 15.
