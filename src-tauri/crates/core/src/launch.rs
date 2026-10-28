@@ -164,6 +164,8 @@ pub fn build_command(
         // Zusätzlich zu Mojangs gepatchter Log-Konfiguration (Log4Shell).
         "-Dlog4j2.formatMsgNoLookups=true".into(),
     ]);
+    // Der Cubiq Client spricht mit demselben Server wie der Launcher (ohne eingerichteten Server: nichts).
+    args.extend(crate::cubiq_api::client_mod_jvm_arg());
 
     match &version.arguments {
         Some(a) if !a.jvm.is_empty() => args.extend(expand(&a.jvm, &features).map(&fill)),

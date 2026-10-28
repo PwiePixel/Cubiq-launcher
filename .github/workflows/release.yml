@@ -555,6 +555,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Frontend build
+        env:
+          # Links zur Website (Anmeldung, Team) zeigen auf denselben Server wie der Kern.
+          CUBIQ_API_BASE: ${{ vars.CUBIQ_API_BASE }}
         run: pnpm generate
 
       - name: Xcode project

@@ -627,6 +627,17 @@ async fn removed_website_login_answers_with_a_hint_to_sign_in_with_microsoft() {
 }
 
 #[test]
+fn without_a_server_the_cubiq_client_gets_no_address() {
+    // Die CI baut ohne CUBIQ_API_BASE – zur Laufzeit gesetzt (lokale API im Debug-Build) gilt sie dagegen.
+    if std::env::var_os("CUBIQ_API_BASE").is_some() {
+        return;
+    }
+    assert_eq!(configured_base(), "https://cubiq-launcher.invalid");
+    assert_eq!(client_mod_jvm_arg(), None, "kein Server – der Mod bekommt keine Adresse");
+    assert_eq!(website_login_url(), "https://cubiq-launcher.invalid/login");
+}
+
+#[test]
 fn both_api_addresses_are_trusted_for_textures() {
     assert_eq!(DEFAULT_BASE, "https://cubiq-launcher.invalid");
     assert!(KNOWN_BASES.contains(&"https://api.cubiq-launcher.invalid"), "alte Adresse bleibt erlaubt");

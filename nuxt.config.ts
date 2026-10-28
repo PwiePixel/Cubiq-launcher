@@ -20,6 +20,11 @@ const messePinRecord = messePin
   ? JSON.stringify({ salt: messePinSalt, hash: createHash('sha256').update(`cubiq-messe:${messePinSalt}:${messePin}`).digest('hex') })
   : ''
 
+// Adresse der Cubiq-Dienste (Repo-Variable CUBIQ_API_BASE, im Release-Build gesetzt) – geprüft wie in
+// src-tauri/crates/core/build.rs, damit Oberfläche und Kern dieselbe Adresse nutzen (app/utils/site.ts).
+const cubiqApiBase = (process.env.CUBIQ_API_BASE ?? '').trim().replace(/\/+$/, '')
+const cubiqSite = /^(?:https:\/\/[A-Za-z0-9.:-]+|http:\/\/(?:127\.0\.0\.1|localhost):[0-9]+)$/.test(cubiqApiBase) ? cubiqApiBase : ''
+
 // Tauri hat keine Server-Runtime: SPA-Modus + `nuxt generate`.
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-01',
@@ -53,6 +58,7 @@ export default defineNuxtConfig({
     define: {
       'import.meta.env.VITE_CUBIQ_MESSE': JSON.stringify(messe ? '1' : ''),
       'import.meta.env.VITE_CUBIQ_MESSE_PIN': JSON.stringify(messePinRecord),
+      'import.meta.env.VITE_CUBIQ_SITE': JSON.stringify(cubiqSite),
       __VUE_I18N_FULL_INSTALL__: true,
       __VUE_I18N_LEGACY_API__: false,
       __INTLIFY_PROD_DEVTOOLS__: false,
