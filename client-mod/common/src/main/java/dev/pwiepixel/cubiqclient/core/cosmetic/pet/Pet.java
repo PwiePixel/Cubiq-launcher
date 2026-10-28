@@ -1,6 +1,7 @@
 package dev.pwiepixel.cubiqclient.core.cosmetic.pet;
 
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2;
+import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2Renderer;
 
 import java.util.Random;
 import java.util.UUID;
@@ -56,6 +57,8 @@ public final class Pet {
 	int state = IDLE;
 	int prevState = IDLE;
 	long stateSince;
+	/** Seit wann der vorige Zustand lief (seine eigene Zeitbasis beim Ausblenden von {@code grab} und den Aktionen). */
+	long prevStateSince;
 	/** Ticks, die der Begleiter schon ohne Boden ist (AIR erst ab 2, gegen Flattern an Stufen). */
 	int airTicks;
 
@@ -193,6 +196,11 @@ public final class Pet {
 		return stateSince;
 	}
 
+	/** Wanduhr-Zeit, seit der der vorige Zustand ({@link #prevState}) lief – seine Zeitbasis beim Ausblenden. */
+	public long prevStateSince() {
+		return prevStateSince;
+	}
+
 	/**
 	 * Spielt dieser Zustand seine Animation einmal ab Zustandsbeginn statt nach der Uhr ({@link #GRAB}, {@link #PET},
 	 * {@link #EAT})? Die Zeichen-Zeit richtet sich nach dem Treiber, der wirklich spielt
@@ -218,6 +226,18 @@ public final class Pet {
 		return a;
 	}
 
+	/**
+	 * Zeit der Pose für den Zustand {@code state} mit dem Modell {@code m}: einmalige Animationen ({@code grab}, die
+	 * Aktionen) ab ihrem eigenen Beginn ({@code sinceStartMs}), alles andere nach {@code clockMs} (Uhr + Versatz des
+	 * Begleiters). Maßgeblich ist der Treiber, den das Modell wirklich spielt: fehlt ihm die Aktion, läuft idle nach der
+	 * Uhr weiter (kein Sprung auf Phase 0).
+	 */
+	public static long poseTime(CosmeticV2 m, int state, long sinceStartMs, long clockMs) {
+		if (m == null) return clockMs;
+		int eff = CosmeticV2Renderer.effectiveDriver(m, driver(state));
+		return CosmeticV2.oneShot(eff) ? Math.max(0L, sinceStartMs) : clockMs;
+	}
+
 	/** Länge der Aktion {@code driver} ({@link CosmeticV2#DRIVER_PET}/{@link CosmeticV2#DRIVER_EAT}) in ms, 0 = keine. */
 	public static int actionMs(CosmeticV2 m, int driver) {
 		CosmeticV2.Animation a = m == null ? null : m.action(driver);
@@ -226,8 +246,11 @@ public final class Pet {
 
 	void setState(int s, long now) {
 		if (s == state) return;
-		// Mitten im Überblenden: vom überwiegend sichtbaren Zustand weiterblenden.
-		prevState = blend(now) >= 0.5f ? state : prevState;
+		// Mitten im Überblenden: vom überwiegend sichtbaren Zustand weiterblenden (samt seiner Zeitbasis).
+		if (blend(now) >= 0.5f) {
+			prevState = state;
+			prevStateSince = stateSince;
+		}
 		state = s;
 		stateSince = now;
 	}

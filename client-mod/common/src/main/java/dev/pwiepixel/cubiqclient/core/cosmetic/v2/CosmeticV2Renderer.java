@@ -95,6 +95,18 @@ public final class CosmeticV2Renderer {
 	 */
 	public void pose(CosmeticV2 m, long timeMs, boolean animate, boolean helmet, int driver, int prevDriver, float blend,
 			long hiddenBones) {
+		pose(m, timeMs, timeMs, animate, helmet, driver, prevDriver, blend, hiddenBones);
+	}
+
+	/**
+	 * Wie {@link #pose(CosmeticV2, long, boolean, boolean, int, int, float, long)}, aber jede Seite der Überblendung auf
+	 * ihrer eigenen Zeitbasis: {@code timeMs} für {@code driver}, {@code prevTimeMs} für {@code prevDriver} (Begleiter:
+	 * Uhr + Versatz für Bewegungs-Zustände, Zeit seit dem eigenen Beginn für {@code grab} und die Aktionen). Sonst
+	 * springt die ausgehende Seite beim Wechsel auf eine fremde Phase (sitzender Fuchs → stehend beim Schnappen). Aktions-
+	 * Treiber ({@link CosmeticV2#DRIVER_PET} …) spielen ihre Aktion allein und auf 0…lengthMs begrenzt.
+	 */
+	public void pose(CosmeticV2 m, long timeMs, long prevTimeMs, boolean animate, boolean helmet, int driver, int prevDriver,
+			float blend, long hiddenBones) {
 		this.hidden = hiddenBones;
 		int n = Math.min(MAX, m.bones.size());
 		for (int b = 0; b < n; b++) {
@@ -107,7 +119,7 @@ public final class CosmeticV2Renderer {
 			int prev = effectiveDriver(m, prevDriver);
 			float w = blend >= 1f || cur == prev ? 1f : Math.max(0f, blend);
 			samplePoses(m, timeMs, cur, w);
-			if (w < 1f) samplePoses(m, timeMs, prev, 1f - w);
+			if (w < 1f) samplePoses(m, prevTimeMs, prev, 1f - w);
 		}
 		for (int b = 0; b < n; b++) {
 			CosmeticV2.Bone bone = m.bones.get(b);

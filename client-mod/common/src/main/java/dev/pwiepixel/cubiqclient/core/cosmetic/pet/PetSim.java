@@ -442,6 +442,7 @@ public final class PetSim {
 		p.state = Pet.IDLE;
 		p.prevState = Pet.IDLE;
 		p.stateSince = now - Pet.FADE_MS;
+		p.prevStateSince = p.stateSince;
 	}
 
 	void tickPet(Pet p, Owner o, PetWorld w) {
