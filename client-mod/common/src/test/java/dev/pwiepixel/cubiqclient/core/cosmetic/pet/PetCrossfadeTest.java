@@ -528,6 +528,46 @@ class PetCrossfadeTest {
 	}
 
 	@Test
+	void theRendererPosesACompanionOnBothTimeBasesAndHatsAndWingsOnTheClock() throws IOException {
+		for (String file : PetActionsFormatTest.FOXES) {
+			CosmeticV2 m = PetActionsFormatTest.foxModel(file);
+			CosmeticV2Renderer r = new CosmeticV2Renderer(), ref = new CosmeticV2Renderer();
+			long clock = farFromRest(ref, m);
+			V2Hat<String> base = new V2Hat<String>(m, "base", null, null, 5000L, false);
+			for (int drv : actions(m)) {
+				String what = file + " " + m.action(drv).id;
+				// wie petFrame: der sitzende Fuchs (idle auf der Uhr des Begleiters) blendet in die Aktion, die seit ihrem eigenen
+				// Beginn läuft (halb durch)
+				long t = m.action(drv).lengthMs / 2;
+				V2Hat<String> pet = base.forPet(clock, t, clock, drv, CosmeticV2.DRIVER_IDLE, 0.4f);
+				r.pose(pet);
+				ref.pose(m, t, clock, true, false, drv, CosmeticV2.DRIVER_IDLE, 0.4f, 0L);
+				for (int b = 0; b < m.bones.size(); b++) assertArrayEquals(ref.world(b), r.world(b), 0.0, what + ", Knochen " + b);
+				// … nicht beide Seiten auf der einen Uhr des Bildes, wie Hüte und Flügel (dort stünde die Aktion schon am Ende)
+				double[] two = body(r, m);
+				ref.pose(m, pet.now, true, false, drv, CosmeticV2.DRIVER_IDLE, 0.4f, 0L);
+				assertTrue(shift(body(ref, m), two) > 0.25, what + ": eigene Zeitbasen: " + shift(body(ref, m), two));
+				// abgeschaltete Knochen reisen mit
+				r.pose(pet.withHidden(2L));
+				ref.pose(m, t, clock, true, false, drv, CosmeticV2.DRIVER_IDLE, 0.4f, 2L);
+				assertArrayEquals(corners(ref, m), corners(r, m), 0.0, what + ": ohne Knochen 1");
+			}
+		}
+		// Hüte und Flügel: eine Zeit, gewichtet addiert wie bisher – 170° → −170° läuft dort rückwärts über 0°, ein Begleiter
+		// auf dem kürzesten Weg über 180°
+		CosmeticV2 spin = CosmeticV2.parse(fadeModel(170, -170));
+		int bone = PetActionsFormatTest.bone(spin, "spin");
+		CosmeticV2Renderer r = new CosmeticV2Renderer();
+		V2Hat<String> hat = new V2Hat<String>(spin, "base", null, null, 400L, false).withState(CosmeticV2.DRIVER_WALK,
+				CosmeticV2.DRIVER_IDLE, 0.5f);
+		r.pose(hat);
+		assertArrayEquals(spinAt(0), r.world(bone), 1e-5, "Hut/Flügel: linear");
+		r.pose(new V2Hat<String>(spin, "base", null, null, 400L, false).forPet(400L, 400L, 400L, CosmeticV2.DRIVER_WALK,
+				CosmeticV2.DRIVER_IDLE, 0.5f));
+		assertArrayEquals(spinAt(180), r.world(bone), 1e-5, "Begleiter: kürzester Weg");
+	}
+
+	@Test
 	void v2HatCarriesThePetClockAndBothPoseTimes() throws IOException {
 		CosmeticV2 m = PetActionsFormatTest.foxModel(PetActionsFormatTest.FOXES[0]);
 		// Hüte/Flügel: eine Zeit für alles

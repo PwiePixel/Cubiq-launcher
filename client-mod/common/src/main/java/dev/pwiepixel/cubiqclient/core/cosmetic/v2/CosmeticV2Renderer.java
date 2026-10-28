@@ -113,6 +113,20 @@ public final class CosmeticV2Renderer {
 		pose(m, timeMs, prevTimeMs, animate, helmet, driver, prevDriver, blend, hiddenBones, true);
 	}
 
+	/**
+	 * Pose für einen Durchgang von {@code hat} (immer animiert): ein Begleiter am Boden ({@link V2Hat#pet}) mit der
+	 * Überblendung der Begleiter – jede Seite auf ihrer eigenen Zeit ({@link V2Hat#poseMs}, {@link V2Hat#prevPoseMs}), siehe
+	 * {@link #pose(CosmeticV2, long, long, boolean, boolean, int, int, float, long)} –, Hüte und Flügel mit der einen Uhr des
+	 * Bildes ({@link V2Hat#now}) wie bisher.
+	 */
+	public void pose(V2Hat<?> hat) {
+		if (hat.pet) {
+			pose(hat.model, hat.poseMs, hat.prevPoseMs, true, hat.helmet, hat.driver, hat.prevDriver, hat.blend, hat.hiddenBones);
+		} else {
+			pose(hat.model, hat.now, true, hat.helmet, hat.driver, hat.prevDriver, hat.blend, hat.hiddenBones);
+		}
+	}
+
 	/** {@code pet}: Überblendung nach {@link #crossfade} (Begleiter), sonst gewichtet addiert wie bisher (Hüte, Flügel). */
 	private void pose(CosmeticV2 m, long timeMs, long prevTimeMs, boolean animate, boolean helmet, int driver, int prevDriver,
 			float blend, long hiddenBones, boolean pet) {

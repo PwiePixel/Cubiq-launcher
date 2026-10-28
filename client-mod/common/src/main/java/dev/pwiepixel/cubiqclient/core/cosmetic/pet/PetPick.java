@@ -44,6 +44,15 @@ public final class PetPick {
 		}
 	}
 
+	/**
+	 * Umriss für den Klick-Test eines Teils, das auch gezeichnet wird ({@code OnlineFeatures#petFrame}: Modell geladen und
+	 * ein Begleiter am Boden), sonst null – ohne Umriss ist ein Begleiter nicht anklickbar und zeigt keine Herzchen
+	 * ({@link PetSim#owner}). Nur Spiel-/Render-Thread.
+	 */
+	public static float[] drawnBox(CosmeticV2 model) {
+		return model == null || !model.pet() ? null : bounds(model);
+	}
+
 	static float[] compute(CosmeticV2 m) {
 		CosmeticV2Renderer r = new CosmeticV2Renderer();
 		r.pose(m, 0L, false);

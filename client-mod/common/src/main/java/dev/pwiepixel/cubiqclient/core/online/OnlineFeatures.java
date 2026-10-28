@@ -428,8 +428,7 @@ public final class OnlineFeatures<T> {
 								dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2.DRIVER_PET);
 						actionMs[2 * k + 1] = dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.actionMs(model,
 								dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2.DRIVER_EAT);
-						boxes[k] = model == null || !model.pet() ? null
-								: dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetPick.bounds(model);
+						boxes[k] = dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetPick.drawnBox(model);
 					}
 				}
 			}
@@ -619,12 +618,7 @@ public final class OnlineFeatures<T> {
 		if (trace != null) trace.accept(hat, pass);
 		try {
 			// Begleiter: jede Seite der Überblendung auf ihrer Zeit, gemischt wie in den Vorschauen; Hüte/Flügel wie bisher
-			if (hat.pet) {
-				v2Renderer.pose(hat.model, hat.poseMs, hat.prevPoseMs, true, hat.helmet, hat.driver, hat.prevDriver, hat.blend,
-						hat.hiddenBones);
-			} else {
-				v2Renderer.pose(hat.model, hat.now, true, hat.helmet, hat.driver, hat.prevDriver, hat.blend, hat.hiddenBones);
-			}
+			v2Renderer.pose(hat);
 			v2Renderer.emit(hat.model, pass, hat.now, eye, sink);
 		} catch (RuntimeException e) {
 			online.reportError(e);

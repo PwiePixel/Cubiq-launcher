@@ -361,6 +361,35 @@ class PetPickTest {
 		}
 	}
 
+	@Test
+	void onlyPartsThatAreDrawnGetAClickBox() throws IOException {
+		// petFrame zeichnet nur geladene Begleiter am Boden – nur sie bekommen einen Umriss (OnlineFeatures#petOwner); ohne
+		// Umriss sind sie nicht anklickbar und zeigen keine Herzchen
+		assertNull(PetPick.drawnBox(null), "Modell noch nicht geladen");
+		CosmeticV2 hat = CosmeticV2.parse(armModel().replace("\"slot\":\"pet\",\"attach\":\"ground\"",
+				"\"slot\":\"hat\",\"attach\":\"head\""));
+		assertTrue(hat != null && !hat.pet(), "Probe: ein Hut");
+		assertNull(PetPick.drawnBox(hat), "kein Begleiter am Boden");
+		CosmeticV2 arm = CosmeticV2.parse(armModel());
+		assertSame(PetPick.bounds(arm), PetPick.drawnBox(arm));
+		for (String file : PetActionsFormatTest.FOXES) {
+			CosmeticV2 fox = PetActionsFormatTest.foxModel(file);
+			assertSame(PetPick.bounds(fox), PetPick.drawnBox(fox), file);
+		}
+		// in der Simulation: ein Teil ohne Umriss ist durchlässig, eins mit Umriss wird getroffen
+		PetSim sim = new PetSim();
+		FakeWorld w = new FakeWorld();
+		PetSim.forceSlide = 0;
+		sim.begin(w, 0);
+		sim.owner(OWNER, 1, 1.0, new double[] { 1.0 }, null, null, new float[][] { PetPick.drawnBox(hat), PetPick.drawnBox(arm) },
+				0.5, 64, 0.5, 0f, false, false, true, w);
+		sim.end();
+		Pet notDrawn = sim.pets(OWNER).get(0), drawn = sim.pets(OWNER).get(1);
+		put(notDrawn, 0.5, 2.5);
+		put(drawn, 0.5, 4.5);
+		assertSame(drawn, sim.pick(0.5, 64.4, 0, 0, 0, 1, PetInteract.REACH, 1f));
+	}
+
 	/** Ausdehnung {minX, minY, minZ, maxX, maxY, maxZ} der Würfel in Ruhe (Pixel), ohne {@code fx_*}-Knochen auf Wunsch. */
 	static double[] restExtent(CosmeticV2 m, boolean skipFx) {
 		CosmeticV2Renderer r = new CosmeticV2Renderer();
