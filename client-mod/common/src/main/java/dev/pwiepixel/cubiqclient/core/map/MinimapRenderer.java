@@ -33,7 +33,9 @@ public final class MinimapRenderer {
 	/** Unterauflösung der Textur-Ausschnitte (1/16 Block genau). */
 	static final int SUB = 16;
 	/** Karte v3: Platzhalter „wird geladen“ (etwas heller als der Kartenhintergrund). */
-	static final int LOADING = 0xFF24222B;
+	static final int LOADING = MapStyle.LOADING;
+	/** Chunk-Raster: Linien mindestens so viele Bildschirmpixel auseinander, sonst kein Raster. */
+	static final float GRID_MIN_GAP = 8f;
 	static final int LINE_H = 10;
 	static final int HOSTILE = 0xFFE5483E;
 	static final int PASSIVE = 0xFFEDE6D2;
@@ -47,6 +49,8 @@ public final class MinimapRenderer {
 	static final float EDGE_GAP = EDGE_BOX + 3;
 
 	private final float[] bands = new float[4 * 512];
+	/** Linien des Chunk-Rasters ({@link #gridLines}). */
+	private final float[] gridOut = new float[5 * 512];
 	/** Karte v3: unter 1 Bildschirmpixel je Block die Stufe-2-Kacheln (vorgemittelt, flimmerfrei) statt Bereichs-Texturen. */
 	private boolean coarse;
 	private float zoom = -1f;
@@ -120,9 +124,11 @@ public final class MinimapRenderer {
 		double px = live ? e.playerX() : 0, pz = live ? e.playerZ() : 0;
 		float yawRad = (float) Math.toRadians(live ? e.yaw() : 180f);
 		float theta = (float) ((Math.PI - yawRad) * spin);
+		// Eigene Blickrichtung (bei gedrehter Karte immer nach oben).
+		float arrowRot = theta + yawRad + (float) Math.PI;
 
 		// Hintergrund.
-		int bg = ColorMath.withAlpha(0xFF101014, Math.round(opacity * 0.9f));
+		int bg = ColorMath.withAlpha(MapStyle.VOID, Math.round(opacity * 0.9f));
 		if (round) {
 			if (!e.sprites().drawDisc(c, cx, cy, radius, scale, bg)) c.fill(pad, pad, pad + size, pad + size, bg);
 		} else {
@@ -132,7 +138,11 @@ public final class MinimapRenderer {
 		if (live) {
 			// Karte v3: fehlende Chunks auch je Bild abtasten (kleines Budget).
 			if (!preview) e.frame(false);
-			drawMap(c, e, layer, cx, cy, radius, round, theta, px, pz, opacity, nowMs, clip);
+			drawMap(c, e, layer, cx, cy, radius, round, theta, px, pz, opacity, nowMs, clip, scale, m.minimapGrid.get());
+		}
+		// Blickkegel unter Rahmen, Markierungen und Pfeil.
+		if (m.minimapViewCone.get()) {
+			e.sprites().draw(c, MapSprites.CONE, cx, cy, coneLength(radius) * 2f, arrowRot, coneTint(theme), scale);
 		}
 
 		// Rahmen.
@@ -148,17 +158,17 @@ public final class MinimapRenderer {
 		}
 		// Himmelsrichtungen zuletzt: immer lesbar, die Rand-Kästchen weichen ihnen aus.
 		if (m.minimapCompass.get()) drawCompass(c, e, cx, cy, radius, round, theta, scale, theme);
-		// Eigene Position: Pfeil in Blickrichtung (bei gedrehter Karte immer nach oben).
-		float arrowRot = theta + yawRad + (float) Math.PI;
-		if (!e.sprites().draw(c, MapSprites.ARROW, cx, cy, 10f, arrowRot, 0xFF000000 | (theme.accentText & 0xFFFFFF), scale)) {
-			c.fill((int) cx - 2, (int) cy - 2, (int) cx + 2, (int) cy + 2, theme.accentText);
+		// Eigene Position: Pfeil in Blickrichtung.
+		int marker = 0xFF000000 | (MapStyle.marker(theme) & 0xFFFFFF);
+		if (!e.sprites().draw(c, MapSprites.ARROW, cx, cy, 10f, arrowRot, marker, scale)) {
+			c.fill((int) cx - 2, (int) cy - 2, (int) cx + 2, (int) cy + 2, marker);
 		}
 		drawInfo(c, e, pad * 2 + size, pad * 2 + size + 1, preview, live);
 		e.recordDraw(System.nanoTime() - t0);
 	}
 
 	private void drawMap(Canvas c, MapEngine e, MapLayer layer, float cx, float cy, float radius, boolean round,
-			float theta, double px, double pz, int opacity, long now, Clip clip) {
+			float theta, double px, double pz, int opacity, long now, Clip clip, double scale, boolean grid) {
 		int n;
 		boolean clipped = false;
 		if (round) {
@@ -209,8 +219,100 @@ public final class MinimapRenderer {
 			if (under != null) drawPieces(c, e, under, wx0, wz0, wx1, wz1, px, pz, tint, now);
 			drawPieces(c, e, layer, wx0, wz0, wx1, wz1, px, pz, tint, now);
 		}
+		// Chunk-Raster (dreht sich mit der Karte), nur so nah, dass die Linien nicht zu dicht stehen.
+		if (grid && showGrid(zoom, scale)) {
+			float line = (float) (1.0 / (Math.max(1.0, scale) * zoom));
+			int k = gridLines(px, pz, zoom, line, round, radius - 0.5f, bands, n, gridOut);
+			int faint = Math.round(0x30 * opacity / 255f) << 24, strong = Math.round(0x58 * opacity / 255f) << 24;
+			for (int i = 0; i < k; i++) {
+				rect(c, gridOut[i * 5], gridOut[i * 5 + 1], gridOut[i * 5 + 2], gridOut[i * 5 + 3], gridOut[i * 5 + 4] > 0 ? strong : faint);
+			}
+		}
 		c.pop();
 		if (clipped) clip.end();
+	}
+
+	/** Chunk-Raster zeigen? Nur wenn seine Linien mindestens {@link #GRID_MIN_GAP} Bildschirmpixel auseinander liegen. */
+	static boolean showGrid(float zoom, double scale) {
+		return 16f * zoom * (float) scale >= GRID_MIN_GAP;
+	}
+
+	/**
+	 * Linien des Chunk-Rasters (alle 16 Blöcke, an Bereichsgrenzen alle {@link MapRegion#SIZE} Blöcke kräftiger) als
+	 * Rechtecke in Blöcken um den Spieler ({@code px}, {@code pz}), auf die Form der Karte begrenzt: rund am Kreis mit
+	 * {@code mapR} (GUI-Pixel), eckig an den {@code n} Streifen in {@code bands}. {@code line} = Linienbreite in Blöcken.
+	 * Je Linie 5 Werte in {@code out}: x, z, Breite, Höhe, 1 = Bereichsgrenze. Liefert die Anzahl.
+	 */
+	static int gridLines(double px, double pz, float zoom, float line, boolean round, float mapR, float[] bands, int n, float[] out) {
+		int count = 0;
+		int max = out.length / 5;
+		if (round) {
+			float r = mapR / zoom;
+			for (int axis = 0; axis < 2; axis++) {
+				double p = axis == 0 ? px : pz;
+				for (double v = Math.ceil((p - r) / 16) * 16; v <= p + r && count < max; v += 16) {
+					float d = (float) (v - p);
+					float half = (float) Math.sqrt(Math.max(0f, r * r - d * d));
+					if (half > 0f) count = gridLine(out, count, axis, d, -half, half, line, v);
+				}
+			}
+			return count;
+		}
+		// Eckig: die Streifen bilden eine konvexe Form. Senkrechte Linien in einem Stück vom ersten bis zum letzten
+		// Streifen, den sie kreuzen; waagerechte liegen in genau einem Streifen.
+		float left = Float.MAX_VALUE, right = -Float.MAX_VALUE;
+		for (int b = 0; b < n; b++) {
+			left = Math.min(left, bands[b * 4 + 2] / zoom);
+			right = Math.max(right, bands[b * 4 + 3] / zoom);
+		}
+		for (double x = Math.ceil((px + left) / 16) * 16; x < px + right && count < max; x += 16) {
+			float at = (float) (x - px), from = Float.MAX_VALUE, to = -Float.MAX_VALUE;
+			for (int b = 0; b < n; b++) {
+				if (at >= bands[b * 4 + 2] / zoom && at < bands[b * 4 + 3] / zoom) {
+					from = Math.min(from, bands[b * 4] / zoom);
+					to = Math.max(to, bands[b * 4 + 1] / zoom);
+				}
+			}
+			if (to > from) count = gridLine(out, count, 0, at, from, to, line, x);
+		}
+		for (int b = 0; b < n; b++) {
+			float y0 = bands[b * 4] / zoom, y1 = bands[b * 4 + 1] / zoom;
+			for (double z = Math.ceil((pz + y0) / 16) * 16; z < pz + y1 && count < max; z += 16) {
+				count = gridLine(out, count, 1, (float) (z - pz), bands[b * 4 + 2] / zoom, bands[b * 4 + 3] / zoom, line, z);
+			}
+		}
+		return count;
+	}
+
+	/** Eine Rasterlinie: {@code axis} 0 = senkrecht bei x = {@code at}, 1 = waagerecht bei z = {@code at}. */
+	private static int gridLine(float[] out, int i, int axis, float at, float from, float to, float line, double world) {
+		int o = i * 5;
+		out[o] = axis == 0 ? at - line / 2f : from;
+		out[o + 1] = axis == 0 ? from : at - line / 2f;
+		out[o + 2] = axis == 0 ? line : to - from;
+		out[o + 3] = axis == 0 ? to - from : line;
+		out[o + 4] = Math.floorMod(Math.round(world), (long) MapRegion.SIZE) == 0 ? 1f : 0f;
+		return i + 1;
+	}
+
+	/** Rechteck in der aktuellen (Karten-)Transformation – auch Bruchteile eines GUI-Pixels. */
+	private static void rect(Canvas c, float x, float y, float w, float h, int argb) {
+		if (w <= 0f || h <= 0f) return;
+		c.push();
+		c.translate(x, y);
+		c.scale(w, h);
+		c.fill(0, 0, 1, 1, argb);
+		c.pop();
+	}
+
+	/** Länge des Blickkegels (GUI-Pixel): gut die halbe Karte, nie bis unter den Rahmen. */
+	static float coneLength(float radius) {
+		return Math.max(14f, Math.min(44f, radius * 0.55f));
+	}
+
+	/** Farbe des Blickkegels: aufgehellte Akzentfarbe, halb durchsichtig (der Verlauf steckt im Symbol). */
+	static int coneTint(Theme t) {
+		return ColorMath.withAlpha(ColorMath.lerp(MapStyle.marker(t), 0xFFFFFFFF, 0.25f), 0x78);
 	}
 
 	/**
@@ -381,16 +483,13 @@ public final class MinimapRenderer {
 		return round ? radius - MapSprites.ringIn(radius) * 0.5f + 0.5f : radius;
 	}
 
-	/** Kästchen in der Farbe des Wegpunkts mit seinem Anfangsbuchstaben. */
+	/** Flaches, abgerundetes Kästchen in der Farbe des Wegpunkts mit dunklerer Kante und seinem Anfangsbuchstaben. */
 	private static void edgeBox(Canvas c, float x, float y, Waypoint w) {
 		int s = EDGE_BOX;
 		int x0 = Math.round(x - s / 2f), y0 = Math.round(y - s / 2f);
 		int color = 0xFF000000 | (w.color & 0xFFFFFF);
-		c.fill(x0 - 1, y0 - 1, x0 + s + 1, y0 + s + 1, 0xF0101014);
-		c.fill(x0, y0, x0 + s, y0 + s, color);
-		// Obere Kante etwas heller, untere dunkler – wie ein kleiner Block.
-		c.fill(x0, y0, x0 + s, y0 + 1, ColorMath.lerp(color, 0xFFFFFFFF, 0.3f));
-		c.fill(x0, y0 + s - 1, x0 + s, y0 + s, ColorMath.lerp(color, 0xFF000000, 0.3f));
+		Paint.roundRect(c, x0 - 1, y0 - 1, s + 2, s + 2, 3, edgeOf(color));
+		Paint.roundRect(c, x0, y0, s, s, 2, color);
 		String letter = initial(w.name);
 		int tw = c.textWidth(letter);
 		c.text(letter, x0 + (s - tw) / 2 + 1, y0 + 1, textOn(w.color), false);
@@ -408,6 +507,11 @@ public final class MinimapRenderer {
 			}
 		}
 		return "?";
+	}
+
+	/** Kante eines farbigen Kästchens: dieselbe Farbe, deutlich dunkler (hebt es von Karte und Rahmen ab). */
+	static int edgeOf(int argb) {
+		return ColorMath.lerp(0xFF000000 | (argb & 0xFFFFFF), 0xFF000000, 0.55f);
 	}
 
 	/** Gut lesbare Schriftfarbe auf der Hintergrundfarbe (dunkel auf hell, weiß auf dunkel). */
@@ -467,7 +571,7 @@ public final class MinimapRenderer {
 	static void mobHead(Canvas c, MobHeads.Head h, float x, float y, float size) {
 		float k = size / Math.max(h.w, h.h);
 		float w = h.w * k, hh = h.h * k;
-		c.fill(Math.round(x - w / 2 - 1), Math.round(y - hh / 2 - 1), Math.round(x + w / 2 + 1), Math.round(y + hh / 2 + 1), 0xE0101014);
+		c.fill(Math.round(x - w / 2 - 1), Math.round(y - hh / 2 - 1), Math.round(x + w / 2 + 1), Math.round(y + hh / 2 + 1), MapStyle.PLATE);
 		c.push();
 		c.translate(x - w / 2, y - hh / 2);
 		c.scale(k, k);
@@ -483,7 +587,7 @@ public final class MinimapRenderer {
 			return;
 		}
 		float half = size / 2f;
-		c.fill(Math.round(x - half - 1), Math.round(y - half - 1), Math.round(x + half + 1), Math.round(y + half + 1), 0xE0101014);
+		c.fill(Math.round(x - half - 1), Math.round(y - half - 1), Math.round(x + half + 1), Math.round(y + half + 1), MapStyle.PLATE);
 		c.push();
 		c.translate(x - half, y - half);
 		c.scale(size / 8f, size / 8f);
@@ -510,9 +614,12 @@ public final class MinimapRenderer {
 				y = dy * k;
 			}
 			float lx = cx + (float) x, ly = cy + (float) y;
-			e.sprites().draw(c, MapSprites.BADGE, lx, ly, 9f, 0f, 0xF0141217, scale);
+			// Plakette im Cubiq-Stil: feine Kante, ruhige Fläche – Norden in der Akzentfarbe.
+			boolean north = i == 0;
+			e.sprites().draw(c, MapSprites.BADGE, lx, ly, 9f, 0f, MapStyle.badgeEdge(theme, north), scale);
+			e.sprites().draw(c, MapSprites.BADGE, lx, ly, 7f, 0f, MapStyle.badgeFill(theme, north), scale);
 			String s = letters[i];
-			int color = i == 0 ? (0xFF000000 | (theme.accentText & 0xFFFFFF)) : 0xFFE6E2DA;
+			int color = MapStyle.badgeText(theme, north);
 			c.push();
 			c.translate(lx, ly);
 			c.scale(0.75f);

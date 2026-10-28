@@ -10,10 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Prozedural erzeugte, kantengeglättete Kartensymbole (Pfeil, Punkte, Raute, Grabstein, Freundes-Ring) und der
- * runde Rahmen der Minimap (ruhig im Cubiq-Design, im Stil von Winternacht, Fuchsbau und Halloween). Erzeugt in
- * Bildschirmauflösung (GUI-Größe × Skalierung) und verkleinert gezeichnet – dadurch gestochen scharf, auch gedreht.
- * Nur Render-Thread.
+ * Prozedural erzeugte, kantengeglättete Kartensymbole (Pfeil, Punkte, Raute, Grabstein, Freundes-Ring, Plakette,
+ * Blickkegel) und der runde Rahmen der Minimap (ruhig im Cubiq-Design, im Stil von Winternacht, Fuchsbau und
+ * Halloween). Erzeugt in Bildschirmauflösung (GUI-Größe × Skalierung) und verkleinert gezeichnet – dadurch gestochen
+ * scharf, auch gedreht. Nur Render-Thread.
  */
 public final class MapSprites {
 	public static final int ARROW = 0;
@@ -21,7 +21,16 @@ public final class MapSprites {
 	public static final int DIAMOND = 2;
 	public static final int GRAVE = 3;
 	public static final int HALO = 4;
+	/** Runde Plakette ohne Umriss – die Farbe kommt ganz aus der Tönung (zweimal gezeichnet: Kante, Fläche). */
 	public static final int BADGE = 5;
+	/**
+	 * Blickkegel: weicher Fächer nach oben mit der Spitze in der Mitte (dreht sich also um die eigene Position),
+	 * nach außen und zu den Seiten auslaufend.
+	 */
+	public static final int CONE = 6;
+	/** Halber Öffnungswinkel des Blickkegels (Bogenmaß, ≈ 35°) und weicher Rand zu den Seiten. */
+	static final float CONE_HALF = 0.61f;
+	static final float CONE_SOFT = 0.22f;
 
 	private static final class Entry {
 		final TextureRef ref;
@@ -74,7 +83,7 @@ public final class MapSprites {
 		int[] argb = new int[px * px];
 		for (int y = 0; y < px; y++) {
 			for (int x = 0; x < px; x++) {
-				argb[y * px + x] = spritePixel(kind, x, y, px);
+				argb[y * px + x] = kind == CONE ? conePixel(x, y, px) : spritePixel(kind, x, y, px);
 			}
 		}
 		TextureRef ref = Textures.store().upload("map/sprite" + kind + "-" + px, px, px, argb);
@@ -144,15 +153,40 @@ public final class MapSprites {
 				if (d >= 0.7f && d < 0.78f) return 1;
 				return 0;
 			}
-			case BADGE: {
-				float d = u * u + v * v;
-				if (d <= 0.8f * 0.8f) return 2;
-				if (d <= 0.97f * 0.97f) return 1;
-				return 0;
-			}
+			case BADGE:
+				return u * u + v * v <= 0.97f * 0.97f ? 2 : 0;
 			default:
 				return 0;
 		}
+	}
+
+	/** Blickkegel: weiß mit weich auslaufender Deckkraft, 4×4-überabgetastet. */
+	static int conePixel(int x, int y, int px) {
+		float a = 0f;
+		for (int sy = 0; sy < 4; sy++) {
+			for (int sx = 0; sx < 4; sx++) {
+				float u = ((x + (sx + 0.5f) / 4f) / px) * 2f - 1f;
+				float v = ((y + (sy + 0.5f) / 4f) / px) * 2f - 1f;
+				a += coneAlpha(u, v) / 16f;
+			}
+		}
+		int alpha = Math.min(255, Math.round(a * 255));
+		return alpha <= 0 ? 0 : (alpha << 24) | 0xFFFFFF;
+	}
+
+	/** Deckkraft des Kegels (0..1) bei u, v in [-1, 1]: Spitze in der Mitte, Fächer nach oben (v &lt; 0). */
+	static float coneAlpha(float u, float v) {
+		float d = (float) Math.sqrt(u * u + v * v);
+		if (d >= 1f || v >= 0f) return 0f;
+		float off = Math.abs((float) Math.atan2(u, -v));
+		float side = smooth(ColorMath.clamp01((CONE_HALF + CONE_SOFT / 2f - off) / CONE_SOFT));
+		// Bis gut ein Drittel der Länge kräftig, dann weich bis zur Spitze auslaufend.
+		float out = 1f - smooth(ColorMath.clamp01((d - 0.35f) / 0.65f));
+		return side * out;
+	}
+
+	private static float smooth(float t) {
+		return t * t * (3f - 2f * t);
 	}
 
 	private static boolean inArrow(float u, float v, float s) {
