@@ -526,7 +526,8 @@ jobs:
     name: iOS
     needs: [prepare]
     if: needs.prepare.outputs.changelog == 'ok'
-    runs-on: macos-latest
+    # Fest auf macos-15 wie die iOS-Engine und die CI (ci.yml, launcher-ios): macos-latest bekam zeitweise keinen Runner.
+    runs-on: macos-15
     env:
       # Swift-Pakete der Plugins nutzen APIs ab iOS 14; die App verlangt iOS 15.
       IPHONEOS_DEPLOYMENT_TARGET: '15.0'
