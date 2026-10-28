@@ -10,9 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Prozedural erzeugte, kantengeglättete Kartensymbole (Pfeil, Punkte, Raute, Grabstein, Freundes-Ring) und der
- * runde Redstone-Rahmen der Minimap. Erzeugt in Bildschirmauflösung (GUI-Größe × Skalierung) und verkleinert
- * gezeichnet – dadurch gestochen scharf, auch gedreht. Nur Render-Thread.
+ * Prozedural erzeugte, kantengeglättete Kartensymbole (Pfeil, Punkte, Raute, Grabstein, Freundes-Ring, Plakette,
+ * Blickkegel) und der runde Rahmen der Minimap (ruhig im Cubiq-Design, im Stil von Winternacht, Fuchsbau und
+ * Halloween). Erzeugt in Bildschirmauflösung (GUI-Größe × Skalierung) und verkleinert gezeichnet – dadurch gestochen
+ * scharf, auch gedreht. Nur Render-Thread.
  */
 public final class MapSprites {
 	public static final int ARROW = 0;
@@ -20,7 +21,16 @@ public final class MapSprites {
 	public static final int DIAMOND = 2;
 	public static final int GRAVE = 3;
 	public static final int HALO = 4;
+	/** Runde Plakette ohne Umriss – die Farbe kommt ganz aus der Tönung (zweimal gezeichnet: Kante, Fläche). */
 	public static final int BADGE = 5;
+	/**
+	 * Blickkegel: weicher Fächer nach oben mit der Spitze in der Mitte (dreht sich also um die eigene Position),
+	 * nach außen und zu den Seiten auslaufend.
+	 */
+	public static final int CONE = 6;
+	/** Halber Öffnungswinkel des Blickkegels (Bogenmaß, ≈ 35°) und weicher Rand zu den Seiten. */
+	static final float CONE_HALF = 0.61f;
+	static final float CONE_SOFT = 0.22f;
 
 	private static final class Entry {
 		final TextureRef ref;
@@ -73,7 +83,7 @@ public final class MapSprites {
 		int[] argb = new int[px * px];
 		for (int y = 0; y < px; y++) {
 			for (int x = 0; x < px; x++) {
-				argb[y * px + x] = spritePixel(kind, x, y, px);
+				argb[y * px + x] = kind == CONE ? conePixel(x, y, px) : spritePixel(kind, x, y, px);
 			}
 		}
 		TextureRef ref = Textures.store().upload("map/sprite" + kind + "-" + px, px, px, argb);
@@ -143,15 +153,40 @@ public final class MapSprites {
 				if (d >= 0.7f && d < 0.78f) return 1;
 				return 0;
 			}
-			case BADGE: {
-				float d = u * u + v * v;
-				if (d <= 0.8f * 0.8f) return 2;
-				if (d <= 0.97f * 0.97f) return 1;
-				return 0;
-			}
+			case BADGE:
+				return u * u + v * v <= 0.97f * 0.97f ? 2 : 0;
 			default:
 				return 0;
 		}
+	}
+
+	/** Blickkegel: weiß mit weich auslaufender Deckkraft, 4×4-überabgetastet. */
+	static int conePixel(int x, int y, int px) {
+		float a = 0f;
+		for (int sy = 0; sy < 4; sy++) {
+			for (int sx = 0; sx < 4; sx++) {
+				float u = ((x + (sx + 0.5f) / 4f) / px) * 2f - 1f;
+				float v = ((y + (sy + 0.5f) / 4f) / px) * 2f - 1f;
+				a += coneAlpha(u, v) / 16f;
+			}
+		}
+		int alpha = Math.min(255, Math.round(a * 255));
+		return alpha <= 0 ? 0 : (alpha << 24) | 0xFFFFFF;
+	}
+
+	/** Deckkraft des Kegels (0..1) bei u, v in [-1, 1]: Spitze in der Mitte, Fächer nach oben (v &lt; 0). */
+	static float coneAlpha(float u, float v) {
+		float d = (float) Math.sqrt(u * u + v * v);
+		if (d >= 1f || v >= 0f) return 0f;
+		float off = Math.abs((float) Math.atan2(u, -v));
+		float side = smooth(ColorMath.clamp01((CONE_HALF + CONE_SOFT / 2f - off) / CONE_SOFT));
+		// Bis gut ein Drittel der Länge kräftig, dann weich bis zur Spitze auslaufend.
+		float out = 1f - smooth(ColorMath.clamp01((d - 0.35f) / 0.65f));
+		return side * out;
+	}
+
+	private static float smooth(float t) {
+		return t * t * (3f - 2f * t);
 	}
 
 	private static boolean inArrow(float u, float v, float s) {
@@ -177,24 +212,34 @@ public final class MapSprites {
 
 	/** Breite des Randes außerhalb des Kartenradius (GUI-Pixel). */
 	public static final float RING_OUT = 3f;
+	/** Deckkraft des weichen Schattens direkt an der Kante (Cubiq-Rahmen, rund und eckig). */
+	static final int SHADOW_ALPHA = 0x50;
+
 	/**
-	 * Deckender Rand innerhalb des Kartenradius (Staublinie + Stein) – verdeckt die Streifenkanten. Wächst mit der
-	 * Größe, damit große Karten nicht zu viele Streifen brauchen (Anzahl ≈ Radius / Rand).
+	 * Deckender Rand innerhalb des Kartenradius – verdeckt die Streifenkanten. Wächst mit der Größe, damit große Karten
+	 * nicht zu viele Streifen brauchen (Anzahl ≈ Radius / Rand).
 	 */
 	public static float ringIn(float radius) {
 		return Math.max(3f, radius / 18f);
 	}
 
+	/** Rahmen im Stil von Winternacht, Fuchsbau oder Halloween statt des ruhigen Cubiq-Rahmens? */
+	static boolean themed(Theme t) {
+		return t.winter || t.fox || t.halloween;
+	}
+
 	/**
-	 * Runder Redstone-Rahmen für eine Karte mit Radius {@code radius} (GUI-Pixel): Steinring mit Licht von links
-	 * oben, rote Staublinie innen und ein schwaches Leuchten zur Karte hin. Textur deckt [−R−RING_OUT, R+RING_OUT]².
+	 * Runder Rahmen für eine Karte mit Radius {@code radius} (GUI-Pixel). Cubiq: ruhiger Ring in der Flächenfarbe mit
+	 * feiner Kante und weichem Schatten ({@link #ringColor}); Winternacht, Fuchsbau und Halloween behalten einen Ring im
+	 * Stil des Designs ({@link #themedRingColor}). Textur deckt [−R−RING_OUT, R+RING_OUT]².
 	 */
 	public boolean drawRing(Canvas c, float cx, float cy, float radius, double scale, int alpha) {
 		if (!c.images() || Textures.store() == null) return false;
 		Theme t = Theme.get();
 		float outer = radius + RING_OUT;
 		int px = density(scale, outer * 2f, 1024);
-		String key = "ring_" + px + "_" + Math.round(radius * 4) + "_" + t.accentText + "_" + t.bevelLight;
+		String key = "ring_" + px + "_" + Math.round(radius * 4) + "_" + (themed(t)
+				? "t" + t.accentText + "_" + t.bevelLight + "_" + t.bevelDark : "c" + t.surface + "_" + t.border);
 		if (!key.equals(ringKey) || ring == null) {
 			Entry made = makeRing(px, radius, outer, t);
 			if (made == null) return false;
@@ -249,10 +294,11 @@ public final class MapSprites {
 		int[] img = new int[px * px];
 		float k = px / (outer * 2f); // Texturpixel je GUI-Pixel
 		float center = px / 2f;
-		int stoneLight = ColorMath.lerp(0xFF6E6A70, t.bevelLight, 0.35f);
-		int stoneDark = ColorMath.lerp(0xFF232126, t.bevelDark, 0.35f);
-		int dust = t.accentText;
-		int dustDark = ColorMath.scaleRgb(t.accentText, 0.55f);
+		boolean themed = themed(t);
+		int rimLight = ColorMath.lerp(0xFF6E6A70, t.bevelLight, 0.35f);
+		int rimDark = ColorMath.lerp(0xFF232126, t.bevelDark, 0.35f);
+		int line = t.accentText;
+		int lineDark = ColorMath.scaleRgb(t.accentText, 0.55f);
 		for (int y = 0; y < px; y++) {
 			for (int x = 0; x < px; x++) {
 				float a = 0f, r = 0f, g = 0f, b = 0f;
@@ -260,7 +306,8 @@ public final class MapSprites {
 					float dx = (x + 0.25f + (s & 1) * 0.5f - center) / k;
 					float dy = (y + 0.25f + (s >> 1) * 0.5f - center) / k;
 					float d = (float) Math.sqrt(dx * dx + dy * dy);
-					int col = ringColor(d, dx, dy, radius, stoneLight, stoneDark, dust, dustDark);
+					int col = themed ? themedRingColor(d, dx, dy, radius, rimLight, rimDark, line, lineDark)
+							: ringColor(d, radius, t.surface, t.border);
 					float ca = (col >>> 24) / 255f;
 					a += ca * 0.25f;
 					r += ((col >> 16) & 0xFF) * ca * 0.25f;
@@ -276,26 +323,41 @@ public final class MapSprites {
 		return ref == null ? null : new Entry(ref, px);
 	}
 
-	/** Farbe des Rahmens im Abstand d vom Mittelpunkt (0 = durchsichtig). */
-	static int ringColor(float d, float dx, float dy, float radius, int stoneLight, int stoneDark, int dust, int dustDark) {
+	/**
+	 * Farbe des Cubiq-Rahmens im Abstand d vom Mittelpunkt (0 = durchsichtig), wie die Fenster des Menüs: innerhalb des
+	 * Kartenradius deckend in der Flächenfarbe {@code fill} (verdeckt die Streifenkanten), darauf die feine Kante
+	 * {@code edge} (1 px, auf ganzen Pixeln um die Mitte) und außen ein weicher Schatten, der bis RING_OUT ausläuft.
+	 */
+	static int ringColor(float d, float radius, int fill, int edge) {
+		if (d < radius - ringIn(radius) || d >= radius + RING_OUT) return 0;
+		if (d < radius) return fill;
+		if (d < radius + 1f) return edge;
+		return Math.round(SHADOW_ALPHA * (radius + RING_OUT - d) / (RING_OUT - 1f)) << 24;
+	}
+
+	/**
+	 * Ring im Stil von Winternacht, Fuchsbau und Halloween: Licht von links oben, dunkle Außenkante, innen eine Linie in
+	 * der Akzentfarbe ({@code line}, mit hellerer Mitte – Frost, Glut, Mondsilber), die zur Karte hin schimmert.
+	 */
+	static int themedRingColor(float d, float dx, float dy, float radius, int rimLight, int rimDark, int line, int lineDark) {
 		float inner = radius - ringIn(radius);
 		if (d > radius + RING_OUT || d < inner - 2.5f) return 0;
 		if (d < inner) {
-			// Leuchten zur Karte hin.
+			// Schimmer zur Karte hin.
 			float f = 1f - (inner - d) / 2.5f;
-			return ColorMath.withAlpha(dust, Math.round(f * f * 0x60));
+			return ColorMath.withAlpha(line, Math.round(f * f * 0x60));
 		}
 		if (d < inner + 1.6f) {
-			// Staublinie mit hellerer Mitte.
+			// Linie mit hellerer Mitte.
 			float m = 1f - Math.abs(d - (inner + 0.8f)) / 0.8f;
-			return 0xFF000000 | (ColorMath.lerp(dustDark, dust, 0.55f + 0.45f * m) & 0xFFFFFF);
+			return 0xFF000000 | (ColorMath.lerp(lineDark, line, 0.55f + 0.45f * m) & 0xFFFFFF);
 		}
 		if (d > radius + RING_OUT - 0.9f) return 0xFF0B0A0D;
 		if (d < inner + 2.2f) return 0xFF151317;
-		// Stein: Licht von links oben.
+		// Ring: Licht von links oben.
 		float nx = dx / Math.max(0.001f, d), ny = dy / Math.max(0.001f, d);
 		float light = 0.5f - 0.5f * (nx * 0.7071f + ny * 0.7071f);
-		return 0xFF000000 | (ColorMath.lerp(stoneDark, stoneLight, light) & 0xFFFFFF);
+		return 0xFF000000 | (ColorMath.lerp(rimDark, rimLight, light) & 0xFFFFFF);
 	}
 
 	/** Alle Texturen freigeben (Weltwechsel/Größenwechsel unnötig – nur beim Beenden). */

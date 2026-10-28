@@ -1,7 +1,12 @@
 package dev.pwiepixel.cubiqclient.core.map;
 
 import dev.pwiepixel.cubiqclient.core.config.KeyDefaults;
+import dev.pwiepixel.cubiqclient.core.halloween.Halloween;
 import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
+import dev.pwiepixel.cubiqclient.core.ui.Canvas;
+import dev.pwiepixel.cubiqclient.core.ui.TextureRef;
+import dev.pwiepixel.cubiqclient.core.ui.Textures;
+import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.waypoint.Waypoint;
 import dev.pwiepixel.cubiqclient.core.waypoint.WaypointStore;
 import org.junit.jupiter.api.Test;
@@ -441,6 +446,241 @@ class MapTest {
 			}
 		}
 		return false;
+	}
+
+	// --- Rahmen ---
+
+	@Test
+	void ringHidesTheStripEdgesInEveryDesign() {
+		float[] out = new float[4 * 512];
+		for (float radius : new float[]{32f, 56f, 92f, 128f}) {
+			// Wie MinimapRenderer.drawMap: Karte bis knapp unter die Kante.
+			int n = MapShapes.circle(radius - 0.5f, MapSprites.ringIn(radius) - 0.5f, out);
+			float inner = radius - MapSprites.ringIn(radius);
+			for (float a = 0; a < 6.28f; a += 0.02f) {
+				float cos = (float) Math.cos(a), sin = (float) Math.sin(a);
+				for (float d = inner - 3f; d <= radius + 1f; d += 0.05f) {
+					float x = cos * d, y = sin * d;
+					if (covered(out, n, x, y)) {
+						assertTrue(d <= radius - 0.5f + 1e-3f, "Streifen ragen nicht unter der Kante hervor");
+						continue;
+					}
+					// Bis knapp vor ringIn decken die Streifen (siehe oben, gleiche Rundungsgrenze).
+					if (d > inner - 0.01f && d < inner) continue;
+					// Lücke der Streifen: hier muss der Rahmen decken – sonst sähe man Treppenkanten.
+					assertEquals(0xFF, MapSprites.ringColor(d, radius, 0xFF161C18, 0xFF29332C) >>> 24, "Cubiq bei d=" + d + ", r=" + radius);
+					assertEquals(0xFF, MapSprites.themedRingColor(d, x, y, radius, 0xFF6E6A70, 0xFF232126, 0xFF8FDCFF, 0xFF4E7A8C) >>> 24,
+							"Design-Ring bei d=" + d + ", r=" + radius);
+				}
+			}
+		}
+	}
+
+	@Test
+	void cubiqRingIsFlatWithAFineEdgeAndASoftShadow() {
+		int fill = 0xFF161C18, edge = 0xFF29332C;
+		for (float radius : new float[]{32f, 56f, 128f}) {
+			float inner = radius - MapSprites.ringIn(radius);
+			for (float d = 0f; d < inner; d += 0.1f) assertEquals(0, MapSprites.ringColor(d, radius, fill, edge), "kein Schein über der Karte");
+			for (float d = inner; d < radius; d += 0.05f) assertEquals(fill, MapSprites.ringColor(d, radius, fill, edge), "ruhige Fläche");
+			for (float d = radius; d < radius + 1f; d += 0.05f) assertEquals(edge, MapSprites.ringColor(d, radius, fill, edge), "feine Kante");
+			int last = 0xFF;
+			for (float d = radius + 1f; d < radius + MapSprites.RING_OUT; d += 0.1f) {
+				int shadow = MapSprites.ringColor(d, radius, fill, edge);
+				assertEquals(0, shadow & 0xFFFFFF, "Schatten ist schwarz");
+				assertTrue((shadow >>> 24) <= Math.min(last, MapSprites.SHADOW_ALPHA), "läuft nach außen aus");
+				last = shadow >>> 24;
+			}
+			assertTrue(last <= 0x06, "am Rand der Textur fast weg: " + last);
+			assertEquals(0, MapSprites.ringColor(radius + MapSprites.RING_OUT, radius, fill, edge));
+		}
+	}
+
+	@Test
+	void themedRingKeepsItsLineAndLight() {
+		float radius = 56f, inner = radius - MapSprites.ringIn(radius);
+		int light = 0xFF6E6A70, dark = 0xFF232126, line = 0xFF8FDCFF, lineDark = 0xFF4E7A8C;
+		float d = inner + 0.8f;
+		assertEquals(line, MapSprites.themedRingColor(d, 0f, -d, radius, light, dark, line, lineDark), "Linie in Akzentfarbe");
+		int shimmer = MapSprites.themedRingColor(inner - 1f, 0f, 1f - inner, radius, light, dark, line, lineDark);
+		assertEquals(line & 0xFFFFFF, shimmer & 0xFFFFFF);
+		assertTrue((shimmer >>> 24) > 0 && (shimmer >>> 24) < 0xFF, "schimmert zur Karte hin");
+		float r = radius + 1f, k = r * 0.70710677f;
+		assertEquals(light, MapSprites.themedRingColor(r, -k, -k, radius, light, dark, line, lineDark), "Licht von links oben");
+		assertEquals(dark, MapSprites.themedRingColor(r, k, k, radius, light, dark, line, lineDark));
+	}
+
+	@Test
+	void drawRingFollowsTheDesign() {
+		final java.util.Map<String, int[]> uploads = new java.util.HashMap<String, int[]>();
+		Textures.replaceForTests(new Textures.Store() {
+			@Override
+			public TextureRef upload(String name, int width, int height, int[] argb) {
+				uploads.put(name, argb.clone());
+				return new TextureRef(name, width, height);
+			}
+
+			@Override
+			public void release(TextureRef texture) {
+			}
+
+			@Override
+			public TextureRef game(String location, int width, int height) {
+				return null;
+			}
+
+			@Override
+			public Textures.DefaultSkin defaultSkin(java.util.UUID uuid) {
+				return null;
+			}
+		});
+		Halloween.reset();
+		try {
+			MapSprites sprites = new MapSprites();
+			Grid canvas = new Grid(1, 1, 0);
+			float radius = 56f, outer = radius + MapSprites.RING_OUT, inner = radius - MapSprites.ringIn(radius);
+			int px = MapSprites.density(2.0, outer * 2f, 1024);
+			for (String name : new String[]{"dark", "oled", "light"}) {
+				Theme t = Theme.of(name, "cubiq", null);
+				Theme.set(t);
+				assertTrue(sprites.drawRing(canvas, 60f, 60f, radius, 2.0, 255));
+				int[] ring = uploads.get("map/ring");
+				// Oben in der Mitte von innen nach außen: Karte frei, Fläche, feine Kante, Schatten.
+				assertEquals(0, texel(ring, px, outer, 0f, 1f - inner), name);
+				assertEquals(t.surface, texel(ring, px, outer, 0f, 1f - radius), name);
+				assertEquals(t.border, texel(ring, px, outer, 0f, -radius - 0.5f), name);
+				assertEquals(0, texel(ring, px, outer, 0f, -radius - 2f) & 0xFFFFFF, name);
+				assertTrue(closest(ring, px, t.accentText) > 40, "keine Linie in Akzentfarbe (" + name + ")");
+			}
+			Theme.set(Theme.of("dark", "ice", null, Theme.WINTER));
+			assertTrue(sprites.drawRing(canvas, 60f, 60f, radius, 2.0, 255));
+			assertTrue(closest(uploads.get("map/ring"), px, Theme.get().accentText) <= 12, "Winternacht: Frostlinie");
+			Theme.set(Theme.of("dark", "cubiq", null));
+			Halloween.force(Boolean.TRUE);
+			assertTrue(sprites.drawRing(canvas, 60f, 60f, radius, 2.0, 255));
+			assertTrue(closest(uploads.get("map/ring"), px, Theme.get().accentText) <= 12, "Halloween: Mondsilber");
+		} finally {
+			Halloween.reset();
+			Textures.replaceForTests(null);
+			Theme.set(Theme.of("dark", "cubiq", null));
+		}
+	}
+
+	/** Texel der Rahmen-Textur bei (dx, dy) GUI-Pixeln um die Mitte. */
+	private static int texel(int[] ring, int px, float outer, float dx, float dy) {
+		float k = px / (outer * 2f);
+		return ring[(int) ((dy + outer) * k) * px + (int) ((dx + outer) * k)];
+	}
+
+	/** Kleinster Abstand (größte Kanal-Abweichung) eines deckenden Texels der mittleren Spalte zu {@code argb}. */
+	private static int closest(int[] ring, int px, int argb) {
+		int best = 256;
+		for (int y = 0; y < px; y++) {
+			int c = ring[y * px + px / 2];
+			if ((c >>> 24) != 0xFF) continue;
+			int diff = Math.max(Math.abs(((c >> 16) & 0xFF) - ((argb >> 16) & 0xFF)),
+					Math.max(Math.abs(((c >> 8) & 0xFF) - ((argb >> 8) & 0xFF)), Math.abs((c & 0xFF) - (argb & 0xFF))));
+			best = Math.min(best, diff);
+		}
+		return best;
+	}
+
+	@Test
+	void squareFrameIsAFineEdgeRightAroundTheMap() {
+		int pad = 3, size = 40, w = size + 2 * pad;
+		for (String name : new String[]{"dark", "oled", "light"}) {
+			Theme t = Theme.of(name, "cubiq", null);
+			Grid g = new Grid(w, w, 3);
+			MinimapRenderer.squareFrame(g, pad, size, t);
+			for (int y = -3; y < w + 3; y++) {
+				for (int x = -3; x < w + 3; x++) {
+					int c = g.at(x, y);
+					boolean outside = x < 0 || y < 0 || x >= w || y >= w;
+					boolean map = x >= pad && x < pad + size && y >= pad && y < pad + size;
+					boolean mapCorner = (x == pad || x == pad + size - 1) && (y == pad || y == pad + size - 1);
+					boolean straightEdge = (y == pad - 1 || y == pad + size) && x > pad && x < pad + size - 1
+							|| (x == pad - 1 || x == pad + size) && y > pad && y < pad + size - 1;
+					String at = name + " bei " + x + "," + y;
+					if (outside) {
+						assertEquals(0, c, "nichts außerhalb des Elements: " + at);
+					} else if (map) {
+						assertEquals(mapCorner ? t.border : 0, c, "Karte frei, nur die Ecken unter der Rundung: " + at);
+					} else if (straightEdge) {
+						assertEquals(t.border, c, "feine Kante direkt um die Karte: " + at);
+					} else {
+						assertEquals(0, c & 0xFFFFFF, "sonst nur Schatten: " + at);
+						assertTrue((c >>> 24) <= MapSprites.SHADOW_ALPHA, at);
+					}
+				}
+			}
+			assertTrue(g.at(pad - 2, w / 2) >>> 24 > g.at(pad - 3, w / 2) >>> 24, "Schatten läuft aus");
+			assertTrue(g.at(pad - 3, w / 2) >>> 24 > 0);
+		}
+		// Winternacht, Fuchsbau, Halloween: Rand im Stil des Designs mit Linie in Akzentfarbe.
+		Theme winter = Theme.of("dark", "ice", null, Theme.WINTER);
+		Grid g = new Grid(w, w, 0);
+		MinimapRenderer.squareFrame(g, pad, size, winter);
+		assertEquals(0xFF000000 | (winter.accentText & 0xFFFFFF), g.at(pad - 1, w / 2));
+		assertEquals(0xFF000000 | (winter.accentText & 0xFFFFFF), g.at(w / 2, pad + size));
+		assertEquals(0, g.at(pad + 1, pad + 1), "Karte frei");
+	}
+
+	/** Zeichenfläche als ARGB-Raster (Koordinaten ab −margin, um Zeichnen außerhalb zu sehen); Überblenden wie im Spiel. */
+	static final class Grid implements Canvas {
+		final int w, h, margin, stride;
+		final int[] px;
+
+		Grid(int w, int h, int margin) {
+			this.w = w;
+			this.h = h;
+			this.margin = margin;
+			this.stride = w + 2 * margin;
+			this.px = new int[stride * (h + 2 * margin)];
+		}
+
+		int at(int x, int y) {
+			return px[(y + margin) * stride + x + margin];
+		}
+
+		@Override
+		public void fill(int x1, int y1, int x2, int y2, int argb) {
+			for (int y = Math.max(-margin, y1); y < Math.min(h + margin, y2); y++) {
+				for (int x = Math.max(-margin, x1); x < Math.min(w + margin, x2); x++) {
+					int i = (y + margin) * stride + x + margin;
+					px[i] = over(argb, px[i]);
+				}
+			}
+		}
+
+		private static int over(int src, int dst) {
+			int sa = src >>> 24, da = dst >>> 24;
+			if (sa == 0xFF || da == 0) return src;
+			int oa = sa + da * (0xFF - sa) / 0xFF;
+			int[] ch = new int[3];
+			for (int k = 0; k < 3; k++) {
+				int s = (src >> (16 - 8 * k)) & 0xFF, d = (dst >> (16 - 8 * k)) & 0xFF;
+				ch[k] = (s * sa + d * da * (0xFF - sa) / 0xFF) / oa;
+			}
+			return (oa << 24) | (ch[0] << 16) | (ch[1] << 8) | ch[2];
+		}
+
+		@Override
+		public boolean images() {
+			return true;
+		}
+
+		@Override public void text(String text, int x, int y, int argb, boolean shadow) { }
+		@Override public int textWidth(String text) { return text.length() * 6; }
+		@Override public int lineHeight() { return 9; }
+		@Override public String clip(String text, int maxWidth) { return text; }
+		@Override public void flush() { }
+		@Override public void scissor(int x1, int y1, int x2, int y2) { }
+		@Override public void noScissor() { }
+		@Override public void raise(float z) { }
+		@Override public void push() { }
+		@Override public void translate(float x, float y) { }
+		@Override public void scale(float factor) { }
+		@Override public void pop() { }
 	}
 
 	// --- Engine: Abtasten, Höhle, Fair Play, Wegpunkte, Tod ---

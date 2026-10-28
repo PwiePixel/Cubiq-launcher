@@ -163,6 +163,15 @@ const C = Object.fromEntries(
     star: '#ffd23f',
     starDark: '#e8a317',
     starFace: '#8a4a10',
+    // Karte (Papier, Wasser, Sand, Wiese, Route)
+    parchment: '#f1e2b6',
+    parchmentShade: '#dcc68f',
+    waterHi: '#bfe6f8',
+    water: '#72b8e8',
+    waterDeep: '#4b92cf',
+    sand: '#e9c66f',
+    meadow: '#cfe08f',
+    routeHi: '#a9d46b',
   }).map(([k, v]) => [k, hex(v)]),
 )
 
@@ -196,6 +205,8 @@ export const SPECIAL_TOPICS = [
   // herum die neuen Begleiter; statt der schwebenden Würfel fliegt Mini-Cubi, statt der Funken leuchten eigene Sterne.
   // Längere, flüssigere Schleife.
   { id: 'cosmetics', subject: 'companions', hero: 'middle', wide: 8, cubes: 0, sparkles: 0, float: 1, frames: 32, frameMs: 80 },
+  // 0.3.1: Das Karten-Update – neben Cubi steht eine große aufgefaltete Karte, eine grüne Route führt zum Wegpunkt.
+  { id: 'map', subject: 'map' },
 ]
 
 function count(haystack, needle) {
@@ -464,6 +475,42 @@ const SPRITES = {
     { h: C.woodHi, W: C.wood, w: C.woodDark, m: C.metalDeep, M: C.metalDark, g: C.gold, G: C.goldDark },
   ),
   bow: sprite(['gg..gg', 'gGggGg', '.gGGg.'], { g: C.goldHi, G: C.goldDark }),
+  // Flächen der Karte (24 × 24, „.“ = blankes Papier): Wiesen und ein See mit Sandufer und Glanz.
+  mapLand: sprite(
+    [
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '....................g...',
+      '...................gggg.',
+      '..................ggggg.',
+      '...................gggg.',
+      '....................gg..',
+      '...............sss......',
+      '............ssswwwss....',
+      '..ggg......sshhwwwwss...',
+      '.gggggg...sswwwWWwwws...',
+      '.ggggggg..swwwWWWwwws...',
+      '.gggggggg.sswwwwwwwss...',
+      '..ggggggg...sswwwwss....',
+      '...ggggg......ssss......',
+      '....ggg.................',
+      '........................',
+    ],
+    { g: C.meadow, w: C.water, W: C.waterDeep, h: C.waterHi, s: C.sand },
+  ),
+  // Kartenzeichen, aufrecht gestempelt (sie knicken nicht mit dem Papier)
+  mapMountain: sprite(['...n...', '..nnN..', '..mmM..', '.mmmMM.', 'mmmmMMM'], { n: C.snow, N: C.snowShade, m: C.stone, M: C.stoneDark }),
+  mapTree: sprite(['.lLL.', 'lLLLD', 'LLLDD', '.LDD.', '..s..'], { l: C.leaf, L: C.grassDark, D: C.cubiBottom, s: C.woodDark }),
+  mapHome: sprite(['ttt', 'GGS', 'GGS'], { t: C.cubiTop, G: C.cubi, S: C.cubiSide }),
+  mapScale: sprite(['S..S', 'SSss'], { S: C.slateDark, s: C.slateHi }),
+  pin: sprite(['.rrr.', 'rhrrR', 'rrwrR', 'rrrrR', '.rrR.', '..R..'], { r: C.red, R: C.redDark, h: C.white, w: C.white }),
   z: sprite(['zzzz', '..z.', '.z..', 'zzzz'], { z: C.white }),
   heart: sprite(['pp.pp', 'ppppp', '.ppp.', '..p..'], { p: C.pink }),
 }
@@ -1319,6 +1366,102 @@ const PROPS = {
     const mini = miniCubiOrbit(f, n, hero)
     const sky = nightSky(f, { left, right, hero }).draw(fireflyFlight(f, n, left + 5, 6)).draw(shootingStar(f, n))
     return { layer: c, hero: hoppingCubi(f, n, body), ground: mini.back, front: mini.front, sky }
+  },
+
+  /**
+   * Große aufgefaltete Karte aus drei Feldern, im Zickzack gefaltet – so steht sie von selbst: die Falten vorn liegen
+   * im Bild tiefer, das mittlere Feld liegt im Schatten, Flächen und Route knicken mit dem Papier. Eine gestrichelte
+   * Route in Cubiq-Grün läuft von Cubis kleinem Würfel zum Wegpunkt (die Striche wandern), die rote Nadel darüber wippt
+   * und funkelt. An der Ecke klebt eine runde Minikarte mit Norden und Blickkegel, der sich langsam hin und her dreht.
+   */
+  map(f) {
+    const x0 = 31
+    const w = 24
+    const h = 24
+    const fold = 8
+    // Versatz je Spalte: Felder 1 und 3 laufen nach rechts nach vorn (im Bild tiefer), Feld 2 wieder nach hinten.
+    const sink = (u) => {
+      const t = ((u % fold) + 0.5) / fold
+      return Math.round(2 * (Math.floor(u / fold) % 2 ? 1 - t : t))
+    }
+    const top = (u) => GROUND - h + sink(u)
+    // Mittleres Feld im Schatten, an den Falten eine dunklere Linie.
+    const tone = (col, u) => {
+      const shaded = Math.floor(u / fold) === 1 ? mix(col, C.dirtDeep, 0.16) : col
+      return u % fold === fold - 1 && u < w - 1 ? mix(shaded, C.dirtDeep, 0.2) : shaded
+    }
+
+    // Papier mit Flächen und Route in Kartenkoordinaten (u, v), danach Spalte für Spalte versetzt aufs Bild.
+    const sheet = new Canvas(w, h).rect(0, 0, w, h, C.parchment).draw(SPRITES.mapLand)
+    // Route vom kleinen Würfel links zum Ziel oben rechts, Punkt für Punkt (ohne doppelte Punkte an den Ecken).
+    const stops = [[4, 13], [6, 14], [8, 14], [10, 13], [12, 11], [14, 10], [16, 9], [17, 7], [18, 5]]
+    const route = []
+    for (let i = 1; i < stops.length; i++) {
+      const [au, av] = stops[i - 1]
+      const [bu, bv] = stops[i]
+      const n = Math.max(Math.abs(bu - au), Math.abs(bv - av))
+      for (let k = 0; k <= n; k++) {
+        const p = [Math.round(au + ((bu - au) * k) / n), Math.round(av + ((bv - av) * k) / n)]
+        const last = route[route.length - 1]
+        if (!last || last[0] !== p[0] || last[1] !== p[1]) route.push(p)
+      }
+    }
+    // Blasse Spur, darauf Striche (3 an, 1 aus), die alle 2 Bilder einen Punkt Richtung Ziel wandern.
+    const step = Math.floor(f / 2)
+    route.forEach(([u, v], i) => sheet.set(u, v, (((i - step) % 4) + 4) % 4 < 3 ? C.cubi : C.routeHi))
+    const [du, dv] = stops[stops.length - 1]
+    // Die Nadel schwebt über dem Ziel; ihr Schatten wird schmaler, wenn sie oben ist.
+    const bob = f % FRAMES >= 4 && f % FRAMES < 12 ? 1 : 0
+    sheet.rect(du - 1 + bob, dv, 3 - 2 * bob, 1, C.parchmentShade)
+
+    const c = layer()
+    for (let u = 0; u < w; u++) for (let v = 0; v < h; v++) c.set(x0 + u, top(u) + v, tone(sheet.get(u, v), u))
+    // Kartenzeichen aufrecht: Höhe nach ihrer Mitte, Schatten je Spalte.
+    const stamp = (spr, u, v) => {
+      const y = top(u + (spr.w >> 1)) + v
+      for (let j = 0; j < spr.h; j++) {
+        for (let i = 0; i < spr.w; i++) {
+          const col = spr.get(i, j)
+          if (col) c.set(x0 + u + i, y + j, tone(col, u + i))
+        }
+      }
+    }
+    stamp(SPRITES.mapMountain, 8, 3)
+    for (const [u, v] of [[1, 16], [3, 18], [18, 9]]) stamp(SPRITES.mapTree, u, v)
+    stamp(SPRITES.mapHome, 1, 12)
+    stamp(SPRITES.mapScale, 19, 21)
+    c.bevel(0.3, 0.18).outline(C.outline)
+
+    // Runde Minikarte an der Ecke oben links: ruhiger Rahmen, Norden rot, Pfeil mit Blickkegel – er schaut zum Wegpunkt
+    // und dreht sich dabei langsam hin und her.
+    const badge = layer()
+    const bx = 33
+    const by = 23
+    badge.disc(bx, by, 4.7, C.slate).bevel(0.3, 0.3)
+    badge.disc(bx, by, 3.6, C.grass)
+    // Innen unten rechts Wasser, darüber der hellere Kegel in Blickrichtung `a` (0 = Norden, im Uhrzeigersinn).
+    const a = 1.2 + wave(f) * 0.3
+    for (let y = by - 4; y <= by + 4; y++) {
+      for (let x = bx - 4; x <= bx + 4; x++) {
+        const d = Math.hypot(x - bx, y - by)
+        if (d > 3.6) continue
+        if (x - bx + (y - by) > 2) badge.set(x, y, C.water)
+        if (d >= 0.9 && Math.abs(Math.atan2(x - bx, by - y) - a) < 0.5) badge.set(x, y, [255, 255, 255, 140])
+      }
+    }
+    badge.set(bx, by, C.white)
+    badge.set(Math.round(bx + Math.sin(a) * 1.6), Math.round(by - Math.cos(a) * 1.6), C.white)
+    badge.set(bx, by - 5, C.red)
+    badge.outline(C.outline)
+    c.draw(badge)
+
+    // Wegpunkt: rote Nadel über dem Ziel, wippt; daneben funkelt es.
+    const front = layer()
+    const px = x0 + du
+    const py = top(du) + dv
+    front.draw(layer().draw(SPRITES.pin, px - 2, py - 7 - bob).outline(C.outline))
+    sparkle(front, f, { x: px + 5, y: py - 9, phase: 3 })
+    return { layer: c, front }
   },
 
   snowman(f) {
