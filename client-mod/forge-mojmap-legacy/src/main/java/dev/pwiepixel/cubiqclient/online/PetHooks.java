@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.pwiepixel.cubiqclient.compat.Mc;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetDraw;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetInteract;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSight;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSim;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetWorld;
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2Renderer;
@@ -18,16 +19,22 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SnowLayerBlock;
+import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -74,9 +81,9 @@ public final class PetHooks {
 	 * Rechtsklick (Anfang von {@code Minecraft#startUseItem}, aus {@code PetUseMixin}): trifft der Blick zuerst den
 	 * eigenen Begleiter am Boden und ist die Hand leer oder hält Essen, wird er gestreichelt bzw. gefüttert – true =
 	 * Minecraft benutzt nichts (nichts wird gegessen, kein Paket an den Server). Sonst false = Minecraft wie immer.
-	 * Ein Block ohne Kollisionsform als Minecrafts Treffer (kurzes Gras, Farn, Blumen, Getreide, eine Schneeschicht –
-	 * Minecraft trifft deren Umriss vor dem Begleiter, der darin steht) zählt nicht, wenn seine Zelle den Begleiter
-	 * schneidet; das entscheidet {@code OnlineFeatures#petUse}.
+	 * Ist Minecrafts Treffer eine Pflanze (Weizen, Gras, Blumen, eine Schneeschicht …, {@link #seeThrough}), ist sie
+	 * durchsichtig: der Klick-Test sucht entlang des Blicks ({@link Sight}) bis zum ersten Treffer dahinter, der keine ist
+	 * ({@code PetSight}).
 	 */
 	public static boolean onUse(Minecraft mc) {
 		OnlineFeatures<Object> f = OnlineHooks.features();
@@ -90,20 +97,78 @@ public final class PetHooks {
 			HitResult hit = mc.hitResult;
 			double vanilla = hit == null || hit.getType() == HitResult.Type.MISS ? Double.POSITIVE_INFINITY
 					: eye.distanceTo(hit.getLocation());
-			boolean soft = false;
-			int bx = 0, by = 0, bz = 0;
-			if (hit instanceof BlockHitResult && hit.getType() == HitResult.Type.BLOCK) {
-				BlockPos pos = ((BlockHitResult) hit).getBlockPos();
-				soft = mc.level.getBlockState(pos).getCollisionShape(mc.level, pos).isEmpty();
-				bx = pos.getX();
-				by = pos.getY();
-				bz = pos.getZ();
-			}
-			return f.petUse(eye.x, eye.y, eye.z, look.x, look.y, look.z, vanilla, soft, bx, by, bz, held(p.getMainHandItem()),
-					held(p.getOffhandItem()), p.isShiftKeyDown(), p.isSpectator(), Mc.screen() != null);
+			boolean plant = hit instanceof BlockHitResult && hit.getType() == HitResult.Type.BLOCK
+					&& seeThrough(mc.level, ((BlockHitResult) hit).getBlockPos());
+			return f.petUse(eye.x, eye.y, eye.z, look.x, look.y, look.z, vanilla, plant, new Sight(mc.level, p, eye, look),
+					held(p.getMainHandItem()), held(p.getOffhandItem()), p.isShiftKeyDown(), p.isSpectator(), Mc.screen() != null);
 		} catch (RuntimeException e) {
 			f.online().reportError(e);
 			return false;
+		}
+	}
+
+	/**
+	 * Durchsichtig für den Klick-Test ({@code PetSight#seeThrough})? Pflanzen ohne Kollisionsform – Getreide, Setzlinge,
+	 * Blumen, Gras, Farne, doppelte Pflanzen, toter Busch … (ab 1.21.5 {@code VegetationBlock}, davor {@code BushBlock}) –
+	 * außer dem Süßbeerenstrauch, und eine einzelne Schneeschicht.
+	 */
+	static boolean seeThrough(Level level, BlockPos pos) {
+		BlockState s = level.getBlockState(pos);
+		Block b = s.getBlock();
+		//? if >=1.21.5 {
+		/*boolean plant = b instanceof net.minecraft.world.level.block.VegetationBlock;
+		*///?} else
+		boolean plant = b instanceof net.minecraft.world.level.block.BushBlock;
+		return PetSight.seeThrough(plant, b instanceof SweetBerryBushBlock, s.getCollisionShape(level, pos).isEmpty(),
+				b instanceof SnowLayerBlock ? s.getValue(SnowLayerBlock.LAYERS) : 0);
+	}
+
+	/**
+	 * Blick-Strahl für den Klick-Test ({@link PetSight.Ray}) aus Auge und Blickrichtung eines Klicks: Umrisse wie
+	 * Minecrafts Fadenkreuz ({@code Entity#pick}: Umriss, keine Flüssigkeiten), Wesen wie dessen Wesen-Suche
+	 * ({@code ProjectileUtil#getEntityHitResult}, anklickbar, kein Zuschauer). Nur Spiel-Thread, nur für diesen Klick.
+	 */
+	static final class Sight implements PetSight.Ray {
+		private final Level level;
+		private final Player player;
+		private final Vec3 eye, look;
+		private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+
+		Sight(Level level, Player player, Vec3 eye, Vec3 look) {
+			this.level = level;
+			this.player = player;
+			this.eye = eye;
+			this.look = look;
+		}
+
+		private Vec3 at(double t) {
+			return eye.add(look.x * t, look.y * t, look.z * t);
+		}
+
+		@Override
+		public double block(double from, double to, int[] cell) {
+			BlockHitResult hit = level.clip(new ClipContext(at(from), at(to), ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE,
+					player));
+			if (hit.getType() != HitResult.Type.BLOCK) return Double.NaN;
+			BlockPos p = hit.getBlockPos();
+			cell[0] = p.getX();
+			cell[1] = p.getY();
+			cell[2] = p.getZ();
+			return eye.distanceTo(hit.getLocation());
+		}
+
+		@Override
+		public boolean seeThrough(int x, int y, int z) {
+			pos.set(x, y, z);
+			return PetHooks.seeThrough(level, pos);
+		}
+
+		@Override
+		public double entity(double to) {
+			AABB area = player.getBoundingBox().expandTowards(look.scale(to)).inflate(1.0);
+			EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, at(to), area,
+					e -> !e.isSpectator() && e.isPickable(), to * to);
+			return hit == null ? Double.POSITIVE_INFINITY : eye.distanceTo(hit.getLocation());
 		}
 	}
 

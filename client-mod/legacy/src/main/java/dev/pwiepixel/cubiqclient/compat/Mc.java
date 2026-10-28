@@ -370,29 +370,102 @@ public final class Mc {
 		return player.getPositionEyes(1.0F).distanceTo(hit.hitVec);
 	}
 
-	/**
-	 * Zelle des Blocks unter dem Fadenkreuz, wenn er keine Kollisions-Box hat (kurzes Gras, Farn, Blumen, Getreide,
-	 * Hebel, Knopf …; eine einzelne Schneeschicht hat eine flache Box ohne Höhe – ab 1.13 eine leere Form – und zählt
-	 * mit), sonst null: kein Block unter dem Fadenkreuz, oder einer, der etwas aufhält.
-	 */
-	public static BlockPos aimSoftBlock() {
-		World w = world();
+	/** Zelle des Blocks unter dem Fadenkreuz (Minecrafts aktueller Treffer) oder null: kein Block (Wesen, nichts). */
+	public static BlockPos aimBlock() {
 		//? if >=1.9 {
 		/*net.minecraft.util.math.RayTraceResult hit = mc().objectMouseOver;
-		if (w == null || hit == null || hit.typeOfHit != net.minecraft.util.math.RayTraceResult.Type.BLOCK) return null;
-		BlockPos pos = hit.getBlockPos();
-		if (pos == null) return null;
-		net.minecraft.util.math.AxisAlignedBB box = w.getBlockState(pos).getCollisionBoundingBox(w, pos);
+		if (hit == null || hit.typeOfHit != net.minecraft.util.math.RayTraceResult.Type.BLOCK) return null;
 		*///?} else {
 		net.minecraft.util.MovingObjectPosition hit = mc().objectMouseOver;
-		if (w == null || hit == null || hit.typeOfHit != net.minecraft.util.MovingObjectPosition.MovingObjectType.BLOCK) return null;
-		BlockPos pos = hit.getBlockPos();
-		if (pos == null) return null;
-		net.minecraft.block.state.IBlockState state = w.getBlockState(pos);
-		state.getBlock().setBlockBoundsBasedOnState(w, pos);
-		net.minecraft.util.AxisAlignedBB box = state.getBlock().getCollisionBoundingBox(w, pos, state);
+		if (hit == null || hit.typeOfHit != net.minecraft.util.MovingObjectPosition.MovingObjectType.BLOCK) return null;
 		//?}
-		return box == null || box.maxY <= box.minY ? pos : null;
+		return hit.getBlockPos();
+	}
+
+	/**
+	 * Durchsichtig für den Klick-Test der Begleiter ({@code PetSight#seeThrough})? Pflanzen ({@code BlockBush}: Getreide,
+	 * kurzes und hohes Gras, Farn, Blumen, Setzlinge, toter Busch, Pilze …) ohne Kollisions-Box und eine einzelne
+	 * Schneeschicht (ihre Box ist flach). Die Seerose hat eine Box und hält den Strahl auf.
+	 */
+	public static boolean seeThrough(World w, BlockPos pos) {
+		net.minecraft.block.state.IBlockState state = w.getBlockState(pos);
+		net.minecraft.block.Block b = state.getBlock();
+		//? if >=1.9 {
+		/*net.minecraft.util.math.AxisAlignedBB box = state.getCollisionBoundingBox(w, pos);
+		*///?} else {
+		b.setBlockBoundsBasedOnState(w, pos);
+		net.minecraft.util.AxisAlignedBB box = b.getCollisionBoundingBox(w, pos, state);
+		//?}
+		int snow = b instanceof net.minecraft.block.BlockSnow ? state.getValue(net.minecraft.block.BlockSnow.LAYERS) : 0;
+		return dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSight.seeThrough(b instanceof net.minecraft.block.BlockBush, false,
+				box == null || box.maxY <= box.minY, snow);
+	}
+
+	/**
+	 * Erster Block, dessen Auswahl-Umriss der Strahl vom Auge ({@code ex, ey, ez}) in Richtung ({@code dx, dy, dz},
+	 * normiert) zwischen {@code from} und {@code to} Blöcken trifft – wie Minecrafts Fadenkreuz, Flüssigkeiten zählen nicht.
+	 * Ergebnis: Entfernung ab dem Auge, NaN = keiner; die Zelle in {@code cell}.
+	 */
+	public static double clipBlock(World w, double ex, double ey, double ez, double dx, double dy, double dz, double from,
+			double to, int[] cell) {
+		//? if >=1.9 {
+		/*net.minecraft.util.math.Vec3d eye = new net.minecraft.util.math.Vec3d(ex, ey, ez);
+		net.minecraft.util.math.RayTraceResult hit = w.rayTraceBlocks(
+				new net.minecraft.util.math.Vec3d(ex + dx * from, ey + dy * from, ez + dz * from),
+				new net.minecraft.util.math.Vec3d(ex + dx * to, ey + dy * to, ez + dz * to), false, false, true);
+		if (hit == null || hit.typeOfHit != net.minecraft.util.math.RayTraceResult.Type.BLOCK || hit.hitVec == null) {
+			return Double.NaN;
+		}
+		*///?} else {
+		net.minecraft.util.Vec3 eye = new net.minecraft.util.Vec3(ex, ey, ez);
+		net.minecraft.util.MovingObjectPosition hit = w.rayTraceBlocks(
+				new net.minecraft.util.Vec3(ex + dx * from, ey + dy * from, ez + dz * from),
+				new net.minecraft.util.Vec3(ex + dx * to, ey + dy * to, ez + dz * to), false, false, true);
+		if (hit == null || hit.typeOfHit != net.minecraft.util.MovingObjectPosition.MovingObjectType.BLOCK || hit.hitVec == null) {
+			return Double.NaN;
+		}
+		//?}
+		BlockPos pos = hit.getBlockPos();
+		if (pos == null) return Double.NaN;
+		cell[0] = pos.getX();
+		cell[1] = pos.getY();
+		cell[2] = pos.getZ();
+		return eye.distanceTo(hit.hitVec);
+	}
+
+	/**
+	 * Entfernung vom Auge bis zum ersten Wesen auf dem Strahl (bis {@code to} Blöcke), das Minecrafts Fadenkreuz träfe:
+	 * anklickbar, kein Zuschauer, nicht das eigene Reittier; sein Kasten um den Rand vergrößert wie dort. Unendlich = keins.
+	 */
+	public static double aimEntity(World w, EntityPlayer player, double ex, double ey, double ez, double dx, double dy, double dz,
+			double to) {
+		double x1 = ex + dx * to, y1 = ey + dy * to, z1 = ez + dz * to;
+		//? if >=1.9 {
+		/*net.minecraft.util.math.AxisAlignedBB area = new net.minecraft.util.math.AxisAlignedBB(Math.min(ex, x1) - 1,
+				Math.min(ey, y1) - 1, Math.min(ez, z1) - 1, Math.max(ex, x1) + 1, Math.max(ey, y1) + 1, Math.max(ez, z1) + 1);
+		*///?} else {
+		net.minecraft.util.AxisAlignedBB area = new net.minecraft.util.AxisAlignedBB(Math.min(ex, x1) - 1, Math.min(ey, y1) - 1,
+				Math.min(ez, z1) - 1, Math.max(ex, x1) + 1, Math.max(ey, y1) + 1, Math.max(ez, z1) + 1);
+		//?}
+		double best = Double.POSITIVE_INFINITY;
+		for (net.minecraft.entity.Entity e : w.getEntitiesWithinAABBExcludingEntity(player, area)) {
+			if (!e.canBeCollidedWith() || mount(player, e)) continue;
+			if (e instanceof EntityPlayer && ((EntityPlayer) e).isSpectator()) continue;
+			double r = e.getCollisionBorderSize();
+			double t = dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSight.enter(ex, ey, ez, dx, dy, dz,
+					e.getEntityBoundingBox().minX - r, e.getEntityBoundingBox().minY - r, e.getEntityBoundingBox().minZ - r,
+					e.getEntityBoundingBox().maxX + r, e.getEntityBoundingBox().maxY + r, e.getEntityBoundingBox().maxZ + r);
+			if (t < best) best = t;
+		}
+		return best <= to ? best : Double.POSITIVE_INFINITY;
+	}
+
+	/** Reitet der Spieler auf {@code e} (ab 1.9: gehören beide zum selben Reit-Stapel)? Das Fadenkreuz übergeht es. */
+	private static boolean mount(EntityPlayer player, net.minecraft.entity.Entity e) {
+		//? if >=1.9 {
+		/*return e.getLowestRidingEntity() == player.getLowestRidingEntity();
+		*///?} else
+		return e == player.ridingEntity;
 	}
 
 	/** Gegenstand in der Zweithand (ab 1.9) oder null: leer bzw. vor 1.9 (keine Zweithand). */

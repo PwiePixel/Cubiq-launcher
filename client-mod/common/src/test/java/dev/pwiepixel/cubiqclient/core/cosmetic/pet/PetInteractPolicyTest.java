@@ -156,12 +156,13 @@ class PetInteractPolicyTest {
 		double[] d = PetPickTest.dir(eye, p.x, p.y + 0.3, p.z);
 		double grass = PetPickTest.outline(eye, d, bx, by, bz, PetPickTest.GRASS);
 		assertTrue(grass < PetPick.ray(EX, EY, EZ, d[0], d[1], d[2], p.x, p.y, p.z, p.yaw, p.scale, p.box), "Gras zuerst getroffen");
+		PetSightTest.Grid world = new PetSightTest.Grid().put(bx, by, bz, PetSightTest.GRASS).aim(eye, d);
 		long now = 59 * 50L + 20;
 		// Block mit Kollisionsform an derselben Stelle: Minecraft behält den Klick
-		assertFalse(PetInteract.use(sim, EX, EY, EZ, d[0], d[1], d[2], grass, false, bx, by, bz, F, E, false, false, false, 1f, now));
+		assertFalse(PetInteract.use(sim, EX, EY, EZ, d[0], d[1], d[2], grass, false, world, F, E, false, false, false, 1f, now));
 		assertEquals(Pet.IDLE, p.state());
 		// das Gras: der Begleiter wird gefüttert, der Klick geschluckt (Minecraft isst nichts)
-		assertTrue(PetInteract.use(sim, EX, EY, EZ, d[0], d[1], d[2], grass, true, bx, by, bz, F, E, false, false, false, 1f, now));
+		assertTrue(PetInteract.use(sim, EX, EY, EZ, d[0], d[1], d[2], grass, true, world, F, E, false, false, false, 1f, now));
 		assertEquals(Pet.EAT, p.state());
 	}
 

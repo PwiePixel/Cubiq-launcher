@@ -464,29 +464,7 @@ public final class PetSim {
 				}
 			}
 		}
-		if (best != null) picked = bestT;
 		return best;
-	}
-
-	/** Entfernung (Blöcke ab dem Auge) des Treffers beim letzten erfolgreichen {@link #pick}. */
-	private double picked;
-
-	/**
-	 * Klick-Test gegen Minecrafts eigenen Treffer ({@link PetInteract#use}): der nächste eigene Begleiter bis
-	 * {@link PetInteract#REACH} wie {@link #pick(double, double, double, double, double, double, double, float)}, aber nie
-	 * hinter Minecrafts Treffer ({@code vanillaDist}, Blöcke ab dem Auge; unendlich/NaN = keiner) – Blöcke und Wesen davor
-	 * gewinnen. Ausnahme: Ist der Treffer ein Block ohne Kollisionsform ({@code soft}: kurzes Gras, Farn, Blumen,
-	 * Getreide, eine Schneeschicht – aber auch Hebel und Knöpfe) und schneidet seine Zelle ({@code bx, by, bz}) den Umriss
-	 * des getroffenen Begleiters, steht der Begleiter darin, und der Treffer zählt nicht: Minecrafts Strahl trifft den
-	 * Umriss der Pflanze zuerst, davor kann aber nichts Festes liegen (sein Treffer ist der erste auf dem Strahl). Ein
-	 * solcher Block in einer anderen Zelle (Hebel oder Knopf vor dem Begleiter) gewinnt weiter, Blöcke dahinter zählen
-	 * ohnehin nicht.
-	 */
-	public Pet pick(double ex, double ey, double ez, double dx, double dy, double dz, double vanillaDist, boolean soft, int bx,
-			int by, int bz, float alpha) {
-		Pet p = pick(ex, ey, ez, dx, dy, dz, PetInteract.REACH, alpha);
-		if (p == null || picked <= PetInteract.reach(vanillaDist)) return p;
-		return soft && PetPick.overlapsCell(p.box, p.x(alpha), p.y(alpha), p.z(alpha), p.yaw(alpha), p.scale, bx, by, bz) ? p : null;
 	}
 
 	/**

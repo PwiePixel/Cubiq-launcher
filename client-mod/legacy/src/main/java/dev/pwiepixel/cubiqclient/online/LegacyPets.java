@@ -3,6 +3,7 @@ package dev.pwiepixel.cubiqclient.online;
 import dev.pwiepixel.cubiqclient.compat.Mc;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetDraw;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetInteract;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSight;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSim;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetWorld;
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2Renderer;
@@ -111,25 +112,64 @@ public final class LegacyPets {
 	/**
 	 * Rechtsklick (aus {@code CubiqClient.onMouse}: Taste gedrückt, kein Bildschirm offen): trifft der Blick zuerst den
 	 * eigenen Begleiter am Boden und ist die Hand leer oder hält Essen, wird er gestreichelt bzw. gefüttert – true =
-	 * Ereignis abbrechen (Minecraft benutzt nichts, nichts geht an den Server). Sonst false = Minecraft wie immer. Ein
-	 * Block ohne Kollisions-Box unter dem Fadenkreuz (Gras, Blumen, Getreide, Schneeschicht …) zählt nicht, wenn seine
-	 * Zelle den Begleiter schneidet ({@code OnlineFeatures#petUse}).
+	 * Ereignis abbrechen (Minecraft benutzt nichts, nichts geht an den Server). Sonst false = Minecraft wie immer. Ist
+	 * der Block unter dem Fadenkreuz eine Pflanze (Getreide, Gras, Blumen, eine Schneeschicht …, {@code Mc#seeThrough}),
+	 * ist er durchsichtig: der Klick-Test sucht entlang des Blicks ({@link Sight}) bis zum ersten Treffer dahinter, der
+	 * keine ist ({@code PetSight}).
 	 */
 	public static boolean onUse() {
 		OnlineFeatures<Object> f = LegacyOnline.features();
 		EntityPlayer p = Mc.player();
-		if (f == null || p == null || Mc.world() == null) return false;
+		World w = Mc.world();
+		if (f == null || p == null || w == null) return false;
 		try {
 			// Auge und Blickrichtung wie Minecrafts eigener Treffer (getPositionEyes/getLook)
 			double yaw = Math.toRadians(p.rotationYaw), pitch = Math.toRadians(p.rotationPitch);
 			double dx = -Math.sin(yaw) * Math.cos(pitch), dy = -Math.sin(pitch), dz = Math.cos(yaw) * Math.cos(pitch);
-			BlockPos soft = Mc.aimSoftBlock();
-			return f.petUse(p.posX, p.posY + p.getEyeHeight(), p.posZ, dx, dy, dz, Mc.aimDistance(p), soft != null,
-					soft == null ? 0 : soft.getX(), soft == null ? 0 : soft.getY(), soft == null ? 0 : soft.getZ(),
+			double ex = p.posX, ey = p.posY + p.getEyeHeight(), ez = p.posZ;
+			BlockPos aim = Mc.aimBlock();
+			boolean plant = aim != null && Mc.seeThrough(w, aim);
+			return f.petUse(ex, ey, ez, dx, dy, dz, Mc.aimDistance(p), plant, new Sight(w, p, ex, ey, ez, dx, dy, dz),
 					held(Mc.equipment(p, 4)), held(Mc.offhand(p)), p.isSneaking(), p.isSpectator(), Mc.screen() != null);
 		} catch (RuntimeException e) {
 			f.online().reportError(e);
 			return false;
+		}
+	}
+
+	/**
+	 * Blick-Strahl für den Klick-Test ({@link PetSight.Ray}) aus Auge und Blickrichtung eines Klicks: Umrisse und Wesen
+	 * wie Minecrafts Fadenkreuz ({@link Mc#clipBlock}, {@link Mc#aimEntity}). Nur Spiel-Thread, nur für diesen Klick.
+	 */
+	private static final class Sight implements PetSight.Ray {
+		private final World world;
+		private final EntityPlayer player;
+		private final double ex, ey, ez, dx, dy, dz;
+
+		Sight(World world, EntityPlayer player, double ex, double ey, double ez, double dx, double dy, double dz) {
+			this.world = world;
+			this.player = player;
+			this.ex = ex;
+			this.ey = ey;
+			this.ez = ez;
+			this.dx = dx;
+			this.dy = dy;
+			this.dz = dz;
+		}
+
+		@Override
+		public double block(double from, double to, int[] cell) {
+			return Mc.clipBlock(world, ex, ey, ez, dx, dy, dz, from, to, cell);
+		}
+
+		@Override
+		public boolean seeThrough(int x, int y, int z) {
+			return Mc.seeThrough(world, new BlockPos(x, y, z));
+		}
+
+		@Override
+		public double entity(double to) {
+			return Mc.aimEntity(world, player, ex, ey, ez, dx, dy, dz, to);
 		}
 	}
 
