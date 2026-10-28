@@ -22,7 +22,8 @@ import java.util.UUID;
  * <p>Ablauf je Client-Tick: {@link #begin}, {@link #owner} für jeden Spieler in der Welt mit Begleiter, {@link #end}.
  * Zeichnen: {@link #visible} (Entfernung, hinter der Kamera, Obergrenze gesamt) und {@link #alpha} zum Überblenden
  * zwischen zwei Ticks. Nur Spiel-/Render-Thread. Jeder Client rechnet selbst – die Begleiter anderer sehen bei jedem
- * Betrachter etwas anders aus, gehen aber immer dem Besitzer nach.
+ * Betrachter etwas anders aus, gehen aber immer dem Besitzer nach. Streicheln/Füttern der eigenen per Rechtsklick:
+ * {@link #pick} und {@link #interact} (nur auf diesem Client sichtbar).
  */
 public final class PetSim {
 	/** Höchstens so viele Begleiter je Besitzer (Haupt-Teil × Anzahl + Gefolge). */
@@ -71,6 +72,16 @@ public final class PetSim {
 	static final int HANDSUP_LOOK = 8, HANDSUP_HOLD = 20, HANDSUP_COOLDOWN = 160;
 	static final double HANDSUP_ANGLE = 6.0, HANDSUP_REACH = 6.0;
 
+	// Streicheln/Füttern (Rechtsklick des Besitzers, 2026-10-28) – Zeiten in Ticks
+	/** Dauer einer Aktion aus der Länge im Modell ({@code ceil(ms / 50)}), begrenzt auf 0,5–6 s. */
+	static final int ACTION_MIN_TICKS = 10, ACTION_MAX_TICKS = 120;
+	/** Dauer ohne eigene Aktion im Modell: Streicheln 2 s, Füttern 2,4 s (still stehen, Herzchen). */
+	static final int PET_TICKS = 40, EAT_TICKS = 48;
+	/** Pause nach einer Aktion, bis die nächste beginnen kann. */
+	static final int INTERACT_COOLDOWN = 10;
+	/** Ohne eigene Aktion im Modell: alle so viele Ticks ein Herzchen. */
+	static final int HEART_EVERY = 10;
+
 	/**
 	 * Plätze der Formation für Größe 1: [seitlich (+ = links vom Besitzer), hinten] in Blöcken, je zwei in einer Reihe.
 	 * Größere Begleiter rücken nach außen und schieben die Reihen dahinter zurück ({@link #layout}).
@@ -105,6 +116,21 @@ public final class PetSim {
 	}
 
 	private final Map<UUID, Owner> owners = new HashMap<UUID, Owner>();
+
+	/**
+	 * Ein Effekt dieses Ticks (Herzchen über einem Begleiter, der gestreichelt/gefüttert wird, aber keine eigene Aktion
+	 * im Modell hat) – Weltkoordinaten; wiederverwendet, gilt bis zum nächsten {@link #begin}.
+	 */
+	public static final class Fx {
+		public static final int HEART = 0;
+		public int kind;
+		public double x, y, z;
+	}
+
+	/** Höchstens so viele Effekte je Tick. */
+	static final int MAX_FX = 32;
+	private final Fx[] fx = new Fx[MAX_FX];
+	private int fxCount;
 	/** Neu angelegte Begleiter dieses Aufrufs von {@link #owner} (erst nach der Formation absetzen). */
 	private final List<Pet> fresh = new ArrayList<Pet>();
 	private Object worldKey;
@@ -171,6 +197,7 @@ public final class PetSim {
 		tick++;
 		now = nowMs;
 		tickNanos = System.nanoTime();
+		fxCount = 0;
 		UUID[] ids = seenIds;
 		seenIds = seenIdsNext;
 		seenIdsNext = ids;
@@ -211,6 +238,17 @@ public final class PetSim {
 	 */
 	public void owner(UUID id, int count, double scale, double[] extraScales, int[] abilities, double x, double y, double z,
 			float bodyYaw, boolean sneaking, boolean hidden, boolean self, PetWorld world) {
+		owner(id, count, scale, extraScales, abilities, null, null, x, y, z, bodyYaw, sneaking, hidden, self, world);
+	}
+
+	/**
+	 * Wie {@link #owner(UUID, int, double, double[], int[], double, double, double, float, boolean, boolean, boolean, PetWorld)}
+	 * plus je {@link Pet#kind} die Länge der Aktionen ({@code actionMs[kind·2]} = {@code pet}, {@code actionMs[kind·2+1]}
+	 * = {@code eat} in ms, 0 = Modell hat sie nicht; null = keine) und den Umriss in Ruhe für den Klick-Test
+	 * ({@code boxes[kind]}, Pixel wie {@link PetPick#bounds}; null = aus Radius/Höhe).
+	 */
+	public void owner(UUID id, int count, double scale, double[] extraScales, int[] abilities, int[] actionMs, float[][] boxes,
+			double x, double y, double z, float bodyYaw, boolean sneaking, boolean hidden, boolean self, PetWorld world) {
 		if (id == null) return;
 		if (seenCountNext < MAX_SEEN) {
 			seenIdsNext[seenCountNext] = id;
@@ -277,7 +315,13 @@ public final class PetSim {
 		if (changed || o.slots.length != total) o.slots = layout(o.pets);
 		for (Pet p : fresh) place(p, o, world);
 		fresh.clear();
-		for (Pet p : o.pets) p.abilities = abilities != null && p.kind < abilities.length ? abilities[p.kind] : 0;
+		for (Pet p : o.pets) {
+			p.abilities = abilities != null && p.kind < abilities.length ? abilities[p.kind] : 0;
+			int k = p.kind * 2;
+			p.petMs = actionMs != null && k + 1 < actionMs.length ? actionMs[k] : 0;
+			p.eatMs = actionMs != null && k + 1 < actionMs.length ? actionMs[k + 1] : 0;
+			p.box = boxes != null && p.kind < boxes.length ? boxes[p.kind] : null;
+		}
 		for (Pet p : o.pets) {
 			try {
 				tickPet(p, o, world);
@@ -299,6 +343,28 @@ public final class PetSim {
 	public void clear() {
 		owners.clear();
 		worldKey = null;
+		fxCount = 0;
+	}
+
+	/** Anzahl der Effekte dieses Ticks (nach {@link #end}; {@link #fx(int)} 0 … n−1). */
+	public int fxCount() {
+		return fxCount;
+	}
+
+	/** Effekt {@code i} dieses Ticks (wiederverwendet – nur bis zum nächsten {@link #begin} gültig). */
+	public Fx fx(int i) {
+		return fx[i];
+	}
+
+	private void emit(int kind, double x, double y, double z) {
+		if (fxCount >= MAX_FX) return;
+		Fx f = fx[fxCount];
+		if (f == null) fx[fxCount] = f = new Fx();
+		f.kind = kind;
+		f.x = x;
+		f.y = y;
+		f.z = z;
+		fxCount++;
 	}
 
 	/** Anteil des laufenden Ticks (0…1) zum Überblenden der Positionen, aus der Uhrzeit seit {@link #begin}. */
@@ -357,6 +423,78 @@ public final class PetSim {
 			return Double.compare(a.sortKey, b.sortKey);
 		}
 	};
+
+	// =====================================================================================================
+	// Streicheln/Füttern (Rechtsklick des Besitzers)
+	// =====================================================================================================
+
+	/** Ergebnis von {@link #interact}: begonnen; läuft schon (Klick ignoriert, kein Neustart); abgelehnt. */
+	public static final int STARTED = 0, BUSY = 1, REFUSED = 2;
+
+	/**
+	 * Klick-Test: der nächste EIGENE Begleiter (Besitzer mit {@code self}), den der Strahl vom Auge ({@code ex, ey, ez})
+	 * in Blickrichtung ({@code dx, dy, dz}) höchstens {@code maxDist} Blöcke weit trifft – gegen seinen Umriss in Ruhe
+	 * ({@link PetPick}) an der gezeichneten Stelle zwischen zwei Ticks ({@code alpha}). Unsichtbare oder in diesem Tick
+	 * nicht gemeldete Besitzer zählen nicht; Begleiter anderer Spieler sind durchlässig. null = keiner.
+	 */
+	public Pet pick(double ex, double ey, double ez, double dx, double dy, double dz, double maxDist, float alpha) {
+		double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+		if (!(len > 1e-9) || !(maxDist > 0)) return null;
+		dx /= len;
+		dy /= len;
+		dz /= len;
+		Pet best = null;
+		double bestT = maxDist;
+		for (Owner o : owners.values()) {
+			if (!o.self || o.hidden || o.seenTick != tick) continue;
+			for (Pet p : o.pets) {
+				double t = PetPick.ray(ex, ey, ez, dx, dy, dz, p.x(alpha), p.y(alpha), p.z(alpha), p.yaw(alpha), p.scale, p.box);
+				if (!Double.isNaN(t) && t <= bestT) {
+					best = p;
+					bestT = t;
+				}
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * Streicheln ({@link Pet#PET}) oder Füttern ({@link Pet#EAT}) beginnen, angestoßen zur Wanduhr {@code nowMs} (ms wie
+	 * {@link #begin}). Nur wenn der Begleiter ruhig steht (am Boden, nicht im Wasser), nicht rutscht, nicht schnappt oder
+	 * flieht, keine Aktion läuft und die kurze Pause danach ({@link #INTERACT_COOLDOWN}) um ist. Eine laufende Aktion
+	 * bleibt, wie sie ist ({@link #BUSY}, kein Neustart). Dauer: Länge der Aktion des Modells ({@code ceil(ms / 50)}
+	 * Ticks, {@link #ACTION_MIN_TICKS}…{@link #ACTION_MAX_TICKS}), ohne sie {@link #PET_TICKS} bzw. {@link #EAT_TICKS}.
+	 * Hände hoch, Umherwatscheln und Umschauen enden.
+	 */
+	public int interact(Pet p, int action, long nowMs) {
+		if (p == null || action != Pet.PET && action != Pet.EAT) return REFUSED;
+		if (p.actionTicks > 0) return BUSY;
+		if (frozen || p.interactCooldown > 0 || !p.calm || p.slideTicks > 0 || p.grabTicks > 0 || p.fleeTicks > 0) return REFUSED;
+		// Muss er ohnehin gleich nachlaufen (Besitzer weiter weg als beim Abbruch), gar nicht erst anfangen.
+		Owner o = owners.get(p.owner);
+		if (o == null || Math.hypot(o.x - p.x, o.z - p.z) > followFar(o, p.index) + 1) return REFUSED;
+		int ms = action == Pet.PET ? p.petMs : p.eatMs;
+		int ticks = ms > 0 ? (int) Math.max(ACTION_MIN_TICKS, Math.min(ACTION_MAX_TICKS, (ms + 49L) / 50L))
+				: action == Pet.PET ? PET_TICKS : EAT_TICKS;
+		p.action = action;
+		p.actionTicks = ticks;
+		p.actionTotal = ticks;
+		p.handsupTicks = 0;
+		p.lookTicks = 0;
+		p.grabYaw = Double.NaN;
+		p.wanderX = p.wanderZ = Double.NaN;
+		p.lookYaw = Double.NaN;
+		p.setState(action, nowMs);
+		return STARTED;
+	}
+
+	/** Aktion beenden (fertig oder abgebrochen): kurze Pause, und keine Hände hoch direkt danach (er wird ja angesehen). */
+	private static void endAction(Pet p) {
+		p.actionTicks = 0;
+		p.interactCooldown = INTERACT_COOLDOWN;
+		p.handsupCooldown = HANDSUP_COOLDOWN;
+		p.lookTicks = 0;
+	}
 
 	// =====================================================================================================
 	// Verhalten eines Begleiters
@@ -439,6 +577,7 @@ public final class PetSim {
 		p.grabYaw = Double.NaN;
 		p.wanderX = p.wanderZ = Double.NaN;
 		p.lookYaw = Double.NaN;
+		p.actionTicks = 0;
 		p.state = Pet.IDLE;
 		p.prevState = Pet.IDLE;
 		p.stateSince = now - Pet.FADE_MS;
@@ -484,7 +623,21 @@ public final class PetSim {
 
 		// Überfall-Begleiter (Anhang E): Hände hoch, Beute schnappen, Flucht – nur mit den passenden Animationen im Modell
 		boolean calm = p.onGround && !water && !deep;
-		handsup(p, calm);
+		p.calm = calm;
+		// Streicheln/Füttern: still stehen und zum Besitzer schauen; vorzeitig zu Ende, wenn er nachlaufen muss (Besitzer zu
+		// weit weg) oder nicht mehr ruhig steht (fällt, schwimmt). Solange keine Hände hoch.
+		if (p.interactCooldown > 0) p.interactCooldown--;
+		boolean acting = p.actionTicks > 0;
+		if (acting && (!calm || distOwner > followFar(o, p.index) + 1)) {
+			endAction(p);
+			acting = false;
+		}
+		if (acting) {
+			p.lookTicks = 0;
+			p.handsupTicks = 0;
+		} else {
+			handsup(p, calm);
+		}
 		boolean handsup = p.handsupTicks > 0;
 		if (handsup) {
 			p.grabTicks = 0;
@@ -492,15 +645,15 @@ public final class PetSim {
 			p.grabYaw = Double.NaN;
 			if (p.slideTicks > 0) endSlide(p);
 		}
-		boolean grabbing = !handsup && p.grabTicks > 0;
-		boolean fleeing = !handsup && !grabbing && p.fleeTicks > 0;
+		boolean grabbing = !acting && !handsup && p.grabTicks > 0;
+		boolean fleeing = !acting && !handsup && !grabbing && p.fleeTicks > 0;
 
 		// Ziel und Tempo
 		slot(o, p.index, tmp);
 		double tx = tmp[0], tz = tmp[1];
 		double dSlot = Math.hypot(tx - p.x, tz - p.z);
 		// Hintere Plätze liegen selbst weiter als FOLLOW_FAR weg – dort gilt ihr eigener Abstand (+ Spiel)
-		boolean follow = !handsup && !grabbing && (fleeing || dSlot > 1.2 || distOwner > followFar(o, p.index));
+		boolean follow = !acting && !handsup && !grabbing && (fleeing || dSlot > 1.2 || distOwner > followFar(o, p.index));
 		double speed = 0;
 		double gx = Double.NaN, gz = Double.NaN;
 		if (fleeing) {
@@ -524,6 +677,10 @@ public final class PetSim {
 			if (distOwner > 2.0) speed = Math.max(speed, o.speed * 1.08 + 0.06 * dSlot);
 			// Obergrenze je Gangart: schwimmen, auf dem Bauch rutschen (schneller Gang, siehe unten), sonst watscheln
 			speed = Math.min(deep ? SWIM_MAX : CHASE_MAX, speed);
+		} else if (acting) {
+			// still stehen: kein Umherwatscheln, kein Schnappen
+			p.wanderX = p.wanderZ = Double.NaN;
+			p.lookYaw = Double.NaN;
 		} else if (!handsup && !grabbing && startGrab(p, o, calm)) {
 			grabbing = true;
 		} else if (!handsup && !grabbing) {
@@ -622,7 +779,10 @@ public final class PetSim {
 			}
 		}
 		double mx, mz;
-		if (grabbing) {
+		if (acting) {
+			mx = 0;
+			mz = 0;
+		} else if (grabbing) {
 			// Beute schnappen: still stehen, dabei ein kleines Stück vor
 			double h = Math.toRadians(p.yaw);
 			mx = -Math.sin(h) * GRAB_PUSH / GRAB_TICKS;
@@ -671,11 +831,13 @@ public final class PetSim {
 
 		// Zustand
 		double hs = Math.hypot(p.x - p.px, p.z - p.pz);
-		// Vorrang (Anhang E): schwimmen/Luft > Hände hoch > schnappen > Flucht > rutschen > schleichen > laufen > stehen
+		// Vorrang (Anhang E): schwimmen > rutschen > Luft > Streicheln/Füttern > Hände hoch > schnappen > Flucht >
+		// schleichen/laufen > stehen
 		int st;
 		if (deep) st = Pet.SWIM;
 		else if (p.slideTicks > 0) st = Pet.SLIDE;
 		else if (!p.onGround && p.airTicks >= 2) st = Pet.AIR;
+		else if (acting) st = p.action;
 		else if (handsup) st = Pet.HANDSUP;
 		else if (grabbing) st = Pet.GRAB;
 		else if (fleeing && p.fleeTicks > 0) st = (p.abilities & Pet.CAN_FLEE) != 0 ? Pet.FLEE : Pet.WALK;
@@ -686,7 +848,11 @@ public final class PetSim {
 		// Blickrichtung
 		double want = Double.NaN;
 		double rate = 9;
-		if (handsup) {
+		if (acting) {
+			// zum Besitzer drehen (er streichelt/füttert)
+			want = Math.toDegrees(Math.atan2(-(o.x - p.x), o.z - p.z));
+			rate = 18;
+		} else if (handsup) {
 			// zum Betrachter drehen
 			want = Math.toDegrees(Math.atan2(-(vx - p.x), vz - p.z));
 			rate = 18;
@@ -708,6 +874,19 @@ public final class PetSim {
 			if (!Double.isNaN(p.lookYaw) && Math.abs(d) < 1) p.lookYaw = Double.NaN;
 		}
 		p.yaw = Pet.wrap(p.yaw);
+
+		if (acting) {
+			// Ohne eigene Aktion im Modell (z. B. ältere Begleiter): Herzchen über dem Kopf statt der Animation.
+			boolean clip = (p.abilities & (p.action == Pet.PET ? Pet.CAN_PET : Pet.CAN_EAT)) != 0;
+			int age = p.actionTotal - p.actionTicks;
+			if (!clip && age % HEART_EVERY == 0) {
+				float[] b = p.box != null ? p.box : PetPick.DEFAULT_BOX;
+				double side = ((age / HEART_EVERY) % 3 - 1) * 0.15 * p.scale;
+				double h = Math.toRadians(p.yaw);
+				emit(Fx.HEART, p.x + Math.cos(h) * side, p.y + b[4] / 16.0 * p.scale + 0.2, p.z + Math.sin(h) * side);
+			}
+			if (--p.actionTicks <= 0) endAction(p);
+		}
 	}
 
 	private void endSlide(Pet p) {

@@ -72,6 +72,21 @@ public final class Pet {
 	/** Blickziel beim Schnappen (Gieren) oder NaN. */
 	double grabYaw = Double.NaN;
 
+	// Streicheln/Füttern (Rechtsklick des Besitzers, 2026-10-28)
+	/** Laufende Aktion ({@link #PET}/{@link #EAT}) und ihre restlichen bzw. gesamten Ticks; 0 = keine. */
+	int action, actionTicks, actionTotal;
+	/** Ticks bis zur nächsten Aktion (kurze Pause danach). */
+	int interactCooldown;
+	/** Länge der Aktionen {@code pet}/{@code eat} des Modells in ms (0 = Modell hat sie nicht), je Tick gemeldet. */
+	int petMs, eatMs;
+	/**
+	 * Umriss in Ruhe (Pixel im Modellraum: minX, minY, minZ, maxX, maxY, maxZ) für den Klick-Test; null = aus
+	 * {@link PetSim#RADIUS}/{@link PetSim#HEIGHT}. Je Tick gemeldet.
+	 */
+	float[] box;
+	/** Ruhig (am Boden, nicht im Wasser) im letzten Tick – nur dann beginnt eine Aktion. */
+	boolean calm = true;
+
 	// Verhalten
 	int slideTicks;
 	int slideCooldown;
@@ -199,6 +214,11 @@ public final class Pet {
 	/** Wanduhr-Zeit, seit der der vorige Zustand ({@link #prevState}) lief – seine Zeitbasis beim Ausblenden. */
 	public long prevStateSince() {
 		return prevStateSince;
+	}
+
+	/** Laufende Aktion ({@link #PET}, {@link #EAT}) oder −1. */
+	public int action() {
+		return actionTicks > 0 ? action : -1;
 	}
 
 	/**

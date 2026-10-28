@@ -170,6 +170,11 @@ public final class NewSince {
 	public static final String WINTER_COSMETICS = "0.21.0";
 	/** Garderobe → Kosmetik → Abschnitt „Begleiter (Boden)“ samt Schaltern für abschaltbare Teile. */
 	public static final String WARDROBE_PET = "wardrobe:pet";
+	/**
+	 * Begleiter streicheln und füttern (nächste Version nach Cubiq Client 0.23.0): Rechtsklick auf den eigenen
+	 * Begleiter am Boden.
+	 */
+	public static final String PET_INTERACT = "0.24.0";
 
 	private static final Map<String, String> SINCE = new LinkedHashMap<String, String>();
 	/** Zusatzbereiche je Modul (Modul-ID → Einträge). */
@@ -256,6 +261,8 @@ public final class NewSince {
 		add(GAMMA_REFILL, "autorefill", "fullbright.level", KEY_GAMMA_CYCLE, KEY_AUTO_REFILL);
 		// Winter-Kosmetik: Begleiter am Boden + Optionen in der Garderobe.
 		add(WINTER_COSMETICS, WARDROBE_PET);
+		// Begleiter per Rechtsklick streicheln/füttern (Schalter in Cubiq Online).
+		add(PET_INTERACT, "cubiqOnline.petInteract");
 	}
 
 	private NewSince() {
