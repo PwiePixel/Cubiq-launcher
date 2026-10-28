@@ -400,22 +400,40 @@ public final class OnlineFeatures<T> {
 			if (count > 0 && self && forced > 0) count = forced;
 			double[] extras = null;
 			int[] abilities = null;
+			int[] actionMs = null;
+			float[][] boxes = null;
 			if (count > 0) {
 				int n = piece.extras.size();
 				if (n > 0) {
 					extras = petScales(n);
 					for (int i = 0; i < n; i++) extras[i] = piece.extras.get(i).petScale;
 				}
-				// Was die Modelle können (Anhang E: sneak/grab/flee/handsup) – erst, wenn sie geladen sind
+				// Was die Modelle können (Anhang E: sneak/grab/flee/handsup, dazu pet/eat) – erst, wenn sie geladen sind
 				abilities = petAbilities[n];
 				if (abilities == null) petAbilities[n] = abilities = new int[n + 1];
+				// Nur die eigenen lassen sich streicheln/füttern: Länge der Aktionen und Umriss für den Klick-Test – nur für
+				// Teile, die petFrame auch zeichnet (geladen, Begleiter am Boden); ohne Umriss nicht anklickbar.
+				if (self) {
+					actionMs = petActionMs[n];
+					if (actionMs == null) petActionMs[n] = actionMs = new int[2 * (n + 1)];
+					boxes = petBoxes[n];
+					if (boxes == null) petBoxes[n] = boxes = new float[n + 1][];
+				}
 				for (int k = 0; k <= n; k++) {
 					dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<T> h = v2(k == 0 ? piece : piece.extras.get(k - 1), false);
-					abilities[k] = h == null ? 0 : dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.abilitiesOf(h.model);
+					dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2 model = h == null ? null : h.model;
+					abilities[k] = dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.abilitiesOf(model);
+					if (actionMs != null) {
+						actionMs[2 * k] = dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.actionMs(model,
+								dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2.DRIVER_PET);
+						actionMs[2 * k + 1] = dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.actionMs(model,
+								dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2.DRIVER_EAT);
+						boxes[k] = dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetPick.drawnBox(model);
+					}
 				}
 			}
-			pets.owner(uuid, count, piece == null ? 1.0 : piece.petScale, extras, abilities, x, y, z, bodyYaw, sneaking, hidden,
-					self, world);
+			pets.owner(uuid, count, piece == null ? 1.0 : piece.petScale, extras, abilities, actionMs, boxes, x, y, z, bodyYaw,
+					sneaking, hidden, self, world);
 		} catch (RuntimeException e) {
 			online.reportError(e);
 		}
@@ -426,6 +444,9 @@ public final class OnlineFeatures<T> {
 
 	/** Wiederverwendete Fähigkeits-Felder je Gefolge-Länge + 1 (nur Spiel-Thread). */
 	private final int[][] petAbilities = new int[HatInfo.MAX_EXTRAS + 1][];
+	/** Wiederverwendet: Länge der Aktionen pet/eat je Teil ({@code [kind·2]}, {@code [kind·2+1]}) und Umriss je Teil. */
+	private final int[][] petActionMs = new int[HatInfo.MAX_EXTRAS + 1][];
+	private final float[][][] petBoxes = new float[HatInfo.MAX_EXTRAS + 1][][];
 
 	private double[] petScales(int n) {
 		double[] b = petScaleBuffers[n];
@@ -442,6 +463,45 @@ public final class OnlineFeatures<T> {
 	/** Ende des Begleiter-Ticks. */
 	public void petsEnd() {
 		if (petsActive) pets.end();
+	}
+
+	/**
+	 * Rechtsklick des eigenen Spielers (Spiel-Thread, bevor Minecraft etwas benutzt): Auge und Blickrichtung in Welt-
+	 * Koordinaten, {@code vanillaDist} = Entfernung bis zu Minecrafts eigenem Treffer (Block/Wesen; unendlich ohne
+	 * Treffer), {@code vanillaPlant} = dieser Treffer ist eine durchsichtige Pflanze (Weizen, Gras, Blumen, eine
+	 * Schneeschicht …, {@code PetSight#seeThrough}) – dann sucht der Klick-Test entlang {@code sight} dahinter weiter bis zum
+	 * ersten Treffer, der keine ist –, was in Haupt- und Zweithand liegt ({@code PetInteract.HELD_*}), Schleichen,
+	 * Zuschauer-Modus, offener Bildschirm. Trifft der Blick zuerst einen eigenen Begleiter am Boden, wird er gestreichelt
+	 * bzw. gefüttert ({@code PetInteract}) und das Ergebnis ist true: Minecraft darf den Klick nicht benutzen – auch wenn
+	 * der Begleiter gerade nicht kann (Pause, Aktion läuft), sonst würde das Essen in der Hand gegessen. Nichts geht an den
+	 * Server, nichts wird verbraucht. false = Minecraft wie immer.
+	 */
+	public boolean petUse(double ex, double ey, double ez, double dx, double dy, double dz, double vanillaDist, boolean vanillaPlant,
+			dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSight.Ray sight, int mainHeld, int offHeld, boolean sneaking,
+			boolean spectator, boolean screenOpen) {
+		if (!petsActive || Thread.currentThread() != gameThread || !modules.petInteract.get()) return false;
+		try {
+			return dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetInteract.use(pets, ex, ey, ez, dx, dy, dz, vanillaDist,
+					vanillaPlant, sight, mainHeld, offHeld, sneaking, spectator, screenOpen, pets.alpha(System.nanoTime()),
+					System.currentTimeMillis());
+		} catch (RuntimeException e) {
+			online.reportError(e);
+			return false;
+		}
+	}
+
+	/**
+	 * Effekte dieses Begleiter-Ticks (nach {@link #petsEnd}): Anzahl, {@link #petFx(int)} liefert sie – Herzchen über
+	 * Begleitern, die gestreichelt/gefüttert werden, aber keine eigene Aktion im Modell haben (die Loader zeigen sie als
+	 * Partikel). Nur Spiel-Thread.
+	 */
+	public int petFxCount() {
+		return petsActive ? pets.fxCount() : 0;
+	}
+
+	/** Effekt {@code i} dieses Ticks (wiederverwendet, nur bis zum nächsten Tick gültig). */
+	public dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSim.Fx petFx(int i) {
+		return pets.fx(i);
 	}
 
 	/**
@@ -493,12 +553,18 @@ public final class OnlineFeatures<T> {
 				if (d == null) petDraws[out] = d = new dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetDraw<T>();
 				d.pet = p;
 				long fixed = dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSim.forceTimeMs;
-				// „grab“ läuft einmal ab Zustandsbeginn (Anhang E), alles andere nach der Uhr mit eigenem Versatz
+				int drv = dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.driver(st);
+				int prevDrv = dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.driver(p.prevState());
+				// Jede Seite der Überblendung auf ihrer eigenen Zeitbasis, nach dem Treiber, der wirklich spielt: „grab“ und
+				// die Aktionen (Streicheln/Füttern) einmal ab ihrem Beginn, alles andere – auch idle als Ersatz für eine
+				// fehlende Aktion – nach der Uhr mit eigenem Versatz. Leucht-Frames und Höfe immer nach der Uhr.
+				long own = fixed >= 0 ? fixed : base + p.offsetMs;
 				long t = fixed >= 0 ? fixed
-						: dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.fromStateStart(st) ? Math.max(0L, wall - p.stateSince())
-								: base + p.offsetMs;
-				d.hat = hat.forPet(t, dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.driver(st),
-						dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.driver(p.prevState()), p.blend(wall));
+						: dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.poseTime(hat.model, st, wall - p.stateSince(), own);
+				long tPrev = fixed >= 0 ? fixed
+						: dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.poseTime(hat.model, p.prevState(), wall - p.prevStateSince(),
+								own);
+				d.hat = hat.forPet(own, t, tPrev, drv, prevDrv, p.blend(wall));
 				double px = p.x(alpha), py = p.y(alpha), pz = p.z(alpha);
 				d.set(px - camX, py - camY, pz - camZ, p.yaw(alpha), p.scale);
 				d.light = world == null ? dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetWorld.packLight(15, 15)
@@ -551,7 +617,8 @@ public final class OnlineFeatures<T> {
 		java.util.function.BiConsumer<dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<?>, Integer> trace = v2Trace;
 		if (trace != null) trace.accept(hat, pass);
 		try {
-			v2Renderer.pose(hat.model, hat.now, true, hat.helmet, hat.driver, hat.prevDriver, hat.blend, hat.hiddenBones);
+			// Begleiter: jede Seite der Überblendung auf ihrer Zeit, Effekt-Knochen sofort im Ziel; Hüte/Flügel wie bisher
+			v2Renderer.pose(hat);
 			v2Renderer.emit(hat.model, pass, hat.now, eye, sink);
 		} catch (RuntimeException e) {
 			online.reportError(e);

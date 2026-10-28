@@ -21,7 +21,14 @@ public final class V2Hat<T> {
 	public final T glow;
 	/** null = keine Höfe. */
 	public final T halo;
+	/** Uhr dieses Bildes: Leucht-Frames, Puls der Höfe, Bild der Entfernungs-Stufen (Begleiter: Wanduhr + Versatz). */
 	public final long now;
+	/**
+	 * Zeit der Pose für {@link #driver} bzw. {@link #prevDriver} – jede Seite einer Überblendung auf ihrer eigenen
+	 * Zeitbasis (Begleiter: Uhr + Versatz, oder Zeit seit dem Beginn von {@code grab}/einer Aktion). Sonst beide
+	 * {@link #now}.
+	 */
+	public final long poseMs, prevPoseMs;
 	/** Träger hat einen Helm auf: Teil wird auf den Helm gesetzt (siehe {@code CosmeticV2Renderer#HELMET_SCALE}). */
 	public final boolean helmet;
 
@@ -38,6 +45,13 @@ public final class V2Hat<T> {
 	 * alles.
 	 */
 	public final long hiddenBones;
+
+	/**
+	 * Begleiter am Boden ({@link #forPet}): gezeichnet mit der Überblendung der Begleiter
+	 * ({@code CosmeticV2Renderer#pose(CosmeticV2, long, long, boolean, boolean, int, int, float, long)} – jede Seite auf
+	 * ihrer Zeit, gemischt wie bisher, Effekt-Knochen sofort im Ziel). Hüte und Flügel: false, wie bisher.
+	 */
+	public final boolean pet;
 
 	private final Lod<T> lod;
 
@@ -56,6 +70,14 @@ public final class V2Hat<T> {
 
 	public V2Hat(CosmeticV2 model, T base, T glow, T halo, long now, boolean helmet, Lod<T> lod, int driver, int prevDriver,
 			float blend, long hiddenBones) {
+		this(model, base, glow, halo, now, now, now, helmet, lod, driver, prevDriver, blend, hiddenBones, false);
+	}
+
+	private V2Hat(CosmeticV2 model, T base, T glow, T halo, long now, long poseMs, long prevPoseMs, boolean helmet, Lod<T> lod,
+			int driver, int prevDriver, float blend, long hiddenBones, boolean pet) {
+		this.pet = pet;
+		this.poseMs = poseMs;
+		this.prevPoseMs = prevPoseMs;
 		this.hiddenBones = hiddenBones;
 		this.driver = driver;
 		this.prevDriver = prevDriver;
@@ -93,22 +115,35 @@ public final class V2Hat<T> {
 
 	/** Gleiches Teil mit einer Zustands-Animation (Flügel: idle/air/sneak, siehe {@link WingState}). */
 	public V2Hat<T> withState(int driver, int prevDriver, float blend) {
-		return new V2Hat<T>(model, base, glow, halo, now, helmet, lod, driver, prevDriver, blend, hiddenBones);
+		return new V2Hat<T>(model, base, glow, halo, now, poseMs, prevPoseMs, helmet, lod, driver, prevDriver, blend, hiddenBones,
+				pet);
 	}
 
 	/** Gleiches Teil mit abgeschalteten Knochen ({@link CosmeticV2#hiddenBones}). */
 	public V2Hat<T> withHidden(long hidden) {
 		return hidden == hiddenBones ? this
-				: new V2Hat<T>(model, base, glow, halo, now, helmet, lod, driver, prevDriver, blend, hidden);
+				: new V2Hat<T>(model, base, glow, halo, now, poseMs, prevPoseMs, helmet, lod, driver, prevDriver, blend, hidden, pet);
 	}
 
 	/**
-	 * Ein Begleiter am Boden in diesem Bild: eigener Zeitversatz ({@code timeMs} = Wanduhr + Versatz je Begleiter, damit
-	 * mehrere nicht im Gleichschritt laufen) und Zustand ({@code core.cosmetic.pet.PetSim}). Die Texturen bleiben die
-	 * des Bildes (Leucht-Frames laufen mit der Wanduhr wie bei allen Teilen).
+	 * Ein Begleiter am Boden in diesem Bild: Zustand ({@code core.cosmetic.pet.PetSim}) und eigene Zeiten –
+	 * {@code clockMs} = Wanduhr + Versatz je Begleiter (damit mehrere nicht im Gleichschritt laufen; Leucht-Frames, Puls
+	 * der Höfe), {@code poseMs}/{@code prevPoseMs} = Zeit der Pose für {@code driver} bzw. {@code prevDriver}: Zeit seit
+	 * dem eigenen Beginn bei {@code grab} und den Aktionen, sonst ebenfalls die Uhr des Begleiters.
 	 */
-	public V2Hat<T> forPet(long timeMs, int driver, int prevDriver, float blend) {
-		return new V2Hat<T>(model, base, glow, halo, timeMs, false, lod, driver, prevDriver, blend, hiddenBones);
+	public V2Hat<T> forPet(long clockMs, long poseMs, long prevPoseMs, int driver, int prevDriver, float blend) {
+		// Leucht-Frames auch in voller Auflösung zur Uhr des Begleiters (die Stufen darunter liest base/glow ohnehin so).
+		T b = base;
+		T g = glow;
+		if (lod != null) {
+			T x = lod.base(clockMs, 0);
+			if (x != null) b = x;
+			if (glow != null) {
+				x = lod.glow(clockMs, 0);
+				if (x != null) g = x;
+			}
+		}
+		return new V2Hat<T>(model, b, g, halo, clockMs, poseMs, prevPoseMs, false, lod, driver, prevDriver, blend, hiddenBones, true);
 	}
 
 	/** Gibt es in diesem Durchgang etwas zu zeichnen? */

@@ -22,7 +22,8 @@ import java.util.regex.Pattern;
  * 1 Einheit = 1 Skin-Pixel) mit UV je Fläche, Materialien, Leucht-Höfe und Animationsspuren. Unveränderlich.
  *
  * <p>{@link #parse} prüft genau wie {@code validateModel} der Referenz (Port – gleiche Grenzen, gleiche Regeln);
- * ein ungültiges Modell wird nie gezeichnet.
+ * ein ungültiges Modell wird nie gezeichnet. Die Liste {@code actions} (Streicheln/Füttern) macht ein Modell nie
+ * ungültig: Probleme darin sind Warnungen, der Eintrag fällt weg.
  */
 public final class CosmeticV2 {
 	public static final int FORMAT = 2;
@@ -57,6 +58,25 @@ public final class CosmeticV2 {
 	 */
 	public static final int DRIVER_IDLE = 0, DRIVER_WALK = 1, DRIVER_SNEAK = 2, DRIVER_JUMP = 3, DRIVER_AIR = 4,
 			DRIVER_SLIDE = 5, DRIVER_SWIM = 6, DRIVER_GRAB = 7, DRIVER_FLEE = 8, DRIVER_HANDSUP = 9;
+	/**
+	 * Aktionen eines Begleiters am Boden (2026-10-28): einmalige Posen auf Anstoß – {@code pet} (Streicheln) und
+	 * {@code eat} (Füttern). Sie stehen in der eigenen Liste {@code actions} neben {@code animations}: ältere Clients
+	 * kennen den Schlüssel nicht und laden das Modell unverändert ({@code animations} behält genau {@link #DRIVERS}).
+	 * Reihenfolge wie auf der Website und im Launcher.
+	 */
+	static final String[] ACTION_DRIVERS = { "pet", "eat" };
+	/** Treiber-Indizes der Aktionen: hinter {@link #DRIVERS} ({@code DRIVERS.length + i}). */
+	public static final int DRIVER_PET = 10, DRIVER_EAT = 11;
+	/**
+	 * Grenzen für {@code actions}: mehr Einträge → der ganze Block fällt weg; Länge einer Aktion in ms. Ein Problem in
+	 * {@code actions} ist nie ein Fehler, nur eine Warnung (der Eintrag bzw. der Block wird ignoriert).
+	 */
+	public static final int MAX_ACTIONS = 16, MIN_ACTION_MS = 300, MAX_ACTION_MS = 10000;
+	/**
+	 * Präfix der Effekt-Knochen der Aktionen (Herzchen, Krümel …): in Ruhe im Körper versteckt, nur die Aktionen holen
+	 * sie heraus. Siehe {@link #fxBones}.
+	 */
+	public static final String FX_PREFIX = "fx_";
 	/** Höchstens so viele abschaltbare Teile ({@code options}) je Modell. */
 	public static final int MAX_OPTIONS = 4;
 
@@ -151,7 +171,10 @@ public final class CosmeticV2 {
 
 	public static final class Animation {
 		public final String id;
-		/** Treiber-Index ({@code idle} = 0; nur der wird im Moment abgespielt). */
+		/**
+		 * Treiber-Index ({@code idle} = 0; nur der wird im Moment abgespielt). Aktionen ({@link CosmeticV2#actions}):
+		 * {@link CosmeticV2#DRIVER_PET}/{@link CosmeticV2#DRIVER_EAT}, immer {@code loop} false ohne Versatz.
+		 */
 		public final int driver;
 		public final int lengthMs;
 		public final boolean loop;
@@ -248,7 +271,18 @@ public final class CosmeticV2 {
 	public final List<Bone> bones;
 	public final List<Cube> cubes;
 	public final List<Animation> animations;
+	/**
+	 * Gültige Aktionen ({@code actions}, nur Begleiter am Boden): je Treiber höchstens eine, laufen einmal ab ihrem
+	 * Beginn und allein (keine Animation dazu); nie null.
+	 */
+	public final List<Animation> actions;
 	public final List<Halo> halos;
+	/**
+	 * Effekt-Knochen ({@link #FX_PREFIX}, Bit {@code 1L << knochen}). Beim Überblenden eines Begleiters werden sie nie
+	 * gemischt: sie stehen sofort in der Pose des Ziels (Ruhe, wenn das Ziel sie nicht bewegt) – abgebrochene Herzchen
+	 * verschwinden, statt in voller Größe zurückzugleiten ({@code CosmeticV2Renderer}).
+	 */
+	public final long fxBones;
 	/** Abschaltbare Teile (höchstens {@link #MAX_OPTIONS}); nie null. */
 	public final List<Option> options;
 	/** Anzahl gezeichneter Flächen. */
@@ -258,7 +292,7 @@ public final class CosmeticV2 {
 
 	private CosmeticV2(String id, String name, String slot, String attach, int tw, int th, int scale, int frames, int frameTimeMs,
 			boolean glow, int glowFrames, int glowFrameTimeMs, List<Bone> bones, List<Cube> cubes, List<Animation> animations,
-			List<Halo> halos, List<Option> options) {
+			List<Animation> actions, List<Halo> halos, List<Option> options) {
 		this.id = id;
 		this.name = name;
 		this.slot = slot;
@@ -275,6 +309,7 @@ public final class CosmeticV2 {
 		this.bones = Collections.unmodifiableList(bones);
 		this.cubes = Collections.unmodifiableList(cubes);
 		this.animations = Collections.unmodifiableList(animations);
+		this.actions = Collections.unmodifiableList(actions);
 		this.halos = Collections.unmodifiableList(halos);
 		int n = 0;
 		int mats = 0;
@@ -287,6 +322,11 @@ public final class CosmeticV2 {
 		}
 		this.faceCount = n;
 		this.materials = mats;
+		long fx = 0L;
+		for (int b = 0; b < bones.size() && b < 64; b++) {
+			if (bones.get(b).id.startsWith(FX_PREFIX)) fx |= 1L << b;
+		}
+		this.fxBones = fx;
 	}
 
 	/** Breite eines Bildes der Grundtextur in echten Pixeln. */
@@ -305,18 +345,42 @@ public final class CosmeticV2 {
 
 	/**
 	 * Treiber-Index ({@code idle} 0, {@code walk} 1, {@code sneak} 2, {@code jump} 3, {@code air} 4, {@code slide} 5,
-	 * {@code swim} 6, {@code grab} 7, {@code flee} 8, {@code handsup} 9) eines Namens, sonst -1.
+	 * {@code swim} 6, {@code grab} 7, {@code flee} 8, {@code handsup} 9; Aktionen {@code pet} 10, {@code eat} 11) eines
+	 * Namens, sonst -1.
 	 */
 	public static int driverIndex(String name) {
-		return index(DRIVERS, name);
+		int i = index(DRIVERS, name);
+		if (i >= 0) return i;
+		int a = index(ACTION_DRIVERS, name);
+		return a < 0 ? -1 : DRIVERS.length + a;
 	}
 
-	/** Hat das Modell mindestens eine Animation mit diesem Treiber? */
+	/**
+	 * Hat das Modell mindestens eine Animation mit diesem Treiber? Aktions-Treiber ({@link #DRIVER_PET} …) zählen nur
+	 * mit einer gültigen Aktion ({@link #action}).
+	 */
 	public boolean hasDriver(int driver) {
+		if (driver >= DRIVER_PET) return action(driver) != null;
 		for (Animation a : animations) {
 			if (a.driver == driver) return true;
 		}
 		return false;
+	}
+
+	/** Die gültige Aktion mit diesem Treiber ({@link #DRIVER_PET}, {@link #DRIVER_EAT}) oder null. */
+	public Animation action(int driver) {
+		for (Animation a : actions) {
+			if (a.driver == driver) return a;
+		}
+		return null;
+	}
+
+	/**
+	 * Spielt dieser Treiber einmal ab seinem eigenen Beginn statt nach der Uhr (+ Versatz je Begleiter)? {@code grab}
+	 * und alle Aktionen.
+	 */
+	public static boolean oneShot(int driver) {
+		return driver == DRIVER_GRAB || driver >= DRIVER_PET;
 	}
 
 	/** Begleiter am Boden ({@code slot: "pet"}, {@code attach: "ground"})? */
@@ -720,66 +784,63 @@ public final class CosmeticV2 {
 				JsonElement loopEl = a.get("loop");
 				boolean loop = !(loopEl != null && loopEl.isJsonPrimitive() && loopEl.getAsJsonPrimitive().isBoolean()
 						&& !loopEl.getAsBoolean());
-				JsonArray tracksArr = arr(a.get("tracks"));
-				if (tracksArr == null || tracksArr.size() == 0 || tracksArr.size() > MAX_TRACKS) {
-					out.err(p, "1–" + MAX_TRACKS + " tracks");
-					continue;
-				}
-				List<Track> tracks = new ArrayList<Track>();
-				for (int j = 0; j < tracksArr.size(); j++) {
-					String tp = p + ".tracks[" + j + "]";
-					JsonObject tr = obj(tracksArr.get(j));
-					String tb = tr == null ? null : str(tr.get("bone"));
-					Integer tbi = tb == null ? null : boneIndex.get(tb);
-					if (tbi == null) out.err(tp, "unbekannter Knochen " + tb);
-					int channel = tr == null ? -1 : index(CHANNELS, str(tr.get("channel")));
-					if (channel < 0) out.err(tp, "channel eins von rotation, position, scale");
-					int interp = LINEAR;
-					JsonElement ie = tr == null ? null : tr.get("interpolation");
-					if (ie != null && !ie.isJsonNull()) {
-						interp = index(INTERPOLATIONS, str(ie));
-						if (interp < 0) out.err(tp, "interpolation eins von linear, smooth, step");
-					}
-					JsonArray keys = tr == null ? null : arr(tr.get("keys"));
-					if (keys == null || keys.size() == 0 || keys.size() > MAX_KEYS) {
-						out.err(tp, "1–" + MAX_KEYS + " keys");
+				Track[] tracks = tracks(out, p, a, length, boneIndex);
+				if (tracks == null) continue;
+				animations.add(new Animation(aid, Math.max(0, driver), Math.max(1, length), loop, offset, tracks));
+			}
+		}
+
+		// Aktionen (Streicheln/Füttern, nur slot pet): nie ein Fehler – jedes Problem gibt genau eine Warnung, und der
+		// Eintrag (oder der ganze Block) fällt weg. Gültige Einträge melden nichts: das Ergebnis ist dann dasselbe wie ohne
+		// actions. Unbekannte Treiber werden nur übersprungen (ein neuerer Client kennt sie vielleicht).
+		List<Animation> actions = new ArrayList<Animation>();
+		if (m.has("actions")) {
+			JsonArray acts = arr(m.get("actions"));
+			if (acts == null) ignored(out, "actions", "Liste erwartet");
+			else if (!SLOT_PET.equals(slot)) ignored(out, "actions", "nur für slot pet");
+			else if (acts.size() > MAX_ACTIONS) ignored(out, "actions", "höchstens " + MAX_ACTIONS + " Einträge");
+			else {
+				for (int i = 0; i < acts.size(); i++) {
+					String p = "actions[" + i + "]";
+					JsonObject a = obj(acts.get(i));
+					if (a == null) {
+						ignored(out, p, "Objekt erwartet");
 						continue;
 					}
-					int[] ts = new int[keys.size()];
-					float[][] vs = new float[keys.size()][];
-					int[] kis = new int[keys.size()];
-					int last = -1;
-					for (int k = 0; k < keys.size(); k++) {
-						String kp = tp + ".keys[" + k + "]";
-						JsonObject key = obj(keys.get(k));
-						JsonElement tEl = key == null ? null : key.get("t");
-						int t = isInt(tEl) ? intOr(tEl, -1) : -1;
-						if (!isInt(tEl) || t < 0 || t > length || t <= last) out.err(kp, "t aufsteigend in 0…lengthMs");
-						if (isInt(tEl)) last = t;
-						float[] v = key == null ? null : vec(key.get("v"));
-						if (v == null) out.err(kp, "v [x,y,z] fehlt");
-						JsonElement kiEl = key == null ? null : key.get("interpolation");
-						int ki = -1;
-						if (kiEl != null && !kiEl.isJsonNull()) {
-							ki = index(INTERPOLATIONS, str(kiEl));
-							if (ki < 0) out.err(kp, "unbekannte interpolation");
-						}
-						if (channel == SCALE && v != null) {
-							for (float s : v) {
-								if (s <= 0 || s > 4) {
-									out.err(kp, "scale 0…4");
-									break;
-								}
-							}
-						}
-						ts[k] = t;
-						vs[k] = v == null ? new float[3] : v;
-						kis[k] = ki;
+					int which = index(ACTION_DRIVERS, str(a.get("driver")));
+					if (which < 0) {
+						ignored(out, p, "driver eins von " + String.join(", ", ACTION_DRIVERS));
+						continue;
 					}
-					tracks.add(new Track(tbi == null ? 0 : tbi, Math.max(0, channel), Math.max(0, interp), ts, vs, kis));
+					int driver = DRIVERS.length + which;
+					if (find(actions, driver) != null) {
+						ignored(out, p, "driver " + ACTION_DRIVERS[which] + " doppelt");
+						continue;
+					}
+					// Probleme des Eintrags sammeln; eine Warnung je Eintrag (das erste Problem + Anzahl weiterer).
+					Check q = new Check();
+					String aid = str(a.get("id"));
+					if (aid == null || !ID.matcher(aid).matches()) q.err(p, "ungültige id");
+					JsonElement lenEl = a.get("lengthMs");
+					int length = isInt(lenEl) ? intOr(lenEl, 0) : 0;
+					if (!isInt(lenEl) || length < MIN_ACTION_MS || length > MAX_ACTION_MS) {
+						q.err(p, "lengthMs " + MIN_ACTION_MS + "…" + MAX_ACTION_MS);
+					}
+					JsonElement loopEl = a.get("loop");
+					boolean loopFalse = loopEl != null && loopEl.isJsonPrimitive() && loopEl.getAsJsonPrimitive().isBoolean()
+							&& !loopEl.getAsBoolean();
+					if (a.has("loop") && !loopFalse) q.err(p, "loop nur false");
+					if (a.has("offsetMs")) q.err(p, "kein offsetMs");
+					Track[] tracks = tracks(q, p, a, length, boneIndex);
+					if (!q.ok()) {
+						String first = q.errors.get(0);
+						int more = q.errors.size() - 1;
+						out.warnings.add(first + (more > 0 ? " (+" + more + ")" : "") + " – "
+								+ (first.startsWith(p + ": ") ? "" : p + " ") + "ignoriert");
+						continue;
+					}
+					actions.add(new Animation(aid, driver, length, false, 0, tracks));
 				}
-				animations.add(new Animation(aid, Math.max(0, driver), Math.max(1, length), loop, offset,
-						tracks.toArray(new Track[0])));
 			}
 		}
 
@@ -856,10 +917,82 @@ public final class CosmeticV2 {
 			int glowTime = glow == null ? 0 : intOr(glow.get("frameTimeMs"), 0);
 			out.model = new CosmeticV2(id, name, slot, attach, tw, th, scale, frames,
 					frames > 1 ? intOr(tex.get("frameTimeMs"), 0) : 0, glow != null, glow == null ? 0 : glowFrames,
-					glowFrames > 1 ? glowTime : 0, bones, cubes, animations, halos, options);
+					glowFrames > 1 ? glowTime : 0, bones, cubes, animations, actions, halos, options);
 		}
 		return out;
 	}
+
+	/**
+	 * Spuren einer Animation oder Aktion lesen: Knochen, Kanal, Interpolation, 1–{@link #MAX_KEYS} Schlüssel mit t
+	 * aufsteigend in 0…{@code length}. Probleme landen als Fehler in {@code out}; null = keine gültige Spurenliste.
+	 */
+	private static Track[] tracks(Check out, String p, JsonObject a, int length, Map<String, Integer> boneIndex) {
+		JsonArray tracksArr = arr(a.get("tracks"));
+		if (tracksArr == null || tracksArr.size() == 0 || tracksArr.size() > MAX_TRACKS) {
+			out.err(p, "1–" + MAX_TRACKS + " tracks");
+			return null;
+		}
+		List<Track> tracks = new ArrayList<Track>();
+		for (int j = 0; j < tracksArr.size(); j++) {
+			String tp = p + ".tracks[" + j + "]";
+			JsonObject tr = obj(tracksArr.get(j));
+			String tb = tr == null ? null : str(tr.get("bone"));
+			Integer tbi = tb == null ? null : boneIndex.get(tb);
+			if (tbi == null) out.err(tp, "unbekannter Knochen " + tb);
+			int channel = tr == null ? -1 : index(CHANNELS, str(tr.get("channel")));
+			if (channel < 0) out.err(tp, "channel eins von rotation, position, scale");
+			int interp = LINEAR;
+			JsonElement ie = tr == null ? null : tr.get("interpolation");
+			if (ie != null && !ie.isJsonNull()) {
+				interp = index(INTERPOLATIONS, str(ie));
+				if (interp < 0) out.err(tp, "interpolation eins von linear, smooth, step");
+			}
+			JsonArray keys = tr == null ? null : arr(tr.get("keys"));
+			if (keys == null || keys.size() == 0 || keys.size() > MAX_KEYS) {
+				out.err(tp, "1–" + MAX_KEYS + " keys");
+				continue;
+			}
+			int[] ts = new int[keys.size()];
+			float[][] vs = new float[keys.size()][];
+			int[] kis = new int[keys.size()];
+			int last = -1;
+			for (int k = 0; k < keys.size(); k++) {
+				String kp = tp + ".keys[" + k + "]";
+				JsonObject key = obj(keys.get(k));
+				JsonElement tEl = key == null ? null : key.get("t");
+				int t = isInt(tEl) ? intOr(tEl, -1) : -1;
+				if (!isInt(tEl) || t < 0 || t > length || t <= last) out.err(kp, "t aufsteigend in 0…lengthMs");
+				if (isInt(tEl)) last = t;
+				float[] v = key == null ? null : vec(key.get("v"));
+				if (v == null) out.err(kp, "v [x,y,z] fehlt");
+				JsonElement kiEl = key == null ? null : key.get("interpolation");
+				int ki = -1;
+				if (kiEl != null && !kiEl.isJsonNull()) {
+					ki = index(INTERPOLATIONS, str(kiEl));
+					if (ki < 0) out.err(kp, "unbekannte interpolation");
+				}
+				if (channel == SCALE && v != null && !scaleOk(key.get("v"))) out.err(kp, "scale 0…4");
+				ts[k] = t;
+				vs[k] = v == null ? new float[3] : v;
+				kis[k] = ki;
+			}
+			tracks.add(new Track(tbi == null ? 0 : tbi, Math.max(0, channel), Math.max(0, interp), ts, vs, kis));
+		}
+		return tracks.toArray(new Track[0]);
+	}
+
+	/** Warnung „… – ignoriert“ für einen Eintrag bzw. den ganzen Block {@code actions} (nie ein Fehler). */
+	private static void ignored(Check out, String path, String msg) {
+		out.warnings.add(path + ": " + msg + " – ignoriert");
+	}
+
+	private static Animation find(List<Animation> list, int driver) {
+		for (Animation a : list) {
+			if (a.driver == driver) return a;
+		}
+		return null;
+	}
+
 
 	private static boolean checkImage(Check out, String p, JsonObject t, boolean main) {
 		boolean ok = true;
@@ -963,6 +1096,20 @@ public final class CosmeticV2 {
 			out[i] = f;
 		}
 		return out;
+	}
+
+	/**
+	 * Skalierung 0 &lt; s ≤ 4 je Achse, geprüft auf der JSON-Zahl (double) – nicht erst nach dem Runden auf float: 4.0000001
+	 * ist zu groß (als float wäre es 4), 1e-46 ist größer als 0 (als float wäre es 0). So wie Website und Launcher.
+	 * {@code e} ist schon als Vektor aus drei endlichen Zahlen geprüft ({@link #vec}).
+	 */
+	private static boolean scaleOk(JsonElement e) {
+		JsonArray a = e.getAsJsonArray();
+		for (int i = 0; i < a.size(); i++) {
+			double s = a.get(i).getAsDouble();
+			if (!(s > 0) || s > 4) return false;
+		}
+		return true;
 	}
 
 	private static float abs3(float[] v) {

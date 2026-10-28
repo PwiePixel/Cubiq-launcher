@@ -172,6 +172,14 @@ const C = Object.fromEntries(
     sand: '#e9c66f',
     meadow: '#cfe08f',
     routeHi: '#a9d46b',
+    // Streicheln und Füttern (Sonderthema „petting“): silbrig-blauer Fisch, Herzchen
+    fishHi: '#d6ecf6',
+    fish: '#94c4dd',
+    fishDark: '#5b8fb6',
+    fishDeep: '#41719b',
+    heartHi: '#ffd0e2',
+    heart: '#f2648c',
+    heartDark: '#c43c66',
   }).map(([k, v]) => [k, hex(v)]),
 )
 
@@ -207,6 +215,10 @@ export const SPECIAL_TOPICS = [
   { id: 'cosmetics', subject: 'companions', hero: 'middle', wide: 8, cubes: 0, sparkles: 0, float: 1, frames: 32, frameMs: 80 },
   // 0.3.1: Das Karten-Update – neben Cubi steht eine große aufgefaltete Karte, eine grüne Route führt zum Wegpunkt.
   { id: 'map', subject: 'map' },
+  // 0.3.2: Begleiter streicheln und füttern – Cubi mitten auf der schwebenden Insel krault mit einem Ärmchen das
+  // Füchschen (Herzchen steigen auf) und hält dem Pinguin mit dem anderen einen Fisch hin (Bissen, Krümel, zufriedenes
+  // Kauen); darüber schwebt das Axolotl auf einer eigenen kleinen Insel, statt der Würfel. Schleife wie bei 0.3.0.
+  { id: 'petting', subject: 'petting', hero: 'middle', wide: 6, cubes: 0, sparkles: 3, float: 1, frames: 32, frameMs: 80 },
 ]
 
 function count(haystack, needle) {
@@ -949,6 +961,175 @@ function fireflyFlight(f, n, x0, y0) {
   return c
 }
 
+// ---------------------------------------------------------------- Streicheln und Füttern (Sonderthema „petting“)
+//
+// Cubi kümmert sich um seine Begleiter (eigene Schleife wie bei „cosmetics“): Mit dem rechten Ärmchen krault er das
+// Füchschen – es kneift glücklich die Augen zu, legt die Ohren an, geht der Hand nach und wedelt, Herzchen steigen auf.
+// Mit dem linken hält er dem Pinguin einen Fisch hin: der schaut hoch, sperrt den Schnabel auf, schnappt dreimal zu
+// (Krümel fliegen) und kaut zufrieden. Über Cubi schwebt das Axolotl auf seiner eigenen kleinen Insel. Alles hängt am
+// Bild der Schleife, damit sie nahtlos bleibt.
+
+/** Farben des Pinguins (wie im Kosmetik-Bild), hier von der Seite gezeichnet. */
+const PENGUIN_SIDE = {
+  K: C.penguin, k: C.penguinDark, h: C.penguinHi, W: C.belly, E: C.pupil, P: C.cheek, B: C.beak, b: C.beakDark, M: C.lip,
+  R: C.scarf, r: C.scarfDark, S: C.scarfStripe,
+}
+
+const CARE = {
+  // Fisch: dunkler Rücken, weißer Bauch, Gabelschwanz rechts – dort hält Cubi ihn
+  fish: sprite(['...dd...', '.ddddd.D', 'hEfffdD.', '.wwwww.D'], {
+    d: C.fishDark, D: C.fishDeep, h: C.fishHi, f: C.fish, E: C.pupil, w: C.paper,
+  }),
+  // Herzchen in vier Größen: ploppt als Punkt auf, wächst beim Steigen, schrumpft beim Verblassen wieder (dann blass)
+  hearts: [
+    sprite(['p'], { p: C.heart }),
+    sprite(['p.p', 'ppp', '.p.'], { p: C.heart }),
+    sprite(['hp.pp', 'ppppp', '.ppd.', '..d..'], { h: C.heartHi, p: C.heart, d: C.heartDark }),
+    sprite(['.pp.pp.', 'phhpppp', 'phppppd', '.ppppd.', '..ppd..', '...d...'], { h: C.heartHi, p: C.heart, d: C.heartDark }),
+  ],
+  // Pinguin von der Seite (schaut nach rechts zu Cubi): Kopf je Haltung – glücklich (Auge zu), kauend (Unterschnabel
+  // klappt auf), hoch (Schnabel zum Fisch), aufgesperrt; darunter Schal, Flosse und Bauch.
+  penguinHead: Object.fromEntries(
+    Object.entries({
+      happy: ['..hKKk...', '.hKKKKk..', '.KKWEWk..', '.KKEWEk..', '.KPWWWBB.', '.KKWWWb..'],
+      chew: ['..hKKk...', '.hKKKKk..', '.KKWEWk..', '.KKEWEk..', '.KPWWWBB.', '.KKWWWMb.'],
+      up: ['....BB...', '..hKKB...', '.hKKEWk..', '.KKWWWk..', '.KPWWWk..', '.KKWWWk..'],
+      open: ['.....B...', '...KKBMb.', '.hKKEWbb.', '.KKWWWk..', '.KPWWWk..', '.KKWWWk..'],
+    }).map(([k, rows]) => [k, sprite(rows, PENGUIN_SIDE)]),
+  ),
+  penguinBody: sprite(['RRRSRRr..', 'hKhWWWWk.', 'hKhWWWWk.', 'KKKhWWWk.', '.kKKKKk..'], PENGUIN_SIDE),
+  penguinFeet: sprite(['..BB.BB..'], PENGUIN_SIDE),
+}
+
+/**
+ * Fütter-Ablauf des Pinguins, ein Zeichen je Bild: u = schaut hoch, o = sperrt den Schnabel auf und streckt sich,
+ * B = schnappt zu (Krümel fliegen), c/C = kaut (Schnabel auf/zu, Auge glücklich zu), h/H = zufrieden, hüpft und schlägt
+ * mit der Flosse. Drei Bissen, nach dem letzten wird länger gekaut.
+ */
+const FEED = 'oBccCCuoBccCCuoBccCCccCChhHHhhHu'
+/** Bilder, in denen der Pinguin zuschnappt. */
+const BITES = [...FEED].flatMap((s, f) => (s === 'B' ? [f] : []))
+
+/**
+ * Ärmchen von der Schulter (sx, sy) zur Hand (hx, hy): zwei Punkte dick, die Hand ein runder Klecks (3 × `hand`) –
+ * oben und links im Licht, unten im Schatten wie Cubis Körper.
+ */
+function cubiArm(c, sx, sy, hx, hy, hand = 3) {
+  const arm = layer()
+  const steps = Math.max(Math.abs(hx - sx), Math.abs(hy - sy), 1)
+  for (let k = 0; k <= steps; k++) {
+    const x = Math.round(sx + ((hx - sx) * k) / steps)
+    const y = Math.round(sy + ((hy - sy) * k) / steps)
+    arm.rect(x, y, 2, 2, C.cubi)
+  }
+  arm.rect(hx - 1, hy - 1, 3, hand, C.cubi)
+  const shape = arm.clone()
+  arm.map((col, x, y) => (!shape.get(x, y - 1) ? C.cubiTop : !shape.get(x, y + 1) ? C.cubiSide : !shape.get(x - 1, y) ? C.cubiHi : col))
+  c.draw(arm)
+}
+
+/**
+ * Cubi beim Kümmern: steht mitten auf der Insel, schaut zum Pinguin (`look` < 0) oder zum Füchschen, blinzelt; `lift`
+ * hebt den Körper (die Füße bleiben am Boden).
+ */
+function caringCubi(f, n, x, { look, feed, pet, lift = 0 }) {
+  const c = layer()
+  const top = GROUND - 13 - lift
+  // Ärmchen zuerst: sie kommen hinter dem Körper hervor
+  cubiArm(c, x + 1, top + 2, feed[0], feed[1])
+  cubiArm(c, x + 13, top + 6, pet[0], pet[1], 2)
+  const blink = f === n / 2 + 5
+  c.draw(blink ? CUBI.blink : CUBI.body, x, top)
+  if (look < 0 && !blink) {
+    for (const ex of [x + 3, x + 11]) c.rect(ex, top + 5, 1, 2, C.pupil).rect(ex + 1, top + 5, 1, 2, C.eye)
+  }
+  c.draw(CUBI.feet, x, GROUND - 1)
+  c.draw(CUBI.sprout[Math.floor(f / 8) % 2], x + 6, top - 3)
+  return c.outline(C.outline)
+}
+
+/** Pinguin beim Füttern (Haltung aus FEED): streckt sich zum Fisch oder hüpft (`lift`), die Füße bleiben am Boden. */
+function fedPenguin(f, x) {
+  const s = FEED[f % FEED.length]
+  const lift = s === 'o' || s === 'h' ? 1 : s === 'B' ? 2 : 0
+  const top = GROUND - 12 - lift
+  const head = { u: 'up', o: 'open', B: 'up', c: 'chew' }[s] ?? 'happy'
+  const c = layer()
+  c.draw(CARE.penguinHead[head], x, top)
+  c.draw(CARE.penguinBody, x, top + 6)
+  c.draw(CARE.penguinFeet, x, GROUND - 1)
+  // Zufrieden: die Flosse schlägt nach hinten aus
+  if (s === 'h') {
+    for (const [dx, dy] of [[2, 7], [2, 8], [3, 9]]) c.set(x + dx, top + dy, C.penguin)
+    for (const [dx, dy] of [[0, 7], [-1, 6], [-1, 7]]) c.set(x + dx, top + dy, C.penguinHi)
+  }
+  return c.outline(C.outline)
+}
+
+/**
+ * Krümel eines Bissens bei (x, y), `age` Bilder nach dem Biss: im Moment des Zuschnappens ein kleiner Blitz, dann
+ * fliegen sie im Bogen auseinander und fallen.
+ */
+function crumbs(c, age, x, y) {
+  if (age < 0 || age > 8) return
+  if (age === 0) for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [-1, -1], [1, -1]]) c.set(x + dx, y + dy, C.white)
+  const flying = [[-1.3, -1.6, C.fishHi], [1.2, -1.9, C.paper], [-0.5, -2.3, C.fish], [0.7, -1.1, C.fishHi], [-1.1, -0.7, C.paper]]
+  for (const [vx, vy, col] of flying) {
+    const px = Math.round(x + vx * age)
+    const py = Math.round(y + vy * age + 0.35 * age * age)
+    if (py < GROUND - 1) c.set(px, py, col)
+  }
+}
+
+/** Füchschen beim Kraulen: Ohren angelegt, Augen glücklich zu, rosige Bäckchen, es wedelt. */
+function pettedFox(f, x) {
+  const top = GROUND - 10
+  const tail = layer().draw(PET.foxTail[[1, 2, 1, 0][Math.floor(f / 2) % 4]], x + 5, top - 1).outline(C.outline)
+  const body = layer().draw(PET.fox, x, top)
+  // Ohren angelegt: die Spitzen kippen zur Seite
+  body.erase(x + 1, top)
+  body.erase(x + 5, top)
+  body.set(x, top + 1, C.sock)
+  body.set(x + 6, top + 1, C.sock)
+  // Augen glücklich zu: zwei kurze Striche, darunter Bäckchen
+  for (const ex of [x + 1, x + 4]) body.rect(ex, top + 3, 2, 1, C.pupil)
+  body.set(x + 1, top + 4, C.cheek)
+  body.set(x + 5, top + 4, C.cheek)
+  return tail.draw(body.outline(C.outline))
+}
+
+/** Kleine schwebende Insel (fest, ohne Zufall) mit Oberkante bei y: Gras, Erde, nach unten spitz mit Stein. */
+function islet(x, y, w) {
+  const c = layer()
+  for (let k = 0; k < w; k++) {
+    const edge = k === 0 || k === w - 1
+    c.set(x + k, y, edge ? C.grass : C.grassHi)
+    c.set(x + k, y + 1, k === w - 1 ? C.grassDark : C.grass)
+    c.set(x + k, y + 2, k % 3 === 1 ? C.grassDark : C.dirt)
+  }
+  for (let r = 0; r < 3; r++) {
+    for (let k = 1 + r * 2; k < w - 1 - r * 2; k++) c.set(x + k, y + 3 + r, r === 2 ? C.stoneDark : (k + r) % 4 === 0 ? C.dirtDark : C.dirtDeep)
+  }
+  c.set(x + 2, y - 1, C.grass)
+  c.set(x + w - 4, y - 1, C.grassHi)
+  return c.outline(C.outline)
+}
+
+/**
+ * Herzchen `age` Bilder nach dem Aufploppen bei (x, y): steigt um `rise` (erst schnell, dann sanft) und treibt um
+ * `drift` zur Seite, wiegt sich dabei, wächst (bis `big`) und schrumpft zum Schluss blass wieder zum Punkt.
+ */
+function risingHeart(c, age, x, y, { life = 16, rise = 14, drift = 0, big = 2 } = {}) {
+  if (age < 0 || age >= life) return
+  const t = age / life
+  const size = Math.min(big, t < 0.07 ? 0 : t < 0.15 ? 1 : t < 0.25 ? 2 : t < 0.66 ? 3 : t < 0.8 ? 2 : t < 0.92 ? 1 : 0)
+  const ease = 1 - (1 - t) ** 2
+  const hx = Math.round(x + drift * ease + Math.sin(t * 2 * Math.PI) * 1.2)
+  const hy = Math.round(y - rise * ease)
+  const s = t >= 0.8 ? CARE.hearts[size].clone().map(() => C.heartHi) : CARE.hearts[size]
+  c.draw(s, hx - (s.w >> 1), hy - (s.h >> 1))
+}
+
 /**
  * Jeder Gegenstand: f → Ebenen. `layer` bekommt einen Umriss, `front` (Licht, Flammen, Funken) und `ground`
  * (Rauch, Schatten auf der Insel) nicht bzw. eigene. `x` = linker Rand des freien Platzes rechts von Cubi.
@@ -1462,6 +1643,51 @@ const PROPS = {
     front.draw(layer().draw(SPRITES.pin, px - 2, py - 7 - bob).outline(C.outline))
     sparkle(front, f, { x: px + 5, y: py - 9, phase: 3 })
     return { layer: c, front }
+  },
+
+  /**
+   * Streicheln und Füttern: Cubi mitten auf der Insel (`hero: 'middle'`) krault rechts das Füchschen und hält links dem
+   * Pinguin einen Fisch hin; Herzchen steigen auf, Krümel fliegen. Darüber schwebt das Axolotl auf seiner eigenen
+   * kleinen Insel, links fliegt das Glühwürmchen mit seiner Laterne.
+   */
+  petting(f, { left, hero, frames: n }) {
+    const s = FEED[f % FEED.length]
+    const px = hero - 15
+    const fx = hero + 18
+    // Fisch über dem Pinguin, Cubi hält ihn an der Schwanzflosse; beim Zuschnappen ruckt er nach unten.
+    const fishX = px + 4
+    const fishY = GROUND - 18 + (s === 'B' ? 1 : 0)
+    // Kraulen: die Hand fährt zweimal je Schleife über den Kopf des Füchschens (sanft hin und her), Cubi geht mit.
+    const stroke = Math.round(1.5 - 1.5 * Math.cos((f / n) * 4 * Math.PI))
+    const c = layer()
+    c.draw(fedPenguin(f, px))
+    // Das Füchschen geht der Hand ein Stück nach.
+    c.draw(pettedFox(f, fx + (stroke >= 2 ? 1 : 0)))
+    c.draw(layer().draw(CARE.fish, fishX, fishY).outline(C.outline))
+    // Cubi schaut dem Pinguin beim Fressen zu, nach dem dritten Bissen zum Füchschen (nur zwei Blickwechsel je Schleife).
+    const caring = caringCubi(f, n, hero, {
+      look: f >= 18 && f < 30 ? 1 : -1,
+      feed: [fishX + 9, fishY + 2],
+      pet: [fx + 1 + stroke, GROUND - 10],
+      lift: stroke === 3 ? 1 : 0,
+    })
+    // Herzchen: alle 8 Bilder eins, steigt hoch über die Insel und treibt mal zur Mitte, mal nach außen (im ruhigen
+    // Bild ist gerade ein großes ganz zu sehen).
+    const hearts = layer()
+    for (let k = 0; k < 4; k++) {
+      const drift = [-1, 7, -2, 5][k]
+      risingHeart(hearts, (f - k * 8 - 4 + 2 * n) % n, fx + 3, GROUND - 13, { life: 24, rise: 24, drift, big: k % 2 ? 2 : 3 })
+    }
+    const front = hearts.outline(C.outline)
+    for (const b of BITES) crumbs(front, (f - b + n) % n, fishX + 1, fishY + 3)
+    // Am Himmel: das Axolotl auf seiner Insel (schwebt versetzt zur großen) bekommt auch ein Herz ab, wenn Cubi zum
+    // Füchschen schaut; links fliegt das Glühwürmchen seine Acht.
+    const iy = 19 + Math.round(swing(f, n, 0.3))
+    const sky = layer().draw(islet(hero, iy, 15)).draw(axolotlPet(f, n, hero + 2), 0, iy - GROUND)
+    const love = layer()
+    risingHeart(love, (f - 18 + n) % n, hero + 7, iy - 9, { life: 14, rise: 4 })
+    sky.draw(love.outline(C.outline)).draw(fireflyFlight(f, n, left + 5, 6))
+    return { layer: c, hero: caring, front, sky }
   },
 
   snowman(f) {

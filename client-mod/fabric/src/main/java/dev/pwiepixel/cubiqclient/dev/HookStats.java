@@ -7,12 +7,14 @@ public final class HookStats {
 	public static long scroll;
 	public static long turn;
 	public static long lightmap;
+	/** Rechtsklick geprüft (Begleiter streicheln/füttern, {@code PetUseMixin}). */
+	public static long petUse;
 
 	private HookStats() {
 	}
 
 	public static String summary() {
 		return "getFov=" + fov + ", onPress=" + press + ", onScroll=" + scroll
-				+ ", turnPlayer=" + turn + ", updateLightTexture=" + lightmap;
+				+ ", turnPlayer=" + turn + ", updateLightTexture=" + lightmap + ", startUseItem=" + petUse;
 	}
 }
