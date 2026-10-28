@@ -4062,10 +4062,14 @@
         "flee": "Foge",
         "handsup": "Mãos ao alto"
       },
-      "actions": "Interagir:",
+      "actions": "Interagir",
       "action": {
         "pet": "Fazer carinho",
         "eat": "Alimentar"
+      },
+      "actionHint": {
+        "pet": "Prévia do carinho – no jogo, clique com o botão direito no seu companheiro com a mão vazia",
+        "eat": "Prévia da alimentação – no jogo, clique com o botão direito no seu companheiro segurando comida"
       },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {

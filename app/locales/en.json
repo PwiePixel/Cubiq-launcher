@@ -4129,10 +4129,14 @@
         "flee": "Flees",
         "handsup": "Hands up"
       },
-      "actions": "Interact:",
+      "actions": "Interact",
       "action": {
         "pet": "Pet",
         "eat": "Feed"
+      },
+      "actionHint": {
+        "pet": "Preview of petting – in the game, right-click your companion with an empty hand",
+        "eat": "Preview of feeding – in the game, right-click your companion while holding food"
       },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {

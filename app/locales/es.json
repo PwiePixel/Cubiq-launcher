@@ -4129,10 +4129,14 @@
         "flee": "Huye",
         "handsup": "Manos arriba"
       },
-      "actions": "Interactuar:",
+      "actions": "Interactuar",
       "action": {
         "pet": "Acariciar",
         "eat": "Dar de comer"
+      },
+      "actionHint": {
+        "pet": "Vista previa de las caricias: en el juego, haz clic derecho en tu compañero con la mano vacía",
+        "eat": "Vista previa de darle de comer: en el juego, haz clic derecho en tu compañero con comida en la mano"
       },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {

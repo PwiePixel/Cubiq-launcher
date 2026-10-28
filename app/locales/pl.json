@@ -4062,10 +4062,14 @@
         "flee": "Ucieka",
         "handsup": "Ręce do góry"
       },
-      "actions": "Interakcja:",
+      "actions": "Interakcja",
       "action": {
         "pet": "Pogłaszcz",
         "eat": "Nakarm"
+      },
+      "actionHint": {
+        "pet": "Podgląd głaskania – w grze kliknij prawym przyciskiem swojego towarzysza pustą ręką",
+        "eat": "Podgląd karmienia – w grze kliknij prawym przyciskiem swojego towarzysza, trzymając jedzenie"
       },
       "count": "{n} × {name} | {n} × {name} | {n} × {name}",
       "counts": {

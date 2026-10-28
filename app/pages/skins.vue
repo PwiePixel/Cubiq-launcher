@@ -912,6 +912,35 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
               </ClientOnly>
               <!-- Halloween 2026: Kürbis unten rechts auf der 3D-Bühne (Kürbis-Suche 3/13). -->
               <HalloweenPumpkin v-if="!loading" id="launcher-skins" :size="13" class="absolute right-3 z-10" :style="{ top: `${viewerHeight - 22}px` }" />
+              <!--
+                Begleiter am Boden: Aktionen vorführen (streicheln, füttern) – nur, wenn das Modell sie hat. Liegen unten
+                links auf der 3D-Bühne statt in einer eigenen Leiste: Die Vorschau-Karte bleibt so hoch wie ohne sie, damit
+                „Anwenden“/„Verwerfen“ nicht aus dem Bild rutschen. Handy: nur Symbole (Name für Screenreader).
+              -->
+              <div v-if="!loading && viewerPet && petActionKeys.length" class="pointer-events-none absolute inset-x-0 top-0 z-10" :style="{ height: `${viewerHeight}px` }">
+                <div class="pointer-events-auto absolute bottom-2.5 left-3 flex items-center gap-1 text-[11px]" role="group" :aria-label="t('headCosmetics.pet.actions')" data-testid="pet-actions">
+                  <button
+                    v-for="key in petActionKeys"
+                    :key="key"
+                    class="seg inline-flex items-center gap-1.5 rounded-md px-2 py-1 backdrop-blur-sm mobile:size-10 mobile:justify-center mobile:px-0 mobile:py-0"
+                    :class="petAction === key ? 'seg-on' : 'bg-base-950/70 ring-1 ring-base-700/60 ring-inset'"
+                    :aria-pressed="petAction === key"
+                    :aria-label="t(`headCosmetics.pet.action.${key}`)"
+                    :title="t(`headCosmetics.pet.actionHint.${key}`)"
+                    :data-action="key"
+                    @click="playPetAction(key)"
+                  >
+                    <svg viewBox="0 0 24 24" class="size-3.5 shrink-0 mobile:size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path v-if="key === 'pet'" d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z" />
+                      <template v-else>
+                        <path d="M12 8.2c-1.6-1.4-4.6-1.5-6.1.4-1.7 2.1-1.2 5.9.6 8.8 1.2 2 2.6 3.1 3.8 3.1.8 0 1.1-.4 1.7-.4s.9.4 1.7.4c1.2 0 2.6-1.1 3.8-3.1 1.8-2.9 2.3-6.7.6-8.8-1.5-1.9-4.5-1.8-6.1-.4Z" />
+                        <path d="M12 8.2c0-2.2.9-3.7 2.6-4.7" />
+                      </template>
+                    </svg>
+                    <span class="mobile:sr-only">{{ t(`headCosmetics.pet.action.${key}`) }}</span>
+                  </button>
+                </div>
+              </div>
               <div class="absolute top-12 right-3 flex max-w-[60%] flex-col items-end gap-1">
                 <button
                   v-if="cubiqPreview"
@@ -996,21 +1025,6 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
                   @click="choosePetState(key)"
                 >
                   {{ t(`headCosmetics.pet.state.${key}`) }}
-                </button>
-              </div>
-              <!-- Begleiter am Boden: Aktionen vorführen (streicheln, füttern) – nur, wenn das Modell sie hat. -->
-              <div v-if="viewerPet && petActionKeys.length" class="flex flex-wrap items-center gap-1 border-t border-base-800/80 bg-base-950/60 p-1 text-[11px] backdrop-blur-sm" data-testid="pet-actions">
-                <span class="px-1 text-base-400">{{ t('headCosmetics.pet.actions') }}</span>
-                <button
-                  v-for="key in petActionKeys"
-                  :key="key"
-                  class="seg flex-1 rounded px-2 py-1 mobile:min-h-10"
-                  :class="{ 'seg-on': petAction === key }"
-                  :aria-pressed="petAction === key"
-                  :data-action="key"
-                  @click="playPetAction(key)"
-                >
-                  {{ t(`headCosmetics.pet.action.${key}`) }}
                 </button>
               </div>
               <!-- Flügel: Zustände vorführen (am Boden, in der Luft, Schleichen). -->

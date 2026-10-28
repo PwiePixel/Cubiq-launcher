@@ -4129,10 +4129,14 @@
         "flee": "Flieht",
         "handsup": "Hände hoch"
       },
-      "actions": "Interagieren:",
+      "actions": "Interagieren",
       "action": {
         "pet": "Streicheln",
         "eat": "Füttern"
+      },
+      "actionHint": {
+        "pet": "Vorschau aufs Streicheln – im Spiel klickst du deinen Begleiter mit leerer Hand rechts an",
+        "eat": "Vorschau aufs Füttern – im Spiel klickst du deinen Begleiter mit Essen in der Hand rechts an"
       },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {

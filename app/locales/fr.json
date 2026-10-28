@@ -4062,10 +4062,14 @@
         "flee": "S’enfuit",
         "handsup": "Les mains en l’air"
       },
-      "actions": "Interagir :",
+      "actions": "Interagir",
       "action": {
         "pet": "Caresser",
         "eat": "Nourrir"
+      },
+      "actionHint": {
+        "pet": "Aperçu des caresses : en jeu, fais un clic droit sur ton compagnon la main vide",
+        "eat": "Aperçu du repas : en jeu, fais un clic droit sur ton compagnon en tenant de la nourriture"
       },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {

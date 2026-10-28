@@ -4062,10 +4062,14 @@
         "flee": "Kaçar",
         "handsup": "Eller yukarı"
       },
-      "actions": "Etkileşim:",
+      "actions": "Etkileşim",
       "action": {
         "pet": "Sev",
         "eat": "Besle"
+      },
+      "actionHint": {
+        "pet": "Sevme önizlemesi – oyunda boş elle yoldaşına sağ tıkla",
+        "eat": "Besleme önizlemesi – oyunda elinde yiyecekle yoldaşına sağ tıkla"
       },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {

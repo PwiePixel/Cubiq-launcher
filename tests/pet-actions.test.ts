@@ -679,4 +679,15 @@ describe('Aktionen – Namen im Launcher', () => {
     for (const l of ['fr', 'nl', 'pl', 'pt-BR', 'tr']) expect(Object.keys(load(l).action)).toEqual([...ACTION_DRIVERS])
   })
 
+  it('Knöpfe auf der Bühne: Gruppenname ohne Doppelpunkt, Hinweis zum Spiel in allen acht Sprachen', () => {
+    const load = (l: string) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'app', 'locales', `${l}.json`), 'utf8')).headCosmetics.pet
+    expect(load('en').actions).toBe('Interact')
+    expect(load('de').actions).toBe('Interagieren')
+    for (const l of ['en', 'de', 'es', 'fr', 'nl', 'pl', 'pt-BR', 'tr']) {
+      const pet = load(l)
+      expect(pet.actions, l).not.toMatch(/:\s*$/)
+      expect(Object.keys(pet.actionHint), l).toEqual([...ACTION_DRIVERS])
+      for (const d of ACTION_DRIVERS) expect(pet.actionHint[d].length, `${l} ${d}`).toBeGreaterThan(pet.action[d].length)
+    }
+  })
 })
