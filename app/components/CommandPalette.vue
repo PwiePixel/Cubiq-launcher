@@ -80,6 +80,7 @@ const pages = computed<Command[]>(() => {
     { to: '/screenshots', label: 'nav.screenshots', icon: 'screenshots', keywords: 'palette.keywords.screenshots' },
     { to: '/clips', label: 'nav.clips', icon: 'clips', keywords: 'palette.keywords.clips' },
     { to: '/skins', label: 'nav.skins', icon: 'skins', keywords: 'palette.keywords.skins' },
+    { to: '/stats', label: 'nav.stats', icon: 'chart', keywords: 'palette.keywords.stats' },
     ...(cubiq.available
       ? [
           { to: '/social', label: 'nav.social' as MessageKey, icon: 'chat' as IconName, keywords: 'palette.keywords.social' as MessageKey },

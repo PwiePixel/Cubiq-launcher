@@ -238,6 +238,8 @@ export interface Settings {
   discordPresence: boolean
   java: JavaPaths
   clips: ClipSettings
+  /** Automatische Welt-Backups (fehlt bei älteren Kernen – dann Standard). */
+  worldBackups?: import('~/utils/worldBackups').WorldBackupSettings
   /** Eigene Skins, eigene Presets, Theme, Akzentfarbe und Sprache mit dem Cubiq-Konto abgleichen – ab Werk an */
   cubiqSync: boolean
   /** Benachrichtigungen aus „Sozial“ (nur lokal) */

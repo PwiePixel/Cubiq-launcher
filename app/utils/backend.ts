@@ -267,6 +267,8 @@ import type {
 import { presetCheckSchema, presetPickListSchema, sharedFolderStatusSchema } from './schemas'
 import { pingStatusSchema } from './ping'
 import { gamePerfSchema } from './perfLive'
+import type { PlayStatsData } from './playStats'
+import type { BackupInfo, BackupJob, BackupOverview, BackupUsage, RestoreMode, RestoreOutcome } from './worldBackups'
 import { badgeImageSchema, halloweenStateSchema, pumpkinFoundSchema, stickerSchema, trickOutcomeSchema, type LauncherPumpkin } from './halloween'
 
 export class BackendError extends Error {
@@ -434,6 +436,11 @@ export const backend = {
   changeInstanceVersion: (id: string, gameVersion: string, loader: Loader) =>
     call<Instance>('change_instance_version', { id, gameVersion, loader }),
   instanceHistory: (id: string) => call<HistoryEntry[]>('instance_history', { id }),
+  // --- Spielzeit-Statistik (rechnen: utils/playStats.ts) ---
+  /** Alle Sitzungen, laufende Spiele und Spielzeit ohne Datum. */
+  playStats: () => call<PlayStatsData>('play_stats'),
+  /** Statistik leeren – die Spielzeit der Instanzen bleibt. */
+  resetPlayStats: () => call<void>('reset_play_stats'),
   setInstanceGroup: (id: string, group: string | null) => call<Instance>('set_instance_group', { id, group }),
   /** Grafik-Modus des Cubiq Clients (null = im Spiel noch nicht gewählt). */
   getFpsMode: (id: string) => call<FpsMode | null>('get_fps_mode', { id }),
@@ -861,6 +868,30 @@ export const backend = {
   backupWorld: (id: string, folder: string, onProgress: (percent: number) => void, taskId?: string) =>
     call<string>('backup_world', { id, folder, onProgress: channel(onProgress), taskId }),
   trashWorld: (id: string, folder: string) => call<void>('trash_world', { id, folder }),
+  // --- Welt-Backups (Typen: utils/worldBackups.ts) ---
+  worldBackupOverview: (id: string) => call<BackupOverview>('world_backup_overview', { id }),
+  worldBackupList: (id: string, folder: string) => call<BackupInfo[]>('world_backup_list', { id, folder }),
+  /** `copyName`: Name der neuen Welt (nur bei `copy`). */
+  restoreWorldBackup: (
+    id: string,
+    folder: string,
+    backup: string,
+    mode: RestoreMode,
+    copyName: string | null,
+    onProgress: (percent: number) => void,
+    taskId?: string,
+  ) => call<RestoreOutcome>('world_backup_restore', { id, folder, backup, mode, copyName, onProgress: channel(onProgress), taskId }),
+  deleteWorldBackup: (id: string, folder: string, backup: string) => call<void>('world_backup_delete', { id, folder, backup }),
+  /** Ordner der Backups einer Welt (ohne `folder`: der Instanz). */
+  openWorldBackups: (id: string, folder: string | null) => call<void>('open_world_backups', { id, folder }),
+  openWorldBackupRoot: () => call<void>('open_world_backup_root'),
+  /** Eigene Einstellung der Instanz; `null` = wie in den Einstellungen. */
+  setWorldBackupAuto: (id: string, enabled: boolean | null) => call<BackupOverview>('set_world_backup_auto', { id, enabled }),
+  worldBackupUsage: () => call<BackupUsage>('world_backup_usage'),
+  /** Backups gelöschter Instanzen entfernen; liefert die freigegebenen Bytes. */
+  pruneWorldBackups: () => call<number>('prune_world_backups'),
+  worldBackupJobs: () => call<BackupJob[]>('world_backup_jobs'),
+  cancelWorldBackupJob: (job: number) => call<boolean>('cancel_world_backup_job', { job }),
   instanceServers: (id: string) => call<InstanceServer[]>('instance_servers', { id }),
   /** Ping-Test über alle Einträge der servers.dat (Adressen liest der Kern selbst, höchstens 4 gleichzeitig). */
   pingInstanceServers: (instanceId: string) => call<InstancePing[]>('ping_instance_servers', { instanceId }),

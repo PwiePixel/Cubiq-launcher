@@ -748,6 +748,14 @@
       "levelDatBroken": "Het level.dat-bestand van de wereld is beschadigd.",
       "notFound": "Deze wereld bestaat niet meer."
     },
+    "worldBackups": {
+      "tooManyFiles": "Deze wereld heeft te veel bestanden voor een back-up.",
+      "unsafeArchive": "De back-up bevat ongeldige paden en wordt niet uitgepakt.",
+      "broken": "Deze back-up is beschadigd.",
+      "notFound": "Deze back-up bestaat niet meer.",
+      "worldOpened": "De wereld werd in het spel geopend voordat de back-up klaar was.",
+      "worldOpen": "Deze wereld is nu open in het spel – sluit hem eerst."
+    },
     "logs": {
       "sourceGone": "Dit logbestand bestaat niet meer.",
       "unreadable": "Dit logbestand kan niet worden gelezen.",
@@ -1990,6 +1998,93 @@
       "javaCustom": "eigen pad"
     }
   },
+  "stats": {
+    "title": "Statistieken",
+    "subtitle": "Hoeveel je speelt – over al je instanties.",
+    "subtitleInstance": "Speeltijd van {name}",
+    "filterLabel": "Statistieken tonen voor",
+    "allInstances": "Alle instanties",
+    "live": "Nu aan het spelen",
+    "units": {
+      "hours": "{n} u"
+    },
+    "empty": {
+      "title": "Nog geen speeltijd",
+      "text": "Start een instantie en speel een potje – elke sessie verschijnt hier: uren per dag, een kalender van je speeldagen, je favoriete instanties en versies en je langste reeks.",
+      "action": "Bibliotheek openen"
+    },
+    "tiles": {
+      "label": "Kerncijfers",
+      "total": "Totale speeltijd",
+      "totalCarried": "incl. {time} van eerder",
+      "since": "sinds {date}",
+      "week": "Deze week",
+      "today": "Vandaag: {time}",
+      "month": "Deze maand",
+      "sessions": "Sessies",
+      "average": "Ø {time} per sessie",
+      "longest": "Langste sessie",
+      "streak": "Huidige reeks",
+      "days": "{n} dag | {n} dagen",
+      "bestStreak": "Record: {days}"
+    },
+    "chart": {
+      "title": "Speeltijd",
+      "rangeLabel": "Periode",
+      "days": "30 dagen",
+      "weeks": "16 weken",
+      "labelDays": "Speeltijd per dag, laatste 30 dagen",
+      "labelWeeks": "Speeltijd per week, laatste 16 weken",
+      "total": "Totaal: {time}",
+      "none": "Niet gespeeld",
+      "weekOf": "Week van {date}",
+      "summary": "{label}. Totaal: {total}. Meest: {best}.",
+      "showTable": "Als tabel tonen",
+      "hideTable": "Tabel verbergen",
+      "day": "Dag",
+      "week": "Week",
+      "playTime": "Speeltijd"
+    },
+    "heatmap": {
+      "title": "Kalender",
+      "daysPlayed": "{n} dag gespeeld | {n} dagen gespeeld",
+      "summary": "{label}: laatste {weeks} weken, op {days} dagen gespeeld.",
+      "less": "Minder",
+      "more": "Meer"
+    },
+    "top": {
+      "instances": "Meest gespeelde instanties",
+      "versions": "Minecraft-versies",
+      "versionsHint": "De versies waarmee je speelde",
+      "noVersions": "Nog geen sessies met een bekende versie.",
+      "servers": "Servers",
+      "serversHint": "Servers waar je op kwam – via de launcher of het multiplayer-menu in het spel.",
+      "sessions": "{n} sessie | {n} sessies",
+      "deleted": "{name} (verwijderd)",
+      "showAll": "Alles tonen ({n})",
+      "showLess": "Minder tonen"
+    },
+    "footer": {
+      "tracking": "Sessies worden bijgehouden sinds {date}.",
+      "carried": "Speeltijd van daarvoor telt mee in de totalen en de instanties, maar heeft geen datum."
+    },
+    "reset": {
+      "button": "Statistieken resetten",
+      "title": "Statistieken resetten?",
+      "text": "Alle opgeslagen sessies verdwijnen uit de statistieken – grafieken, kalender, reeksen en lijsten beginnen weer bij nul. De speeltijd bij je instanties blijft.",
+      "confirm": "Resetten",
+      "done": "Statistieken gereset."
+    },
+    "instance": {
+      "title": "Speeltijd",
+      "recent": "{time} in de laatste 30 dagen",
+      "average": "Gemiddeld",
+      "last30": "Speeltijd van de laatste 30 dagen: {time}",
+      "crashes": "{n} crash | {n} crashes",
+      "topVersion": "Meestal op {version}",
+      "open": "Alle statistieken"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} regel | {n} regels",
     "copied": "Gekopieerd"
@@ -3054,6 +3149,7 @@
     "discover": "Ontdekken",
     "servers": "Servers",
     "screenshots": "Screenshots",
+    "stats": "Statistieken",
     "skins": "Skins",
     "admin": "Admin",
     "runningCount": "{n} actief | {n} actief",
@@ -3125,6 +3221,7 @@
       "servers": "server lijst serverlijst",
       "accounts": "account inloggen aanmelden login microsoft",
       "screenshots": "afbeeldingen foto’s galerij screenshots",
+      "stats": "statistieken speeltijd uren reeks kalender grafiek",
       "skins": "cape skin",
       "settings": "instellingen opties voorkeuren",
       "newInstance": "toevoegen aanmaken nieuw",
@@ -3423,6 +3520,7 @@
       "storage": "Opslag",
       "network": "Netwerk",
       "clips": "Clips en opnemen",
+      "backups": "Wereldback-ups",
       "notifications": "Meldingen",
       "remote": "Afstandsbediening"
     },
@@ -5122,13 +5220,13 @@
     "cheats": "Cheats",
     "backingUp": "Wereld wordt geback-upt …",
     "backupDone": "“{name}” is geback-upt",
-    "backup": "Back-up (ZIP)",
+    "backup": "Nu back-up maken",
     "backupOf": "{name} back-uppen",
     "openFolderOf": "Map van {name} openen",
     "deleteOf": "{name} verwijderen",
     "stopFirst": "Sluit eerst het spel",
     "deleted": "“{name}” staat in de prullenbak",
-    "backupHint": "Back-ups worden als ZIP opgeslagen in de map “backups” van de instantie (zie het tabblad Bestanden).",
+    "backupHint": "Werelden worden automatisch geback-upt bij het starten van het spel en na het spelen – alleen de werelden die veranderd zijn. Klik op de regel met de klok om back-ups te bekijken, terug te zetten of te verwijderen.",
     "deleteTitle": "Wereld verwijderen?",
     "deleteText": "“{name}” gaat naar de Windows-prullenbak.",
     "deleteTextLinux": "“{name}” gaat naar de prullenbak.",
@@ -5155,6 +5253,88 @@
       "joinNote": "Joinen start het spel en verbindt meteen. Heel oude versies openen alleen het hoofdmenu.",
       "pingCooldown": "Wacht een paar seconden tot de volgende pingtest.",
       "sortNote": "Alleen de weergave is op ping gesorteerd – de serverlijst in het spel behoudt haar volgorde."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Automatische back-up",
+      "defaultOn": "Standaard (aan)",
+      "defaultOff": "Standaard (uit)",
+      "on": "Aan",
+      "off": "Uit",
+      "onText": "Automatische back-ups staan aan: gewijzigde werelden worden bij het starten en na het spelen opgeslagen, per wereld blijven de laatste {n}.",
+      "offText": "Automatische back-ups staan uit voor deze instantie – gebruik “Nu back-up maken”.",
+      "sharedText": "Deze instantie deelt haar wereldmap, dus de back-ups horen bij alle instanties die hem delen."
+    },
+    "panel": {
+      "open": "Back-ups van {name}",
+      "running": "Back-up maken … {percent} %",
+      "status": "{n} back-up · laatst {time} | {n} back-ups · laatst {time}",
+      "none": "Nog geen back-up",
+      "deletedTitle": "Verwijderde werelden met back-ups",
+      "restoreDeleted": "Terugzetten"
+    },
+    "dialog": {
+      "title": "Back-ups van {name}",
+      "backupNow": "Nu back-up maken",
+      "backingUp": "Back-up maken … {percent} %",
+      "empty": "Nog geen back-ups van deze wereld.",
+      "restore": "Terugzetten",
+      "deleteConfirm": "Deze back-up verwijderen?",
+      "deleteOf": "Back-up van {date} verwijderen"
+    },
+    "kinds": {
+      "auto": "Automatisch",
+      "manual": "Handmatig",
+      "safety": "Voor het terugzetten",
+      "legacy": "Oudere back-up"
+    },
+    "restore": {
+      "title": "Back-up van {date} terugzetten",
+      "modeLabel": "Hoe terugzetten",
+      "copy": "Als kopie",
+      "copyText": "Voegt de wereld toe als “{name}” – je huidige wereld blijft zoals hij is.",
+      "replace": "Huidige wereld vervangen",
+      "replaceText": "De huidige stand wordt eerst als back-up bewaard, zodat je terug kunt.",
+      "bringBack": "Wereld terughalen",
+      "bringBackText": "De wereld verschijnt weer in je wereldlijst.",
+      "confirm": "Terugzetten",
+      "stopFirst": "Sluit eerst het spel – een wereld kan alleen worden teruggezet als het spel niet draait.",
+      "copySuffix": "teruggezet",
+      "taskTitle": "{name} terugzetten",
+      "stage": "Wereld wordt teruggezet …",
+      "doneCopy": "Teruggezet als “{name}”.",
+      "doneReplace": "“{name}” is teruggezet – de vorige stand blijft als back-up bewaard.",
+      "doneDeleted": "“{name}” is terug."
+    },
+    "task": {
+      "title": "Wereldback-up · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Werelden controleren …"
+    },
+    "toast": {
+      "opened": "“{world}” werd geopend voordat de back-up klaar was. De vorige back-up blijft – na het spelen komt er een nieuwe.",
+      "failed": "Back-up van “{world}” mislukt: {error}"
+    },
+    "settings": {
+      "title": "Wereldback-ups",
+      "intro": "Bij het starten van een instantie bewaart de launcher elke singleplayerwereld die sinds de laatste back-up veranderd is – op de achtergrond, het spel start meteen. Na het spelen bewaart hij de gespeelde werelden. Ongewijzigde werelden worden overgeslagen.",
+      "enabledTitle": "Automatische back-ups",
+      "enabledDescription": "Gewijzigde werelden back-uppen bij het starten en na het spelen. Elke instantie kan dit in haar tabblad Werelden aan- of uitzetten.",
+      "keepTitle": "Per wereld bewaren",
+      "keepDescription": "Oudere automatische back-ups worden verwijderd. Handmatige back-ups en die van voor het terugzetten blijven altijd.",
+      "keepOption": "{n} back-up | {n} back-ups",
+      "limitTitle": "Maximale grootte",
+      "limitDescription": "Worden alle back-ups samen groter, dan gaan de oudste automatische eerst – de nieuwste back-up van elke wereld blijft altijd.",
+      "noLimit": "Geen limiet",
+      "storageTitle": "Opslag",
+      "usage": "In gebruik: {size} · Back-ups: {count} · Werelden: {worlds}",
+      "usageNone": "Nog geen back-ups.",
+      "where": "Back-ups worden als ZIP-bestanden bewaard in de map “world-backups” van de datamap van de launcher.",
+      "orphaned": "{size} hoort bij verwijderde instanties.",
+      "prune": "Die verwijderen",
+      "pruneConfirm": "Definitief verwijderen",
+      "pruned": "{size} vrijgemaakt."
     }
   },
   "share": {

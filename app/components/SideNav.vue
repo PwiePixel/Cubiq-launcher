@@ -61,6 +61,8 @@ const groups: NavGroup[] = [
       { to: '/skins', label: 'nav.skins', icon: 'skins', optional: true },
       { to: '/screenshots', label: 'nav.screenshots', icon: 'screenshots', optional: true },
       { to: '/clips', label: 'nav.clips', icon: 'clips', optional: true, clipsOnly: true },
+      // Spielzeit-Statistik
+      { to: '/stats', label: 'nav.stats', icon: 'chart', optional: true },
     ],
   },
   {

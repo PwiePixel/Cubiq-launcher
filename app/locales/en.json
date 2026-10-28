@@ -776,6 +776,14 @@
       "levelDatBroken": "The world’s level.dat is damaged.",
       "notFound": "This world no longer exists."
     },
+    "worldBackups": {
+      "tooManyFiles": "This world has too many files for a backup.",
+      "unsafeArchive": "The backup contains invalid paths and is not unpacked.",
+      "broken": "This backup is damaged.",
+      "notFound": "This backup no longer exists.",
+      "worldOpened": "The world was opened in the game before its backup was finished.",
+      "worldOpen": "This world is open in the game right now – close it first."
+    },
     "logs": {
       "sourceGone": "This log file no longer exists.",
       "unreadable": "This log file can’t be read.",
@@ -2031,6 +2039,93 @@
       "javaCustom": "custom path"
     }
   },
+  "stats": {
+    "title": "Statistics",
+    "subtitle": "How much you play – across all your instances.",
+    "subtitleInstance": "Play time of {name}",
+    "filterLabel": "Show statistics for",
+    "allInstances": "All instances",
+    "live": "Playing now",
+    "units": {
+      "hours": "{n} h"
+    },
+    "empty": {
+      "title": "No play time yet",
+      "text": "Start an instance and play a round – every session shows up here: hours per day, a calendar of your gaming days, your favourite instances and versions and your longest streak.",
+      "action": "Open library"
+    },
+    "tiles": {
+      "label": "Key figures",
+      "total": "Total play time",
+      "totalCarried": "incl. {time} from before",
+      "since": "since {date}",
+      "week": "This week",
+      "today": "Today: {time}",
+      "month": "This month",
+      "sessions": "Sessions",
+      "average": "avg. {time} per session",
+      "longest": "Longest session",
+      "streak": "Current streak",
+      "days": "{n} day | {n} days",
+      "bestStreak": "Best: {days}"
+    },
+    "chart": {
+      "title": "Play time",
+      "rangeLabel": "Time range",
+      "days": "30 days",
+      "weeks": "16 weeks",
+      "labelDays": "Play time per day, last 30 days",
+      "labelWeeks": "Play time per week, last 16 weeks",
+      "total": "Total: {time}",
+      "none": "Not played",
+      "weekOf": "Week of {date}",
+      "summary": "{label}. Total: {total}. Most: {best}.",
+      "showTable": "Show as table",
+      "hideTable": "Hide table",
+      "day": "Day",
+      "week": "Week",
+      "playTime": "Play time"
+    },
+    "heatmap": {
+      "title": "Calendar",
+      "daysPlayed": "{n} day played | {n} days played",
+      "summary": "{label}: last {weeks} weeks, played on {days} days.",
+      "less": "Less",
+      "more": "More"
+    },
+    "top": {
+      "instances": "Most played instances",
+      "versions": "Minecraft versions",
+      "versionsHint": "The versions you played with",
+      "noVersions": "No sessions with a known version yet.",
+      "servers": "Servers",
+      "serversHint": "Servers you joined – through the launcher or the multiplayer menu in the game.",
+      "sessions": "{n} session | {n} sessions",
+      "deleted": "{name} (deleted)",
+      "showAll": "Show all ({n})",
+      "showLess": "Show less"
+    },
+    "footer": {
+      "tracking": "Sessions recorded since {date}.",
+      "carried": "Play time from before then counts towards the totals and the instances, but has no date."
+    },
+    "reset": {
+      "button": "Reset statistics",
+      "title": "Reset statistics?",
+      "text": "All recorded sessions disappear from the statistics – charts, calendar, streaks and lists start again from zero. The play time shown on your instances stays.",
+      "confirm": "Reset",
+      "done": "Statistics reset."
+    },
+    "instance": {
+      "title": "Play time",
+      "recent": "{time} in the last 30 days",
+      "average": "Average",
+      "last30": "Play time in the last 30 days: {time}",
+      "crashes": "{n} crash | {n} crashes",
+      "topVersion": "Mostly on {version}",
+      "open": "All statistics"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} line | {n} lines",
     "copied": "Copied"
@@ -3097,6 +3192,7 @@
     "discover": "Discover",
     "servers": "Servers",
     "screenshots": "Screenshots",
+    "stats": "Statistics",
     "skins": "Skins",
     "admin": "Admin",
     "runningCount": "{n} running | {n} running",
@@ -3169,6 +3265,7 @@
       "servers": "server list",
       "accounts": "account sign in login microsoft",
       "screenshots": "images pictures gallery",
+      "stats": "statistics stats play time playtime hours streak calendar chart",
       "skins": "cape",
       "settings": "settings options preferences",
       "newInstance": "add create new",
@@ -3468,6 +3565,7 @@
       "storage": "Storage",
       "network": "Network",
       "clips": "Clips & recording",
+      "backups": "World backups",
       "notifications": "Notifications",
       "remote": "Remote control"
     },
@@ -5189,13 +5287,13 @@
     "cheats": "Cheats",
     "backingUp": "Backing up world …",
     "backupDone": "“{name}” was backed up",
-    "backup": "Back up (ZIP)",
+    "backup": "Back up now",
     "backupOf": "Back up {name}",
     "openFolderOf": "Open the folder of {name}",
     "deleteOf": "Delete {name}",
     "stopFirst": "Stop the game first",
     "deleted": "“{name}” moved to the trash",
-    "backupHint": "Backups are saved as ZIP files in the “backups” folder of the instance (see the Files tab).",
+    "backupHint": "Worlds are backed up automatically when you start the game and after you play – only the ones that changed. Click the line with the clock to see, restore or delete backups.",
     "deleteTitle": "Delete world?",
     "deleteText": "“{name}” is moved to the Windows Recycle Bin.",
     "deleteTextLinux": "“{name}” is moved to the trash.",
@@ -5222,6 +5320,88 @@
       "joinNote": "Join starts the game and connects straight away. Very old versions only open the main menu.",
       "pingCooldown": "Please wait a few seconds before the next ping test.",
       "sortNote": "Sorted by ping for display only – the in-game server list keeps its order."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Auto backup",
+      "defaultOn": "Default (on)",
+      "defaultOff": "Default (off)",
+      "on": "On",
+      "off": "Off",
+      "onText": "Automatic backups are on: changed worlds are saved when you start and after you play, the last {n} per world are kept.",
+      "offText": "Automatic backups are off for this instance – use “Back up now”.",
+      "sharedText": "This instance shares its worlds folder, so the backups belong to every instance that shares it."
+    },
+    "panel": {
+      "open": "Backups of {name}",
+      "running": "Backing up … {percent} %",
+      "status": "{n} backup · last {time} | {n} backups · last {time}",
+      "none": "No backup yet",
+      "deletedTitle": "Deleted worlds with backups",
+      "restoreDeleted": "Restore"
+    },
+    "dialog": {
+      "title": "Backups of {name}",
+      "backupNow": "Back up now",
+      "backingUp": "Backing up … {percent} %",
+      "empty": "No backups of this world yet.",
+      "restore": "Restore",
+      "deleteConfirm": "Delete this backup?",
+      "deleteOf": "Delete the backup from {date}"
+    },
+    "kinds": {
+      "auto": "Automatic",
+      "manual": "Manual",
+      "safety": "Before restoring",
+      "legacy": "Older backup"
+    },
+    "restore": {
+      "title": "Restore the backup from {date}",
+      "modeLabel": "How to restore",
+      "copy": "As a copy",
+      "copyText": "Adds the world as “{name}” – your current world stays as it is.",
+      "replace": "Replace the current world",
+      "replaceText": "The current state is saved as a backup first, so you can go back to it.",
+      "bringBack": "Bring the world back",
+      "bringBackText": "The world appears in your world list again.",
+      "confirm": "Restore",
+      "stopFirst": "Close the game first – a world can only be restored while it is not running.",
+      "copySuffix": "restored",
+      "taskTitle": "Restore {name}",
+      "stage": "Restoring the world …",
+      "doneCopy": "Restored as “{name}”.",
+      "doneReplace": "“{name}” was restored – the previous state is kept as a backup.",
+      "doneDeleted": "“{name}” is back."
+    },
+    "task": {
+      "title": "World backup · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Checking worlds …"
+    },
+    "toast": {
+      "opened": "“{world}” was opened before its backup was finished. The previous backup is kept – a new one is made after you play.",
+      "failed": "Backup of “{world}” failed: {error}"
+    },
+    "settings": {
+      "title": "World backups",
+      "intro": "When you start an instance, the launcher saves every singleplayer world that changed since its last backup – in the background, so the game starts right away. After you play it saves the worlds you played. Unchanged worlds are skipped.",
+      "enabledTitle": "Automatic backups",
+      "enabledDescription": "Back up changed worlds when you start and after you play. Each instance can switch it on or off in its Worlds tab.",
+      "keepTitle": "Keep per world",
+      "keepDescription": "Older automatic backups are deleted. Manual backups and the ones made before restoring always stay.",
+      "keepOption": "{n} backup | {n} backups",
+      "limitTitle": "Size limit",
+      "limitDescription": "When all backups together get bigger, the oldest automatic ones go first – the newest backup of each world always stays.",
+      "noLimit": "No limit",
+      "storageTitle": "Storage",
+      "usage": "Space used: {size} · Backups: {count} · Worlds: {worlds}",
+      "usageNone": "No backups yet.",
+      "where": "Backups are stored as ZIP files in the “world-backups” folder of the launcher’s data folder.",
+      "orphaned": "{size} belong to deleted instances.",
+      "prune": "Delete those",
+      "pruneConfirm": "Delete for good",
+      "pruned": "{size} freed."
     }
   },
   "share": {

@@ -748,6 +748,14 @@
       "levelDatBroken": "Le level.dat du monde est endommagé.",
       "notFound": "Ce monde n’existe plus."
     },
+    "worldBackups": {
+      "tooManyFiles": "Ce monde contient trop de fichiers pour une sauvegarde.",
+      "unsafeArchive": "La sauvegarde contient des chemins invalides et n'est pas décompressée.",
+      "broken": "Cette sauvegarde est endommagée.",
+      "notFound": "Cette sauvegarde n'existe plus.",
+      "worldOpened": "Le monde a été ouvert dans le jeu avant la fin de sa sauvegarde.",
+      "worldOpen": "Ce monde est ouvert dans le jeu en ce moment – ferme-le d'abord."
+    },
     "logs": {
       "sourceGone": "Ce fichier journal n’existe plus.",
       "unreadable": "Ce fichier journal est illisible.",
@@ -1990,6 +1998,93 @@
       "javaCustom": "chemin personnalisé"
     }
   },
+  "stats": {
+    "title": "Statistiques",
+    "subtitle": "Combien tu joues – sur toutes tes instances.",
+    "subtitleInstance": "Temps de jeu de {name}",
+    "filterLabel": "Afficher les statistiques de",
+    "allInstances": "Toutes les instances",
+    "live": "En jeu",
+    "units": {
+      "hours": "{n} h"
+    },
+    "empty": {
+      "title": "Pas encore de temps de jeu",
+      "text": "Lance une instance et joue une partie : chaque session apparaît ici – heures par jour, un calendrier de tes jours de jeu, tes instances et versions préférées et ta plus longue série.",
+      "action": "Ouvrir la bibliothèque"
+    },
+    "tiles": {
+      "label": "Chiffres clés",
+      "total": "Temps de jeu total",
+      "totalCarried": "dont {time} d'avant",
+      "since": "depuis le {date}",
+      "week": "Cette semaine",
+      "today": "Aujourd'hui : {time}",
+      "month": "Ce mois-ci",
+      "sessions": "Sessions",
+      "average": "Ø {time} par session",
+      "longest": "Plus longue session",
+      "streak": "Série en cours",
+      "days": "{n} jour | {n} jours",
+      "bestStreak": "Record : {days}"
+    },
+    "chart": {
+      "title": "Temps de jeu",
+      "rangeLabel": "Période",
+      "days": "30 jours",
+      "weeks": "16 semaines",
+      "labelDays": "Temps de jeu par jour, 30 derniers jours",
+      "labelWeeks": "Temps de jeu par semaine, 16 dernières semaines",
+      "total": "Total : {time}",
+      "none": "Pas joué",
+      "weekOf": "Semaine du {date}",
+      "summary": "{label}. Total : {total}. Maximum : {best}.",
+      "showTable": "Afficher en tableau",
+      "hideTable": "Masquer le tableau",
+      "day": "Jour",
+      "week": "Semaine",
+      "playTime": "Temps de jeu"
+    },
+    "heatmap": {
+      "title": "Calendrier",
+      "daysPlayed": "{n} jour joué | {n} jours joués",
+      "summary": "{label} : {weeks} dernières semaines, joué {days} jours.",
+      "less": "Moins",
+      "more": "Plus"
+    },
+    "top": {
+      "instances": "Instances les plus jouées",
+      "versions": "Versions de Minecraft",
+      "versionsHint": "Les versions avec lesquelles tu as joué",
+      "noVersions": "Pas encore de session avec une version connue.",
+      "servers": "Serveurs",
+      "serversHint": "Serveurs rejoints – via le launcher ou le menu multijoueur du jeu.",
+      "sessions": "{n} session | {n} sessions",
+      "deleted": "{name} (supprimée)",
+      "showAll": "Tout afficher ({n})",
+      "showLess": "Afficher moins"
+    },
+    "footer": {
+      "tracking": "Sessions enregistrées depuis le {date}.",
+      "carried": "Le temps de jeu d'avant compte dans les totaux et les instances, mais n'a pas de date."
+    },
+    "reset": {
+      "button": "Réinitialiser les statistiques",
+      "title": "Réinitialiser les statistiques ?",
+      "text": "Toutes les sessions enregistrées disparaissent des statistiques : graphiques, calendrier, séries et listes repartent de zéro. Le temps de jeu affiché sur tes instances reste.",
+      "confirm": "Réinitialiser",
+      "done": "Statistiques réinitialisées."
+    },
+    "instance": {
+      "title": "Temps de jeu",
+      "recent": "{time} ces 30 derniers jours",
+      "average": "Moyenne",
+      "last30": "Temps de jeu des 30 derniers jours : {time}",
+      "crashes": "{n} plantage | {n} plantages",
+      "topVersion": "Surtout en {version}",
+      "open": "Toutes les statistiques"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} ligne | {n} lignes",
     "copied": "Copié"
@@ -3054,6 +3149,7 @@
     "discover": "Découvrir",
     "servers": "Serveurs",
     "screenshots": "Captures",
+    "stats": "Statistiques",
     "skins": "Skins",
     "admin": "Admin",
     "runningCount": "{n} en cours | {n} en cours",
@@ -3125,6 +3221,7 @@
       "servers": "serveurs liste",
       "accounts": "compte connexion login microsoft",
       "screenshots": "images captures photos galerie",
+      "stats": "statistiques temps de jeu heures série calendrier graphique",
       "skins": "cape skin",
       "settings": "paramètres options préférences réglages",
       "newInstance": "ajouter créer nouvelle",
@@ -3423,6 +3520,7 @@
       "storage": "Stockage",
       "network": "Réseau",
       "clips": "Clips et enregistrement",
+      "backups": "Sauvegardes des mondes",
       "notifications": "Notifications",
       "remote": "Télécommande"
     },
@@ -5122,13 +5220,13 @@
     "cheats": "Commandes",
     "backingUp": "Sauvegarde du monde …",
     "backupDone": "« {name} » a été sauvegardé",
-    "backup": "Sauvegarder (ZIP)",
+    "backup": "Sauvegarder maintenant",
     "backupOf": "Sauvegarder {name}",
     "openFolderOf": "Ouvrir le dossier de {name}",
     "deleteOf": "Supprimer {name}",
     "stopFirst": "Ferme d’abord le jeu",
     "deleted": "« {name} » est dans la corbeille",
-    "backupHint": "Les sauvegardes sont enregistrées en ZIP dans le dossier « backups » de l’instance (voir l’onglet Fichiers).",
+    "backupHint": "Les mondes sont sauvegardés automatiquement au lancement du jeu et après avoir joué – seulement ceux qui ont changé. Clique sur la ligne avec l'horloge pour voir, restaurer ou supprimer les sauvegardes.",
     "deleteTitle": "Supprimer le monde ?",
     "deleteText": "« {name} » va dans la Corbeille de Windows.",
     "deleteTextLinux": "« {name} » va dans la corbeille.",
@@ -5155,6 +5253,88 @@
       "joinNote": "Rejoindre lance le jeu et se connecte directement. Les très anciennes versions n’ouvrent que le menu principal.",
       "pingCooldown": "Attends quelques secondes avant le prochain test de ping.",
       "sortNote": "Trié par ping uniquement à l’affichage : la liste des serveurs du jeu garde son ordre."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Sauvegarde auto",
+      "defaultOn": "Par défaut (activée)",
+      "defaultOff": "Par défaut (désactivée)",
+      "on": "Activée",
+      "off": "Désactivée",
+      "onText": "Les sauvegardes automatiques sont activées : les mondes modifiés sont sauvegardés au lancement et après avoir joué, les {n} dernières de chaque monde sont conservées.",
+      "offText": "Les sauvegardes automatiques sont désactivées pour cette instance – utilise « Sauvegarder maintenant ».",
+      "sharedText": "Cette instance partage son dossier de mondes, les sauvegardes appartiennent donc à toutes les instances qui le partagent."
+    },
+    "panel": {
+      "open": "Sauvegardes de {name}",
+      "running": "Sauvegarde … {percent} %",
+      "status": "{n} sauvegarde · dernière {time} | {n} sauvegardes · dernière {time}",
+      "none": "Pas encore de sauvegarde",
+      "deletedTitle": "Mondes supprimés avec sauvegardes",
+      "restoreDeleted": "Restaurer"
+    },
+    "dialog": {
+      "title": "Sauvegardes de {name}",
+      "backupNow": "Sauvegarder maintenant",
+      "backingUp": "Sauvegarde … {percent} %",
+      "empty": "Pas encore de sauvegarde de ce monde.",
+      "restore": "Restaurer",
+      "deleteConfirm": "Supprimer cette sauvegarde ?",
+      "deleteOf": "Supprimer la sauvegarde du {date}"
+    },
+    "kinds": {
+      "auto": "Automatique",
+      "manual": "Manuelle",
+      "safety": "Avant restauration",
+      "legacy": "Ancienne sauvegarde"
+    },
+    "restore": {
+      "title": "Restaurer la sauvegarde du {date}",
+      "modeLabel": "Comment restaurer",
+      "copy": "Comme copie",
+      "copyText": "Ajoute le monde sous le nom « {name} » – ton monde actuel reste tel quel.",
+      "replace": "Remplacer le monde actuel",
+      "replaceText": "L'état actuel est d'abord sauvegardé, tu peux donc y revenir.",
+      "bringBack": "Récupérer le monde",
+      "bringBackText": "Le monde réapparaît dans ta liste de mondes.",
+      "confirm": "Restaurer",
+      "stopFirst": "Ferme d'abord le jeu – un monde ne peut être restauré que lorsque le jeu n'est pas lancé.",
+      "copySuffix": "restauré",
+      "taskTitle": "Restaurer {name}",
+      "stage": "Restauration du monde …",
+      "doneCopy": "Restauré sous le nom « {name} ».",
+      "doneReplace": "« {name} » a été restauré – l'état précédent est conservé comme sauvegarde.",
+      "doneDeleted": "« {name} » est de retour."
+    },
+    "task": {
+      "title": "Sauvegarde des mondes · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Vérification des mondes …"
+    },
+    "toast": {
+      "opened": "« {world} » a été ouvert avant la fin de sa sauvegarde. La sauvegarde précédente est conservée – une nouvelle est faite après avoir joué.",
+      "failed": "La sauvegarde de « {world} » a échoué : {error}"
+    },
+    "settings": {
+      "title": "Sauvegardes des mondes",
+      "intro": "Au lancement d'une instance, le launcher sauvegarde chaque monde solo modifié depuis sa dernière sauvegarde – en arrière-plan, le jeu démarre tout de suite. Après avoir joué, il sauvegarde les mondes joués. Les mondes inchangés sont ignorés.",
+      "enabledTitle": "Sauvegardes automatiques",
+      "enabledDescription": "Sauvegarder les mondes modifiés au lancement et après avoir joué. Chaque instance peut l'activer ou le désactiver dans son onglet Mondes.",
+      "keepTitle": "Conserver par monde",
+      "keepDescription": "Les anciennes sauvegardes automatiques sont supprimées. Les sauvegardes manuelles et celles faites avant une restauration restent toujours.",
+      "keepOption": "{n} sauvegarde | {n} sauvegardes",
+      "limitTitle": "Limite de taille",
+      "limitDescription": "Si l'ensemble des sauvegardes dépasse la limite, les plus anciennes automatiques partent en premier – la plus récente de chaque monde reste toujours.",
+      "noLimit": "Aucune",
+      "storageTitle": "Stockage",
+      "usage": "Utilisé : {size} · Sauvegardes : {count} · Mondes : {worlds}",
+      "usageNone": "Pas encore de sauvegarde.",
+      "where": "Les sauvegardes sont stockées en fichiers ZIP dans le dossier « world-backups » du dossier de données du launcher.",
+      "orphaned": "{size} appartiennent à des instances supprimées.",
+      "prune": "Les supprimer",
+      "pruneConfirm": "Supprimer définitivement",
+      "pruned": "{size} libérés."
     }
   },
   "share": {

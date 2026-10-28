@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { convertFileSrc } from '@tauri-apps/api/core'
 import type { GameMode, Instance, InstanceServer, ServerStatus, WorldInfo } from '~/types'
+import type { BackupOverview, WorldBackupSummary } from '~/utils/worldBackups'
 
 // Tab „Welten“: Einzelspieler-Welten (Name, Modus, Version, Größe; Ordner,
 // Sicherung, Löschen) und die Server dieser Instanz (servers.dat).
@@ -43,6 +44,7 @@ async function loadServers() {
 onMounted(() => {
   loadWorlds()
   loadServers()
+  loadBackups()
   if (!servers.loaded) servers.load().catch(() => {})
 })
 // Nach dem Spielen: neue Welten/Server aus dem Spiel übernehmen.
@@ -52,9 +54,48 @@ watch(
     if (phase === 'idle' && before !== 'idle') {
       loadWorlds()
       loadServers()
+      loadBackups()
     }
   },
 )
+
+// --- Welt-Backups (automatisch vor dem Start und nach dem Spielen; Wiederherstellen im Dialog) ---
+const backupStore = useWorldBackupsStore()
+const overview = ref<BackupOverview | null>(null)
+const backupsOf = ref<{ folder: string; name: string; exists: boolean } | null>(null)
+async function loadBackups() {
+  try {
+    overview.value = await backend.worldBackupOverview(props.instance.id)
+  } catch {
+    overview.value = null
+  }
+}
+// Automatische Sicherung fertig: Stand neu laden.
+watch(() => backupStore.revision, loadBackups)
+const summaries = computed(() => new Map((overview.value?.worlds ?? []).map((w) => [w.folder, w])))
+const backupOf = (w: WorldInfo): WorldBackupSummary | null => summaries.value.get(w.folder) ?? null
+/** Welten, die es nicht mehr gibt, deren Backups aber noch da sind. */
+const deletedWorlds = computed(() => (overview.value?.worlds ?? []).filter((w) => !w.exists && !worlds.value.some((x) => x.folder === w.folder)))
+/** Läuft gerade die automatische Sicherung dieser Welt? */
+const autoJob = computed(() => backupStore.runningFor(props.instance.id))
+const autoChoice = computed({
+  get: () => (overview.value?.instance === null || overview.value?.instance === undefined ? 'default' : overview.value.instance ? 'on' : 'off'),
+  set: (value: string) => {
+    backend
+      .setWorldBackupAuto(props.instance.id, value === 'default' ? null : value === 'on')
+      .then((o) => (overview.value = o))
+      .catch((e) => toasts.error(e))
+  },
+})
+const autoText = computed(() => {
+  const o = overview.value
+  if (!o) return ''
+  const base = o.enabled ? t('worldBackups.auto.onText', { n: o.keep }) : t('worldBackups.auto.offText')
+  return o.shared ? `${base} ${t('worldBackups.auto.sharedText')}` : base
+})
+function openBackups(folder: string, name: string, exists: boolean) {
+  backupsOf.value = { folder, name, exists }
+}
 
 // --- Welten ---------------------------------------------------------------------
 const icon = (w: WorldInfo) => (w.iconPath ? convertFileSrc(w.iconPath) : null)
@@ -84,7 +125,7 @@ function backup(w: WorldInfo) {
       doneText: t('worlds.backupDone', { name: w.name }),
     },
     (ctx) => backend.backupWorld(props.instance.id, w.folder, (p) => ctx.progress(p), ctx.taskId),
-  )
+  ).then(loadBackups)
 }
 
 function openFolder(w: WorldInfo) {
@@ -171,7 +212,15 @@ const joinTitle = (s: InstanceServer) =>
       <header class="mb-3 flex items-center gap-2">
         <h2 class="heading text-base">{{ t('worlds.title') }}</h2>
         <span v-if="worlds.length" class="chip">{{ formatNumber(worlds.length) }}</span>
-        <button class="btn-icon ml-auto size-8" :title="t('common.actions.refresh')" :aria-label="t('common.actions.refresh')" @click="loadWorlds">
+        <label v-if="overview" class="ml-auto flex items-center gap-2 text-xs text-base-400" :title="autoText">
+          {{ t('worldBackups.auto.label') }}
+          <select v-model="autoChoice" class="field h-8 w-auto py-0 text-xs text-base-50" data-testid="world-backup-auto">
+            <option value="default">{{ overview.global ? t('worldBackups.auto.defaultOn') : t('worldBackups.auto.defaultOff') }}</option>
+            <option value="on">{{ t('worldBackups.auto.on') }}</option>
+            <option value="off">{{ t('worldBackups.auto.off') }}</option>
+          </select>
+        </label>
+        <button class="btn-icon size-8" :class="{ 'ml-auto': !overview }" :title="t('common.actions.refresh')" :aria-label="t('common.actions.refresh')" @click="loadWorlds(); loadBackups()">
           <svg viewBox="0 0 24 24" class="size-4" :class="{ 'animate-spin': loadingWorlds }" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path :d="icons.sync" /></svg>
         </button>
       </header>
@@ -201,6 +250,18 @@ const joinTitle = (s: InstanceServer) =>
             <p class="mt-1.5 text-[11px] text-base-400">
               {{ formatRelative(w.lastPlayed) }}<template v-if="w.size !== null"> · {{ formatBytes(w.size) }}</template>
             </p>
+            <button
+              type="button"
+              class="mt-1 inline-flex max-w-full items-center gap-1 truncate text-[11px] text-base-400 underline-offset-2 hover:text-primary-300 hover:underline"
+              :title="t('worldBackups.panel.open', { name: w.name })"
+              data-testid="world-backups-open"
+              @click="openBackups(w.folder, w.name, true)"
+            >
+              <svg viewBox="0 0 24 24" class="size-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4M12 8v4l3 2" /></svg>
+              <template v-if="autoJob?.world === w.name">{{ t('worldBackups.panel.running', { percent: autoJob.percent }) }}</template>
+              <template v-else-if="backupOf(w)">{{ t('worldBackups.panel.status', { time: formatRelative(backupOf(w)!.latest, true) }, backupOf(w)!.count) }}</template>
+              <template v-else>{{ t('worldBackups.panel.none') }}</template>
+            </button>
             <div v-if="backupTask(w.folder)?.status === 'running'" class="mt-2 flex items-center gap-2">
               <ProgressBar :percent="backupTask(w.folder)?.percent ?? 0" :segments="14" class="flex-1" />
               <span class="display text-[11px] tabular-nums text-primary-300">{{ backupTask(w.folder)?.percent ?? 0 }} %</span>
@@ -220,6 +281,20 @@ const joinTitle = (s: InstanceServer) =>
         </li>
       </ul>
       <p v-if="worlds.length" class="mt-2 text-[11px] text-base-600">{{ t('worlds.backupHint') }}</p>
+
+      <div v-if="deletedWorlds.length" class="mt-5" data-testid="deleted-worlds">
+        <h3 class="mb-2 text-xs font-medium text-base-400">{{ t('worldBackups.panel.deletedTitle') }}</h3>
+        <ul class="grid grid-cols-[repeat(auto-fill,minmax(19rem,1fr))] gap-3">
+          <li v-for="d in deletedWorlds" :key="d.folder" class="card flex items-center gap-3 p-3">
+            <div class="display flex size-10 shrink-0 items-center justify-center rounded-lg bg-base-800 text-base text-base-400 ring-1 ring-base-700" aria-hidden="true">{{ (d.name ?? d.folder).charAt(0).toUpperCase() }}</div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium text-base-200" :title="d.name ?? d.folder">{{ d.name ?? d.folder }}</p>
+              <p class="truncate text-[11px] text-base-400">{{ t('worldBackups.panel.status', { time: formatRelative(d.latest, true) }, d.count) }}</p>
+            </div>
+            <button type="button" class="btn btn-ghost h-8 px-3 py-0 text-xs" @click="openBackups(d.folder, d.name ?? d.folder, false)">{{ t('worldBackups.panel.restoreDeleted') }}</button>
+          </li>
+        </ul>
+      </div>
     </section>
 
     <!-- Server -->
@@ -305,6 +380,17 @@ const joinTitle = (s: InstanceServer) =>
         <button class="btn btn-danger" @click="confirmDelete">{{ t('common.actions.delete') }}</button>
       </template>
     </BaseDialog>
+
+    <WorldBackupsDialog
+      v-if="backupsOf"
+      :instance="instance"
+      :folder="backupsOf.folder"
+      :name="backupsOf.name"
+      :exists="backupsOf.exists"
+      :auto-text="autoText"
+      @close="backupsOf = null"
+      @changed="loadWorlds(); loadBackups()"
+    />
 
     <InstanceServerDialog
       v-if="editing"
