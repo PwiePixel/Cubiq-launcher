@@ -144,32 +144,45 @@ public final class CosmeticV2Renderer {
 		V2Math.multiply(out, out, tmp2, tmp);
 	}
 
-	/** Treiber, den das Modell wirklich hat: sonst {@code idle} (Vertrag: fehlende Zustands-Animation spielt idle). */
-	static int effectiveDriver(CosmeticV2 m, int driver) {
+	/**
+	 * Treiber, den das Modell wirklich hat: sonst {@code idle} (Vertrag: fehlende Zustands-Animation bzw. Aktion spielt
+	 * idle). Danach richtet sich auch die Zeitbasis einer Seite ({@link CosmeticV2#oneShot}).
+	 */
+	public static int effectiveDriver(CosmeticV2 m, int driver) {
 		return driver != 0 && m.hasDriver(driver) ? driver : 0;
 	}
 
 	/**
 	 * Pose aller Knochen für einen Treiber mit Gewicht {@code weight} (Überblendung); Drehung/Position addieren
-	 * (gewichtet), Skalierung multiplizieren (Faktor 1 + w·(v - 1)).
+	 * (gewichtet), Skalierung multiplizieren (Faktor 1 + w·(v - 1)). Aktions-Treiber: nur die eine Aktion.
 	 */
 	private void samplePoses(CosmeticV2 m, long timeMs, int driver, float weight) {
+		if (driver >= CosmeticV2.DRIVER_PET) {
+			CosmeticV2.Animation action = m.action(driver);
+			if (action != null) sample(action, timeMs, weight);
+			return;
+		}
 		for (CosmeticV2.Animation anim : m.animations) {
 			if (anim.driver != driver) continue; // exklusiv: nur die Animationen des Zustands (§7)
-			long len = anim.lengthMs;
-			long t = timeMs + anim.offsetMs;
-			double tt;
-			if (!anim.loop) tt = Math.min(Math.max(t, 0L), len);
-			else tt = ((t % len) + len) % len;
-			for (CosmeticV2.Track tr : anim.tracks) {
-				if (tr.bone >= MAX) continue;
-				sampleTrack(tr, tt, v3);
-				float[] target = tr.channel == CosmeticV2.SCALE ? pScale[tr.bone]
-						: tr.channel == CosmeticV2.POSITION ? pPos[tr.bone] : pRot[tr.bone];
-				for (int j = 0; j < 3; j++) {
-					if (tr.channel == CosmeticV2.SCALE) target[j] = (float) (target[j] * (1 + weight * (v3[j] - 1)));
-					else target[j] = (float) (target[j] + weight * v3[j]);
-				}
+			sample(anim, timeMs, weight);
+		}
+	}
+
+	/** Eine Animation zur Zeit {@code timeMs} (+ ihr Versatz; ohne {@code loop} auf 0…lengthMs begrenzt) dazunehmen. */
+	private void sample(CosmeticV2.Animation anim, long timeMs, float weight) {
+		long len = anim.lengthMs;
+		long t = timeMs + anim.offsetMs;
+		double tt;
+		if (!anim.loop) tt = Math.min(Math.max(t, 0L), len);
+		else tt = ((t % len) + len) % len;
+		for (CosmeticV2.Track tr : anim.tracks) {
+			if (tr.bone >= MAX) continue;
+			sampleTrack(tr, tt, v3);
+			float[] target = tr.channel == CosmeticV2.SCALE ? pScale[tr.bone]
+					: tr.channel == CosmeticV2.POSITION ? pPos[tr.bone] : pRot[tr.bone];
+			for (int j = 0; j < 3; j++) {
+				if (tr.channel == CosmeticV2.SCALE) target[j] = (float) (target[j] * (1 + weight * (v3[j] - 1)));
+				else target[j] = (float) (target[j] + weight * v3[j]);
 			}
 		}
 	}
