@@ -1,5 +1,7 @@
 package dev.pwiepixel.cubiqclient.core.cosmetic.pet;
 
+import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -73,8 +75,11 @@ public final class PetSim {
 	static final double HANDSUP_ANGLE = 6.0, HANDSUP_REACH = 6.0;
 
 	// Streicheln/Füttern (Rechtsklick des Besitzers, 2026-10-28) – Zeiten in Ticks
-	/** Dauer einer Aktion aus der Länge im Modell ({@code ceil(ms / 50)}), begrenzt auf 0,5–6 s. */
-	static final int ACTION_MIN_TICKS = 10, ACTION_MAX_TICKS = 120;
+	/**
+	 * Dauer einer Aktion aus der Länge im Modell ({@code ceil(ms / 50)}), mindestens 0,5 s. Die Obergrenze deckt die
+	 * längste gültige Aktion ({@link CosmeticV2#MAX_ACTION_MS}, 10 s = 200 Ticks) – jede Aktion läuft bis zu ihrem Ende.
+	 */
+	static final int ACTION_MIN_TICKS = 10, ACTION_MAX_TICKS = (CosmeticV2.MAX_ACTION_MS + 49) / 50;
 	/** Dauer ohne eigene Aktion im Modell: Streicheln 2 s, Füttern 2,4 s (still stehen, Herzchen). */
 	static final int PET_TICKS = 40, EAT_TICKS = 48;
 	/** Pause nach einer Aktion, bis die nächste beginnen kann. */

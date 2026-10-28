@@ -1,6 +1,7 @@
 package dev.pwiepixel.cubiqclient.core.cosmetic.pet;
 
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSimTest.FakeWorld;
+import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -95,6 +96,26 @@ class PetInteractTest {
 			if (p.state() == Pet.EAT) eat++;
 		}
 		assertEquals((MS[1] + 49) / 50, eat, "Füttern so lang wie seine Aktion");
+	}
+
+	@Test
+	void evenTheLongestValidActionPlaysToItsEnd() {
+		assertEquals((CosmeticV2.MAX_ACTION_MS + 49) / 50, PetSim.ACTION_MAX_TICKS, "deckt die längste gültige Aktion (10 s)");
+		assertEquals(200, PetSim.ACTION_MAX_TICKS);
+		for (int ms : new int[] { 8000, CosmeticV2.MAX_ACTION_MS, 9999 }) {
+			PetSim sim = new PetSim();
+			FakeWorld w = new FakeWorld();
+			int[] lengths = { ms, ms };
+			Pet p = settled(sim, w, ALL, lengths);
+			assertEquals(PetSim.STARTED, sim.interact(p, Pet.PET, CLICK));
+			int ticks = 0;
+			for (int i = 60; i < 400 && p.state() == Pet.PET; i++) {
+				tick(sim, w, i, ALL, lengths);
+				if (p.state() == Pet.PET) ticks++;
+			}
+			assertEquals((ms + 49) / 50, ticks, ms + " ms: so lang wie die Aktion im Modell");
+			assertEquals(Pet.IDLE, p.state(), ms + " ms");
+		}
 	}
 
 	@Test
