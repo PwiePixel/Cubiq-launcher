@@ -28,6 +28,165 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
+## 0.3.0 – 2026-10-28 – New friends | Neue Freunde
+<!-- banner: accent=#71a330 motif=/news/0.3.0/banner.png anim=/news/0.3.0/banner-anim.png -->
+
+<!-- shots:
+/news/0.3.0/new-cosmetics-companions.png | Six new companions on the ground: Cubi, penguin, fox kit, axolotl, snowman and firefly | Sechs neue Begleiter am Boden: Cubi, Pinguin, Füchschen, Axolotl, Schneemännchen und Glühwürmchen
+/news/0.3.0/new-cosmetics-wings.png | Aurora wings, shooting star and Mini-Cubi – by day and at night | Polarlichtflügel, Sternschnuppe und Mini-Cubi – bei Tag und bei Nacht
+-->
+<!-- shots:
+/news/0.3.0/play-statistics.png | The new Statistics page with your key numbers and play time per day | Die neue Statistik-Seite mit Kennzahlen und Spielzeit pro Tag
+/news/0.3.0/play-statistics-calendar.png | Calendar of your gaming days and your most played instances | Kalender deiner Spieltage und deine meistgespielten Instanzen
+-->
+
+<!-- shots:
+/news/0.3.0/world-backups-worlds.png | Every world shows its backups – deleted worlds can be brought back | Jede Welt zeigt ihre Backups – gelöschte Welten lassen sich zurückholen
+/news/0.3.0/world-backups-list.png | All backups of a world with date, size and kind | Alle Backups einer Welt mit Datum, Größe und Art
+/news/0.3.0/world-backups-restore.png | Restoring a backup as a copy or in place of the current world | Ein Backup als Kopie oder statt der jetzigen Welt wiederherstellen
+-->
+
+### English
+- **Nine new cosmetics, free for everyone.** With the Cubiq services online, new animated cosmetics arrive – nothing to
+  unlock, just pick them. Six companions walk next to you on the ground: Cubi, the green cube from the Cubiq logo,
+  hops along and rolls over its edges to catch up; a waddling penguin in a red and white scarf slides on its belly;
+  a fox kit trots, pounces and runs off with a berry; a pink axolotl swims with its tail and waves; a little
+  snowman hops and glides like a curling stone; and a firefly flies with its lantern glowing and loops for joy.
+- **Wings and head companions.** The aurora wings are big feathered wings of light in Cubiq green, turquoise and
+  ice cyan: rows of feathers with glowing edges that fan out wide when you fly, with aurora light running through
+  them. Two companions circle your head: a shooting star with a face and three sparkling little stars in its trail,
+  and Mini-Cubi, whose sprout spins like a propeller.
+- **Glowing at night.** Many of them light up in the dark: Cubi's eyes and leaves, the axolotl's gills, the snowman's
+  eyes, the firefly's lantern, the wings and the shooting star.
+- **Where to find them.** In the Cosmetics tab on the Skins page and in the wardrobe of the Cubiq Client in the game.
+  Other Cubiq players see what you wear.
+- **The Cubiq services are live.** The launcher is now connected to the Cubiq server. Once you agree in the launcher –
+  a short note tells you what is stored – you get Cubiq capes and cosmetics that other Cubiq players see too, a friends
+  list with online status, chat with your friends, achievements and the sync of your own skins, presets, theme, accent
+  colour and language between your PCs. You can turn the services off again at any time under Settings → Privacy; the
+  launcher then sends nothing to the Cubiq server.
+- **In the game, too.** When you start Minecraft from the launcher, the Cubiq Client uses the same server: the capes
+  and cosmetics of other Cubiq players, the Cubiq badge next to their names, emotes, the Social menu with chat, friends
+  list and your friends' worlds, the sync of your modules and HUD profiles, and bug reports from the Cubiq menu. After
+  sending a bug report, "Open in browser" shows it on the Cubiq website.
+- **Links to the website that work.** "Sign in on the website" under Settings → Privacy and the links to the team page
+  and the open positions in "My applications" now open the Cubiq website.
+- **Your play time at a glance.** A new Statistics page in the sidebar (under Collection, also in the search with
+  Ctrl+K) shows how much you play: in total, this week and this month, how many sessions you had and how long they
+  last on average, your longest session and your current and best streak of days in a row. Below that, a bar chart
+  shows your play time per day for the last 30 days – or per week for the last 16 weeks – and a calendar colours every
+  day of the last months by how long you played, from a soft to a full green. Point at a bar or a day, or use the
+  arrow keys, to see the exact time; "Show as table" lists the same numbers.
+- **Favourite instances, versions and servers.** The page ranks your most played instances, the Minecraft versions and
+  mod loaders you play most and the servers you joined – the ones you start from the launcher and the ones you open
+  in the multiplayer menu of the game. Pick an instance at the top to see every number for just that one. Instances
+  you deleted still count and are marked as deleted.
+- **On every instance page.** The History tab of an instance now starts with a summary: total play time, number of
+  sessions, average and longest session and small bars for the last 30 days. "All statistics" opens the page with
+  just that instance. The summary follows the "Show play time" setting.
+- **Nothing gets lost.** The play time you already have counts from the start: sessions from the history of your
+  instances come in with their date and the version you played back then, older play time counts towards the totals.
+  If the launcher closes unexpectedly while you play, its next start ends the session at the moment the game last
+  wrote to its log and adds that time to the instance – it used to get lost. At the bottom of the page you can reset
+  the statistics; the play time shown on your instances stays.
+- **Automatic world backups.** Your singleplayer worlds are now backed up on their own: when you press Play, the
+  launcher saves every world that changed since its last backup as a ZIP file, and after you close the game it saves
+  the worlds you just played. Unchanged worlds are skipped, so usually there is nothing to do at all. The game never
+  waits for it – the backup runs in the background while the game loads, and its progress shows up with the other
+  tasks in the title bar. If you open a world in the game before its backup is finished, that unfinished backup is
+  thrown away, because a backup is never made from a half-saved world; the previous one stays, and a new one follows
+  after you play. If a backup fails, you get a short notice and the game starts anyway.
+- **See and restore backups.** In the Worlds tab of an instance, every world now shows how many backups it has and
+  when the last one was made. Click that line to open its backups with date, size and kind. "Restore" adds a backup
+  as a copy next to your current world – named like "My world (restored 2026-10-27 14.05)" – or replaces the current
+  world; before replacing, the launcher saves the current state as a backup, so you can always go back. Worlds you
+  deleted that still have backups appear under "Deleted worlds with backups" and come back with one click. "Back up
+  now" makes a manual backup at any time, even while the game runs, as long as that world is not open.
+- **Your choice how much to keep.** Under Settings → World backups you can turn automatic backups off, choose how
+  many automatic backups to keep per world (5 by default) and set a size limit for all backups together – the oldest
+  automatic ones go first, the newest backup of each world always stays. Manual backups and the ones made before
+  restoring are never deleted automatically. In the Worlds tab ("Auto backup") a single instance can be switched on
+  or off on its own. The settings also show how much space the backups take, open their folder and can delete the
+  backups of instances you removed.
+- **Animated update pictures.** The pictures of the updates in "What's new" and on the update card on the home page
+  are small animated pixel scenes again instead of rotatable 3D models – for every update, from the very first one to
+  this one. They play quietly next to the title and load quickly, also on slower PCs; with "Reduce animations" under
+  Settings → Appearance you see the still picture. The picture of this update shows the new cosmetics: Cubi with the
+  aurora wings, surrounded by his new companions.
+
+### Deutsch
+- **Neun neue Kosmetik-Teile, für alle kostenlos.** Mit den Cubiq-Diensten kommen neue animierte Kosmetik-Teile –
+  nichts freizuschalten, einfach auswählen. Sechs Begleiter laufen neben dir am Boden: Cubi, der grüne Würfel aus
+  dem Cubiq-Logo, hüpft mit und rollt über die Kanten, wenn er aufholen muss; ein Watschelpinguin mit rot-weißem
+  Schal rutscht auf dem Bauch; ein Füchschen trabt, macht den Mäusesprung und flitzt mit einer Beere davon; ein
+  rosa Axolotl schwimmt mit kräftigem Schwanzschlag und winkt; ein kleines Schneemännchen hüpft und gleitet wie
+  ein Curlingstein; und ein Glühwürmchen fliegt mit leuchtender Laterne und dreht vor Freude einen Looping.
+- **Flügel und Begleiter am Kopf.** Die Polarlichtflügel sind große gefiederte Lichtflügel in Cubiq-Grün, Türkis
+  und Eiscyan: Reihen von Federn mit leuchtenden Rändern, die sich beim Fliegen weit auffächern, und Polarlicht, das
+  durch sie hindurchzieht. Zwei Begleiter kreisen um deinen Kopf: eine Sternschnuppe mit Gesicht und drei funkelnden
+  Sternchen im Schweif und Mini-Cubi, dessen Pflänzchen sich wie ein Propeller dreht.
+- **Leuchten bei Nacht.** Viele leuchten im Dunkeln: Cubis Augen und Blätter, die Kiemen des Axolotls, die Augen des
+  Schneemännchens, die Laterne des Glühwürmchens, die Flügel und die Sternschnuppe.
+- **Wo du sie findest.** Im Reiter „Kosmetik“ auf der Skins-Seite und in der Garderobe des Cubiq Client im Spiel.
+  Andere Cubiq-Spieler sehen, was du trägst.
+- **Die Cubiq-Dienste sind online.** Der Launcher ist jetzt mit dem Cubiq-Server verbunden. Sobald du im Launcher
+  zustimmst – ein kurzer Hinweis erklärt, was gespeichert wird –, bekommst du Cubiq-Umhänge und Kosmetik, die auch
+  andere Cubiq-Spieler sehen, eine Freundesliste mit Online-Status, Chat mit deinen Freunden, Erfolge und den Abgleich
+  deiner eigenen Skins, Presets, Theme, Akzentfarbe und Sprache zwischen deinen PCs. Unter Einstellungen → Datenschutz
+  lassen sich die Dienste jederzeit wieder ausschalten; dann sendet der Launcher nichts an den Cubiq-Server.
+- **Auch im Spiel.** Startest du Minecraft aus dem Launcher, nutzt der Cubiq Client denselben Server: Umhänge und
+  Kosmetik anderer Cubiq-Spieler, das Cubiq-Abzeichen neben ihren Namen, Emotes, das Sozial-Menü mit Chat,
+  Freundesliste und den Welten deiner Freunde, den Abgleich deiner Module und HUD-Profile und Bug-Meldungen aus dem
+  Cubiq-Menü. Nach dem Senden einer Bug-Meldung zeigt „Im Browser öffnen“ sie auf der Cubiq-Website.
+- **Links zur Website, die funktionieren.** „Auf der Website anmelden“ unter Einstellungen → Datenschutz und die Links
+  zur Team-Seite und zu den offenen Stellen in „Meine Bewerbungen“ öffnen jetzt die Cubiq-Website.
+- **Deine Spielzeit auf einen Blick.** Eine neue Seite „Statistik“ in der Seitenleiste (unter „Sammlung“, auch in der
+  Suche mit Strg+K) zeigt, wie viel du spielst: insgesamt, in dieser Woche und in diesem Monat, wie viele Sitzungen du
+  hattest und wie lange sie im Schnitt dauern, deine längste Sitzung und deine aktuelle und beste Serie an Tagen
+  hintereinander. Darunter zeigt ein Säulendiagramm die Spielzeit pro Tag der letzten 30 Tage – oder pro Woche der
+  letzten 16 Wochen –, und ein Kalender färbt jeden Tag der letzten Monate danach, wie lange du gespielt hast, von
+  zartem bis zu vollem Grün. Zeig auf eine Säule oder einen Tag oder nimm die Pfeiltasten, um die genaue Zeit zu sehen;
+  „Als Tabelle anzeigen“ listet dieselben Zahlen.
+- **Lieblings-Instanzen, -Versionen und -Server.** Die Seite listet deine meistgespielten Instanzen, die
+  Minecraft-Versionen und Modloader, mit denen du am meisten spielst, und die Server, denen du beigetreten bist – die
+  aus dem Launcher gestarteten genauso wie die, die du im Mehrspieler-Menü des Spiels öffnest. Wähle oben eine Instanz,
+  dann gelten alle Zahlen nur für sie. Gelöschte Instanzen zählen weiter mit und sind als gelöscht markiert.
+- **Auf jeder Instanz-Seite.** Der Tab „Verlauf“ einer Instanz beginnt jetzt mit einer Übersicht: Spielzeit gesamt,
+  Zahl der Sitzungen, durchschnittliche und längste Sitzung und kleine Säulen für die letzten 30 Tage. „Alle
+  Statistiken“ öffnet die Seite nur für diese Instanz. Die Übersicht richtet sich nach der Einstellung „Spielzeit
+  anzeigen“.
+- **Nichts geht verloren.** Deine bisherige Spielzeit zählt von Anfang an mit: Sitzungen aus dem Verlauf deiner
+  Instanzen kommen mit Datum und der damals gespielten Version dazu, ältere Spielzeit zählt zu den Summen. Schließt
+  sich der Launcher während des Spielens unerwartet, beendet sein nächster Start die Sitzung zu dem Zeitpunkt, an dem
+  das Spiel zuletzt in sein Log geschrieben hat, und bucht diese Zeit auch auf die Instanz – bisher ging sie verloren.
+  Unten auf der Seite lässt sich die Statistik zurücksetzen; die Spielzeit an deinen Instanzen bleibt.
+- **Automatische Welt-Backups.** Deine Einzelspieler-Welten werden jetzt von selbst gesichert: Wenn du auf „Spielen“
+  drückst, speichert der Launcher jede Welt, die sich seit ihrem letzten Backup geändert hat, als ZIP-Datei, und nach
+  dem Beenden des Spiels sichert er die Welten, die du gerade gespielt hast. Unveränderte Welten werden übersprungen,
+  meist ist also gar nichts zu tun. Das Spiel wartet nie darauf – das Backup läuft im Hintergrund, während das Spiel
+  lädt, und sein Fortschritt erscheint bei den anderen Aufgaben in der Titelleiste. Öffnest du eine Welt im Spiel,
+  bevor ihr Backup fertig ist, wird dieses unfertige Backup verworfen, denn ein Backup entsteht nie aus einer halb
+  gespeicherten Welt; das vorige bleibt, und nach dem Spielen folgt ein neues. Klappt ein Backup nicht, bekommst du
+  einen kurzen Hinweis, und das Spiel startet trotzdem.
+- **Backups ansehen und wiederherstellen.** Im Tab „Welten“ einer Instanz zeigt jede Welt jetzt, wie viele Backups es
+  gibt und wann das letzte entstand. Ein Klick auf diese Zeile öffnet ihre Backups mit Datum, Größe und Art.
+  „Wiederherstellen“ legt ein Backup als Kopie neben deine jetzige Welt – mit einem Namen wie „Meine Welt
+  (wiederhergestellt 2026-10-27 14.05)“ – oder ersetzt die jetzige Welt; vor dem Ersetzen sichert der Launcher den
+  aktuellen Stand als Backup, du kannst also immer zurück. Gelöschte Welten, von denen es noch Backups gibt, stehen
+  unter „Gelöschte Welten mit Backups“ und kommen mit einem Klick zurück. „Jetzt sichern“ macht jederzeit ein Backup
+  von Hand, auch während das Spiel läuft, solange diese Welt nicht geöffnet ist.
+- **Du bestimmst, wie viel bleibt.** Unter Einstellungen → Welt-Backups lassen sich die automatischen Backups
+  ausschalten, festlegen, wie viele automatische Backups je Welt bleiben (ab Werk 5), und eine Obergrenze für alle
+  Backups zusammen setzen – die ältesten automatischen gehen zuerst, das neueste Backup jeder Welt bleibt immer.
+  Backups von Hand und die vor dem Wiederherstellen werden nie automatisch gelöscht. Im Tab „Welten“ („Auto-Backup“)
+  lässt sich eine einzelne Instanz für sich ein- oder ausschalten. Die Einstellungen zeigen außerdem, wie viel Platz die
+  Backups belegen, öffnen ihren Ordner und können die Backups gelöschter Instanzen entfernen.
+- **Bewegte Update-Bilder.** Die Bilder der Updates unter „Was ist neu“ und auf der Update-Karte der Startseite sind
+  wieder kleine bewegte Pixel-Szenen statt drehbarer 3D-Modelle – bei jedem Update, vom allerersten bis zu diesem. Sie
+  laufen ruhig neben dem Titel und laden schnell, auch auf langsameren PCs; mit „Animationen reduzieren“ unter
+  Einstellungen → Aussehen siehst du das ruhige Bild. Das Bild dieses Updates zeigt die neue Kosmetik: Cubi mit den
+  Polarlichtflügeln, umringt von seinen neuen Begleitern.
+
 ## 0.2.51 – 2026-10-28 – Back to green | Wieder grün
 <!-- banner: accent=#71a330 motif=/news/0.2.51/banner.png anim=/news/0.2.51/banner-anim.png -->
 <!-- shots:
