@@ -422,20 +422,14 @@ class PetSightTest {
 		assertTrue(feed(sim, new Grid().field(-2, 3, 64, -1, 6, WHEAT).put(0, 64, 5, STONE).put(0, 65, 5, STONE), EYE, d));
 	}
 
-	/** {@code b} in Zelle (0, 64, {@code z}) liegt auf dem Strahl vor dem Begleiter und gewinnt. */
+	/**
+	 * {@code b} in Zelle (0, 64, {@code z}) liegt auf dem Strahl vor dem Begleiter und gewinnt: gesucht wird genau bis zum
+	 * Eintritt in seinen Umriss – auch wenn er an der Grenze zur Pflanzen-Zelle davor beginnt.
+	 */
 	private static void assertBlocks(PetSim sim, Grid g, double[] d, double pet, Block b, int z) {
-		g.aim(EYE, d);
-		int[] cell = new int[3];
-		double from = 0;
-		double hit;
-		// erster Treffer in seiner Zelle (Probe: der Strahl kreuzt ihn wirklich vor dem Begleiter)
-		while (true) {
-			hit = g.block(from, PetInteract.REACH, cell);
-			assertFalse(Double.isNaN(hit), b.name + ": nichts getroffen");
-			if (cell[1] == 64 && cell[2] == z && cell[0] == 0) break;
-			from = PetSight.exit(EYE[0], EYE[1], EYE[2], d[0], d[1], d[2], cell[0], cell[1], cell[2]) + 1e-4;
-		}
+		double hit = PetPickTest.outline(EYE, d, 0, 64, z, b.boxes[0]);
 		assertTrue(hit < pet, b.name + " in Zelle z = " + z + " vor dem Begleiter: " + hit + " < " + pet);
+		g.aim(EYE, d);
 		assertEquals(hit, PetSight.reach(EYE[0], EYE[1], EYE[2], d[0], d[1], d[2], g.vanilla()[0], true, g.aim(EYE, d)), 1e-9,
 				b.name);
 		assertFalse(feed(sim, g, EYE, d), b.name + " in Zelle z = " + z + " gewinnt");
@@ -560,6 +554,60 @@ class PetSightTest {
 		};
 		assertEquals(PetInteract.REACH, PetSight.reach(0.5, 65.5, 0.5, 0, 0, 1, 0.05, true, endless), 0);
 		assertTrue(calls[0] <= PetSight.MAX_CELLS, "Schritte: " + calls[0]);
+	}
+
+	@Test
+	void aBlockRightBehindAPlantCellStartsAtItsBorder() {
+		// Auge in einer Pflanzen-Zelle (0, 65, 0), direkt dahinter (0, 65, 1) ein Block, dessen Umriss an der Grenze beginnt
+		// (Spinnweben, Tür, Hebel an der Wand): der nächste Schritt beginnt darin – Minecraft meldet ihn dann 0,1 % der
+		// Strecke dahinter, Legacy am Beginn. Er beginnt aber schon an der Grenze.
+		final double[] eye = { 0.5, 65.5, 0.5 };
+		final double[] d = { 0, 0, 1 };
+		final double border = PetSight.exit(eye[0], eye[1], eye[2], d[0], d[1], d[2], 0, 65, 0);
+		assertEquals(0.5, border, 1e-12);
+		for (final double offset : new double[] { 0.001, 0 }) {
+			PetSight.Ray ray = new PetSight.Ray() {
+				@Override
+				public double block(double from, double to, int[] cell) {
+					cell[0] = 0;
+					cell[1] = 65;
+					cell[2] = from < border ? 0 : 1;
+					return from < border ? from : from + offset * (to - from);
+				}
+
+				@Override
+				public boolean seeThrough(int x, int y, int z) {
+					return z == 0;
+				}
+
+				@Override
+				public double entity(double to) {
+					return Double.POSITIVE_INFINITY;
+				}
+			};
+			assertEquals(border, PetSight.reach(eye[0], eye[1], eye[2], d[0], d[1], d[2], 0, true, ray), 1e-12, "Meldung + " + offset);
+		}
+		// ein Block, der erst weiter hinten in seiner Zelle beginnt, zählt dort
+		PetSight.Ray later = new PetSight.Ray() {
+			@Override
+			public double block(double from, double to, int[] cell) {
+				cell[0] = 0;
+				cell[1] = 65;
+				cell[2] = from < border ? 0 : 1;
+				return from < border ? from : 1.25;
+			}
+
+			@Override
+			public boolean seeThrough(int x, int y, int z) {
+				return z == 0;
+			}
+
+			@Override
+			public double entity(double to) {
+				return Double.POSITIVE_INFINITY;
+			}
+		};
+		assertEquals(1.25, PetSight.reach(eye[0], eye[1], eye[2], d[0], d[1], d[2], 0, true, later), 0);
 	}
 
 	@Test

@@ -404,10 +404,20 @@ public final class Mc {
 	/**
 	 * Erster Block, dessen Auswahl-Umriss der Strahl vom Auge ({@code ex, ey, ez}) in Richtung ({@code dx, dy, dz},
 	 * normiert) zwischen {@code from} und {@code to} Blöcken trifft – wie Minecrafts Fadenkreuz, Flüssigkeiten zählen nicht.
-	 * Ergebnis: Entfernung ab dem Auge, NaN = keiner; die Zelle in {@code cell}.
+	 * Liegt {@code from} schon im Umriss eines Blocks, ist das der Treffer bei {@code from} (wie ab 1.13; bis 1.12 meldet
+	 * {@code rayTraceBlocks} sonst dessen Rückseite). Ergebnis: Entfernung ab dem Auge, NaN = keiner; die Zelle in
+	 * {@code cell}.
 	 */
 	public static double clipBlock(World w, double ex, double ey, double ez, double dx, double dy, double dz, double from,
 			double to, int[] cell) {
+		double sx = ex + dx * from, sy = ey + dy * from, sz = ez + dz * from;
+		BlockPos start = new BlockPos((int) Math.floor(sx), (int) Math.floor(sy), (int) Math.floor(sz));
+		if (inOutline(w, start, sx - start.getX(), sy - start.getY(), sz - start.getZ())) {
+			cell[0] = start.getX();
+			cell[1] = start.getY();
+			cell[2] = start.getZ();
+			return from;
+		}
 		//? if >=1.9 {
 		/*net.minecraft.util.math.Vec3d eye = new net.minecraft.util.math.Vec3d(ex, ey, ez);
 		net.minecraft.util.math.RayTraceResult hit = w.rayTraceBlocks(
@@ -431,6 +441,21 @@ public final class Mc {
 		cell[1] = pos.getY();
 		cell[2] = pos.getZ();
 		return eye.distanceTo(hit.hitVec);
+	}
+
+	/** Liegt der Punkt ({@code x, y, z} relativ zur Zelle {@code pos}) im Auswahl-Umriss des Blocks dort? */
+	private static boolean inOutline(World w, BlockPos pos, double x, double y, double z) {
+		net.minecraft.block.state.IBlockState state = w.getBlockState(pos);
+		net.minecraft.block.Block b = state.getBlock();
+		if (!b.canCollideCheck(state, false)) return false;
+		//? if >=1.9 {
+		/*net.minecraft.util.math.AxisAlignedBB box = state.getBoundingBox(w, pos);
+		return box != null && x > box.minX && x < box.maxX && y > box.minY && y < box.maxY && z > box.minZ && z < box.maxZ;
+		*///?} else {
+		b.setBlockBoundsBasedOnState(w, pos);
+		return x > b.getBlockBoundsMinX() && x < b.getBlockBoundsMaxX() && y > b.getBlockBoundsMinY() && y < b.getBlockBoundsMaxY()
+				&& z > b.getBlockBoundsMinZ() && z < b.getBlockBoundsMaxZ();
+		//?}
 	}
 
 	/**

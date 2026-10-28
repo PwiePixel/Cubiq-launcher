@@ -18,6 +18,12 @@ public final class PetSight {
 	static final int MAX_CELLS = 12;
 	/** So weit hinter dem Ausgang einer Pflanzen-Zelle (Blöcke) sucht der nächste Schritt weiter. */
 	static final double STEP = 1e-4;
+	/**
+	 * Ein Treffer bis so weit (Blöcke) hinter dem Beginn eines Schritts lag schon an dessen Beginn: Beginnt der Strahl in
+	 * einem Umriss, meldet Minecraft den Treffer 0,1 % der Strecke dahinter (höchstens 4,5 mm), Legacy am Anfang
+	 * ({@code Ray#block}).
+	 */
+	static final double INSIDE = 0.005;
 
 	/**
 	 * Die Welt entlang des Blick-Strahls (je Loader, nur Spiel-Thread, nur für einen Klick): Auge und normierte
@@ -26,7 +32,8 @@ public final class PetSight {
 	public interface Ray {
 		/**
 		 * Erster Block, dessen Umriss der Strahl zwischen {@code from} und {@code to} trifft – wie Minecrafts Fadenkreuz,
-		 * Flüssigkeiten zählen nicht. Ergebnis: Entfernung des Treffers, NaN = keiner; seine Zelle in {@code cell} (x, y, z).
+		 * Flüssigkeiten zählen nicht; liegt {@code from} schon in einem Umriss, ist das der Treffer (bei {@code from} bzw.
+		 * knapp dahinter). Ergebnis: Entfernung des Treffers, NaN = keiner; seine Zelle in {@code cell} (x, y, z).
 		 */
 		double block(double from, double to, int[] cell);
 
@@ -74,15 +81,20 @@ public final class PetSight {
 		double entity = ray.entity(end);
 		if (entity >= 0 && entity < end) end = entity;
 		int[] cell = new int[3];
-		double from = 0;
+		double from = 0, last = 0;
 		for (int i = 0; i < MAX_CELLS; i++) {
 			if (from >= end) return end;
 			double t = ray.block(from, end, cell);
 			if (!(t <= end)) return end; // nichts mehr bis zum Ende
-			if (!ray.seeThrough(cell[0], cell[1], cell[2])) return Math.max(0, t);
+			if (!ray.seeThrough(cell[0], cell[1], cell[2])) {
+				// gleich am Beginn eines Schritts getroffen: der Block beginnt schon am Ausgang der Pflanzen-Zelle davor (beim
+				// ersten Schritt am Auge)
+				return t - from <= INSIDE ? last : Math.max(0, t);
+			}
 			// hinter dem Ausgang der Pflanzen-Zelle weiter (immer vorwärts, auch wenn die Rechnung die Zelle knapp verfehlt)
 			double next = Math.max(from, t), out = exit(ex, ey, ez, dx, dy, dz, cell[0], cell[1], cell[2]);
-			from = (out > next ? out : next) + STEP;
+			last = out > next ? out : next;
+			from = last + STEP;
 		}
 		return Math.min(from, end);
 	}
