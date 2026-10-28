@@ -184,6 +184,33 @@ class PetPickTest {
 		assertNull(sim.pick(0.5, 64.4, 0, 0, 0, 1, PetInteract.REACH, 1f));
 	}
 
+	@Test
+	void anOwnCompanionThatIsNotDrawnCannotBePicked() {
+		PetSim sim = new PetSim();
+		FakeWorld w = new FakeWorld();
+		PetSim.forceSlide = 0;
+		// Haupt-Teil gezeichnet, das Extra (kind 1) noch ohne Modell: kein Umriss
+		sim.begin(w, 0);
+		sim.owner(OWNER, 1, 1.0, new double[] { 1.0 }, null, null, new float[][] { BOX, null }, 0.5, 64, 0.5, 0f, false, false,
+				true, w);
+		sim.end();
+		List<Pet> own = sim.pets(OWNER);
+		Pet drawn = own.get(0), missing = own.get(1);
+		assertNull(missing.box);
+		put(missing, 0.5, 2.5);
+		put(drawn, 0.5, 4.5);
+		assertSame(drawn, sim.pick(0.5, 64.4, 0, 0, 0, 1, PetInteract.REACH, 1f), "der nicht gezeichnete davor ist durchlässig");
+		put(drawn, 3.5, 4.5);
+		assertNull(sim.pick(0.5, 64.4, 0, 0, 0, 1, PetInteract.REACH, 1f), "nichts Gezeichnetes im Blick");
+		// ohne Umrisse überhaupt (ältere owner()-Aufrufe): niemand anklickbar
+		sim.begin(w, 50);
+		sim.owner(OWNER, 1, 1.0, null, 0.5, 64, 0.5, 0f, false, true, w);
+		sim.end();
+		Pet only = sim.pets(OWNER).get(0);
+		put(only, 0.5, 2.5);
+		assertNull(sim.pick(0.5, 64.4, 0, 0, 0, 1, PetInteract.REACH, 1f));
+	}
+
 	// --- Umriss aus dem Modell --------------------------------------------------------------------------------
 
 	/** Körper 4 × 6 × 4 und ein um 90° (z) gedrehter Arm am Knochen {@code arm} – zeigt in Ruhe zur Seite. */

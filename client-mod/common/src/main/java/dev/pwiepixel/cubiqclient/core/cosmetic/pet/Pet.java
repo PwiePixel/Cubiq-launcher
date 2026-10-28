@@ -80,8 +80,9 @@ public final class Pet {
 	/** Länge der Aktionen {@code pet}/{@code eat} des Modells in ms (0 = Modell hat sie nicht), je Tick gemeldet. */
 	int petMs, eatMs;
 	/**
-	 * Umriss in Ruhe (Pixel im Modellraum: minX, minY, minZ, maxX, maxY, maxZ) für den Klick-Test; null = aus
-	 * {@link PetSim#RADIUS}/{@link PetSim#HEIGHT}. Je Tick gemeldet.
+	 * Umriss in Ruhe (Pixel im Modellraum: minX, minY, minZ, maxX, maxY, maxZ) für den Klick-Test und die Höhe der
+	 * Herzchen; null = nicht gezeichnet (Modell nicht geladen, kein Begleiter am Boden, oder Begleiter eines anderen
+	 * Spielers) – dann nicht anklickbar. Je Tick gemeldet.
 	 */
 	float[] box;
 	/** Ruhig (am Boden, nicht im Wasser) im letzten Tick – nur dann beginnt eine Aktion. */

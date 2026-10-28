@@ -411,7 +411,8 @@ public final class OnlineFeatures<T> {
 				// Was die Modelle können (Anhang E: sneak/grab/flee/handsup, dazu pet/eat) – erst, wenn sie geladen sind
 				abilities = petAbilities[n];
 				if (abilities == null) petAbilities[n] = abilities = new int[n + 1];
-				// Nur die eigenen lassen sich streicheln/füttern: Länge der Aktionen und Umriss für den Klick-Test
+				// Nur die eigenen lassen sich streicheln/füttern: Länge der Aktionen und Umriss für den Klick-Test – nur für
+				// Teile, die petFrame auch zeichnet (geladen, Begleiter am Boden); ohne Umriss nicht anklickbar.
 				if (self) {
 					actionMs = petActionMs[n];
 					if (actionMs == null) petActionMs[n] = actionMs = new int[2 * (n + 1)];
@@ -427,7 +428,8 @@ public final class OnlineFeatures<T> {
 								dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2.DRIVER_PET);
 						actionMs[2 * k + 1] = dev.pwiepixel.cubiqclient.core.cosmetic.pet.Pet.actionMs(model,
 								dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2.DRIVER_EAT);
-						boxes[k] = model == null ? null : dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetPick.bounds(model);
+						boxes[k] = model == null || !model.pet() ? null
+								: dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetPick.bounds(model);
 					}
 				}
 			}

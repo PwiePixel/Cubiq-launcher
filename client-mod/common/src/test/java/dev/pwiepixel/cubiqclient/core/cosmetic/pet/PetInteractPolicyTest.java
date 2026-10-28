@@ -66,8 +66,12 @@ class PetInteractPolicyTest {
 	// --- ganzer Ablauf mit der Simulation ---------------------------------------------------------------------
 
 	private static void tick(PetSim sim, FakeWorld w, int i, UUID owner, boolean self) {
+		tick(sim, w, i, owner, self, PetInteractTest.DRAWN);
+	}
+
+	private static void tick(PetSim sim, FakeWorld w, int i, UUID owner, boolean self, float[][] boxes) {
 		sim.begin(w, i * 50L);
-		sim.owner(owner, 1, 1.0, null, new int[] { PetInteractTest.ALL }, PetInteractTest.MS, null, 0.5, 64, 0.5, 0f, false,
+		sim.owner(owner, 1, 1.0, null, new int[] { PetInteractTest.ALL }, PetInteractTest.MS, boxes, 0.5, 64, 0.5, 0f, false,
 				false, self, w);
 		sim.end();
 	}
@@ -136,5 +140,25 @@ class PetInteractPolicyTest {
 		assertFalse(click(other, q, FAR, E, E, false, now));
 		assertFalse(click(other, q, FAR, F, E, false, now));
 		assertEquals(Pet.IDLE, q.state());
+	}
+
+	@Test
+	void anOwnCompanionThatIsNotDrawnDoesNotTakeTheClick() {
+		// Modell noch nicht geladen (owner() ohne Umriss): petFrame zeichnet ihn nicht – der Klick geht an Minecraft, als
+		// wäre dort nichts (sonst würde ein unsichtbarer Begleiter Klicks schlucken und Herzchen zeigen)
+		FakeWorld w = new FakeWorld();
+		PetSim sim = new PetSim();
+		PetSim.forceSlide = 0;
+		for (int i = 0; i < 60; i++) tick(sim, w, i, OWNER, true, new float[1][]);
+		Pet p = sim.pets(OWNER).get(0);
+		long now = 59 * 50L + 20;
+		assertFalse(click(sim, p, FAR, E, E, false, now));
+		assertFalse(click(sim, p, FAR, F, E, false, now));
+		assertEquals(Pet.IDLE, p.state());
+		assertEquals(-1, p.action());
+		// sobald er gezeichnet wird (Umriss gemeldet), wieder wie gewohnt
+		tick(sim, w, 60, OWNER, true);
+		assertTrue(click(sim, p, FAR, F, E, false, 60 * 50L + 20));
+		assertEquals(Pet.EAT, p.state());
 	}
 }

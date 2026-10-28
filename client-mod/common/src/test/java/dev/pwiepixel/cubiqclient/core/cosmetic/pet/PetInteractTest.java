@@ -23,6 +23,8 @@ class PetInteractTest {
 	static final int ALL = PetHeistTest.ALL | Pet.CAN_PET | Pet.CAN_EAT;
 	/** Länge der Aktionen pet/eat in ms (wie der Fuchs). */
 	static final int[] MS = { 2200, 2600 };
+	/** Umriss des gezeichneten Teils (ohne Umriss gilt ein Begleiter als nicht gezeichnet). */
+	static final float[][] DRAWN = { PetPick.DEFAULT_BOX };
 
 	@AfterEach
 	void reset() {
@@ -30,10 +32,14 @@ class PetInteractTest {
 		PetSim.forceGrab = false;
 	}
 
-	/** Ein Tick: ein Begleiter, Besitzer bei ({@code ox}, {@code oy}, {@code oz}). */
+	/** Ein Tick: ein (gezeichneter) Begleiter, Besitzer bei ({@code ox}, {@code oy}, {@code oz}). */
 	private static void tick(PetSim sim, PetWorld w, int i, double ox, double oy, double oz, int can, int[] ms) {
+		tick(sim, w, i, ox, oy, oz, can, ms, DRAWN);
+	}
+
+	private static void tick(PetSim sim, PetWorld w, int i, double ox, double oy, double oz, int can, int[] ms, float[][] boxes) {
 		sim.begin(w, i * 50L);
-		sim.owner(OWNER, 1, 1.0, null, new int[] { can }, ms, null, ox, oy, oz, 0f, false, false, true, w);
+		sim.owner(OWNER, 1, 1.0, null, new int[] { can }, ms, boxes, ox, oy, oz, 0f, false, false, true, w);
 		sim.end();
 	}
 
@@ -145,6 +151,23 @@ class PetInteractTest {
 			assertEquals(expected, ticks, Pet.stateNameOf(action));
 			assertEquals((expected + PetSim.HEART_EVERY - 1) / PetSim.HEART_EVERY, hearts, "alle 0,5 s ein Herzchen");
 		}
+	}
+
+	@Test
+	void noHeartsOverACompanionThatIsNotDrawn() {
+		// Modell (noch) nicht geladen: petFrame zeichnet ihn nicht, owner() meldet keinen Umriss – keine Herzchen in der Luft
+		PetSim sim = new PetSim();
+		FakeWorld w = new FakeWorld();
+		PetSim.forceSlide = 0;
+		for (int i = 0; i < 60; i++) tick(sim, w, i, 0.5, 64, 0.5, PetHeistTest.ALL, null, new float[1][]);
+		Pet p = sim.pets(OWNER).get(0);
+		assertEquals(PetSim.STARTED, sim.interact(p, Pet.PET, CLICK));
+		int hearts = 0;
+		for (int i = 60; i < 120; i++) {
+			tick(sim, w, i, 0.5, 64, 0.5, PetHeistTest.ALL, null, new float[1][]);
+			hearts += sim.fxCount();
+		}
+		assertEquals(0, hearts);
 	}
 
 	@Test

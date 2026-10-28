@@ -250,7 +250,9 @@ public final class PetSim {
 	 * Wie {@link #owner(UUID, int, double, double[], int[], double, double, double, float, boolean, boolean, boolean, PetWorld)}
 	 * plus je {@link Pet#kind} die Länge der Aktionen ({@code actionMs[kind·2]} = {@code pet}, {@code actionMs[kind·2+1]}
 	 * = {@code eat} in ms, 0 = Modell hat sie nicht; null = keine) und den Umriss in Ruhe für den Klick-Test
-	 * ({@code boxes[kind]}, Pixel wie {@link PetPick#bounds}; null = aus Radius/Höhe).
+	 * ({@code boxes[kind]}, Pixel wie {@link PetPick#bounds}). Ohne Umriss ({@code boxes} oder {@code boxes[kind]} null)
+	 * wird das Teil nicht gezeichnet (Modell noch nicht geladen, kein Begleiter am Boden): nicht anklickbar, keine
+	 * Herzchen.
 	 */
 	public void owner(UUID id, int count, double scale, double[] extraScales, int[] abilities, int[] actionMs, float[][] boxes,
 			double x, double y, double z, float bodyYaw, boolean sneaking, boolean hidden, boolean self, PetWorld world) {
@@ -440,7 +442,8 @@ public final class PetSim {
 	 * Klick-Test: der nächste EIGENE Begleiter (Besitzer mit {@code self}), den der Strahl vom Auge ({@code ex, ey, ez})
 	 * in Blickrichtung ({@code dx, dy, dz}) höchstens {@code maxDist} Blöcke weit trifft – gegen seinen Umriss in Ruhe
 	 * ({@link PetPick}) an der gezeichneten Stelle zwischen zwei Ticks ({@code alpha}). Unsichtbare oder in diesem Tick
-	 * nicht gemeldete Besitzer zählen nicht; Begleiter anderer Spieler sind durchlässig. null = keiner.
+	 * nicht gemeldete Besitzer zählen nicht, ebenso Begleiter ohne Umriss (nicht gezeichnet, siehe {@link #owner}) –
+	 * sonst schluckte ein unsichtbarer Begleiter den Klick. Begleiter anderer Spieler sind durchlässig. null = keiner.
 	 */
 	public Pet pick(double ex, double ey, double ez, double dx, double dy, double dz, double maxDist, float alpha) {
 		double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -453,6 +456,7 @@ public final class PetSim {
 		for (Owner o : owners.values()) {
 			if (!o.self || o.hidden || o.seenTick != tick) continue;
 			for (Pet p : o.pets) {
+				if (p.box == null) continue;
 				double t = PetPick.ray(ex, ey, ez, dx, dy, dz, p.x(alpha), p.y(alpha), p.z(alpha), p.yaw(alpha), p.scale, p.box);
 				if (!Double.isNaN(t) && t <= bestT) {
 					best = p;
@@ -881,11 +885,12 @@ public final class PetSim {
 		p.yaw = Pet.wrap(p.yaw);
 
 		if (acting) {
-			// Ohne eigene Aktion im Modell (z. B. ältere Begleiter): Herzchen über dem Kopf statt der Animation.
+			// Ohne eigene Aktion im Modell (z. B. ältere Begleiter): Herzchen über dem Kopf statt der Animation – nur über
+			// einem gezeichneten Begleiter (mit Umriss), nie über einem unsichtbaren.
 			boolean clip = (p.abilities & (p.action == Pet.PET ? Pet.CAN_PET : Pet.CAN_EAT)) != 0;
 			int age = p.actionTotal - p.actionTicks;
-			if (!clip && age % HEART_EVERY == 0) {
-				float[] b = p.box != null ? p.box : PetPick.DEFAULT_BOX;
+			if (!clip && p.box != null && age % HEART_EVERY == 0) {
+				float[] b = p.box;
 				double side = ((age / HEART_EVERY) % 3 - 1) * 0.15 * p.scale;
 				double h = Math.toRadians(p.yaw);
 				emit(Fx.HEART, p.x + Math.cos(h) * side, p.y + b[4] / 16.0 * p.scale + 0.2, p.z + Math.sin(h) * side);
