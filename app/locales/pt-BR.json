@@ -4808,10 +4808,6 @@
     "more": "Mais {n} imagens",
     "openRelease": "Ver a versão no GitHub"
   },
-  "updateModel": {
-    "label": "Modelo 3D da imagem da atualização. Arraste ou use as setas para girá-lo.",
-    "hint": "Arraste para girar"
-  },
   "clips": {
     "title": "Clipes",
     "subtitle": "{n} clipe ou gravação | {n} clipes e gravações",

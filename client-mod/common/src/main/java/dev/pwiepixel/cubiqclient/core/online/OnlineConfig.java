@@ -19,8 +19,9 @@ import java.util.Locale;
  * Fehlt die Datei (älterer Launcher, anderer Launcher), ist die API eingeschaltet; im Cubiq-Menü
  * lässt sie sich zusätzlich abschalten.
  *
- * <p>Für Tests lassen sich die Adressen per System-Property umbiegen
- * ({@code -Dcubiqclient.api.url=http://127.0.0.1:8787}, {@code -Dcubiqclient.session.url=…}).
+ * <p>Die Adresse der API gibt der Cubiq Launcher beim Start mit ({@code -Dcubiqclient.api.url=https://…},
+ * dieselbe wie im Launcher); ohne sie gilt {@link #DEFAULT_API}. Für Tests lassen sich so auch lokale Adressen
+ * setzen ({@code -Dcubiqclient.api.url=http://127.0.0.1:8787}, {@code -Dcubiqclient.session.url=…}).
  * Unverschlüsseltes HTTP ist dabei nur für localhost erlaubt.
  */
 public final class OnlineConfig {

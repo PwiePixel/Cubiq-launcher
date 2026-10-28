@@ -4875,10 +4875,6 @@
     "more": "{n} weitere Bilder",
     "openRelease": "Release auf GitHub ansehen"
   },
-  "updateModel": {
-    "label": "3D-Modell des Update-Bilds. Zum Drehen ziehen oder die Pfeiltasten nutzen.",
-    "hint": "Zum Drehen ziehen"
-  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} Clip oder Aufnahme | {n} Clips und Aufnahmen",

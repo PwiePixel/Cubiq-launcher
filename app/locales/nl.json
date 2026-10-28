@@ -4808,10 +4808,6 @@
     "more": "Nog {n} afbeeldingen",
     "openRelease": "Release op GitHub bekijken"
   },
-  "updateModel": {
-    "label": "3D-model van de update-afbeelding. Sleep het of gebruik de pijltjestoetsen om het te draaien.",
-    "hint": "Sleep om te draaien"
-  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} clip of opname | {n} clips en opnames",

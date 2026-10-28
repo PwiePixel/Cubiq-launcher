@@ -24,7 +24,8 @@ const outDir = path.resolve(process.argv[3] || 'mock-issues-out');
 fs.mkdirSync(outDir, { recursive: true });
 
 const MAX_UPLOAD = 8 * 1024 * 1024;
-const SITE = 'https://cubiq-launcher.invalid';
+// Die Website liegt unter derselben Adresse wie die API – hier also bei der Attrappe selbst.
+const SITE = `http://127.0.0.1:${port}`;
 const tokens = new Map(); // token → {uuid, name}
 const joined = new Map(); // serverId → {uuid}
 const uploads = new Map(); // id → {owner, mime, bytes}

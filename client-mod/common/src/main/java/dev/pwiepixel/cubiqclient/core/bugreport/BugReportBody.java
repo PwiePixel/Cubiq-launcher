@@ -27,8 +27,6 @@ public final class BugReportBody {
 	public static final int MAX_MOD_LENGTH = 100;
 	public static final int MAX_LOG = 20000;
 	public static final int MAX_META_STRING = 32;
-	/** Nur Links auf die Cubiq-Website öffnen („Im Browser öffnen“). */
-	public static final String SITE = "https://cubiq-launcher.invalid/";
 
 	private static final Pattern UPLOAD_ID = Pattern.compile("[A-Za-z0-9_-]{22}");
 	private static final Pattern META = Pattern.compile("[0-9A-Za-z._+ -]{1,32}");
@@ -79,12 +77,15 @@ public final class BugReportBody {
 	}
 
 	/**
-	 * Darf „Im Browser öffnen“ diesen Link öffnen? Nur https auf der Cubiq-Website, ohne Leer-/Steuerzeichen (siehe
-	 * {@link Links#allowed}) und ohne Zugangsdaten im Host-Teil.
+	 * Darf „Im Browser öffnen“ diesen Link öffnen? Nur auf der Cubiq-Website ({@code site}: dieselbe Adresse wie die
+	 * API, also https – http nur bei einer lokalen Test-API), ohne Leer-/Steuerzeichen (siehe {@link Links#allowed})
+	 * und ohne Zugangsdaten im Host-Teil.
 	 */
-	public static boolean siteLink(String url) {
-		if (url == null || !url.startsWith(SITE) || url.length() > 300 || !Links.allowed(url)) return false;
-		String rest = url.substring(SITE.length());
+	public static boolean siteLink(String url, String site) {
+		if (url == null || site == null || site.isEmpty() || url.length() > 300 || !Links.allowed(url)) return false;
+		String prefix = site + "/";
+		if (!url.startsWith(prefix)) return false;
+		String rest = url.substring(prefix.length());
 		return !rest.contains("@") && !rest.startsWith("/") && !rest.contains("..");
 	}
 
@@ -173,8 +174,8 @@ public final class BugReportBody {
 		}
 	}
 
-	/** {@code {"issue":{"number":123,"url":"…"}}} → Ergebnis oder null (keine gültige Nummer). */
-	public static Created created(String json) {
+	/** {@code {"issue":{"number":123,"url":"…"}}} → Ergebnis oder null (keine gültige Nummer); Link nur auf {@code site}. */
+	public static Created created(String json, String site) {
 		try {
 			JsonObject root = new JsonParser().parse(json).getAsJsonObject();
 			JsonElement issue = root.get("issue");
@@ -186,7 +187,7 @@ public final class BugReportBody {
 			if (n <= 0 || n > Integer.MAX_VALUE) return null;
 			JsonElement u = o.get("url");
 			String url = u == null || u.isJsonNull() || !u.isJsonPrimitive() ? null : u.getAsString();
-			return new Created((int) n, siteLink(url) ? url : null);
+			return new Created((int) n, siteLink(url, site) ? url : null);
 		} catch (RuntimeException e) {
 			return null;
 		}

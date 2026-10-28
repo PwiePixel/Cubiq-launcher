@@ -145,35 +145,50 @@ class BugReportTest {
 
 	// --- Antworten ---
 
+	/** Website = Adresse der API (OnlineConfig#apiBase). */
+	static final String SITE = "https://cubiq-launcher.invalid";
+
 	@Test
 	void createdResponseIsParsedAndLinkChecked() {
 		BugReportBody.Created c = BugReportBody.created(
-				"{\"issue\":{\"number\":123,\"url\":\"https://cubiq-launcher.invalid/issues/123\",\"title\":\"x\"}}");
+				"{\"issue\":{\"number\":123,\"url\":\"https://cubiq-launcher.invalid/issues/123\",\"title\":\"x\"}}", SITE);
 		assertNotNull(c);
 		assertEquals(123, c.number);
 		assertEquals("https://cubiq-launcher.invalid/issues/123", c.url);
-		assertNull(BugReportBody.created("{\"issue\":{\"number\":5,\"url\":\"https://evil.example/issues/5\"}}").url);
-		assertEquals(5, BugReportBody.created("{\"issue\":{\"number\":5,\"url\":\"https://evil.example/issues/5\"}}").number);
-		assertNull(BugReportBody.created("{\"issue\":{\"number\":0}}"));
-		assertNull(BugReportBody.created("{\"issue\":{\"number\":\"12\"}}"));
-		assertNull(BugReportBody.created("{\"number\":12}"));
-		assertNull(BugReportBody.created("<html>Bad Gateway</html>"));
-		assertNull(BugReportBody.created("{\"issue\":{\"number\":7,\"url\":null}}").url);
+		assertNull(BugReportBody.created("{\"issue\":{\"number\":5,\"url\":\"https://evil.example/issues/5\"}}", SITE).url);
+		assertEquals(5, BugReportBody.created("{\"issue\":{\"number\":5,\"url\":\"https://evil.example/issues/5\"}}", SITE).number);
+		assertNull(BugReportBody.created("{\"issue\":{\"number\":0}}", SITE));
+		assertNull(BugReportBody.created("{\"issue\":{\"number\":\"12\"}}", SITE));
+		assertNull(BugReportBody.created("{\"number\":12}", SITE));
+		assertNull(BugReportBody.created("<html>Bad Gateway</html>", SITE));
+		assertNull(BugReportBody.created("{\"issue\":{\"number\":7,\"url\":null}}", SITE).url);
 	}
 
 	@Test
 	void onlyCubiqWebsiteLinksMayBeOpened() {
-		assertTrue(BugReportBody.siteLink("https://cubiq-launcher.invalid/issues/123"));
-		assertTrue(BugReportBody.siteLink("https://cubiq-launcher.invalid/de/issues/123?x=1#c"));
-		assertFalse(BugReportBody.siteLink("http://cubiq-launcher.invalid/issues/123"));
-		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid.evil.com/issues/1"));
-		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid@evil.com/"));
-		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid/@evil.com"));
-		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid//evil.com"));
-		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid/issues/1 x"));
-		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid/../x"));
-		assertFalse(BugReportBody.siteLink("javascript:alert(1)"));
-		assertFalse(BugReportBody.siteLink(null));
+		assertTrue(BugReportBody.siteLink("https://cubiq-launcher.invalid/issues/123", SITE));
+		assertTrue(BugReportBody.siteLink("https://cubiq-launcher.invalid/de/issues/123?x=1#c", SITE));
+		assertFalse(BugReportBody.siteLink("http://cubiq-launcher.invalid/issues/123", SITE));
+		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid.evil.com/issues/1", SITE));
+		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid@evil.com/", SITE));
+		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid/@evil.com", SITE));
+		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid//evil.com", SITE));
+		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid/issues/1 x", SITE));
+		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid/../x", SITE));
+		assertFalse(BugReportBody.siteLink("javascript:alert(1)", SITE));
+		assertFalse(BugReportBody.siteLink(null, SITE));
+		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid/issues/1", null));
+	}
+
+	@Test
+	void theWebsiteFollowsTheConfiguredServer() {
+		// Der Launcher gibt die Adresse seines Servers mit (-Dcubiqclient.api.url) – Links dorthin sind dann erlaubt.
+		String own = "https://launcher.cubiq.studio";
+		assertTrue(BugReportBody.siteLink("https://launcher.cubiq.studio/issues/7", own));
+		assertFalse(BugReportBody.siteLink("https://cubiq-launcher.invalid/issues/7", own), "Platzhalter gilt dann nicht");
+		assertFalse(BugReportBody.siteLink("https://launcher.cubiq.studio.evil.com/issues/7", own));
+		assertEquals("https://launcher.cubiq.studio/issues/7",
+				BugReportBody.created("{\"issue\":{\"number\":7,\"url\":\"https://launcher.cubiq.studio/issues/7\"}}", own).url);
 	}
 
 	@Test

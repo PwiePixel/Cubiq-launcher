@@ -4875,10 +4875,6 @@
     "more": "{n} more images",
     "openRelease": "View release on GitHub"
   },
-  "updateModel": {
-    "label": "3D model of the update picture. Drag it or use the arrow keys to turn it.",
-    "hint": "Drag to turn"
-  },
   "clips": {
     "title": "Clips",
     "subtitle": "{n} clip or recording | {n} clips and recordings",

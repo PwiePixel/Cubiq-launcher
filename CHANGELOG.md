@@ -28,6 +28,242 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
+## 0.3.1 – 2026-10-28 – The Map Update | Das Karten-Update
+<!-- banner: accent=#71a330 motif=/news/0.3.1/banner.png anim=/news/0.3.1/banner-anim.png -->
+<!-- shots:
+/news/0.3.1/minimap-new-look.png | The new minimap with compass badges and view cone, on the left with the chunk grid | Die neue Minimap mit Himmelsrichtungen und Blickkegel, links mit Chunk-Raster
+/news/0.3.1/world-map-measure.png | Measuring a distance on the world map, with the scale bar | Eine Entfernung auf der Weltkarte messen, mit Maßstab
+/news/0.3.1/world-map-go-to.png | Coordinates typed into the search: the map jumps there | Koordinaten in der Suche: die Karte springt dorthin
+-->
+
+### English
+- **A calmer minimap.** The minimap of the Cubiq Client in the game has a new frame in the style of the launcher instead
+  of the old stone frame: a flat edge in the colours of your theme with a fine border, rounded corners on the square map
+  and a soft shadow that keeps it easy to see over bright snow and dark caves alike. The dark, OLED and light colour
+  schemes each get a matching frame, and the winter, fox and Halloween designs keep their own. Waypoints at the edge of
+  the map now sit in flat, rounded boxes with a darker outline, so their letter reads well on any ground.
+- **Compass directions at a glance.** N, E, S and W now sit on small round badges at the edge of the minimap. North is
+  filled with the accent colour, so you find it at once, even when the map turns with you. As before, you can switch
+  them on and off in the Cubiq menu (Right Shift) → Minimap → "Compass directions".
+- **See where you are looking.** A soft cone of light in front of your arrow shows the direction you are looking in – on
+  the minimap and on the world map. It fades out towards the front, so it never hides the map. It is on by default; if
+  you don't need it, switch it off in the Cubiq menu → Minimap → "View direction".
+- **Chunk grid on the minimap.** Thin lines every 16 blocks show the chunk borders, and every 128 blocks, where a new
+  map region begins, the line is a little stronger – handy for farms, spawn chunks and building along chunk borders.
+  The grid turns with the map and hides by itself when you zoom out so far that the lines would crowd together. Switch
+  it on in the Cubiq menu → Minimap → "Chunk grid".
+- **Measure distances on the world map.** Open the world map (M), right-click a spot and choose "Measure distance from
+  here". A dashed line follows your mouse and shows the distance in metres, from 1,000 blocks in kilometres; a click
+  sets the end point. The measurement stays while you move and zoom the map. Press Esc or right-click → "Clear
+  measurement" to remove it – Esc removes the measurement first before it closes the map.
+- **A scale bar.** The bottom left corner of the world map shows a scale bar with a round length – 20 m, 100 m or 1 km,
+  for example – that adapts while you zoom, so you can judge distances at a glance.
+- **Jump to coordinates.** Type coordinates into the search of the waypoint list, for example "120 -40", "120 64 -40"
+  or "x 120 z -40". A row "Go to 120 / -40" appears above the list; click it or press Enter, and the map centres on
+  that spot and marks it. Handy for coordinates from the chat, from a friend or from a seed map.
+- **The world map on the keyboard.** The arrow keys move the map, + and − zoom in and out, and Home takes you back to
+  your own position.
+- **The world map in Cubiq colours.** The bars at the top and bottom, the waypoint list, the tooltips and the hints of
+  the world map now use the colours of your theme – dark, OLED or light – with fine borders, like the launcher. Your
+  own arrow uses the accent colour and stays easy to see in the light scheme too.
+
+### Deutsch
+- **Eine ruhigere Minimap.** Die Minimap des Cubiq Client im Spiel hat statt des alten Steinrahmens einen neuen Rahmen
+  im Stil des Launchers: einen flachen Rand in den Farben deines Themas mit feiner Kante, abgerundete Ecken bei der
+  eckigen Karte und einen weichen Schatten, der sie über hellem Schnee genauso gut sichtbar hält wie in dunklen Höhlen.
+  Dunkel, OLED und Hell bekommen jeweils einen passenden Rahmen, Winter-, Fuchs- und Halloween-Design behalten ihre
+  eigenen. Wegpunkte am Kartenrand sitzen jetzt in flachen, abgerundeten Kästchen mit dunklerer Kante, so ist ihr
+  Buchstabe auf jedem Untergrund gut zu lesen.
+- **Himmelsrichtungen auf einen Blick.** N, O, S und W sitzen jetzt auf kleinen runden Plaketten am Rand der Minimap.
+  Norden ist in der Akzentfarbe gefüllt, so findest du ihn sofort – auch wenn sich die Karte mit dir dreht. Wie bisher
+  schaltest du sie im Cubiq-Menü (rechte Umschalttaste) → Minimap → „Himmelsrichtungen“ ein und aus.
+- **Sehen, wohin du schaust.** Ein weicher Lichtkegel vor deinem Pfeil zeigt deine Blickrichtung – auf der Minimap und
+  auf der Weltkarte. Nach vorn läuft er sanft aus und verdeckt die Karte nie. Er ist von Anfang an eingeschaltet;
+  brauchst du ihn nicht, schalte ihn im Cubiq-Menü → Minimap → „Blickrichtung“ aus.
+- **Chunk-Raster auf der Minimap.** Feine Linien alle 16 Blöcke zeigen die Chunk-Grenzen, und alle 128 Blöcke, wo ein
+  neuer Kartenbereich beginnt, ist die Linie etwas kräftiger – praktisch für Farmen, Spawn-Chunks und Bauen an
+  Chunk-Grenzen. Das Raster dreht sich mit der Karte und blendet sich von selbst aus, wenn du so weit herauszoomst, dass
+  die Linien zu dicht stünden. Einschalten im Cubiq-Menü → Minimap → „Chunk-Raster“.
+- **Entfernungen auf der Weltkarte messen.** Öffne die Weltkarte (M), klicke mit rechts auf eine Stelle und wähle
+  „Entfernung von hier messen“. Eine gestrichelte Linie folgt deiner Maus und zeigt die Entfernung in Metern, ab 1.000
+  Blöcken in Kilometern; ein Klick setzt den Endpunkt. Die Messung bleibt, während du die Karte verschiebst und zoomst.
+  Mit Esc oder Rechtsklick → „Messung entfernen“ verschwindet sie wieder – Esc entfernt erst die Messung, bevor es die
+  Karte schließt.
+- **Ein Maßstab.** Unten links zeigt die Weltkarte einen Maßstab mit einer runden Länge – zum Beispiel 20 m, 100 m oder
+  1 km –, der sich beim Zoomen anpasst. So schätzt du Entfernungen auf einen Blick.
+- **Zu Koordinaten springen.** Tippe Koordinaten in die Suche der Wegpunkt-Liste, zum Beispiel „120 -40“, „120 64 -40“
+  oder „x 120 z -40“. Über der Liste erscheint die Zeile „Gehe zu 120 / -40“; ein Klick darauf oder Enter, und die
+  Karte zentriert sich dort und markiert die Stelle. Praktisch für Koordinaten aus dem Chat, von Freunden oder von einer
+  Seed-Karte.
+- **Die Weltkarte mit der Tastatur.** Die Pfeiltasten verschieben die Karte, + und − zoomen hinein und heraus, und Pos1
+  bringt dich zurück zu deiner eigenen Position.
+- **Die Weltkarte in Cubiq-Farben.** Die Leisten oben und unten, die Wegpunkt-Liste, die Tooltips und die Hinweise der
+  Weltkarte nutzen jetzt die Farben deines Themas – Dunkel, OLED oder Hell – mit feinen Kanten, wie im Launcher. Dein
+  eigener Pfeil trägt die Akzentfarbe und bleibt auch im hellen Farbschema gut sichtbar.
+
+## 0.3.0 – 2026-10-28 – New friends | Neue Freunde
+<!-- banner: accent=#71a330 motif=/news/0.3.0/banner.png anim=/news/0.3.0/banner-anim.png -->
+
+<!-- shots:
+/news/0.3.0/new-cosmetics-companions.png | Six new companions on the ground: Cubi, penguin, fox kit, axolotl, snowman and firefly | Sechs neue Begleiter am Boden: Cubi, Pinguin, Füchschen, Axolotl, Schneemännchen und Glühwürmchen
+/news/0.3.0/new-cosmetics-wings.png | Aurora wings, shooting star and Mini-Cubi – by day and at night | Polarlichtflügel, Sternschnuppe und Mini-Cubi – bei Tag und bei Nacht
+-->
+<!-- shots:
+/news/0.3.0/play-statistics.png | The new Statistics page with your key numbers and play time per day | Die neue Statistik-Seite mit Kennzahlen und Spielzeit pro Tag
+/news/0.3.0/play-statistics-calendar.png | Calendar of your gaming days and your most played instances | Kalender deiner Spieltage und deine meistgespielten Instanzen
+-->
+
+<!-- shots:
+/news/0.3.0/world-backups-worlds.png | Every world shows its backups – deleted worlds can be brought back | Jede Welt zeigt ihre Backups – gelöschte Welten lassen sich zurückholen
+/news/0.3.0/world-backups-list.png | All backups of a world with date, size and kind | Alle Backups einer Welt mit Datum, Größe und Art
+/news/0.3.0/world-backups-restore.png | Restoring a backup as a copy or in place of the current world | Ein Backup als Kopie oder statt der jetzigen Welt wiederherstellen
+-->
+
+### English
+- **Nine new cosmetics, free for everyone.** With the Cubiq services online, new animated cosmetics arrive – nothing to
+  unlock, just pick them. Six companions walk next to you on the ground: Cubi, the green cube from the Cubiq logo,
+  hops along and rolls over its edges to catch up; a waddling penguin in a red and white scarf slides on its belly;
+  a fox kit trots, pounces and runs off with a berry; a pink axolotl swims with its tail and waves; a little
+  snowman hops and glides like a curling stone; and a firefly flies with its lantern glowing and loops for joy.
+- **Wings and head companions.** The aurora wings are big feathered wings of light in Cubiq green, turquoise and
+  ice cyan: rows of feathers with glowing edges that fan out wide when you fly, with aurora light running through
+  them. Two companions circle your head: a shooting star with a face and three sparkling little stars in its trail,
+  and Mini-Cubi, whose sprout spins like a propeller.
+- **Glowing at night.** Many of them light up in the dark: Cubi's eyes and leaves, the axolotl's gills, the snowman's
+  eyes, the firefly's lantern, the wings and the shooting star.
+- **Where to find them.** In the Cosmetics tab on the Skins page. With the Cubiq Client in the game you can also pick
+  them in its wardrobe, and other Cubiq players see what you wear.
+- **The Cubiq services are live.** The launcher is now connected to the Cubiq server. Once you agree in the launcher –
+  a short note tells you what is stored – you get Cubiq capes and cosmetics that other Cubiq players see too, a friends
+  list with online status, chat with your friends, achievements and the sync of your own skins, presets, theme, accent
+  colour and language between your PCs. You can turn the services off again at any time under Settings → Privacy; the
+  launcher then sends nothing to the Cubiq server.
+- **Ready for the Cubiq Client.** When you start Minecraft with the Cubiq services switched on, the launcher now tells
+  the Cubiq Client which server to use. With the Cubiq Client in your game, the capes and cosmetics of other Cubiq
+  players, the Cubiq badge next to their names, emotes, the Social menu with chat, friends list and your friends'
+  worlds, the sync of your modules and HUD profiles and bug reports from the Cubiq menu all run over the same server as
+  the launcher.
+- **Links to the website that work.** "Open website" under Settings → Privacy, the link in the "Sign in on the
+  website" window and the "Open positions" and "On the website" buttons in "My applications" now open the Cubiq
+  website.
+- **Your play time at a glance.** A new Statistics page in the sidebar (under Collection, also in the search with
+  Ctrl+K) shows how much you play: in total, this week and this month, how many sessions you had and how long they
+  last on average, your longest session and your current and best streak of days in a row. Below that, a bar chart
+  shows your play time per day for the last 30 days – or per week for the last 16 weeks – and a calendar colours every
+  day of the last months by how long you played, from a soft to a full green. Point at a bar or a day, or use the
+  arrow keys, to see the exact time; "Show as table" lists the same numbers.
+- **Favourite instances, versions and servers.** The page ranks your most played instances, the Minecraft versions and
+  mod loaders you play most and the servers you joined – the ones you start from the launcher and the ones you open
+  in the multiplayer menu of the game. Pick an instance at the top to see every number for just that one. Instances
+  you deleted still count and are marked as deleted.
+- **On every instance page.** The History tab of an instance now starts with a summary: total play time, number of
+  sessions, average and longest session and small bars for the last 30 days. "All statistics" opens the page with
+  just that instance. The summary follows the "Show play time" setting.
+- **Nothing gets lost.** The play time you already have counts from the start: sessions from the history of your
+  instances come in with their date and the version you played back then, older play time counts towards the totals.
+  If the launcher closes unexpectedly while you play, its next start ends the session at the moment the game last
+  wrote to its log and adds that time to the instance – it used to get lost. At the bottom of the page you can reset
+  the statistics; the play time shown on your instances stays.
+- **Automatic world backups.** Your singleplayer worlds are now backed up on their own: when you press Play, the
+  launcher saves every world that changed since its last backup as a ZIP file, and after you close the game it saves
+  the worlds you just played. Unchanged worlds are skipped, so usually there is nothing to do at all. The game never
+  waits for it – the backup runs in the background while the game loads, and its progress shows up with the other
+  tasks in the title bar. If you open a world in the game before its backup is finished, that unfinished backup is
+  thrown away, because a backup is never made from a half-saved world; the previous one stays, and a new one follows
+  after you play. If a backup fails, you get a short notice and the game starts anyway.
+- **See and restore backups.** In the Worlds tab of an instance, every world now shows how many backups it has and
+  when the last one was made. Click that line to open its backups with date, size and kind. "Restore" adds a backup
+  as a copy next to your current world – named like "My world (restored 2026-10-27 14.05)" – or replaces the current
+  world; before replacing, the launcher saves the current state as a backup, so you can always go back. Worlds you
+  deleted that still have backups appear under "Deleted worlds with backups" and come back with one click. "Back up
+  now" makes a manual backup at any time, even while the game runs, as long as that world is not open.
+- **Your choice how much to keep.** Under Settings → World backups you can turn automatic backups off, choose how
+  many automatic backups to keep per world (5 by default) and set a size limit for all backups together – the oldest
+  automatic ones go first, the newest backup of each world always stays. Manual backups and the ones made before
+  restoring are never deleted automatically. In the Worlds tab ("Auto backup") a single instance can be switched on
+  or off on its own. The settings also show how much space the backups take, open their folder and can delete the
+  backups of instances you removed.
+- **Animated update pictures.** The pictures of the updates in "What's new" and on the update card on the home page
+  are small animated pixel scenes again instead of rotatable 3D models – for every update, from the very first one to
+  this one. They play quietly next to the title and load quickly, also on slower PCs; with "Reduce animations" under
+  Settings → Appearance you see the still picture. The picture of this update shows the new cosmetics: Cubi with the
+  aurora wings, surrounded by his new companions.
+
+### Deutsch
+- **Neun neue Kosmetik-Teile, für alle kostenlos.** Mit den Cubiq-Diensten kommen neue animierte Kosmetik-Teile –
+  nichts freizuschalten, einfach auswählen. Sechs Begleiter laufen neben dir am Boden: Cubi, der grüne Würfel aus
+  dem Cubiq-Logo, hüpft mit und rollt über die Kanten, wenn er aufholen muss; ein Watschelpinguin mit rot-weißem
+  Schal rutscht auf dem Bauch; ein Füchschen trabt, macht den Mäusesprung und flitzt mit einer Beere davon; ein
+  rosa Axolotl schwimmt mit kräftigem Schwanzschlag und winkt; ein kleines Schneemännchen hüpft und gleitet wie
+  ein Curlingstein; und ein Glühwürmchen fliegt mit leuchtender Laterne und dreht vor Freude einen Looping.
+- **Flügel und Begleiter am Kopf.** Die Polarlichtflügel sind große gefiederte Lichtflügel in Cubiq-Grün, Türkis
+  und Eiscyan: Reihen von Federn mit leuchtenden Rändern, die sich beim Fliegen weit auffächern, und Polarlicht, das
+  durch sie hindurchzieht. Zwei Begleiter kreisen um deinen Kopf: eine Sternschnuppe mit Gesicht und drei funkelnden
+  Sternchen im Schweif und Mini-Cubi, dessen Pflänzchen sich wie ein Propeller dreht.
+- **Leuchten bei Nacht.** Viele leuchten im Dunkeln: Cubis Augen und Blätter, die Kiemen des Axolotls, die Augen des
+  Schneemännchens, die Laterne des Glühwürmchens, die Flügel und die Sternschnuppe.
+- **Wo du sie findest.** Im Reiter „Kosmetik“ auf der Skins-Seite. Mit dem Cubiq Client im Spiel wählst du sie auch in
+  seiner Garderobe aus, und andere Cubiq-Spieler sehen, was du trägst.
+- **Die Cubiq-Dienste sind online.** Der Launcher ist jetzt mit dem Cubiq-Server verbunden. Sobald du im Launcher
+  zustimmst – ein kurzer Hinweis erklärt, was gespeichert wird –, bekommst du Cubiq-Umhänge und Kosmetik, die auch
+  andere Cubiq-Spieler sehen, eine Freundesliste mit Online-Status, Chat mit deinen Freunden, Erfolge und den Abgleich
+  deiner eigenen Skins, Presets, Theme, Akzentfarbe und Sprache zwischen deinen PCs. Unter Einstellungen → Datenschutz
+  lassen sich die Dienste jederzeit wieder ausschalten; dann sendet der Launcher nichts an den Cubiq-Server.
+- **Bereit für den Cubiq Client.** Startest du Minecraft mit eingeschalteten Cubiq-Diensten, sagt der Launcher dem Cubiq
+  Client jetzt, welchen Server er nutzen soll. Mit dem Cubiq Client im Spiel laufen Umhänge und Kosmetik anderer
+  Cubiq-Spieler, das Cubiq-Abzeichen neben ihren Namen, Emotes, das Sozial-Menü mit Chat, Freundesliste und den Welten
+  deiner Freunde, der Abgleich deiner Module und HUD-Profile und Bug-Meldungen aus dem Cubiq-Menü über denselben Server
+  wie der Launcher.
+- **Links zur Website, die funktionieren.** „Website öffnen“ unter Einstellungen → Datenschutz, der Link im Fenster
+  „Auf der Website anmelden“ und die Knöpfe „Offene Stellen“ und „Auf der Website“ in „Meine Bewerbungen“ öffnen
+  jetzt die Cubiq-Website.
+- **Deine Spielzeit auf einen Blick.** Eine neue Seite „Statistik“ in der Seitenleiste (unter „Sammlung“, auch in der
+  Suche mit Strg+K) zeigt, wie viel du spielst: insgesamt, in dieser Woche und in diesem Monat, wie viele Sitzungen du
+  hattest und wie lange sie im Schnitt dauern, deine längste Sitzung und deine aktuelle und beste Serie an Tagen
+  hintereinander. Darunter zeigt ein Säulendiagramm die Spielzeit pro Tag der letzten 30 Tage – oder pro Woche der
+  letzten 16 Wochen –, und ein Kalender färbt jeden Tag der letzten Monate danach, wie lange du gespielt hast, von
+  zartem bis zu vollem Grün. Zeig auf eine Säule oder einen Tag oder nimm die Pfeiltasten, um die genaue Zeit zu sehen;
+  „Als Tabelle anzeigen“ listet dieselben Zahlen.
+- **Lieblings-Instanzen, -Versionen und -Server.** Die Seite listet deine meistgespielten Instanzen, die
+  Minecraft-Versionen und Modloader, mit denen du am meisten spielst, und die Server, denen du beigetreten bist – die
+  aus dem Launcher gestarteten genauso wie die, die du im Mehrspieler-Menü des Spiels öffnest. Wähle oben eine Instanz,
+  dann gelten alle Zahlen nur für sie. Gelöschte Instanzen zählen weiter mit und sind als gelöscht markiert.
+- **Auf jeder Instanz-Seite.** Der Tab „Verlauf“ einer Instanz beginnt jetzt mit einer Übersicht: Spielzeit gesamt,
+  Zahl der Sitzungen, durchschnittliche und längste Sitzung und kleine Säulen für die letzten 30 Tage. „Alle
+  Statistiken“ öffnet die Seite nur für diese Instanz. Die Übersicht richtet sich nach der Einstellung „Spielzeit
+  anzeigen“.
+- **Nichts geht verloren.** Deine bisherige Spielzeit zählt von Anfang an mit: Sitzungen aus dem Verlauf deiner
+  Instanzen kommen mit Datum und der damals gespielten Version dazu, ältere Spielzeit zählt zu den Summen. Schließt
+  sich der Launcher während des Spielens unerwartet, beendet sein nächster Start die Sitzung zu dem Zeitpunkt, an dem
+  das Spiel zuletzt in sein Log geschrieben hat, und bucht diese Zeit auch auf die Instanz – bisher ging sie verloren.
+  Unten auf der Seite lässt sich die Statistik zurücksetzen; die Spielzeit an deinen Instanzen bleibt.
+- **Automatische Welt-Backups.** Deine Einzelspieler-Welten werden jetzt von selbst gesichert: Wenn du auf „Spielen“
+  drückst, speichert der Launcher jede Welt, die sich seit ihrem letzten Backup geändert hat, als ZIP-Datei, und nach
+  dem Beenden des Spiels sichert er die Welten, die du gerade gespielt hast. Unveränderte Welten werden übersprungen,
+  meist ist also gar nichts zu tun. Das Spiel wartet nie darauf – das Backup läuft im Hintergrund, während das Spiel
+  lädt, und sein Fortschritt erscheint bei den anderen Aufgaben in der Titelleiste. Öffnest du eine Welt im Spiel,
+  bevor ihr Backup fertig ist, wird dieses unfertige Backup verworfen, denn ein Backup entsteht nie aus einer halb
+  gespeicherten Welt; das vorige bleibt, und nach dem Spielen folgt ein neues. Klappt ein Backup nicht, bekommst du
+  einen kurzen Hinweis, und das Spiel startet trotzdem.
+- **Backups ansehen und wiederherstellen.** Im Tab „Welten“ einer Instanz zeigt jede Welt jetzt, wie viele Backups es
+  gibt und wann das letzte entstand. Ein Klick auf diese Zeile öffnet ihre Backups mit Datum, Größe und Art.
+  „Wiederherstellen“ legt ein Backup als Kopie neben deine jetzige Welt – mit einem Namen wie „Meine Welt
+  (wiederhergestellt 2026-10-27 14.05)“ – oder ersetzt die jetzige Welt; vor dem Ersetzen sichert der Launcher den
+  aktuellen Stand als Backup, du kannst also immer zurück. Gelöschte Welten, von denen es noch Backups gibt, stehen
+  unter „Gelöschte Welten mit Backups“ und kommen mit einem Klick zurück. „Jetzt sichern“ macht jederzeit ein Backup
+  von Hand, auch während das Spiel läuft, solange diese Welt nicht geöffnet ist.
+- **Du bestimmst, wie viel bleibt.** Unter Einstellungen → Welt-Backups lassen sich die automatischen Backups
+  ausschalten, festlegen, wie viele automatische Backups je Welt bleiben (ab Werk 5), und eine Obergrenze für alle
+  Backups zusammen setzen – die ältesten automatischen gehen zuerst, das neueste Backup jeder Welt bleibt immer.
+  Backups von Hand und die vor dem Wiederherstellen werden nie automatisch gelöscht. Im Tab „Welten“ („Auto-Backup“)
+  lässt sich eine einzelne Instanz für sich ein- oder ausschalten. Die Einstellungen zeigen außerdem, wie viel Platz die
+  Backups belegen, öffnen ihren Ordner und können die Backups gelöschter Instanzen entfernen.
+- **Bewegte Update-Bilder.** Die Bilder der Updates unter „Was ist neu“ und auf der Update-Karte der Startseite sind
+  wieder kleine bewegte Pixel-Szenen statt drehbarer 3D-Modelle – bei jedem Update, vom allerersten bis zu diesem. Sie
+  laufen ruhig neben dem Titel und laden schnell, auch auf langsameren PCs; mit „Animationen reduzieren“ unter
+  Einstellungen → Aussehen siehst du das ruhige Bild. Das Bild dieses Updates zeigt die neue Kosmetik: Cubi mit den
+  Polarlichtflügeln, umringt von seinen neuen Begleitern.
+
 ## 0.2.51 – 2026-10-28 – Back to green | Wieder grün
 <!-- banner: accent=#71a330 motif=/news/0.2.51/banner.png anim=/news/0.2.51/banner-anim.png -->
 <!-- shots:

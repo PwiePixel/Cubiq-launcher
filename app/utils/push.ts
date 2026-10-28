@@ -1,6 +1,7 @@
 // Push-Benachrichtigungen der Handy-App (API §33) – Schemata und reine Helfer, getestet in tests/push.test.ts.
 // Keine Nuxt-Auto-Imports, damit die Tests sie direkt laden können.
 import { z } from 'zod'
+import { CUBIQ_SITE } from './site'
 
 /** Kategorien in der Reihenfolge der Einstellungen (wie der Server). */
 export const PUSH_CATEGORIES = ['chat', 'friends', 'friend_online', 'invites', 'hosting', 'packs', 'team', 'achievements'] as const
@@ -91,7 +92,7 @@ export type PushTargetAction =
   | { kind: 'external'; url: string }
 
 const PART = /^[A-Za-z0-9_-]{1,64}$/
-const WEBSITE = 'https://cubiq-launcher.invalid'
+const WEBSITE = CUBIQ_SITE
 
 export function pushTargetAction(target: unknown): PushTargetAction {
   const home: PushTargetAction = { kind: 'route', path: '/' }

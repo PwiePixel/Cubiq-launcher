@@ -18,7 +18,8 @@ import java.util.List;
 /**
  * Wegpunkt-Liste rechts auf der Weltkarte (ein-/ausklappbar): Suche, Filter nach Dimension, je Wegpunkt Farbe, Name,
  * Dimension/Koordinaten, Entfernung und Ein/Aus-Schalter; Klick zentriert die Karte darauf, der Stift öffnet den
- * Wegpunkt-Dialog der Karte (dort auch Löschen), „+“ legt einen neuen in der Kartenmitte an.
+ * Wegpunkt-Dialog der Karte (dort auch Löschen), „+“ legt einen neuen in der Kartenmitte an. Stehen in der Suche
+ * Koordinaten („120 -450“), führt eine eigene Zeile oben dorthin.
  */
 final class WorldMapSidebar {
 	/** Verbindung zur Weltkarte. */
@@ -35,6 +36,9 @@ final class WorldMapSidebar {
 
 		/** Neuer Wegpunkt in der Kartenmitte. */
 		void newWaypoint();
+
+		/** Karte auf Koordinaten der angezeigten Dimension zentrieren und den Punkt markieren. */
+		void goTo(int x, int z);
 	}
 
 	static final int WIDTH = 168;
@@ -84,8 +88,8 @@ final class WorldMapSidebar {
 		rect[2] = w;
 		rect[3] = h;
 		hovered = null;
-		c.fill(x, y, x + w, y + h, 0xEC141217);
-		c.fill(x, y, x + 1, y + h, ColorMath.withAlpha(t.accentText, 0xB0));
+		c.fill(x, y, x + w, y + h, MapStyle.bar(t));
+		c.fill(x, y, x + 1, y + h, t.border);
 		// Klicks auf leere Flächen der Leiste nicht zur Karte durchlassen.
 		hits.add(x, y, w, h, () -> search.setFocused(false));
 
@@ -124,8 +128,17 @@ final class WorldMapSidebar {
 		hits.add(fx, dy, fw / 2, 14, () -> cycleDim(order, -1));
 		hits.add(fx + fw / 2, dy, fw - fw / 2, 14, () -> cycleDim(order, 1));
 
-		// Liste.
+		// „Gehe zu“: Koordinaten in der Suche bekommen eine eigene Zeile über der Liste.
 		int ly = y + HEAD_H, lh = h - HEAD_H - FOOT_H;
+		c.fill(x + 1, ly - 1, x + w, ly, t.border);
+		final int[] go = goal();
+		if (go != null) {
+			goRow(c, hits, go, x + 1, ly, w - 1, mx, my, t);
+			ly += ROW_H;
+			lh -= ROW_H;
+		}
+
+		// Liste.
 		listRect[0] = x;
 		listRect[1] = ly;
 		listRect[2] = w;
@@ -134,8 +147,7 @@ final class WorldMapSidebar {
 		scrollTarget = Math.max(0, Math.min(maxScroll, scrollTarget));
 		scroll = Anim.approach(scroll, scrollTarget, dt, 0.05f);
 		if (Math.abs(scroll - scrollTarget) < 0.5f) scroll = scrollTarget;
-		c.fill(x + 1, ly - 1, x + w, ly, 0x60000000);
-		if (rows.isEmpty()) {
+		if (rows.isEmpty() && go == null) {
 			String empty = I18n.tr(all.isEmpty() ? "map.list.empty" : "map.list.noMatch");
 			int ew = c.textWidth(empty);
 			c.text(c.clip(empty, w - 12), x + Math.max(6, (w - ew) / 2), ly + 12, t.textDim, false);
@@ -161,7 +173,7 @@ final class WorldMapSidebar {
 
 		// Fuß: Anzahl + „Neu“.
 		int footY = y + h - FOOT_H;
-		c.fill(x + 1, footY, x + w, footY + 1, 0x60000000);
+		c.fill(x + 1, footY, x + w, footY + 1, t.border);
 		String count = I18n.tr("map.list.count", rows.size());
 		c.text(c.clip(count, w - 34), x + 6, footY + 5, t.textDim, false);
 		int bx = x + w - 22, byy = footY + 2;
@@ -173,6 +185,23 @@ final class WorldMapSidebar {
 			host.newWaypoint();
 		});
 		if (hovNew) tooltip.add(I18n.tr("map.list.new"));
+	}
+
+	/** Koordinaten in der Suche ({X, Z}) oder null. */
+	int[] goal() {
+		return WorldMapTools.parseCoords(search.text());
+	}
+
+	/** Zeile „Gehe zu X / Z“ (Fadenkreuz, Akzentfarbe): Klick zentriert die Karte dort. */
+	private void goRow(Canvas c, Hits hits, final int[] go, int x, int y, int w, int mx, int my, Theme t) {
+		boolean hov = inside(mx, my, x, y, w, ROW_H);
+		c.fill(x, y, x + w, y + ROW_H, ColorMath.withAlpha(t.accentText, hov ? 0x40 : 0x24));
+		Icons.draw(c, "crosshair", x + 6, y + 7, 1, 0xFF000000 | (t.accentText & 0xFFFFFF));
+		c.text(c.clip(I18n.tr("map.goTo", go[0], go[1]), w - 24), x + 20, y + 7, t.text, false);
+		hits.add(x, y, w, ROW_H, () -> {
+			host.click();
+			host.goTo(go[0], go[1]);
+		});
 	}
 
 	private void row(Canvas c, Hits hits, final WaypointFilter.Row r, int x, int y, int w, int mx, int my, int ly, int lh,
@@ -209,8 +238,8 @@ final class WorldMapSidebar {
 		int ex = x + w - 28, py = y + 12;
 		if (!wp.death) {
 			boolean hovEye = hov && inside(mx, my, ex - 1, py - 1, 11, 10);
-			Icons.draw(c, "eye", ex, py, 1, shown ? (hovEye ? t.text : t.textDim) : 0x60FFFFFF);
-			if (!shown) c.fill(ex - 1, py + 3, ex + 9, py + 4, 0xC0FF6B5E);
+			Icons.draw(c, "eye", ex, py, 1, shown ? (hovEye ? t.text : t.textDim) : ColorMath.withAlpha(t.textDim, 0x70));
+			if (!shown) c.fill(ex - 1, py + 3, ex + 9, py + 4, ColorMath.withAlpha(t.danger, 0xC0));
 			hits.add(ex - 1, py - 1, 11, 10, () -> {
 				host.click();
 				wp.visible = !wp.visible;
@@ -248,7 +277,9 @@ final class WorldMapSidebar {
 		}
 		if (key == UiKey.ENTER) {
 			search.setFocused(false);
-			if (!rows.isEmpty()) host.centerOnWaypoint(rows.get(0).waypoint);
+			int[] go = goal();
+			if (go != null) host.goTo(go[0], go[1]);
+			else if (!rows.isEmpty()) host.centerOnWaypoint(rows.get(0).waypoint);
 			return true;
 		}
 		search.key(key);
