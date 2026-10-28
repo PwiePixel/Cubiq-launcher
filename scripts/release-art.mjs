@@ -995,11 +995,13 @@ const CARE = {
     sprite(['.pp.pp.', 'phhpppp', 'phppppd', '.ppppd.', '..ppd..', '...d...'], { h: C.heartHi, p: C.heart, d: C.heartDark }),
   ],
   // Pinguin von der Seite (schaut nach rechts zu Cubi): Kopf je Haltung – glücklich (Auge zu), kauend (Unterschnabel
-  // klappt auf), hoch (Schnabel zum Fisch), aufgesperrt; darunter Schal, Flosse und Bauch.
+  // klappt auf), hoch (Schnabel zum Fisch), aufgesperrt; darunter Schal, Flosse und Bauch. Das geschlossene Auge ist
+  // ein kurzer Strich in der weißen Maske (wie beim Füchschen), die Maske bleibt ein Stück: Ein weißer Punkt, ringsum
+  // von Dunklem umschlossen, sähe aus wie ein Fleck auf dem Kopf oder ein zweites Augenpaar.
   penguinHead: Object.fromEntries(
     Object.entries({
-      happy: ['..hKKk...', '.hKKKKk..', '.KKWEWk..', '.KKEWEk..', '.KPWWWBB.', '.KKWWWb..'],
-      chew: ['..hKKk...', '.hKKKKk..', '.KKWEWk..', '.KKEWEk..', '.KPWWWBB.', '.KKWWWMb.'],
+      happy: ['..hKKk...', '.hKKKKk..', '.KKWWWk..', '.KKEEWk..', '.KPWWWBB.', '.KKWWWb..'],
+      chew: ['..hKKk...', '.hKKKKk..', '.KKWWWk..', '.KKEEWk..', '.KPWWWBB.', '.KKWWWMb.'],
       up: ['....BB...', '..hKKB...', '.hKKEWk..', '.KKWWWk..', '.KPWWWk..', '.KKWWWk..'],
       open: ['.....B...', '...KKBMb.', '.hKKEWbb.', '.KKWWWk..', '.KPWWWk..', '.KKWWWk..'],
     }).map(([k, rows]) => [k, sprite(rows, PENGUIN_SIDE)]),

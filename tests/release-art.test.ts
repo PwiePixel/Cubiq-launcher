@@ -320,6 +320,51 @@ describe('Bild je Release', () => {
     for (const bite of [1, 8, 15]) for (let age = 2; age <= 6; age++) expect(flying(frames[bite + age]!)).toBeGreaterThan(0)
   })
 
+  it('Sonderthema „petting“: keine weißen Flecken auf dem Kopf des Pinguins – die weiße Maske bleibt ein Stück', () => {
+    const { frames } = releaseFrames('0.3.2', 'petting')
+    // Dunkle Farben des Pinguins: Frack (Glanz, mittel, dunkel) und Auge. Hell ist alles, was heller ist als die hellste
+    // davon. Ein heller Punkt, der auf allen vier Seiten an diese Farben grenzt, sähe aus wie ein Fleck auf dem Kopf
+    // (beim glücklich geschlossenen Auge wie ein zweites Augenpaar).
+    const dark = new Set(['#46557c', '#313d5e', '#232c45', '#18210f'])
+    const luma = (color: string) => {
+      const n = Number.parseInt(color.slice(1), 16)
+      return 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)
+    }
+    const darkest = Math.max(...[...dark].map(luma))
+    const scarf = new Set(['#d63e4a', '#a72d38', '#f5e9d3'])
+    const near = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const
+    const specks: string[] = []
+    const split: string[] = []
+    frames.forEach((frame, f) => {
+      // Den Schal trägt nur der Pinguin: eine Zeile aus 7 Punkten direkt unter dem Kopf (9 × 6 Punkte, links bündig).
+      const knots: (readonly [number, number])[] = []
+      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (scarf.has(hexAt(frame, x, y) ?? '')) knots.push([x, y])
+      const sx = Math.min(...knots.map(([x]) => x))
+      const top = Math.min(...knots.map(([, y]) => y)) - 6
+      expect([knots.length, knots.every(([, y]) => y === top + 6)]).toEqual([7, true])
+      // Kopf samt Umriss: Zeilen top - 1 … top + 5, Spalten sx - 1 … sx + 9 (Lage im Sprite: x - sx, y - top).
+      const mask = new Set<string>()
+      for (let y = top - 1; y < top + 6; y++) {
+        for (let x = sx - 1; x <= sx + 9; x++) {
+          const color = hexAt(frame, x, y)
+          if (!color || luma(color) <= darkest) continue
+          if (color === '#f6f5f0') mask.add(`${x},${y}`)
+          if (near.every(([dx, dy]) => dark.has(hexAt(frame, x + dx, y + dy) ?? ''))) specks.push(`Bild ${f}: ${x - sx},${y - top} ${color}`)
+        }
+      }
+      // Die weiße Gesichtsmaske (Bauchweiß im Kopf) hängt zusammen – über die vier Nachbarn erreichbar.
+      expect(mask.size).toBeGreaterThanOrEqual(8)
+      const seen = new Set([[...mask][0]!])
+      for (const key of seen) {
+        const [x, y] = key.split(',').map(Number) as [number, number]
+        for (const [dx, dy] of near) if (mask.has(`${x + dx},${y + dy}`)) seen.add(`${x + dx},${y + dy}`)
+      }
+      if (seen.size < mask.size) split.push(`Bild ${f}: ${seen.size} von ${mask.size}`)
+    })
+    expect(specks).toEqual([])
+    expect(split).toEqual([])
+  })
+
   it('zeichnet ein freigestelltes 512er-Bild – je Version anders, dieselbe Version immer gleich', () => {
     const a = releaseArt({ version: '0.4.2', text: '- **Fix a crash.**' })
     const again = releaseArt({ version: '0.4.2', text: '- **Fix a crash.**' })
