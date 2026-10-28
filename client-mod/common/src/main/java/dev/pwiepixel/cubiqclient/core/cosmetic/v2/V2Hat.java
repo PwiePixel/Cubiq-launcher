@@ -46,6 +46,13 @@ public final class V2Hat<T> {
 	 */
 	public final long hiddenBones;
 
+	/**
+	 * Begleiter am Boden ({@link #forPet}): gezeichnet mit der Überblendung der Begleiter
+	 * ({@code CosmeticV2Renderer#pose(CosmeticV2, long, long, boolean, boolean, int, int, float, long)} – jede Seite auf
+	 * ihrer Zeit, Drehungen auf dem kürzesten Weg, Effekt-Knochen sofort im Ziel). Hüte und Flügel: false, wie bisher.
+	 */
+	public final boolean pet;
+
 	private final Lod<T> lod;
 
 	public V2Hat(CosmeticV2 model, T base, T glow, T halo, long now, boolean helmet) {
@@ -63,11 +70,12 @@ public final class V2Hat<T> {
 
 	public V2Hat(CosmeticV2 model, T base, T glow, T halo, long now, boolean helmet, Lod<T> lod, int driver, int prevDriver,
 			float blend, long hiddenBones) {
-		this(model, base, glow, halo, now, now, now, helmet, lod, driver, prevDriver, blend, hiddenBones);
+		this(model, base, glow, halo, now, now, now, helmet, lod, driver, prevDriver, blend, hiddenBones, false);
 	}
 
 	private V2Hat(CosmeticV2 model, T base, T glow, T halo, long now, long poseMs, long prevPoseMs, boolean helmet, Lod<T> lod,
-			int driver, int prevDriver, float blend, long hiddenBones) {
+			int driver, int prevDriver, float blend, long hiddenBones, boolean pet) {
+		this.pet = pet;
 		this.poseMs = poseMs;
 		this.prevPoseMs = prevPoseMs;
 		this.hiddenBones = hiddenBones;
@@ -107,13 +115,14 @@ public final class V2Hat<T> {
 
 	/** Gleiches Teil mit einer Zustands-Animation (Flügel: idle/air/sneak, siehe {@link WingState}). */
 	public V2Hat<T> withState(int driver, int prevDriver, float blend) {
-		return new V2Hat<T>(model, base, glow, halo, now, poseMs, prevPoseMs, helmet, lod, driver, prevDriver, blend, hiddenBones);
+		return new V2Hat<T>(model, base, glow, halo, now, poseMs, prevPoseMs, helmet, lod, driver, prevDriver, blend, hiddenBones,
+				pet);
 	}
 
 	/** Gleiches Teil mit abgeschalteten Knochen ({@link CosmeticV2#hiddenBones}). */
 	public V2Hat<T> withHidden(long hidden) {
 		return hidden == hiddenBones ? this
-				: new V2Hat<T>(model, base, glow, halo, now, poseMs, prevPoseMs, helmet, lod, driver, prevDriver, blend, hidden);
+				: new V2Hat<T>(model, base, glow, halo, now, poseMs, prevPoseMs, helmet, lod, driver, prevDriver, blend, hidden, pet);
 	}
 
 	/**
@@ -134,7 +143,7 @@ public final class V2Hat<T> {
 				if (x != null) g = x;
 			}
 		}
-		return new V2Hat<T>(model, b, g, halo, clockMs, poseMs, prevPoseMs, false, lod, driver, prevDriver, blend, hiddenBones);
+		return new V2Hat<T>(model, b, g, halo, clockMs, poseMs, prevPoseMs, false, lod, driver, prevDriver, blend, hiddenBones, true);
 	}
 
 	/** Gibt es in diesem Durchgang etwas zu zeichnen? */

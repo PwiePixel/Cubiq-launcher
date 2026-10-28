@@ -72,6 +72,11 @@ public final class CosmeticV2 {
 	 * {@code actions} ist nie ein Fehler, nur eine Warnung (der Eintrag bzw. der Block wird ignoriert).
 	 */
 	public static final int MAX_ACTIONS = 16, MIN_ACTION_MS = 300, MAX_ACTION_MS = 10000;
+	/**
+	 * Präfix der Effekt-Knochen der Aktionen (Herzchen, Krümel …): in Ruhe im Körper versteckt, nur die Aktionen holen
+	 * sie heraus. Siehe {@link #fxBones}.
+	 */
+	public static final String FX_PREFIX = "fx_";
 	/** Höchstens so viele abschaltbare Teile ({@code options}) je Modell. */
 	public static final int MAX_OPTIONS = 4;
 
@@ -272,6 +277,12 @@ public final class CosmeticV2 {
 	 */
 	public final List<Animation> actions;
 	public final List<Halo> halos;
+	/**
+	 * Effekt-Knochen ({@link #FX_PREFIX}, Bit {@code 1L << knochen}). Beim Überblenden eines Begleiters werden sie nie
+	 * gemischt: sie stehen sofort in der Pose des Ziels (Ruhe, wenn das Ziel sie nicht bewegt) – abgebrochene Herzchen
+	 * verschwinden, statt in voller Größe zurückzugleiten ({@code CosmeticV2Renderer}).
+	 */
+	public final long fxBones;
 	/** Abschaltbare Teile (höchstens {@link #MAX_OPTIONS}); nie null. */
 	public final List<Option> options;
 	/** Anzahl gezeichneter Flächen. */
@@ -311,6 +322,11 @@ public final class CosmeticV2 {
 		}
 		this.faceCount = n;
 		this.materials = mats;
+		long fx = 0L;
+		for (int b = 0; b < bones.size() && b < 64; b++) {
+			if (bones.get(b).id.startsWith(FX_PREFIX)) fx |= 1L << b;
+		}
+		this.fxBones = fx;
 	}
 
 	/** Breite eines Bildes der Grundtextur in echten Pixeln. */
