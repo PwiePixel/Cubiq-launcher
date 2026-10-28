@@ -11,12 +11,16 @@
 //! `cargo build -vv` nicht in der Ausgabe auf.
 //!
 //! Außerdem die Adresse der Cubiq-Dienste (`CUBIQ_API_BASE`, Repo-Variable im
-//! Release-Build): geprüft und ohne Schrägstrich am Ende als `CUBIQ_SITE`.
+//! Release-Build): geprüft (Regel in `site_rule.rs`) und ohne Schrägstrich am Ende
+//! als `CUBIQ_SITE`.
 
 use std::path::PathBuf;
 
+include!("site_rule.rs");
+
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=site_rule.rs");
     println!("cargo:rerun-if-env-changed=CURSEFORGE_API_KEY");
     cubiq_site();
 
@@ -54,7 +58,8 @@ fn is_plausible(key: &str) -> bool {
 
 /// `CUBIQ_API_BASE` → `CUBIQ_SITE` (gelesen von `cubiq_api::DEFAULT_BASE`). Ein Schrägstrich am Ende
 /// würde Adressvergleiche (z. B. für Umhang-Bilder) leise scheitern lassen, deshalb fällt er weg. Eine
-/// Adresse mit Pfad oder ohne https ist ein Tippfehler – dann bleiben die Dienste aus, statt halb zu laufen.
+/// Adresse mit Pfad, ohne https oder mit kaputtem Port ist ein Tippfehler: Der Build bricht ab – sonst
+/// erschiene ein Release, in dem die Cubiq-Dienste leise fehlen (die Oberfläche prüft genauso).
 fn cubiq_site() {
     println!("cargo:rerun-if-env-changed=CUBIQ_API_BASE");
     let Ok(raw) = std::env::var("CUBIQ_API_BASE") else { return };
@@ -62,17 +67,6 @@ fn cubiq_site() {
     if base.is_empty() {
         return;
     }
-    if is_site(base) {
-        println!("cargo:rustc-env=CUBIQ_SITE={base}");
-    } else {
-        println!("cargo:warning=CUBIQ_API_BASE ist keine Adresse wie https://deine-domain.de – die Cubiq-Dienste bleiben in diesem Build aus.");
-    }
-}
-
-/// `https://host[:port]` ohne Pfad, Query oder Zugangsdaten; für lokale Tests auch `http://127.0.0.1:…`.
-fn is_site(base: &str) -> bool {
-    let host = base
-        .strip_prefix("https://")
-        .or_else(|| base.strip_prefix("http://").filter(|h| h.starts_with("127.0.0.1:") || h.starts_with("localhost:")));
-    host.is_some_and(|h| !h.is_empty() && h.bytes().all(|b| b.is_ascii_alphanumeric() || b".-:".contains(&b)))
+    assert!(is_site(base), "CUBIQ_API_BASE „{base}“ ist keine Adresse wie https://deine-domain.de (ohne Pfad) – Build abgebrochen.");
+    println!("cargo:rustc-env=CUBIQ_SITE={base}");
 }

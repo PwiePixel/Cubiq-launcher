@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import fs from 'node:fs'
 import tailwindcss from '@tailwindcss/vite'
+import { cubiqSite } from './scripts/cubiq-site.mjs'
 
 // Messe-Build (CUBIQ_MESSE=1, alternativ NUXT_PUBLIC_MESSE=1): Präsentation + Kiosk-Ebene. Normale Builds bekommen
 // weder die Präsentation (.messe-pitch/) noch aktive Messe-Pfade – MESSE ist dort zur Bauzeit fest `false`.
@@ -21,9 +22,9 @@ const messePinRecord = messePin
   : ''
 
 // Adresse der Cubiq-Dienste (Repo-Variable CUBIQ_API_BASE, im Release-Build gesetzt) – geprüft wie in
-// src-tauri/crates/core/build.rs, damit Oberfläche und Kern dieselbe Adresse nutzen (app/utils/site.ts).
-const cubiqApiBase = (process.env.CUBIQ_API_BASE ?? '').trim().replace(/\/+$/, '')
-const cubiqSite = /^(?:https:\/\/[A-Za-z0-9.:-]+|http:\/\/(?:127\.0\.0\.1|localhost):[0-9]+)$/.test(cubiqApiBase) ? cubiqApiBase : ''
+// src-tauri/crates/core/site_rule.rs, damit Oberfläche und Kern dieselbe Adresse nutzen (app/utils/site.ts).
+// Ein Tippfehler bricht den Build ab.
+const cubiqSiteBase = cubiqSite(process.env.CUBIQ_API_BASE)
 
 // Tauri hat keine Server-Runtime: SPA-Modus + `nuxt generate`.
 export default defineNuxtConfig({
@@ -58,7 +59,7 @@ export default defineNuxtConfig({
     define: {
       'import.meta.env.VITE_CUBIQ_MESSE': JSON.stringify(messe ? '1' : ''),
       'import.meta.env.VITE_CUBIQ_MESSE_PIN': JSON.stringify(messePinRecord),
-      'import.meta.env.VITE_CUBIQ_SITE': JSON.stringify(cubiqSite),
+      'import.meta.env.VITE_CUBIQ_SITE': JSON.stringify(cubiqSiteBase),
       __VUE_I18N_FULL_INSTALL__: true,
       __VUE_I18N_LEGACY_API__: false,
       __INTLIFY_PROD_DEVTOOLS__: false,
