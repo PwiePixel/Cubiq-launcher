@@ -941,7 +941,8 @@ function checkTracks(p: string, tracks: unknown, len: unknown, bones: ReadonlySe
   ;(tracks as unknown[]).forEach((rawTrack, j) => {
     const tr = isObject(rawTrack) ? rawTrack : {}
     const tp = `${p}.tracks[${j}]`
-    if (!bones.has(String(tr.bone))) err(tp, `unbekannter Knochen ${String(tr.bone)}`)
+    // Knochen nur über ihre id als Text – ["head"] ist kein Knochen (wie Website und Cubiq Client).
+    if (typeof tr.bone !== 'string' || !bones.has(tr.bone)) err(tp, `unbekannter Knochen ${typeof tr.bone === 'string' ? tr.bone : (JSON.stringify(tr.bone) ?? String(tr.bone))}`)
     if (!(CHANNELS as readonly unknown[]).includes(tr.channel)) err(tp, `channel eins von ${CHANNELS.join(', ')}`)
     if (tr.interpolation != null && !(INTERPOLATIONS as readonly unknown[]).includes(tr.interpolation)) err(tp, 'unbekannte interpolation')
     if (!Array.isArray(tr.keys) || !tr.keys.length || tr.keys.length > LIMITS.keys) {
@@ -964,16 +965,19 @@ function checkTracks(p: string, tracks: unknown, len: unknown, bones: ReadonlySe
 /**
  * Aktionen prüfen (`actions`). Nie ein Fehler: Jedes Problem gibt genau EINE Warnung und lässt den Eintrag
  * (oder die ganze Liste) weg – so bleibt ein Begleiter auch mit Aktionen einer späteren Version ladbar.
- * Gültige Aktionen ergeben keine Warnung. Je Treiber gilt der erste gültige Eintrag.
+ * Gültige Aktionen ergeben keine Warnung. Je Treiber gilt der erste gültige Eintrag: Ein weiterer Eintrag für
+ * einen Treiber, der schon einen gültigen hat, fällt mit einer Warnung weg; ein ungültiger blockiert keinen späteren.
+ * Nur ein fehlender Schlüssel ist still – `null` ist keine Liste, und jedes `actions` außerhalb von slot pet
+ * (auch eine leere Liste) gibt eine Warnung.
  */
 function checkActions(m: Record<string, unknown>, bones: ReadonlySet<string>): { actions: Map<ActionDriver, CosmeticAction>; warnings: string[] } {
   const actions = new Map<ActionDriver, CosmeticAction>()
   const warnings: string[] = []
   const list = m.actions
-  if (list == null) return { actions, warnings }
+  if (list === undefined) return { actions, warnings }
   const ignoreAll = (msg: string) => warnings.push(`actions: ${msg} – Aktionen ignoriert`)
   if (!Array.isArray(list)) ignoreAll('Liste erwartet')
-  else if (list.length && m.slot !== 'pet') ignoreAll('nur für slot pet')
+  else if (m.slot !== 'pet') ignoreAll('nur für slot pet')
   else if (list.length > ACTION_LIMITS.entries) ignoreAll(`höchstens ${ACTION_LIMITS.entries} Einträge`)
   else {
     ;(list as unknown[]).forEach((raw, i) => {
@@ -985,7 +989,8 @@ function checkActions(m: Record<string, unknown>, bones: ReadonlySet<string>): {
       if (actions.has(driver)) return ignore(`driver ${driver} doppelt`)
       const problems: string[] = []
       const note = (path: string, msg: string) => problems.push(`${path}: ${msg}`)
-      if (!ID.test(String(raw.id ?? ''))) note(p, 'ungültige id')
+      // id ist Text nach der id-Regel (true oder ["pet"] werden nicht umgewandelt).
+      if (typeof raw.id !== 'string' || !ID.test(raw.id)) note(p, 'ungültige id')
       const [minMs, maxMs] = ACTION_LIMITS.lengthMs
       const len = raw.lengthMs
       if (!Number.isInteger(len) || (len as number) < minMs || (len as number) > maxMs) note(p, `lengthMs ${minMs}…${maxMs}`)

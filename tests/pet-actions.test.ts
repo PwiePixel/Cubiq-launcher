@@ -67,9 +67,29 @@ describe('Aktionen – Prüfung', () => {
     expect(ACTION_DRIVERS).toEqual(['pet', 'eat'])
     expect(actionOf(m, 'pet')).toBe(entries(m)[0])
     expect(actionOf(m, 'eat')).toBe(entries(m)[1])
-    // Leere oder fehlende Liste: nichts zu melden.
-    for (const actions of [[], null, undefined]) expect(validateModel({ ...m, actions }, IMAGES).warnings).toEqual([])
-    expect(validateModel({ ...m, slot: 'hat', attach: 'head', actions: [] }, IMAGES).warnings).toEqual([])
+    // Leere oder fehlende Liste am Begleiter: nichts zu melden.
+    for (const actions of [[], undefined]) expect(validateModel({ ...m, actions }, IMAGES).warnings).toEqual([])
+    expect(validateModel(withoutActions(m), IMAGES).warnings).toEqual([])
+  })
+
+  it('`null` ist keine Liste, und `actions` außerhalb von slot pet meldet sich immer (auch leer) – je eine Warnung', () => {
+    const m = fox()
+    const cases: [string, Json][] = [
+      ['null', { ...m, actions: null }],
+      ['Hut, leere Liste', { ...m, slot: 'hat', attach: 'head', actions: [] }],
+      ['Begleiter am Kopf, leere Liste', { ...m, slot: 'companion', attach: 'head', actions: [] }],
+      ['Begleiter am Kopf, null', { ...m, slot: 'companion', attach: 'head', actions: null }],
+      ['Flügel, gültige Liste', { ...m, slot: 'wings', attach: 'body' }],
+    ]
+    for (const [name, model] of cases) {
+      const res = validateModel(model, IMAGES)
+      expect([name, res.ok, res.errors, res.warnings.length], name).toEqual([name, true, [], 1])
+      expect(res.warnings[0], name).toMatch(/^actions: /)
+      expect([actionOf(model, 'pet'), actionOf(model, 'eat')], name).toEqual([undefined, undefined])
+    }
+    // Ohne den Schlüssel bleibt jeder slot still.
+    const hat = withoutActions({ ...m, slot: 'hat', attach: 'head' } as Model)
+    expect(validateModel(hat, IMAGES).warnings).toEqual([])
   })
 
   // Jeder Fall betrifft die Aktion `pet`: Modell bleibt gültig, genau eine Warnung, `pet` fällt weg, `eat` bleibt.
@@ -83,6 +103,12 @@ describe('Aktionen – Prüfung', () => {
     ['lengthMs 10001', (a) => (a.lengthMs = 10001)],
     ['lengthMs nicht ganzzahlig', (a) => (a.lengthMs = 2200.5)],
     ['ungültige id', (a) => (a.id = 'Pet')],
+    // id und Knochen werden nicht umgewandelt: true, ["pet"] oder ["head"] sind kein Text.
+    ['id true', (a) => (a.id = true)],
+    ['id ["pet"]', (a) => (a.id = ['pet'])],
+    ['id 5', (a) => (a.id = 5)],
+    ['Knochen ["head"]', (a) => (tracksOf(a)[0]!.bone = ['head'] as never)],
+    ['Knochen fehlt', (a) => delete (tracksOf(a)[0] as Json).bone],
     ['keine Spuren', (a) => (a.tracks = [])],
     ['33 Spuren', (a) => (a.tracks = Array.from({ length: 33 }, () => tracksOf(a)[0]))],
     ['65 Schlüssel', (a) => (tracksOf(a)[0]!.keys = Array.from({ length: 65 }, (_, i) => ({ t: i, v: [0, 0, 0] })))],
@@ -154,6 +180,18 @@ describe('Aktionen – Prüfung', () => {
     expect(DRIVERS).toHaveLength(10)
     for (const d of ACTION_DRIVERS) expect([(DRIVERS as readonly string[]).includes(d), (PET_STATES as readonly string[]).includes(d)]).toEqual([false, false])
     expect(LIMITS.animations).toBe(12)
+  })
+
+  it('Spuren nennen ihren Knochen als Text – auch in `animations` wird ["head"] nicht umgewandelt', () => {
+    const m = fox()
+    const tr = m.animations![0]!.tracks[0]! as unknown as Json
+    const bone = tr.bone as string
+    tr.bone = [bone]
+    const res = validateModel(m, IMAGES)
+    expect(res.ok).toBe(false)
+    expect(res.errors).toEqual([`animations[0].tracks[0]: unbekannter Knochen ["${bone}"]`])
+    tr.bone = bone
+    expect(validateModel(m, IMAGES)).toEqual({ ok: true, errors: [], warnings: [] })
   })
 
   it('Zustands-Animationen übergehen `actions`', () => {
