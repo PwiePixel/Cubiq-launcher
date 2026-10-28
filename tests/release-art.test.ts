@@ -81,6 +81,60 @@ function colorsOf(frame: Canvas, y0 = 0, y1 = 64) {
   return set
 }
 
+/** Farbe eines Punkts als „#rrggbb“ (`null`, wenn leer oder außerhalb). */
+function hexAt(frame: Canvas, x: number, y: number) {
+  const c = frame.get(x, y)
+  return c ? `#${c.slice(0, 3).map((v) => v.toString(16).padStart(2, '0')).join('')}` : null
+}
+
+/** Schwerpunkt aller Punkte einer Farbe. */
+function centre(frame: Canvas, color: string) {
+  let sx = 0
+  let sy = 0
+  let n = 0
+  for (let y = 0; y < 64; y++) {
+    for (let x = 0; x < 64; x++) {
+      if (hexAt(frame, x, y) !== color) continue
+      sx += x
+      sy += y
+      n++
+    }
+  }
+  return [sx / n, sy / n] as const
+}
+
+/**
+ * Cubis Augen in einem Bild der Szene „petting“: Sein Mund (nur Cubi hat diese Farbe) gibt die Lage des Gesichts, die
+ * Augen sind je 2 × 3 Punkte wie im Sprite. Je Auge das Muster (W = Augenweiß, K = Pupille, · = Lid), wie viel Weiß zu
+ * sehen ist und wohin die Pupille schaut: `x`/`y` je −1 (links/oben), 0 oder 1 (rechts/unten), bei geschlossenen Augen
+ * 0. Dazu `mid`, die Mitte zwischen den Augen.
+ */
+function cubiEyes(frame: Canvas) {
+  let mx = 64
+  let my = 64
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (hexAt(frame, x, y) === '#22301a') [mx, my] = [Math.min(mx, x), Math.min(my, y)]
+  const left = mx - 6
+  const top = my - 8
+  const eyes = [left + 3, left + 10].map((ex) => {
+    const rows: string[] = []
+    const pupils: number[][] = []
+    for (let dy = 0; dy < 3; dy++) {
+      let row = ''
+      for (let dx = 0; dx < 2; dx++) {
+        const c = hexAt(frame, ex + dx, top + 4 + dy)
+        row += c === '#f6f9f2' ? 'W' : c === '#18210f' ? 'K' : '·'
+        if (c === '#18210f') pupils.push([dx, dy])
+      }
+      rows.push(row)
+    }
+    const pattern = rows.join('/')
+    const white = pattern.split('W').length - 1
+    const mean = (k: number) => pupils.reduce((sum, p) => sum + p[k]!, 0) / pupils.length
+    return { pattern, white, x: white ? Math.sign(mean(0) - 0.5) : 0, y: white ? Math.sign(mean(1) - 1) : 0 }
+  })
+  return { eyes, mid: [left + 7.5, top + 5] as const }
+}
+
 describe('Bild je Release', () => {
   it('wählt das Thema nach dem Text – fette Überschriften zählen mehr', () => {
     expect(pickTopic('- **Cubiq Launcher is here.** The first version.').id).toBe('launch')
@@ -186,6 +240,84 @@ describe('Bild je Release', () => {
     const heartRows = frames.flatMap((frame) => Array.from({ length: 64 }, (_, y) => y).filter((y) => colorsOf(frame, y, y + 1).has('#f2648c')))
     expect(Math.min(...heartRows)).toBeLessThan(12)
     expect(Math.max(...heartRows)).toBeGreaterThan(28)
+  })
+
+  it('Sonderthema „petting“: Cubis Augen folgen dem Fisch und dem Füchschen, jeder Blickwechsel mit einem Lidschlag', () => {
+    const { frames } = releaseFrames('0.3.2', 'petting')
+    const n = frames.length
+    const faces = frames.map(cubiEyes)
+    // Beide Augen immer gleich (kein Auge breiter oder anders gerichtet als das andere).
+    for (const { eyes } of faces) expect(eyes[1]!.pattern).toBe(eyes[0]!.pattern)
+    const look = faces.map(({ eyes }) => eyes[0]!)
+
+    // Beim Füttern (Bild 0 bis 17, alle drei Bissen) ganz offen nach links oben – dort hängt der Fisch über dem Pinguin.
+    // Das ruhige Bild (Bild 0) gehört dazu.
+    expect(look[0]!.pattern).toBe('KW/KW/WW')
+    for (let f = 0; f <= 17; f++) {
+      expect(look[f]).toMatchObject({ white: 4, x: -1, y: -1 })
+      const [fishX, fishY] = centre(frames[f]!, '#5b8fb6')
+      expect(fishX).toBeLessThan(faces[f]!.mid[0])
+      expect(fishY).toBeLessThan(faces[f]!.mid[1])
+    }
+    // Beim Kraulen (Bild 20 bis 29) nach rechts unten – dort sitzt das Füchschen.
+    for (let f = 20; f <= 29; f++) {
+      expect(look[f]).toMatchObject({ pattern: 'WW/WK/WK', x: 1, y: 1 })
+      const [foxX, foxY] = centre(frames[f]!, '#e2702c')
+      expect(foxX).toBeGreaterThan(faces[f]!.mid[0])
+      expect(foxY).toBeGreaterThan(faces[f]!.mid[1])
+    }
+
+    // Die Pupillen springen nie: Zwischen zwei Bildern, in denen sie zu sehen sind, bleibt die Richtung gleich – auch
+    // über die Naht vom letzten zum ersten Bild. Die Richtung wechselt nur über ein Bild mit geschlossenen Augen (Strich
+    // unten wie beim Blinzeln), danach gehen die Lider in zwei Schritten auf: halb, ganz.
+    for (let f = 0; f < n; f++) {
+      const [a, b] = [look[f]!, look[(f + 1) % n]!]
+      if (a.white && b.white) expect([f, b.x]).toEqual([f, a.x])
+    }
+    const shut = look.flatMap((e, f) => (e.white ? [] : [f]))
+    expect(shut).toEqual([18, 30])
+    for (const f of shut) {
+      expect(look[f]!.pattern).toBe('··/··/KK')
+      const [before, after, open] = [look[(f + n - 1) % n]!, look[(f + 1) % n]!, look[(f + 2) % n]!]
+      // Jeder Lidschlag ist ein Blickwechsel (Fisch ↔ Füchschen), die neue Richtung schon beim halb offenen Auge.
+      expect(after.x).toBe(-before.x)
+      expect(after.white).toBeGreaterThan(0)
+      expect(after.white).toBeLessThan(4)
+      expect(after.pattern.startsWith('··/')).toBe(true)
+      expect(open).toMatchObject({ white: 4, x: after.x })
+    }
+  })
+
+  it('Sonderthema „petting“: Krümel fliegen hinter dem Pinguin und Cubi vorbei – kein heller Fleck auf ihnen', () => {
+    const { frames } = releaseFrames('0.3.2', 'petting')
+    // Krümelfarben (Papierweiß, Fischsilber hell und mittel) direkt neben dem Frack des Pinguins oder Cubis Körper
+    // hieße: ein Krümel liegt auf der Figur oder auf ihrem Umriss. Alle Figuren haben einen Umriss, also grenzt sonst
+    // nichts in diesen Farben an sie.
+    const crumb = new Set(['#f2f5f1', '#d6ecf6', '#94c4dd'])
+    const figure = new Set(['#313d5e', '#232c45', '#46557c', '#b3dc72', '#96c955', '#86b844', '#71a330', '#55821f', '#456b19'])
+    const near = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const
+    const spots: string[] = []
+    frames.forEach((frame, f) => {
+      for (let y = 0; y < 64; y++) {
+        for (let x = 0; x < 64; x++) {
+          if (!crumb.has(hexAt(frame, x, y) ?? '')) continue
+          if (near.some(([dx, dy]) => figure.has(hexAt(frame, x + dx, y + dy) ?? ''))) spots.push(`Bild ${f}: ${x},${y}`)
+        }
+      }
+    })
+    expect(spots).toEqual([])
+    // Trotzdem fliegen nach jedem Bissen (Bild 1, 8, 15) sichtbar Krümel: ab dem zweiten Bild danach immer welche frei
+    // in der Luft (ein Punkt in Krümelfarbe ohne Nachbarn – kein Umriss, keine Figur).
+    const flying = (frame: Canvas) => {
+      let count = 0
+      for (let y = 0; y < 64; y++) {
+        for (let x = 0; x < 64; x++) {
+          if (crumb.has(hexAt(frame, x, y) ?? '') && near.every(([dx, dy]) => !frame.get(x + dx, y + dy))) count++
+        }
+      }
+      return count
+    }
+    for (const bite of [1, 8, 15]) for (let age = 2; age <= 6; age++) expect(flying(frames[bite + age]!)).toBeGreaterThan(0)
   })
 
   it('zeichnet ein freigestelltes 512er-Bild – je Version anders, dieselbe Version immer gleich', () => {
