@@ -617,7 +617,7 @@ public final class OnlineFeatures<T> {
 		java.util.function.BiConsumer<dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<?>, Integer> trace = v2Trace;
 		if (trace != null) trace.accept(hat, pass);
 		try {
-			// Begleiter: jede Seite der Überblendung auf ihrer Zeit, gemischt wie in den Vorschauen; Hüte/Flügel wie bisher
+			// Begleiter: jede Seite der Überblendung auf ihrer Zeit, Effekt-Knochen sofort im Ziel; Hüte/Flügel wie bisher
 			v2Renderer.pose(hat);
 			v2Renderer.emit(hat.model, pass, hat.now, eye, sink);
 		} catch (RuntimeException e) {

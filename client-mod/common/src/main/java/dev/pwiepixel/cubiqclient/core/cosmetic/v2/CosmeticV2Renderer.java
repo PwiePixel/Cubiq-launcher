@@ -104,9 +104,9 @@ public final class CosmeticV2Renderer {
 	 * {@code prevDriver} (Uhr + Versatz für Bewegungs-Zustände, Zeit seit dem eigenen Beginn für {@code grab} und die
 	 * Aktionen). Sonst springt die ausgehende Seite beim Wechsel auf eine fremde Phase (sitzender Fuchs → stehend beim
 	 * Schnappen). Aktions-Treiber ({@link CosmeticV2#DRIVER_PET} …) spielen ihre Aktion allein und auf 0…lengthMs begrenzt.
-	 * Überblendet wird wie in den Vorschauen von Website und Launcher ({@link #crossfade}): Drehungen auf dem kürzesten
-	 * Weg, Effekt-Knochen ({@link CosmeticV2#fxBones}) sofort in der Pose des Ziels. Ohne Überblendung (fertig
-	 * eingeblendet) genau wie die Fassung mit einer Zeit; Hüte, Flügel und die Garderobe bleiben bei jener.
+	 * Gemischt wird genau wie mit einer Zeit ({@link #crossfade}); nur Effekt-Knochen ({@link CosmeticV2#fxBones}) stehen
+	 * sofort in der Pose des Ziels. Ohne Überblendung (fertig eingeblendet) genau wie die Fassung mit einer Zeit; Hüte,
+	 * Flügel und die Garderobe bleiben bei jener.
 	 */
 	public void pose(CosmeticV2 m, long timeMs, long prevTimeMs, boolean animate, boolean helmet, int driver, int prevDriver,
 			float blend, long hiddenBones) {
@@ -165,47 +165,46 @@ public final class CosmeticV2Renderer {
 		}
 	}
 
-	/** Ziel-Seite einer Überblendung (Arbeitsspeicher für {@link #crossfade}). */
+	/** Pose des Ziels für die Effekt-Knochen einer Überblendung (Arbeitsspeicher für {@link #crossfade}). */
 	private final float[][] qPos = new float[MAX][3];
 	private final float[][] qRot = new float[MAX][3];
 	private final float[][] qScale = new float[MAX][3];
 
 	/**
-	 * Überblendung eines Begleiters (Vertrag der Aktionen, wie Website und Launcher): beide Seiten getrennt abtasten – das
-	 * Ziel {@code cur} zur Zeit {@code timeMs}, den Ausgang {@code prev} zu {@code prevTimeMs} – und je Knochen mischen
-	 * ({@code w} = Anteil des Ziels): Drehung je Achse auf dem kürzesten Weg ({@code d = ((nach − von) % 360 + 540) % 360
-	 * − 180}, Ergebnis {@code von + d · w} – nie eine volle Umdrehung rückwärts), Position und Größe linear.
+	 * Überblendung eines Begleiters ({@code w} = Anteil des Ziels): gemischt genau wie mit einer Zeit und wie bis 0.23.0 –
+	 * das Ziel {@code cur} mit Gewicht {@code w}, der Ausgang {@code prev} mit {@code 1 − w} ({@link #samplePoses}: Drehung
+	 * und Position je Achse gewichtet addiert, also linear, Größe je Spur als Faktor {@code 1 + w·(v − 1)}) –, nur jede
+	 * Seite auf ihrer eigenen Zeit: das Ziel zu {@code timeMs}, den Ausgang zu {@code prevTimeMs}. Drehungen bewusst je
+	 * Euler-Winkel, ohne kürzesten Weg: gegen ein Ziel, das sich bewegt (Rolle beim Rutschen 0…720°, Drehungen bei Hände
+	 * hoch; hier laufen sogar beide Seiten weiter), wechselte der mitten in der Überblendung die Richtung, und das Bild
+	 * spränge um 360° · w. Nach einer Bewegung über mehrere Runden dreht ein Knochen dafür kurz schnell zurück, wie bisher.
 	 * Effekt-Knochen ({@link CosmeticV2#fxBones}) werden nie gemischt: sie nehmen sofort die Pose des Ziels (Ruhe, wenn
 	 * es sie nicht bewegt), beim Beginn, Ende und Abbruch einer Aktion. Ergebnis in {@code pPos}/{@code pRot}/{@code pScale}.
 	 */
 	private void crossfade(CosmeticV2 m, int n, long timeMs, int cur, long prevTimeMs, int prev, float w) {
-		samplePoses(m, timeMs, cur, 1f);
-		for (int b = 0; b < n; b++) {
-			for (int j = 0; j < 3; j++) {
-				qPos[b][j] = pPos[b][j];
-				qRot[b][j] = pRot[b][j];
-				qScale[b][j] = pScale[b][j];
-				pPos[b][j] = 0f;
-				pRot[b][j] = 0f;
-				pScale[b][j] = 1f;
+		long fx = m.fxBones;
+		if (fx != 0L) {
+			// Ziel mit vollem Gewicht vorab (nur für die Effekt-Knochen), danach wieder von der Ruhe aus mischen
+			samplePoses(m, timeMs, cur, 1f);
+			for (int b = 0; b < n; b++) {
+				for (int j = 0; j < 3; j++) {
+					qPos[b][j] = pPos[b][j];
+					qRot[b][j] = pRot[b][j];
+					qScale[b][j] = pScale[b][j];
+					pPos[b][j] = 0f;
+					pRot[b][j] = 0f;
+					pScale[b][j] = 1f;
+				}
 			}
 		}
-		samplePoses(m, prevTimeMs, prev, 1f);
-		long fx = m.fxBones;
-		for (int b = 0; b < n; b++) {
-			boolean direct = b < 64 && (fx & (1L << b)) != 0L;
+		samplePoses(m, timeMs, cur, w);
+		samplePoses(m, prevTimeMs, prev, 1f - w);
+		for (int b = 0; b < n && b < 64; b++) {
+			if ((fx & (1L << b)) == 0L) continue;
 			for (int j = 0; j < 3; j++) {
-				if (direct) {
-					pPos[b][j] = qPos[b][j];
-					pRot[b][j] = qRot[b][j];
-					pScale[b][j] = qScale[b][j];
-					continue;
-				}
-				double from = pRot[b][j];
-				double d = ((qRot[b][j] - from) % 360.0 + 540.0) % 360.0 - 180.0;
-				pRot[b][j] = (float) (from + d * w);
-				pPos[b][j] = (float) (pPos[b][j] + ((double) qPos[b][j] - pPos[b][j]) * w);
-				pScale[b][j] = (float) (pScale[b][j] + ((double) qScale[b][j] - pScale[b][j]) * w);
+				pPos[b][j] = qPos[b][j];
+				pRot[b][j] = qRot[b][j];
+				pScale[b][j] = qScale[b][j];
 			}
 		}
 	}

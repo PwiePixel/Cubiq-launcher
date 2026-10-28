@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,10 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Überblendung zwischen zwei Zuständen eines Begleiters, jede Seite auf ihrer eigenen Zeitbasis: Bewegung nach der Uhr
  * (+ Versatz), {@code grab} und die Aktionen ab ihrem eigenen Beginn. Bis 0.23.0 lief die ausgehende Seite auf der Zeit
  * der eingehenden – der sitzende Fuchs stand beim Schnappen schlagartig auf, am Ende des Schnappens sprang er in eine
- * zufällige Phase. Dazu die Regeln der Überblendung wie in den Vorschauen von Website und Launcher: Drehungen auf dem
- * kürzesten Weg, Effekt-Knochen ({@code fx_*}) sofort in der Pose des Ziels – Hüte und Flügel mischen wie bisher. Mit
- * beiden Füchsen ({@link PetActionsFormatTest#FOXES}); was ein Test erwartet, leitet er aus dem Modell ab (Längen, Spuren,
- * wo idle sitzt).
+ * zufällige Phase. Gemischt wird sonst genau wie bis 0.23.0 und wie bei Hüten und Flügeln (gewichtet addiert, Drehungen
+ * je Euler-Winkel geradlinig – kein kürzester Weg); nur Effekt-Knochen ({@code fx_*}) stehen sofort in der Pose des
+ * Ziels. Mit beiden Füchsen ({@link PetActionsFormatTest#FOXES}); was ein Test erwartet, leitet er aus dem Modell ab
+ * (Längen, Spuren, wo idle sitzt).
  */
 class PetCrossfadeTest {
 	/** Ein Bild bei 60 fps. */
@@ -333,6 +335,11 @@ class PetCrossfadeTest {
 	 * an (bei 500 ms 8 px hoch, doppelt so groß).
 	 */
 	static String fadeModel(double idleZ, double walkZ) {
+		return fadeModel(still("idle", "spin", idleZ), still("walk", "spin", walkZ));
+	}
+
+	/** {@link #fadeModel(double, double)} mit zwei eigenen Animationen (JSON) statt idle und walk. */
+	private static String fadeModel(String first, String second) {
 		String faces = ",\"faces\":{\"north\":{\"uv\":[0,0,2,2]},\"south\":{\"uv\":[2,0,4,2]}}}";
 		return "{\"format\":2,\"id\":\"test_fade\",\"name\":\"Test\",\"slot\":\"pet\",\"attach\":\"ground\","
 				+ "\"texture\":{\"file\":\"t.png\",\"width\":16,\"height\":16,\"scale\":1},"
@@ -341,7 +348,7 @@ class PetCrossfadeTest {
 				+ "\"cubes\":[{\"id\":\"b\",\"bone\":\"root\",\"from\":[-2,0,-2],\"to\":[2,4,2]" + faces + ","
 				+ "{\"id\":\"s\",\"bone\":\"spin\",\"from\":[-1,4,-1],\"to\":[1,8,1]" + faces + ","
 				+ "{\"id\":\"f\",\"bone\":\"fx_spark\",\"from\":[-0.5,1.5,-0.5],\"to\":[0.5,2.5,0.5]" + faces + "],"
-				+ "\"animations\":[" + still("idle", "spin", idleZ) + "," + still("walk", "spin", walkZ) + "],"
+				+ "\"animations\":[" + first + "," + second + "],"
 				+ "\"actions\":[{\"id\":\"pet\",\"driver\":\"pet\",\"lengthMs\":1000,\"tracks\":["
 				+ "{\"bone\":\"fx_spark\",\"channel\":\"position\",\"keys\":[{\"t\":0,\"v\":[0,0,0]},{\"t\":500,\"v\":[0,8,0]},{\"t\":1000,\"v\":[0,0,0]}]},"
 				+ "{\"bone\":\"fx_spark\",\"channel\":\"scale\",\"keys\":[{\"t\":0,\"v\":[1,1,1]},{\"t\":500,\"v\":[2,2,2]},{\"t\":1000,\"v\":[1,1,1]}]}]},"
@@ -363,36 +370,222 @@ class PetCrossfadeTest {
 		return r.world(PetActionsFormatTest.bone(ref, "spin")).clone();
 	}
 
+	/**
+	 * Eine Animation, die {@code spin} fest in die Pose {@code p} stellt: {rx, ry, rz, px, py, pz, sx, sy, sz} (Grad, Pixel,
+	 * Faktor).
+	 */
+	private static String stillPose(String driver, double[] p) {
+		return "{\"id\":\"" + driver + "\",\"driver\":\"" + driver + "\",\"lengthMs\":1000,\"tracks\":["
+				+ spinKey("rotation", p[0], p[1], p[2]) + "," + spinKey("position", p[3], p[4], p[5]) + ","
+				+ spinKey("scale", p[6], p[7], p[8]) + "]}";
+	}
+
+	private static String spinKey(String channel, double x, double y, double z) {
+		return "{\"bone\":\"spin\",\"channel\":\"" + channel + "\",\"keys\":[{\"t\":0,\"v\":[" + x + "," + y + "," + z + "]}]}";
+	}
+
+	/** Welt-Matrix von {@code spin}, wenn er fest in der Pose {@code p} steht ({@link #stillPose}). */
+	private static double[] spinPose(double[] p) {
+		CosmeticV2 ref = CosmeticV2.parse(fadeModel(stillPose("idle", p), stillPose("walk", p)));
+		CosmeticV2Renderer r = new CosmeticV2Renderer();
+		r.pose(ref, 0, true);
+		return r.world(PetActionsFormatTest.bone(ref, "spin")).clone();
+	}
+
+	/** Eine Schleife, die {@code spin} in {@code lengthMs} gleichmäßig von {@code from}° auf {@code to}° um x dreht. */
+	private static String spinning(String driver, int lengthMs, double from, double to) {
+		return "{\"id\":\"" + driver + "\",\"driver\":\"" + driver + "\",\"lengthMs\":" + lengthMs + ",\"tracks\":[{\"bone\":"
+				+ "\"spin\",\"channel\":\"rotation\",\"keys\":[{\"t\":0,\"v\":[" + from + ",0,0]},{\"t\":" + lengthMs + ",\"v\":["
+				+ to + ",0,0]}]}]}";
+	}
+
+	/** Drehwinkel in Grad zwischen den Lagen zweier Welt-Matrizen (Drehanteil ohne Größe). */
+	private static double angle(double[] a, double[] b) {
+		double trace = 0;
+		for (int c = 0; c < 3; c++) {
+			for (int r = 0; r < 3; r++) trace += a[c * 4 + r] * b[c * 4 + r];
+		}
+		return Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, (trace - 1) / 2))));
+	}
+
 	@Test
-	void petFadesTurnEveryAngleTheShortWayAndHatsStayLinear() {
+	void petFadesTurnEveryAngleTheLinearWayLikeHatsAndTheReleasedClient() {
 		double[][] pairs = { { 170, -170 }, { -170, 170 }, { 10, 350 }, { 350, 10 }, { 0, 180 }, { 0, 720 }, { 30, 60 },
 				{ -90, 450 }, { 0, -190 } };
 		for (double[] pair : pairs) {
 			double from = pair[0], to = pair[1];
 			CosmeticV2 m = CosmeticV2.parse(fadeModel(from, to));
 			int spin = PetActionsFormatTest.bone(m, "spin");
-			CosmeticV2Renderer r = new CosmeticV2Renderer();
-			// Vertrag: d = ((nach − von) % 360 + 540) % 360 − 180, Drehung = von + d · w (beide Seiten wie Website/Launcher)
-			double d = ((to - from) % 360 + 540) % 360 - 180;
-			assertTrue(d >= -180 && d < 180, "d = " + d);
+			CosmeticV2Renderer r = new CosmeticV2Renderer(), hat = new CosmeticV2Renderer();
 			for (float w : new float[] { 0f, 0.1f, 0.25f, 0.5f, 0.75f, 0.9f }) {
 				String what = from + "° → " + to + "° bei " + w;
-				// Begleiter: idle (von) blendet nach walk (nach) – auf dem kürzesten Weg
+				// Begleiter: idle (von) blendet nach walk (nach) – je Euler-Winkel geradlinig, auch über mehr als 180°
 				r.pose(m, 400, 9000, true, false, CosmeticV2.DRIVER_WALK, CosmeticV2.DRIVER_IDLE, w, 0L);
-				assertArrayEquals(spinAt(from + d * w), r.world(spin), 1e-5, what);
-				// Hüte/Flügel (eine Zeit): unverändert linear gewichtet
-				r.pose(m, 400, true, false, CosmeticV2.DRIVER_WALK, CosmeticV2.DRIVER_IDLE, w, 0L);
-				assertArrayEquals(spinAt(from + (to - from) * w), r.world(spin), 1e-5, what + " (Hut)");
+				assertArrayEquals(spinAt(from + (to - from) * w), r.world(spin), 1e-5, what);
+				// … Bit für Bit wie Hüte und Flügel, also wie bis 0.23.0 (beide Seiten stehen hier still, die Zeiten zählen nicht)
+				hat.pose(m, 400, true, false, CosmeticV2.DRIVER_WALK, CosmeticV2.DRIVER_IDLE, w, 0L);
+				for (int b = 0; b < m.bones.size(); b++) assertArrayEquals(hat.world(b), r.world(b), 0.0, what + " (Hut), Knochen " + b);
 			}
-			// fertig eingeblendet: genau das Ziel, auch bei mehr als einer Umdrehung (keine Endpose ändert sich)
+			// fertig eingeblendet: genau das Ziel, auch bei mehr als einer Umdrehung
 			r.pose(m, 400, 9000, true, false, CosmeticV2.DRIVER_WALK, CosmeticV2.DRIVER_IDLE, 1f, 0L);
 			assertArrayEquals(spinAt(to), r.world(spin), 1e-9, from + "° → " + to + "° am Ende");
 		}
-		// das Beispiel aus dem Vertrag: 170° → −170° läuft über 180°, nicht rückwärts über 0°
+		// 170° → −170° läuft wie bis 0.23.0 rückwärts über 0°, nicht auf dem kürzesten Weg über 180°
 		CosmeticV2 m = CosmeticV2.parse(fadeModel(170, -170));
 		CosmeticV2Renderer r = new CosmeticV2Renderer();
 		r.pose(m, 400, 9000, true, false, CosmeticV2.DRIVER_WALK, CosmeticV2.DRIVER_IDLE, 0.5f, 0L);
-		assertArrayEquals(spinAt(180), r.world(PetActionsFormatTest.bone(m, "spin")), 1e-5);
+		assertArrayEquals(spinAt(0), r.world(PetActionsFormatTest.bone(m, "spin")), 1e-5);
+	}
+
+	@Test
+	void petFadesMovePositionsLinearlyAndScaleLikeTheReleasedClient() {
+		// idle und walk stellen spin in eine ganze Pose: Drehung über mehr als 180°, Verschiebung, Größe auf beiden Seiten
+		double[] idle = { 20, -100, 170, 0, 2, 0, 0.5, 1, 2 };
+		double[] walk = { -30, 120, -170, 0, 0, 4, 2, 1.5, 0.5 };
+		CosmeticV2 m = CosmeticV2.parse(fadeModel(stillPose("idle", idle), stillPose("walk", walk)));
+		int spin = PetActionsFormatTest.bone(m, "spin");
+		CosmeticV2Renderer r = new CosmeticV2Renderer(), hat = new CosmeticV2Renderer();
+		for (float w : new float[] { 0.1f, 0.25f, 0.5f, 0.75f, 0.9f }) {
+			String what = "bei " + w;
+			// wie bis 0.23.0: Drehung und Position geradlinig, die Größe als Faktor je Seite, 1 + w · (v − 1)
+			double[] want = new double[9], plain = new double[9];
+			for (int j = 0; j < 9; j++) {
+				plain[j] = idle[j] + (walk[j] - idle[j]) * w;
+				want[j] = j < 6 ? plain[j] : (1 + w * (walk[j] - 1)) * (1 + (1 - w) * (idle[j] - 1));
+			}
+			r.pose(m, 400, 9000, true, false, CosmeticV2.DRIVER_WALK, CosmeticV2.DRIVER_IDLE, w, 0L);
+			assertArrayEquals(spinPose(want), r.world(spin), 1e-5, what);
+			hat.pose(m, 400, true, false, CosmeticV2.DRIVER_WALK, CosmeticV2.DRIVER_IDLE, w, 0L);
+			assertArrayEquals(hat.world(spin), r.world(spin), 0.0, what + " (Hut)");
+			// Probe: eine geradlinig gemischte Größe sähe hier anders aus
+			assertTrue(shift(spinPose(plain), r.world(spin)) > 0.01, what + ": Größe nicht geradlinig");
+		}
+	}
+
+	@Test
+	void aPetFadeFollowsAMovingTargetWithoutAJump() {
+		// Beide Seiten bewegen sich um x: idle dreht spin gleichmäßig 250° → 610° in 2000 ms (wie Drehungen bei Hände hoch),
+		// slide rollt ihn 0° → 720° in 960 ms (wie Cubis Rolle beim Rutschen) – 12° je Bild
+		CosmeticV2 m = CosmeticV2.parse(fadeModel(spinning("idle", 2000, 250, 610), spinning("slide", 960, 0, 720)));
+		int spin = PetActionsFormatTest.bone(m, "spin");
+		CosmeticV2Renderer r = new CosmeticV2Renderer();
+		// idle → slide, jede Seite auf ihrer eigenen Zeit ab Phase 0: im ganzen Fenster beginnt keine Schleife von vorn
+		long target = 10 * 960L, source = 2 * 2000L;
+		double[] last = null;
+		double lastShort = 0, worst = 0, worstShort = 0;
+		for (long dt = 0; dt <= Pet.FADE_MS + 2 * FRAME; dt += FRAME) {
+			float w = fade(dt);
+			double from = 250 + 360.0 * dt / 2000, to = 720.0 * dt / 960;
+			r.pose(m, target + dt, source + dt, true, false, CosmeticV2.DRIVER_SLIDE, CosmeticV2.DRIVER_IDLE, w, 0L);
+			double[] now = r.world(spin).clone();
+			// jedes Bild genau die geradlinige Mischung aus beiden laufenden Seiten
+			assertArrayEquals(spinPose(new double[] { from + (to - from) * w, 0, 0, 0, 0, 0, 1, 1, 1 }), now, 1e-4, "+" + dt + " ms");
+			// zum Vergleich der kürzeste Weg, jedes Bild neu gewählt: d = ((nach − von) % 360 + 540) % 360 − 180
+			double turnShort = from + (((to - from) % 360 + 540) % 360 - 180) * w;
+			if (last != null) {
+				worst = Math.max(worst, angle(last, now));
+				double step = Math.abs(turnShort - lastShort) % 360;
+				worstShort = Math.max(worstShort, Math.min(step, 360 - step));
+			}
+			last = now;
+			lastShort = turnShort;
+		}
+		// höchstens etwa die Bewegung der Rolle selbst je Bild – kein Sprung …
+		assertTrue(worst < 15, "größter Schritt je Bild: " + worst + "°");
+		// … wo der kürzeste Weg mitten in der Überblendung die Richtung wechselt und das Bild umspringen lässt (Probe)
+		assertTrue(worstShort > 150, "Probe – kürzester Weg: " + worstShort + "°");
+	}
+
+	/**
+	 * {@code json} mit den Animationen des Treibers {@code driver} um {@code deltaMs} versetzt ({@code offsetMs}): zur Zeit
+	 * t zeigen sie, was das Original zur Zeit t + deltaMs zeigt.
+	 */
+	private static CosmeticV2 shifted(String json, int driver, long deltaMs) {
+		CosmeticV2 m = CosmeticV2.parse(json);
+		JsonObject o = new JsonParser().parse(json).getAsJsonObject();
+		for (JsonElement e : o.getAsJsonArray("animations")) {
+			JsonObject a = e.getAsJsonObject();
+			for (CosmeticV2.Animation an : m.animations) {
+				if (an.driver == driver && an.id.equals(a.get("id").getAsString())) a.addProperty("offsetMs", an.offsetMs + deltaMs);
+			}
+		}
+		return CosmeticV2.parse(o.toString());
+	}
+
+	/** Lokale Matrix eines Knochens (im Raum seines Elternknochens) nach der letzten Pose. */
+	private static double[] local(CosmeticV2Renderer r, CosmeticV2 m, int bone) {
+		int parent = m.bones.get(bone).parent;
+		if (parent < 0) return r.world(bone).clone();
+		double[] inv = new double[16], out = new double[16];
+		assertTrue(dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Math.invertAffine(r.world(parent), inv));
+		dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Math.multiply(out, inv, r.world(bone), new double[16]);
+		return out;
+	}
+
+	@Test
+	void everyBoneButTheEffectsMixesExactlyLikeTheReleasedClientEachSideOnItsOwnTime() throws IOException {
+		int[] drivers = { CosmeticV2.DRIVER_IDLE, CosmeticV2.DRIVER_WALK, CosmeticV2.DRIVER_SNEAK, CosmeticV2.DRIVER_JUMP,
+				CosmeticV2.DRIVER_AIR, CosmeticV2.DRIVER_SLIDE, CosmeticV2.DRIVER_SWIM, CosmeticV2.DRIVER_GRAB,
+				CosmeticV2.DRIVER_FLEE, CosmeticV2.DRIVER_HANDSUP, CosmeticV2.DRIVER_PET, CosmeticV2.DRIVER_EAT };
+		long[][] times = { { 5300, 5300 }, { 700, 9100 }, { 9100, 700 }, { 1450, 12345 } };
+		float[] weights = { fade(FRAME), 0.37f, 0.5f, fade(200) };
+		int fades = 0;
+		for (String file : PetActionsFormatTest.FOXES) {
+			for (String json : new String[] { PetActionsFormatTest.fox(file), PetActionsFormatTest.foxWithout(file) }) {
+				CosmeticV2 m = CosmeticV2.parse(json);
+				// Probe: kein gewöhnlicher Knochen hängt an einem Effekt-Knochen (sonst rückte er mit dessen Ziel-Pose mit)
+				for (int b = 0; b < m.bones.size(); b++) {
+					for (int p = m.bones.get(b).parent; p >= 0; p = m.bones.get(p).parent) assertTrue(fx(m, b) || !fx(m, p), file);
+				}
+				Map<String, CosmeticV2> refs = new HashMap<String, CosmeticV2>();
+				CosmeticV2Renderer pet = new CosmeticV2Renderer(), hat = new CosmeticV2Renderer(), aim = new CosmeticV2Renderer();
+				for (int d : drivers) {
+					for (int pd : drivers) {
+						int cur = CosmeticV2Renderer.effectiveDriver(m, d), prev = CosmeticV2Renderer.effectiveDriver(m, pd);
+						if (cur == prev) continue; // nichts zu überblenden
+						for (long[] tt : times) {
+							long t = tt[0], tPrev = tt[1];
+							// Bezug: die eine Uhr der Hüte und Flügel (die Mischung bis 0.23.0) auf einem Modell, in dem eine Seite um
+							// den Abstand der Zeitbasen versetzt läuft – so sieht sie jede Seite zu deren eigener Zeit
+							int moved;
+							long delta, at;
+							if (t == tPrev) {
+								moved = -1;
+								delta = 0;
+								at = t;
+							} else if (prev < CosmeticV2.DRIVER_PET) {
+								moved = prev;
+								delta = tPrev - t;
+								at = t;
+							} else if (cur < CosmeticV2.DRIVER_PET) {
+								moved = cur;
+								delta = t - tPrev;
+								at = tPrev;
+							} else {
+								continue; // zwei Aktionen (ohne offsetMs): nur auf derselben Zeit vergleichbar
+							}
+							String key = moved + "/" + delta;
+							CosmeticV2 ref = moved < 0 ? m : refs.get(key);
+							if (ref == null) refs.put(key, ref = shifted(json, moved, delta));
+							for (float w : weights) {
+								String what = file + " " + d + " ← " + pd + " zu " + t + "/" + tPrev + " ms bei " + w;
+								pet.pose(m, t, tPrev, true, false, d, pd, w, 0L);
+								hat.pose(ref, at, true, false, d, pd, w, 0L);
+								aim.pose(m, t, t, true, false, d, d, 1f, 0L);
+								for (int b = 0; b < m.bones.size(); b++) {
+									String bone = what + ", " + m.bones.get(b).id;
+									// gewöhnliche Knochen Bit für Bit wie bis 0.23.0, Effekt-Knochen in der eigenen Pose des Ziels
+									if (!fx(m, b)) assertArrayEquals(hat.world(b), pet.world(b), 0.0, bone);
+									else assertArrayEquals(local(aim, m, b), local(pet, m, b), 1e-9, bone);
+								}
+								fades++;
+							}
+						}
+					}
+				}
+			}
+		}
+		assertTrue(fades > 1000, "geprüfte Überblendungen: " + fades);
 	}
 
 	@Test
@@ -553,18 +746,23 @@ class PetCrossfadeTest {
 				assertArrayEquals(corners(ref, m), corners(r, m), 0.0, what + ": ohne Knochen 1");
 			}
 		}
-		// Hüte und Flügel: eine Zeit, gewichtet addiert wie bisher – 170° → −170° läuft dort rückwärts über 0°, ein Begleiter
-		// auf dem kürzesten Weg über 180°
-		CosmeticV2 spin = CosmeticV2.parse(fadeModel(170, -170));
-		int bone = PetActionsFormatTest.bone(spin, "spin");
-		CosmeticV2Renderer r = new CosmeticV2Renderer();
-		V2Hat<String> hat = new V2Hat<String>(spin, "base", null, null, 400L, false).withState(CosmeticV2.DRIVER_WALK,
-				CosmeticV2.DRIVER_IDLE, 0.5f);
+		// Hüte und Flügel: eine Zeit, alle Knochen gewichtet addiert wie bisher – auch fx_*. Ein Begleiter mischt die übrigen
+		// Knochen genauso, stellt fx_* aber sofort in die Pose des Ziels: Streicheln (hebt den Funken an, lässt spin in Ruhe)
+		// blendet zu 30 % nach walk (spin −170°) aus
+		CosmeticV2 spark = CosmeticV2.parse(fadeModel(170, -170));
+		int spin = PetActionsFormatTest.bone(spark, "spin"), fx = PetActionsFormatTest.bone(spark, "fx_spark");
+		CosmeticV2Renderer r = new CosmeticV2Renderer(), rest = new CosmeticV2Renderer();
+		rest.pose(spark, 0, false);
+		V2Hat<String> hat = new V2Hat<String>(spark, "base", null, null, 500L, false).withState(CosmeticV2.DRIVER_WALK,
+				CosmeticV2.DRIVER_PET, 0.3f);
 		r.pose(hat);
-		assertArrayEquals(spinAt(0), r.world(bone), 1e-5, "Hut/Flügel: linear");
-		r.pose(new V2Hat<String>(spin, "base", null, null, 400L, false).forPet(400L, 400L, 400L, CosmeticV2.DRIVER_WALK,
-				CosmeticV2.DRIVER_IDLE, 0.5f));
-		assertArrayEquals(spinAt(180), r.world(bone), 1e-5, "Begleiter: kürzester Weg");
+		double[] hatSpin = r.world(spin).clone();
+		assertArrayEquals(spinAt(-51), hatSpin, 1e-5, "Hut/Flügel: geradlinig");
+		assertTrue(Math.abs(r.world(fx)[13] - rest.world(fx)[13]) > 3, "Hut/Flügel: fx_* gemischt");
+		r.pose(new V2Hat<String>(spark, "base", null, null, 500L, false).forPet(500L, 500L, 500L, CosmeticV2.DRIVER_WALK,
+				CosmeticV2.DRIVER_PET, 0.3f));
+		assertArrayEquals(hatSpin, r.world(spin), 0.0, "Begleiter: gemischt wie Hüte");
+		assertArrayEquals(rest.world(fx), r.world(fx), 0.0, "Begleiter: fx_* sofort im Ziel (walk bewegt ihn nicht)");
 	}
 
 	@Test

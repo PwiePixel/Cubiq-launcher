@@ -49,7 +49,7 @@ public final class V2Hat<T> {
 	/**
 	 * Begleiter am Boden ({@link #forPet}): gezeichnet mit der Überblendung der Begleiter
 	 * ({@code CosmeticV2Renderer#pose(CosmeticV2, long, long, boolean, boolean, int, int, float, long)} – jede Seite auf
-	 * ihrer Zeit, Drehungen auf dem kürzesten Weg, Effekt-Knochen sofort im Ziel). Hüte und Flügel: false, wie bisher.
+	 * ihrer Zeit, gemischt wie bisher, Effekt-Knochen sofort im Ziel). Hüte und Flügel: false, wie bisher.
 	 */
 	public final boolean pet;
 
