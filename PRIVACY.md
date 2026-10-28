@@ -6,11 +6,11 @@ Cubiq Launcher runs on your computer. It has **no telemetry, analytics, crash re
 information to a server run by the Cubiq Launcher project if you turn on the optional [Cubiq services](#cubiq-services)
 (capes, friends, online status, chat). Without your consent, the launcher sends nothing there.
 
-> [!IMPORTANT]
-> **No Cubiq server is set up yet.** Until one is configured for a build, the Cubiq services are hidden and the
-> launcher sends nothing for them. The sections about the Cubiq services describe what the launcher and the Cubiq
-> Client send once a build is connected to a Cubiq server. Where that server runs, which processors it uses and how
-> to reach its operator must be added here by the operator before the services are switched on.
+> [!NOTE]
+> **The Cubiq server** runs at `launcher.cubiq.studio`, together with the Cubiq website. Its operator and how to reach
+> them are listed in the imprint at <https://launcher.cubiq.studio/imprint>; where it runs and which processors it uses
+> is described under [Hosting and processors](#hosting-and-processors). Builds without a configured Cubiq server (for
+> example your own build of this code) hide the Cubiq services and send nothing for them.
 
 The launcher only connects to other services when that is needed for something you asked it to do:
 
@@ -21,7 +21,7 @@ The launcher only connects to other services when that is needed for something y
 | Mojang session server (`sessionserver.mojang.com`) | Signing in to the Cubiq services (only after you agreed) | The same "join" request a Minecraft server login uses: your access token, UUID and a one-time challenge |
 | Mojang profile services (`api.mojang.com`, `sessionserver.mojang.com`, `textures.minecraft.net`) | Importing a skin by player name, showing player faces (friends, admin search) | The player name or UUID being looked up; a download of that skin image |
 | The website of a link you enter | Only when you import a skin "by link" | A normal download request for that image (only HTTPS, no cookies or accounts) |
-| Cubiq services (the Cubiq server set up for the build – none yet) | Only after you agreed, see [below](#cubiq-services) | Your UUID, name, cape choice, friends, online status, chat messages and pictures you send, reports |
+| Cubiq services (`launcher.cubiq.studio`, through Cloudflare) | Only after you agreed, see [below](#cubiq-services) | Your UUID, name, cape choice, friends, online status, chat messages and pictures you send, reports |
 | Fabric, Quilt, Forge, NeoForge maven/meta servers | Installing a mod loader | Download requests |
 | Modrinth (`api.modrinth.com`, `cdn.modrinth.com`) | Browsing, installing or updating content | Search queries, file hashes of installed mods (for update checks) |
 | CurseForge (`api.curseforge.com`; files and images from `edge.forgecdn.net`, `mediafilez.forgecdn.net`, `media.forgecdn.net`) | Only when you pick CurseForge as the source, install a CurseForge modpack, have content from CurseForge installed or import a CurseForge instance whose files are missing | Search queries and filters, the project and file IDs of content installed from CurseForge (for details and update checks), download requests. Like every web request, this includes your IP address. You don't need a CurseForge account – the launcher identifies itself with its own API key, not with anything about you. |
@@ -555,8 +555,10 @@ The legal basis is the performance of the service you requested (Art. 6(1)(b) GD
 
 ### Hosting and processors
 
-- **Where the Cubiq server runs and which processors it uses** (hosting, CDN or proxy, transfers outside the EU): to be
-  added by its operator before the services are switched on.
+- **Hosting:** the Cubiq server runs on a server in Germany rented from Skrime (Einzelunternehmen Tom Gewiese, Obernaglbach 2, 94259 Kirchberg im Wald, Germany, <https://skrime.eu>).
+- **Cloudflare** (Cloudflare, Inc., USA) sits in front of the Cubiq server as proxy and CDN: every request to
+  `launcher.cubiq.studio` passes through Cloudflare, which sees your IP address and the request and filters attacks.
+  Cloudflare may process this data outside the EU; it takes part in the EU-U.S. Data Privacy Framework.
 - **Mojang/Microsoft** confirms the sign-in (see above): your computer sends the join request to Mojang directly, and
   the Cubiq server asks Mojang with your player name and the one-time challenge (`hasJoined`).
 - **Minecraft servers in chat invites** are contacted by the Cubiq server (server list ping) to show their icon and

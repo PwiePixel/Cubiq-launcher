@@ -7,12 +7,12 @@ Werbung**. Informationen an einen Server des Cubiq-Launcher-Projekts schickt er 
 [Cubiq-Dienste](#cubiq-dienste) (Umhänge, Freunde, Online-Status, Chat) einschaltest. Ohne deine Einwilligung sendet der Launcher
 dorthin nichts.
 
-> [!IMPORTANT]
-> **Noch ist kein Cubiq-Server eingerichtet.** Solange für einen Build keiner eingetragen ist, sind die Cubiq-Dienste
-> ausgeblendet, und der Launcher sendet dafür nichts. Die Abschnitte zu den Cubiq-Diensten beschreiben, was Launcher und
-> Cubiq Client senden, sobald ein Build mit einem Cubiq-Server verbunden ist. Wo dieser Server läuft, welche
-> Auftragsverarbeiter er nutzt und wie sein Betreiber erreichbar ist, trägt der Betreiber hier ein, bevor die Dienste
-> eingeschaltet werden.
+> [!NOTE]
+> **Der Cubiq-Server** läuft unter `launcher.cubiq.studio`, zusammen mit der Cubiq-Website. Wer ihn betreibt und wie du
+> den Betreiber erreichst, steht im Impressum unter <https://launcher.cubiq.studio/imprint>; wo er läuft und welche
+> Auftragsverarbeiter er nutzt, steht unter [Hosting und Auftragsverarbeiter](#hosting-und-auftragsverarbeiter). Builds
+> ohne eingetragenen Cubiq-Server (zum Beispiel ein eigener Build dieses Codes) blenden die Cubiq-Dienste aus und senden
+> dafür nichts.
 
 Zu anderen Diensten verbindet sich der Launcher nur, wenn das für etwas nötig ist, worum du ihn gebeten hast:
 
@@ -23,7 +23,7 @@ Zu anderen Diensten verbindet sich der Launcher nur, wenn das für etwas nötig 
 | Mojang-Sitzungsserver (`sessionserver.mojang.com`) | Anmeldung bei den Cubiq-Diensten (nur nach deiner Zustimmung) | Dieselbe „join“-Anfrage wie bei der Anmeldung auf einem Minecraft-Server: dein Zugriffstoken, deine UUID und eine einmalige Challenge |
 | Mojang-Profildienste (`api.mojang.com`, `sessionserver.mojang.com`, `textures.minecraft.net`) | Skin per Spielername importieren, Spielergesichter anzeigen (Freunde, Admin-Suche) | Der gesuchte Spielername bzw. die UUID; der Download des Skin-Bildes |
 | Die Website eines Links, den du eingibst | Nur wenn du einen Skin „per Link“ importierst | Eine normale Download-Anfrage für dieses Bild (nur HTTPS, ohne Cookies oder Konten) |
-| Cubiq-Dienste (der für den Build eingerichtete Cubiq-Server – bisher keiner) | Nur nach deiner Zustimmung, siehe [unten](#cubiq-dienste) | Deine UUID, dein Name, deine Umhang-Wahl, Freunde, Online-Status, Chat-Nachrichten und gesendete Bilder, Meldungen |
+| Cubiq-Dienste (`launcher.cubiq.studio`, über Cloudflare) | Nur nach deiner Zustimmung, siehe [unten](#cubiq-dienste) | Deine UUID, dein Name, deine Umhang-Wahl, Freunde, Online-Status, Chat-Nachrichten und gesendete Bilder, Meldungen |
 | Maven-/Meta-Server von Fabric, Quilt, Forge, NeoForge | Einen Modloader installieren | Download-Anfragen |
 | Modrinth (`api.modrinth.com`, `cdn.modrinth.com`) | Inhalte durchsuchen, installieren oder aktualisieren | Suchanfragen, Datei-Hashes installierter Mods (für die Update-Prüfung) |
 | CurseForge (`api.curseforge.com`; Dateien und Bilder von `edge.forgecdn.net`, `mediafilez.forgecdn.net`, `media.forgecdn.net`) | Nur wenn du CurseForge als Quelle wählst, ein CurseForge-Modpack installierst, Inhalte von CurseForge installiert hast oder eine CurseForge-Instanz mit fehlenden Dateien importierst | Suchanfragen und Filter, die Projekt- und Datei-IDs von CurseForge-Inhalten (für Details und die Update-Prüfung), Download-Anfragen. Wie bei jeder Anfrage im Internet gehört deine IP-Adresse dazu. Ein CurseForge-Konto brauchst du nicht – der Launcher weist sich mit seinem eigenen API-Schlüssel aus, nicht mit Daten über dich. |
@@ -598,8 +598,10 @@ Profiling und keinen Verkauf von Daten.
 
 ### Hosting und Auftragsverarbeiter
 
-- **Wo der Cubiq-Server läuft und welche Auftragsverarbeiter er nutzt** (Hosting, CDN oder Proxy, Übermittlungen
-  außerhalb der EU): trägt sein Betreiber ein, bevor die Dienste eingeschaltet werden.
+- **Hosting:** Der Cubiq-Server läuft auf einem gemieteten Server in Deutschland bei Skrime (Einzelunternehmen Tom Gewiese, Obernaglbach 2, 94259 Kirchberg im Wald, Deutschland, <https://skrime.eu>).
+- **Cloudflare** (Cloudflare, Inc., USA) steht als Proxy und CDN vor dem Cubiq-Server: Jede Anfrage an
+  `launcher.cubiq.studio` läuft über Cloudflare, das dabei deine IP-Adresse und die Anfrage sieht und Angriffe filtert.
+  Cloudflare kann diese Daten auch außerhalb der EU verarbeiten; es nimmt am EU-U.S. Data Privacy Framework teil.
 - **Mojang/Microsoft** bestätigt die Anmeldung (siehe oben): Dein Computer schickt die join-Anfrage direkt an Mojang,
   und der Cubiq-Server fragt bei Mojang mit deinem Spielernamen und der einmaligen Challenge nach (`hasJoined`).
 - **Minecraft-Server aus Chat-Einladungen** werden vom Cubiq-Server angefragt (Server-List-Ping), um Symbol und

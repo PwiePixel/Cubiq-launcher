@@ -62,6 +62,10 @@ function decode(png: Buffer) {
   return { width, height, colorType, rgba, list }
 }
 
+/** Spieler-Text, der genau vom Sonderthema „cosmetics“ spricht – es wird trotzdem nie aus dem Text gewählt. */
+const COSMETICS_TEXT =
+  '- **Nine new free cosmetics.** A waddling penguin, a fox kit, an axolotl, a snowman, a firefly, aurora wings, a shooting star and Mini-Cubi.'
+
 describe('Bild je Release', () => {
   it('wählt das Thema nach dem Text – fette Überschriften zählen mehr', () => {
     expect(pickTopic('- **Cubiq Launcher is here.** The first version.').id).toBe('launch')
@@ -75,10 +79,57 @@ describe('Bild je Release', () => {
     // Jedes Thema hat ein eigenes Motiv – und für jedes gibt es eine Zeichnung.
     const all = [...TOPICS, ...SPECIAL_TOPICS, DEFAULT_TOPIC]
     expect(new Set(all.map((t) => t.subject)).size).toBe(all.length)
-    for (const topic of all) expect(releaseFrames('0.1.0', topic.id).frames).toHaveLength(FRAMES)
+    // Jedes Thema hat 16 Bilder – ein Sonderthema auch eine eigene Zahl (`frames`).
+    for (const topic of all) expect(releaseFrames('0.1.0', topic.id).frames).toHaveLength((topic as { frames?: number }).frames ?? FRAMES)
     // Sonderthemen gibt es nur auf Wunsch (`--topic`) – nie aus dem Text, auch wenn er genau davon spricht.
     expect(pickTopic('- **The launcher is green again.** Back to the green colours.').id).not.toBe('green')
     expect(releaseArt({ version: '0.2.51', topic: 'green' }).topic).toBe('green')
+    expect(pickTopic(COSMETICS_TEXT).id).not.toBe('cosmetics')
+  })
+
+  it('Sonderthema „cosmetics“ (0.3.0): alle neun Teile, längere flüssige Schleife – nahtlos, scharf und im Bild', () => {
+    // Nur mit `--topic`: das feste Thema schlägt den Text.
+    const art = releaseArt({ version: '0.3.0', text: COSMETICS_TEXT, topic: 'cosmetics' })
+    expect(art.topic).toBe('cosmetics')
+    // 32 verschiedene Bilder à 80 ms (2,56 s), endlos; das erste ist das ruhige Bild.
+    const list = chunks(art.apng)
+    const actl = list.find((c) => c.type === 'acTL')!.data
+    expect([actl.readUInt32BE(0), actl.readUInt32BE(4)]).toEqual([32, 0])
+    const delays = list.filter((c) => c.type === 'fcTL').map((c) => c.data.readUInt16BE(20) / c.data.readUInt16BE(22))
+    expect(delays).toEqual(Array.from({ length: 32 }, () => 0.08))
+    expect(Buffer.from(decode(art.apng).rgba).equals(Buffer.from(decode(art.png).rgba))).toBe(true)
+    expect([decode(art.png).width, decode(art.png).colorType, decode(art.apng).colorType]).toEqual([512, 3, 3])
+    expect(art.png.length).toBeLessThan(20_000)
+    expect(art.apng.length).toBeLessThan(150_000)
+
+    const { frames } = releaseFrames('0.3.0', 'cosmetics')
+    expect(frames).toHaveLength(32)
+    // Dieselbe Version immer gleich (ohne Zufall).
+    const again = releaseFrames('0.3.0', 'cosmetics').frames
+    expect(frames.every((frame, f) => Buffer.from(frame.data).equals(Buffer.from(again[f]!.data)))).toBe(true)
+    // Scharfe Pixel (ganz deckend oder ganz durchsichtig); oben, links und rechts bleibt in jedem Bild ein freier Rand
+    // (unten darf die Inselspitze an den Rand reichen, wie bei den anderen Bildern).
+    expect(frames.every((frame) => frame.data.every((v, i) => i % 4 !== 3 || v === 0 || v === 255))).toBe(true)
+    const border = (frame: Canvas) => Array.from({ length: 64 }, (_, i) => frame.get(i, 0) ?? frame.get(0, i) ?? frame.get(63, i)).some(Boolean)
+    expect(frames.some(border)).toBe(false)
+
+    // Im ruhigen Bild sind alle neun zu sehen – je eine kennzeichnende Farbe: Schal des Pinguins, Fell des Füchschens,
+    // Haut des Axolotls, Karottennase des Schneemännchens, Laterne des Glühwürmchens, Stern, Federn der Flügel; dazu
+    // Cubi auf der Insel und Mini-Cubi hoch darüber.
+    const still = frames[0]!
+    const colorsIn = (y0: number, y1: number) => {
+      const set = new Set<string>()
+      for (let y = y0; y < y1; y++) {
+        for (let x = 0; x < 64; x++) {
+          const c = still.get(x, y)
+          if (c) set.add(`#${c.slice(0, 3).map((v) => v.toString(16).padStart(2, '0')).join('')}`)
+        }
+      }
+      return set
+    }
+    const all = colorsIn(0, 64)
+    for (const color of ['#d63e4a', '#e2702c', '#f6b3c6', '#f08a2c', '#f2ff8a', '#ffd23f', '#2aa894', '#78d6f2', '#71a330']) expect(all).toContain(color)
+    expect(colorsIn(0, 20)).toContain('#b3dc72')
   })
 
   it('zeichnet ein freigestelltes 512er-Bild – je Version anders, dieselbe Version immer gleich', () => {

@@ -250,6 +250,11 @@ public final class BugReports {
 		return o != null ? o.apiBase() : OnlineConfig.load(configDir).apiBase();
 	}
 
+	/** Führt der Link auf die Cubiq-Website (dieselbe Adresse wie die API)? */
+	public boolean siteLink(String url) {
+		return BugReportBody.siteLink(url, apiBase());
+	}
+
 	// --- Öffnen (Autotest, „Neu aufnehmen“) ---
 
 	/** Das Cubiq-Menü soll beim nächsten Öffnen direkt „Bug melden“ zeigen. */

@@ -4803,10 +4803,6 @@
     "more": "{n} görsel daha",
     "openRelease": "Sürümü GitHub'da görüntüle"
   },
-  "updateModel": {
-    "label": "Güncelleme görselinin 3B modeli. Döndürmek için sürükle veya ok tuşlarını kullan.",
-    "hint": "Döndürmek için sürükle"
-  },
   "clips": {
     "title": "Klipler",
     "subtitle": "{n} klip veya kayıt | {n} klip ve kayıt",
