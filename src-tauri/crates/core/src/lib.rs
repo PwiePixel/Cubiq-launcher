@@ -60,6 +60,8 @@ pub mod news;
 pub mod nbt;
 pub mod paths;
 pub mod platform;
+/// Spielzeit-Statistik (Sitzungen, Seite „Statistik“).
+pub mod play_stats;
 pub mod prepare;
 pub mod relocate;
 pub mod preset_tools;
@@ -84,6 +86,8 @@ pub mod task_history;
 pub mod cubiq_api;
 pub mod cubiq_choice;
 pub mod upload;
+/// Automatische Welt-Backups (vor dem Start, nach dem Spielen; Wiederherstellen).
+pub mod world_backups;
 pub mod worlds;
 
 use std::collections::HashSet;
@@ -160,6 +164,8 @@ pub struct Launcher {
     shared_folders_lock: tokio::sync::Mutex<()>,
     /// „Bewegung reduzieren“ des Systems, wie die Oberfläche es sieht (siehe [`Self::set_system_reduced_motion`]).
     system_reduced_motion: std::sync::atomic::AtomicBool,
+    /// Automatische Welt-Backups (siehe [`world_backups`]).
+    world_backups: Arc<world_backups::WorldBackups>,
 }
 
 /// „Im Launcher öffnen“ einer gehosteten Welt mit Mods (Raum-ID) – die App holt das Fenster nach vorn.
@@ -220,6 +226,8 @@ impl Launcher {
                     history::record_detached(&history_paths, instance_id, entry);
                 }
             }
+            // Spielzeit-Statistik: Sitzungsende und Server aus dem Log.
+            play_stats::observe(&history_paths, &event);
             events(event);
         });
 
@@ -237,6 +245,7 @@ impl Launcher {
             hosting_open_sink: std::sync::RwLock::default(),
             shared_folders_lock: tokio::sync::Mutex::default(),
             system_reduced_motion: std::sync::atomic::AtomicBool::default(),
+            world_backups: Arc::new(world_backups::WorldBackups::new(paths.clone())),
             instances: InstanceStore::new(paths.clone()),
             accounts: AccountStore::new(paths.clone(), http.clone()),
             games: GameManager::new(events, paths.root().join("running.json")),
@@ -263,14 +272,23 @@ impl Launcher {
         let paths = launcher.paths.clone();
         let sink = launcher.games.sink();
         let presence = Arc::clone(&launcher.cubiq.presence);
+        let backups = Arc::clone(&launcher.world_backups);
         launcher.games.recover(|id, extra| {
             // Mit welchem Account das Spiel lief, ist nach dem Neustart unbekannt.
             // Zusätzliche Prozesse derselben Instanz melden sich nirgends an (siehe `launch_inner`).
             if !extra {
                 presence.game_started(id, None, None);
             }
-            let (paths, id, sink, presence, clips, discord, link) =
-                (paths.clone(), id.to_owned(), sink.clone(), presence.clone(), clips.clone(), discord.clone(), link.clone());
+            let (paths, id, sink, presence, clips, discord, link, backups) = (
+                paths.clone(),
+                id.to_owned(),
+                sink.clone(),
+                presence.clone(),
+                clips.clone(),
+                discord.clone(),
+                link.clone(),
+                backups.clone(),
+            );
             let still_running = launcher.games.running_probe();
             Box::new(move |seconds| {
                 if !extra {
@@ -292,12 +310,16 @@ impl Launcher {
                     let settings = Settings::load(&paths.settings_file()).await.unwrap_or_default();
                     let plan = ExitPlan::new(&paths, &instance, &settings, None);
                     plan.run(sink).await;
+                    // Welt-Backups nach dem Spielen (im Hintergrund).
+                    backups.after_exit(&id, still_running).await;
                 });
             })
         });
         if !platform::MOBILE {
             launcher.discord_recovered_games().await;
         }
+        // Spielzeit-Statistik: bisherige Spielzeit übernehmen, liegengebliebene Sitzungen schließen.
+        launcher.play_stats_startup().await;
         Ok(launcher)
     }
 
@@ -850,6 +872,10 @@ impl Launcher {
             }
         }
 
+        // Welt-Backups: Zustand der Welten jetzt festhalten, gepackt wird im Hintergrund (siehe world_backups).
+        if !extra {
+            self.world_backups_before_launch(&instance).await;
+        }
         let result =
             self.launch_inner(&instance, join, extra, options.account_id.as_deref(), options.skip_mod_check, on_progress).await;
         self.preparing.lock().unwrap_or_else(std::sync::PoisonError::into_inner).remove(&instance.id);
@@ -903,6 +929,8 @@ impl Launcher {
             },
         };
         let settings = self.settings().await;
+        // Statistik: Instanz, wie der Nutzer sie gewählt hat (vor der Cubiq-Optimierung).
+        let stats_instance = instance;
         // Für Discord zählt, was der Nutzer gewählt hat (Vanilla bleibt Vanilla,
         // auch wenn die Cubiq-Optimierung unter der Haube Fabric nutzt).
         let discord_game = discord::GameInfo {
@@ -1106,6 +1134,9 @@ impl Launcher {
                 // Nach-Beenden-Hook und Synchronisieren erst nach dem letzten Prozess der Instanz.
                 if !still_running(&id) {
                     plan.run(sink).await;
+                    // Welt-Backups nach dem Spielen: Jetzt schreibt niemand mehr in die Welten.
+                    let backups = Arc::clone(&launcher.world_backups);
+                    backups.after_exit(&id, still_running).await;
                 }
             });
         });
@@ -1182,6 +1213,7 @@ impl Launcher {
                 &settings.clips,
             );
         }
+        self.play_stats_started(stats_instance, play_stats::SessionMeta::of(stats_instance), pid, hints_join.clone());
         self.instances.touch_last_played(&instance.id).await?;
         let mut entry = HistoryEntry::new(HistoryKind::Launched);
         if let Some(label) = &join_label {

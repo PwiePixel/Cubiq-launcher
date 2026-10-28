@@ -36,6 +36,7 @@ const allAppSettingsSections: ShellSection[] = [
   section('defaults', 'settingsSections.app.defaults', 'defaults', 'settingsSections.groups.instances'),
   section('java', 'settingsSections.app.java', 'java', 'settingsSections.groups.instances'),
   section('clips', 'settingsSections.app.clips', 'clips', 'settingsSections.groups.instances'),
+  section('backups', 'settingsSections.app.backups', 'world', 'settingsSections.groups.instances'),
   section('storage', 'settingsSections.app.storage', 'storage', 'settingsSections.groups.instances'),
   section('network', 'settingsSections.app.network', 'network', 'settingsSections.groups.instances'),
 ]
@@ -53,6 +54,8 @@ export function appSettingsSectionsFor(caps: Pick<PlatformCapabilities, 'clips' 
       (s.key !== 'java' || caps.java) &&
       // Fenster, JVM, Hooks: nur mit eigenem Java (mobil setzt die Engine das selbst).
       (s.key !== 'defaults' || (caps.gameLaunch && caps.java)) &&
+      // Welt-Backups entstehen beim Spielstart am PC.
+      (s.key !== 'backups' || (caps.gameLaunch && caps.java)) &&
       (s.key !== 'remote' || desktop),
   )
 }
@@ -66,7 +69,7 @@ export function useAppSettingsSections() {
 }
 
 /** Messe-PC: Datenschutz/Cubiq-Konto, Speicher/Datenordner, Fernbedienung, Hooks/JVM, Java und Firewall nur fürs Personal. */
-const MESSE_HIDDEN_SECTIONS = ['privacy', 'storage', 'remote', 'defaults', 'java', 'network']
+const MESSE_HIDDEN_SECTIONS = ['privacy', 'storage', 'remote', 'defaults', 'java', 'network', 'backups']
 
 /** Bereiche der Instanz-Einstellungen. */
 export const instanceSettingsSections: ShellSection[] = [

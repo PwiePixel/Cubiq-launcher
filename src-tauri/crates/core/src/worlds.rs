@@ -1,8 +1,8 @@
 //! Welten einer Instanz (Tab „Welten“): Liste mit Namen aus `level.dat`,
-//! Spielmodus, Version und Größe, dazu Sicherung als ZIP und Löschen in den
-//! Papierkorb.
+//! Spielmodus, Version und Größe, dazu Löschen in den Papierkorb. Backups und
+//! Wiederherstellen: [`crate::world_backups`].
 
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
@@ -20,8 +20,6 @@ const MAX_LEVEL_DAT_BYTES: u64 = 16 << 20;
 const MAX_LEVEL_DAT_UNPACKED: u64 = 64 << 20;
 /// Größenberechnung bricht bei so vielen Dateien ab (riesige Welten).
 const MAX_SIZE_ENTRIES: usize = 400_000;
-/// Ordner für Sicherungen im Spielordner.
-pub const BACKUP_DIR: &str = "backups";
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -189,7 +187,8 @@ pub async fn list(paths: &Paths, instance_id: &str) -> Result<Vec<WorldInfo>> {
         for entry in read.flatten() {
             let Ok(kind) = entry.file_type() else { continue };
             let Some(folder) = entry.file_name().to_str().map(str::to_owned) else { continue };
-            if !kind.is_dir() || validate_name(&folder).is_err() {
+            // `.cubiq-…`: Zwischenordner beim Wiederherstellen eines Backups.
+            if !kind.is_dir() || validate_name(&folder).is_err() || folder.starts_with(".cubiq-") {
                 continue;
             }
             // Nur echte Welten – in `saves` liegt gelegentlich auch anderes.
@@ -215,93 +214,10 @@ pub async fn trash(paths: &Paths, instance_id: &str, folder: &str) -> Result<()>
         .map_err(|e| Error::Internal(e.to_string()))?
 }
 
-/// Dateiname der Sicherung: `<Ordner>_<JJJJ-MM-TT_HH-MM-SS>.zip`.
-pub fn backup_file_name(folder: &str, now: DateTime<chrono::Local>) -> String {
-    format!("{folder}_{}.zip", now.format("%Y-%m-%d_%H-%M-%S"))
-}
-
-/// Packt die Welt als ZIP nach `backups/`. `session.lock` bleibt draußen
-/// (gesperrt, solange das Spiel die Welt offen hat). Liefert den Dateinamen.
-pub async fn backup(paths: &Paths, instance_id: &str, folder: &str, on_progress: impl Fn(u8) + Send + 'static) -> Result<String> {
-    let dir = world_dir(paths, instance_id, folder)?;
-    let backups = paths.instance_game_dir(instance_id).join(BACKUP_DIR);
-    let folder = folder.to_owned();
-    let control = crate::task::current();
-    tokio::task::spawn_blocking(move || {
-        std::fs::create_dir_all(&backups).map_err(|e| Error::io(&backups, e))?;
-        let name = crate::instance_files::free_name(&backups, &backup_file_name(&folder, chrono::Local::now()));
-        let dest = backups.join(&name);
-        let cancelled = || control.as_ref().is_some_and(crate::task::TaskControl::is_cancelled);
-        let result = write_zip(&dir, &folder, &dest, &on_progress, &cancelled);
-        if result.is_err() {
-            let _ = std::fs::remove_file(&dest);
-        }
-        result.map(|()| name)
-    })
-    .await
-    .map_err(|e| Error::Internal(e.to_string()))?
-}
-
-fn collect_files(dir: &Path, prefix: &str, out: &mut Vec<(PathBuf, String)>) {
-    let Ok(read) = std::fs::read_dir(dir) else { return };
-    for entry in read.flatten() {
-        let Ok(kind) = entry.file_type() else { continue };
-        let Some(name) = entry.file_name().to_str().map(str::to_owned) else { continue };
-        let rel = format!("{prefix}/{name}");
-        if kind.is_dir() {
-            out.push((PathBuf::new(), format!("{rel}/")));
-            collect_files(&entry.path(), &rel, out);
-        } else if kind.is_file() && name != "session.lock" {
-            out.push((entry.path(), rel));
-        }
-    }
-}
-
-fn write_zip(dir: &Path, folder: &str, dest: &Path, on_progress: &dyn Fn(u8), cancelled: &dyn Fn() -> bool) -> Result<()> {
-    let mut files = Vec::new();
-    collect_files(dir, folder, &mut files);
-    let total: u64 = files.iter().filter_map(|(p, _)| std::fs::metadata(p).ok()).map(|m| m.len()).sum::<u64>().max(1);
-
-    let file = std::fs::File::create(dest).map_err(|e| Error::io(dest, e))?;
-    let mut zip = zip::ZipWriter::new(std::io::BufWriter::new(file));
-    let options = zip::write::SimpleFileOptions::default()
-        .compression_method(zip::CompressionMethod::Deflated)
-        .large_file(true);
-    let mut done = 0u64;
-    let mut last = 0u8;
-    let mut buf = vec![0u8; 256 * 1024];
-    for (path, rel) in files {
-        if cancelled() {
-            return Err(Error::Cancelled);
-        }
-        if rel.ends_with('/') {
-            zip.add_directory(rel.trim_end_matches('/'), options).map_err(|e| Error::Internal(e.to_string()))?;
-            continue;
-        }
-        // Datei gerade gesperrt oder verschwunden: überspringen statt abbrechen.
-        let Ok(mut input) = std::fs::File::open(&path) else { continue };
-        zip.start_file(rel, options).map_err(|e| Error::Internal(e.to_string()))?;
-        loop {
-            let read = input.read(&mut buf).map_err(|e| Error::io(&path, e))?;
-            if read == 0 {
-                break;
-            }
-            zip.write_all(&buf[..read]).map_err(|e| Error::io(dest, e))?;
-            done += read as u64;
-        }
-        let percent = ((done * 100) / total).min(99) as u8;
-        if percent != last {
-            last = percent;
-            on_progress(percent);
-        }
-    }
-    zip.finish().map_err(|e| Error::Internal(e.to_string()))?;
-    on_progress(100);
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
+    use std::io::Write;
+
     use super::*;
 
     /// Baut eine kleine level.dat wie Minecraft (gzip, Root → Data).
@@ -340,7 +256,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn lists_backs_up_and_validates() {
+    async fn lists_and_validates() {
         let dir = tempfile::tempdir().unwrap();
         let paths = Paths::new(dir.path());
         let saves = paths.instance_game_dir("test").join("saves");
@@ -352,6 +268,9 @@ mod tests {
         std::fs::write(saves.join("welt1/icon.png"), b"png").unwrap();
         std::fs::create_dir_all(saves.join("kaputt")).unwrap();
         std::fs::write(saves.join("kaputt/level.dat"), b"murks").unwrap();
+        // Zwischenordner beim Wiederherstellen eines Backups erscheint nie als Welt.
+        std::fs::create_dir_all(saves.join(".cubiq-restore-1")).unwrap();
+        std::fs::write(saves.join(".cubiq-restore-1/level.dat"), level_dat("Halb", 0, false, None)).unwrap();
 
         let worlds = list(&paths, "test").await.unwrap();
         assert_eq!(worlds.len(), 2);
@@ -364,36 +283,10 @@ mod tests {
         let broken = worlds.iter().find(|w| w.folder == "kaputt").unwrap();
         assert_eq!((broken.name.as_str(), broken.game_mode), ("kaputt", None));
 
-        let progress = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
-        let seen = progress.clone();
-        let name = backup(&paths, "test", "welt1", move |p| seen.lock().unwrap().push(p)).await.unwrap();
-        assert!(name.starts_with("welt1_") && name.ends_with(".zip"));
-        assert_eq!(progress.lock().unwrap().last(), Some(&100));
-        let zip_path = paths.instance_game_dir("test").join(BACKUP_DIR).join(&name);
-        let mut archive = zip::ZipArchive::new(std::fs::File::open(&zip_path).unwrap()).unwrap();
-        let names: Vec<String> = archive.file_names().map(str::to_owned).collect();
-        assert!(names.contains(&"welt1/level.dat".to_owned()));
-        assert!(names.contains(&"welt1/region/r.0.0.mca".to_owned()));
-        assert!(!names.iter().any(|n| n.ends_with("session.lock")));
-        let mut region = Vec::new();
-        archive.by_name("welt1/region/r.0.0.mca").unwrap().read_to_end(&mut region).unwrap();
-        assert_eq!(region.len(), 5000);
-
-        // Zweite Sicherung in derselben Sekunde bekommt einen freien Namen.
-        let second = backup(&paths, "test", "welt1", |_| {}).await.unwrap();
-        assert_ne!(second, name);
-
         for bad in ["..", "../welt1", "welt1/region", "", "fehlt"] {
             assert!(world_dir(&paths, "test", bad).is_err(), "{bad:?}");
         }
         assert!(world_dir(&paths, "../x", "welt1").is_err());
         assert!(list(&paths, "ohne-saves").await.unwrap().is_empty());
-    }
-
-    #[test]
-    fn backup_names() {
-        use chrono::TimeZone;
-        let when = chrono::Local.with_ymd_and_hms(2026, 9, 26, 14, 5, 9).unwrap();
-        assert_eq!(backup_file_name("Meine Welt", when), "Meine Welt_2026-09-26_14-05-09.zip");
     }
 }

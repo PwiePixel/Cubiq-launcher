@@ -748,6 +748,14 @@
       "levelDatBroken": "Dünyanın level.dat dosyası bozuk.",
       "notFound": "Bu dünya artık yok."
     },
+    "worldBackups": {
+      "tooManyFiles": "Bu dünyada yedek için çok fazla dosya var.",
+      "unsafeArchive": "Yedek geçersiz yollar içeriyor ve açılmıyor.",
+      "broken": "Bu yedek bozuk.",
+      "notFound": "Bu yedek artık yok.",
+      "worldOpened": "Dünya, yedeği bitmeden oyunda açıldı.",
+      "worldOpen": "Bu dünya şu an oyunda açık – önce kapat."
+    },
     "logs": {
       "sourceGone": "Bu günlük dosyası artık yok.",
       "unreadable": "Bu günlük dosyası okunamıyor.",
@@ -1990,6 +1998,93 @@
       "javaCustom": "özel yol"
     }
   },
+  "stats": {
+    "title": "İstatistikler",
+    "subtitle": "Ne kadar oynadığın – tüm örneklerinde.",
+    "subtitleInstance": "{name} oynama süresi",
+    "filterLabel": "İstatistikleri göster",
+    "allInstances": "Tüm örnekler",
+    "live": "Şu an oynanıyor",
+    "units": {
+      "hours": "{n} sa"
+    },
+    "empty": {
+      "title": "Henüz oynama süresi yok",
+      "text": "Bir örneği başlat ve bir tur oyna – her oturum burada görünür: günlük saatler, oyun günlerinin takvimi, en sevdiğin örnekler ve sürümler ve en uzun serin.",
+      "action": "Kütüphaneyi aç"
+    },
+    "tiles": {
+      "label": "Temel rakamlar",
+      "total": "Toplam oynama süresi",
+      "totalCarried": "öncesinden {time} dahil",
+      "since": "{date} tarihinden beri",
+      "week": "Bu hafta",
+      "today": "Bugün: {time}",
+      "month": "Bu ay",
+      "sessions": "Oturumlar",
+      "average": "Oturum başına Ø {time}",
+      "longest": "En uzun oturum",
+      "streak": "Güncel seri",
+      "days": "{n} gün | {n} gün",
+      "bestStreak": "Rekor: {days}"
+    },
+    "chart": {
+      "title": "Oynama süresi",
+      "rangeLabel": "Zaman aralığı",
+      "days": "30 gün",
+      "weeks": "16 hafta",
+      "labelDays": "Günlük oynama süresi, son 30 gün",
+      "labelWeeks": "Haftalık oynama süresi, son 16 hafta",
+      "total": "Toplam: {time}",
+      "none": "Oynanmadı",
+      "weekOf": "{date} haftası",
+      "summary": "{label}. Toplam: {total}. En çok: {best}.",
+      "showTable": "Tablo olarak göster",
+      "hideTable": "Tabloyu gizle",
+      "day": "Gün",
+      "week": "Hafta",
+      "playTime": "Oynama süresi"
+    },
+    "heatmap": {
+      "title": "Takvim",
+      "daysPlayed": "{n} gün oynandı | {n} gün oynandı",
+      "summary": "{label}: son {weeks} hafta, {days} gün oynandı.",
+      "less": "Az",
+      "more": "Çok"
+    },
+    "top": {
+      "instances": "En çok oynanan örnekler",
+      "versions": "Minecraft sürümleri",
+      "versionsHint": "Oynadığın sürümler",
+      "noVersions": "Henüz sürümü bilinen oturum yok.",
+      "servers": "Sunucular",
+      "serversHint": "Katıldığın sunucular – başlatıcı veya oyundaki çok oyunculu menü üzerinden.",
+      "sessions": "{n} oturum | {n} oturum",
+      "deleted": "{name} (silindi)",
+      "showAll": "Tümünü göster ({n})",
+      "showLess": "Daha az göster"
+    },
+    "footer": {
+      "tracking": "Oturumlar {date} tarihinden beri kaydediliyor.",
+      "carried": "Önceki oynama süresi toplamlara ve örneklere dahildir, ancak tarihi yoktur."
+    },
+    "reset": {
+      "button": "İstatistikleri sıfırla",
+      "title": "İstatistikler sıfırlansın mı?",
+      "text": "Kaydedilen tüm oturumlar istatistiklerden silinir – grafikler, takvim, seriler ve listeler sıfırdan başlar. Örneklerinde gösterilen oynama süresi kalır.",
+      "confirm": "Sıfırla",
+      "done": "İstatistikler sıfırlandı."
+    },
+    "instance": {
+      "title": "Oynama süresi",
+      "recent": "Son 30 günde {time}",
+      "average": "Ortalama",
+      "last30": "Son 30 günün oynama süresi: {time}",
+      "crashes": "{n} çökme | {n} çökme",
+      "topVersion": "Çoğunlukla {version}",
+      "open": "Tüm istatistikler"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} satır | {n} satır",
     "copied": "Kopyalandı"
@@ -3054,6 +3149,7 @@
     "discover": "Keşfet",
     "servers": "Sunucular",
     "screenshots": "Ekran görüntüleri",
+    "stats": "İstatistikler",
     "skins": "Skinler",
     "admin": "Yönetim",
     "runningCount": "{n} çalışıyor | {n} çalışıyor",
@@ -3125,6 +3221,7 @@
       "servers": "sunucu listesi server list",
       "accounts": "hesap giriş oturum microsoft account sign in login",
       "screenshots": "görseller resimler galeri ekran görüntüsü images gallery",
+      "stats": "istatistik oynama süresi saat seri takvim grafik",
       "skins": "pelerin skin cape",
       "settings": "ayarlar seçenekler tercihler settings options",
       "newInstance": "ekle oluştur yeni add create new",
@@ -3423,6 +3520,7 @@
       "storage": "Depolama",
       "network": "Ağ",
       "clips": "Klipler ve kayıt",
+      "backups": "Dünya yedekleri",
       "notifications": "Bildirimler",
       "remote": "Uzaktan kumanda"
     },
@@ -5122,13 +5220,13 @@
     "cheats": "Hileler",
     "backingUp": "Dünya yedekleniyor …",
     "backupDone": "“{name}” yedeklendi",
-    "backup": "Yedekle (ZIP)",
+    "backup": "Şimdi yedekle",
     "backupOf": "{name} yedekle",
     "openFolderOf": "{name} klasörünü aç",
     "deleteOf": "{name} sil",
     "stopFirst": "Önce oyunu kapat",
     "deleted": "“{name}” çöp kutusunda",
-    "backupHint": "Yedekler örneğin “backups” klasörüne ZIP olarak kaydedilir (Dosyalar sekmesine bak).",
+    "backupHint": "Dünyalar oyunu başlatırken ve oynadıktan sonra otomatik olarak yedeklenir – yalnızca değişenler. Yedekleri görmek, geri yüklemek veya silmek için saatli satıra tıkla.",
     "deleteTitle": "Dünya silinsin mi?",
     "deleteText": "“{name}” Windows Geri Dönüşüm Kutusu’na taşınır.",
     "deleteTextLinux": "“{name}” çöp kutusuna taşınır.",
@@ -5155,6 +5253,88 @@
       "joinNote": "Katıl oyunu başlatır ve hemen bağlanır. Çok eski sürümler yalnızca ana menüyü açar.",
       "pingCooldown": "Bir sonraki ping testinden önce birkaç saniye bekleyin.",
       "sortNote": "Yalnızca görünüm pinge göre sıralandı – oyundaki sunucu listesi sırasını korur."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Otomatik yedek",
+      "defaultOn": "Varsayılan (açık)",
+      "defaultOff": "Varsayılan (kapalı)",
+      "on": "Açık",
+      "off": "Kapalı",
+      "onText": "Otomatik yedekler açık: değişen dünyalar başlatırken ve oynadıktan sonra kaydedilir, her dünyanın son {n} yedeği saklanır.",
+      "offText": "Otomatik yedekler bu örnek için kapalı – “Şimdi yedekle”yi kullan.",
+      "sharedText": "Bu örnek dünya klasörünü paylaşıyor, bu yüzden yedekler onu paylaşan tüm örneklere aittir."
+    },
+    "panel": {
+      "open": "{name} yedekleri",
+      "running": "Yedekleniyor … %{percent}",
+      "status": "{n} yedek · son {time} | {n} yedek · son {time}",
+      "none": "Henüz yedek yok",
+      "deletedTitle": "Yedeği olan silinmiş dünyalar",
+      "restoreDeleted": "Geri yükle"
+    },
+    "dialog": {
+      "title": "{name} yedekleri",
+      "backupNow": "Şimdi yedekle",
+      "backingUp": "Yedekleniyor … %{percent}",
+      "empty": "Bu dünyanın henüz yedeği yok.",
+      "restore": "Geri yükle",
+      "deleteConfirm": "Bu yedek silinsin mi?",
+      "deleteOf": "{date} tarihli yedeği sil"
+    },
+    "kinds": {
+      "auto": "Otomatik",
+      "manual": "Elle",
+      "safety": "Geri yüklemeden önce",
+      "legacy": "Eski yedek"
+    },
+    "restore": {
+      "title": "{date} tarihli yedeği geri yükle",
+      "modeLabel": "Nasıl geri yüklensin",
+      "copy": "Kopya olarak",
+      "copyText": "Dünyayı “{name}” olarak ekler – mevcut dünyan olduğu gibi kalır.",
+      "replace": "Mevcut dünyayı değiştir",
+      "replaceText": "Mevcut durum önce yedeklenir, böylece ona geri dönebilirsin.",
+      "bringBack": "Dünyayı geri getir",
+      "bringBackText": "Dünya tekrar dünya listende görünür.",
+      "confirm": "Geri yükle",
+      "stopFirst": "Önce oyunu kapat – bir dünya yalnızca oyun çalışmıyorken geri yüklenebilir.",
+      "copySuffix": "geri yüklendi",
+      "taskTitle": "{name} geri yükleniyor",
+      "stage": "Dünya geri yükleniyor …",
+      "doneCopy": "“{name}” olarak geri yüklendi.",
+      "doneReplace": "“{name}” geri yüklendi – önceki durum yedek olarak duruyor.",
+      "doneDeleted": "“{name}” geri döndü."
+    },
+    "task": {
+      "title": "Dünya yedeği · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Dünyalar kontrol ediliyor …"
+    },
+    "toast": {
+      "opened": "“{world}” yedeği bitmeden açıldı. Önceki yedek duruyor – oynadıktan sonra yenisi yapılır.",
+      "failed": "“{world}” yedeklenemedi: {error}"
+    },
+    "settings": {
+      "title": "Dünya yedekleri",
+      "intro": "Bir örneği başlattığında başlatıcı, son yedeğinden beri değişen her tek oyunculu dünyayı kaydeder – arka planda, oyun hemen başlar. Oynadıktan sonra oynadığın dünyaları kaydeder. Değişmeyen dünyalar atlanır.",
+      "enabledTitle": "Otomatik yedekler",
+      "enabledDescription": "Değişen dünyaları başlatırken ve oynadıktan sonra yedekle. Her örnek bunu Dünyalar sekmesinde açıp kapatabilir.",
+      "keepTitle": "Dünya başına sakla",
+      "keepDescription": "Daha eski otomatik yedekler silinir. Elle alınan yedekler ve geri yüklemeden önce alınanlar her zaman kalır.",
+      "keepOption": "{n} yedek | {n} yedek",
+      "limitTitle": "Boyut sınırı",
+      "limitDescription": "Tüm yedekler birlikte sınırı aşarsa önce en eski otomatik yedekler silinir – her dünyanın en yeni yedeği her zaman kalır.",
+      "noLimit": "Sınır yok",
+      "storageTitle": "Depolama",
+      "usage": "Kullanılan: {size} · Yedekler: {count} · Dünyalar: {worlds}",
+      "usageNone": "Henüz yedek yok.",
+      "where": "Yedekler, başlatıcının veri klasöründeki “world-backups” klasöründe ZIP dosyaları olarak saklanır.",
+      "orphaned": "{size} silinmiş örneklere ait.",
+      "prune": "Bunları sil",
+      "pruneConfirm": "Kalıcı olarak sil",
+      "pruned": "{size} boşaltıldı."
     }
   },
   "share": {

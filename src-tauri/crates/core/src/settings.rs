@@ -71,6 +71,9 @@ pub struct Settings {
     /// Clips & Aufnahme (Standard aus).
     #[serde(deserialize_with = "crate::clips::settings::lenient")]
     pub clips: ClipSettings,
+    /// Automatische Welt-Backups (ab Werk an, siehe [`crate::world_backups`]).
+    #[serde(deserialize_with = "lenient_world_backups")]
+    pub world_backups: WorldBackupSettings,
     /// Eigene Skins, eigene Presets sowie Theme, Akzentfarbe und Sprache mit
     /// dem Cubiq-Konto abgleichen – nur mit eingeschalteten Cubiq-Diensten. Ab
     /// Werk an; ältere Dateien ohne Feld ebenfalls an.
@@ -89,6 +92,39 @@ pub struct Settings {
     pub shared_folders: Vec<crate::shared_folders::SharedFolder>,
     /// PC-Fernbedienung vom Handy (ab Werk aus).
     pub remote: RemoteSettings,
+}
+
+/// Automatische Welt-Backups vor dem Start und nach dem Spielen (siehe [`crate::world_backups`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct WorldBackupSettings {
+    /// Geänderte Welten automatisch sichern – ab Werk an.
+    pub enabled: bool,
+    /// So viele automatische Backups je Welt bleiben (1–50, ab Werk 5).
+    pub keep: u8,
+    /// Obergrenze aller Backups in GB; 0 = keine (älteste automatische zuerst).
+    pub max_total_gb: u16,
+}
+
+impl Default for WorldBackupSettings {
+    fn default() -> Self {
+        Self { enabled: true, keep: 5, max_total_gb: 0 }
+    }
+}
+
+impl WorldBackupSettings {
+    pub const MAX_KEEP: u8 = 50;
+    pub const MAX_TOTAL_GB: u16 = 10_000;
+
+    pub fn normalized(self) -> Self {
+        Self { keep: self.keep.clamp(1, Self::MAX_KEEP), max_total_gb: self.max_total_gb.min(Self::MAX_TOTAL_GB), ..self }
+    }
+}
+
+/// Unlesbare Backup-Einstellungen (z. B. aus einer neueren Version) → Standard, Rest bleibt.
+fn lenient_world_backups<'de, D: serde::Deserializer<'de>>(deserializer: D) -> std::result::Result<WorldBackupSettings, D::Error> {
+    let value = serde_json::Value::deserialize(deserializer)?;
+    Ok(serde_json::from_value::<WorldBackupSettings>(value).unwrap_or_default().normalized())
 }
 
 /// PC-Fernbedienung (API §33): das Handy desselben Cubiq-Kontos darf diesen PC steuern.
@@ -460,6 +496,7 @@ impl Default for Settings {
             discord_presence: true,
             java: JavaPaths::default(),
             clips: ClipSettings::default(),
+            world_backups: WorldBackupSettings::default(),
             cubiq_sync: true,
             social: SocialSettings::default(),
             modpack_cubiq_client: crate::cubiq_choice::ModpackCubiqPolicy::Ask,
@@ -535,6 +572,7 @@ impl Settings {
         self.hooks = self.hooks.normalized();
         self.env = hooks::normalize_env(self.env);
         self.clips = self.clips.normalized();
+        self.world_backups = self.world_backups.normalized();
         self.social = self.social.normalized();
         self.shared_folders = crate::shared_folders::normalize(&self.shared_folders);
         self

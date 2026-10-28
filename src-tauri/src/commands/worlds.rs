@@ -32,7 +32,7 @@ pub async fn open_world_folder(app: AppHandle, launcher: State<'_, LauncherState
     Ok(())
 }
 
-/// ZIP-Sicherung nach `backups/`; liefert den Dateinamen.
+/// „Jetzt sichern“: Backup der Welt in der Backup-Ablage (siehe `world_backups`); liefert seine Kennung.
 #[tauri::command]
 pub async fn backup_world(
     app: AppHandle,
@@ -42,11 +42,10 @@ pub async fn backup_world(
     on_progress: Channel<u8>,
     task_id: Option<String>,
 ) -> CommandResult<String> {
-    let instance = launcher.instances().get(&id).await?;
-    let work = worlds::backup(launcher.paths(), &instance.id, &folder, move |p| {
+    let work = launcher.world_backup_now(&id, &folder, move |p| {
         let _ = on_progress.send(p);
     });
-    Ok(tracked(&app, task_id, work).await?)
+    Ok(tracked(&app, task_id, work).await?.id)
 }
 
 /// Welt in den Papierkorb – nicht, solange die Instanz läuft (die Welt könnte offen sein).

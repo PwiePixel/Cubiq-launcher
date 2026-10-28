@@ -222,6 +222,13 @@ pub fn run() {
                     log::warn!("local-server konnte nicht gesendet werden: {e}");
                 }
             }));
+            // Welt-Backups: automatische Sicherungen (Start, Fortschritt, Ende) ans Frontend.
+            let handle = app.handle().clone();
+            launcher.world_backups().set_sink(Arc::new(move |event| {
+                if let Err(e) = handle.emit("world-backup", &event) {
+                    log::warn!("world-backup konnte nicht gesendet werden: {e}");
+                }
+            }));
             // Teilen lokaler Server: Stand von Relay und e4mc.
             let handle = app.handle().clone();
             launcher.server_shares().set_sink(Arc::new(move |update| {
@@ -564,6 +571,21 @@ pub fn run() {
             commands::worlds::add_instance_server,
             commands::worlds::update_instance_server,
             commands::worlds::remove_instance_server,
+            // Welt-Backups
+            commands::world_backups::world_backup_overview,
+            commands::world_backups::world_backup_list,
+            commands::world_backups::world_backup_restore,
+            commands::world_backups::world_backup_delete,
+            commands::world_backups::open_world_backups,
+            commands::world_backups::open_world_backup_root,
+            commands::world_backups::set_world_backup_auto,
+            commands::world_backups::world_backup_usage,
+            commands::world_backups::prune_world_backups,
+            commands::world_backups::world_backup_jobs,
+            commands::world_backups::cancel_world_backup_job,
+            // Spielzeit-Statistik
+            commands::play_stats::play_stats,
+            commands::play_stats::reset_play_stats,
             commands::logs::list_log_sources,
             commands::logs::read_log_source,
             commands::logs::share_log_source,

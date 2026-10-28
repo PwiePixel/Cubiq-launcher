@@ -776,6 +776,14 @@
       "levelDatBroken": "Die level.dat der Welt ist beschädigt.",
       "notFound": "Diese Welt gibt es nicht mehr."
     },
+    "worldBackups": {
+      "tooManyFiles": "Diese Welt hat zu viele Dateien für ein Backup.",
+      "unsafeArchive": "Das Backup enthält ungültige Pfade und wird nicht entpackt.",
+      "broken": "Dieses Backup ist beschädigt.",
+      "notFound": "Dieses Backup gibt es nicht mehr.",
+      "worldOpened": "Die Welt wurde im Spiel geöffnet, bevor ihr Backup fertig war.",
+      "worldOpen": "Diese Welt ist gerade im Spiel geöffnet – schließe sie zuerst."
+    },
     "logs": {
       "sourceGone": "Diese Log-Datei gibt es nicht mehr.",
       "unreadable": "Diese Log-Datei lässt sich nicht lesen.",
@@ -2031,6 +2039,93 @@
       "javaCustom": "eigener Pfad"
     }
   },
+  "stats": {
+    "title": "Statistik",
+    "subtitle": "Wie viel du spielst – über alle deine Instanzen.",
+    "subtitleInstance": "Spielzeit von {name}",
+    "filterLabel": "Statistik anzeigen für",
+    "allInstances": "Alle Instanzen",
+    "live": "Läuft gerade",
+    "units": {
+      "hours": "{n} Std."
+    },
+    "empty": {
+      "title": "Noch keine Spielzeit",
+      "text": "Starte eine Instanz und spiel eine Runde – jede Sitzung landet hier: Stunden pro Tag, ein Kalender deiner Spieltage, deine Lieblings-Instanzen und -Versionen und deine längste Serie.",
+      "action": "Zur Bibliothek"
+    },
+    "tiles": {
+      "label": "Kennzahlen",
+      "total": "Spielzeit gesamt",
+      "totalCarried": "inkl. {time} von früher",
+      "since": "seit {date}",
+      "week": "Diese Woche",
+      "today": "Heute: {time}",
+      "month": "Dieser Monat",
+      "sessions": "Sitzungen",
+      "average": "Ø {time} pro Sitzung",
+      "longest": "Längste Sitzung",
+      "streak": "Aktuelle Serie",
+      "days": "{n} Tag | {n} Tage",
+      "bestStreak": "Rekord: {days}"
+    },
+    "chart": {
+      "title": "Spielzeit",
+      "rangeLabel": "Zeitraum",
+      "days": "30 Tage",
+      "weeks": "16 Wochen",
+      "labelDays": "Spielzeit pro Tag, letzte 30 Tage",
+      "labelWeeks": "Spielzeit pro Woche, letzte 16 Wochen",
+      "total": "Summe: {time}",
+      "none": "Nicht gespielt",
+      "weekOf": "Woche ab {date}",
+      "summary": "{label}. Summe: {total}. Am meisten: {best}.",
+      "showTable": "Als Tabelle anzeigen",
+      "hideTable": "Tabelle ausblenden",
+      "day": "Tag",
+      "week": "Woche",
+      "playTime": "Spielzeit"
+    },
+    "heatmap": {
+      "title": "Kalender",
+      "daysPlayed": "{n} Tag gespielt | {n} Tage gespielt",
+      "summary": "{label}: letzte {weeks} Wochen, an {days} Tagen gespielt.",
+      "less": "Weniger",
+      "more": "Mehr"
+    },
+    "top": {
+      "instances": "Meistgespielte Instanzen",
+      "versions": "Minecraft-Versionen",
+      "versionsHint": "Mit diesen Versionen hast du gespielt",
+      "noVersions": "Noch keine Sitzungen mit bekannter Version.",
+      "servers": "Server",
+      "serversHint": "Server, denen du beigetreten bist – über den Launcher oder das Mehrspieler-Menü im Spiel.",
+      "sessions": "{n} Sitzung | {n} Sitzungen",
+      "deleted": "{name} (gelöscht)",
+      "showAll": "Alle zeigen ({n})",
+      "showLess": "Weniger zeigen"
+    },
+    "footer": {
+      "tracking": "Sitzungen werden seit {date} aufgezeichnet.",
+      "carried": "Spielzeit von davor zählt zu den Summen und den Instanzen, hat aber kein Datum."
+    },
+    "reset": {
+      "button": "Statistik zurücksetzen",
+      "title": "Statistik zurücksetzen?",
+      "text": "Alle aufgezeichneten Sitzungen verschwinden aus der Statistik – Diagramme, Kalender, Serien und Listen beginnen wieder bei null. Die Spielzeit an deinen Instanzen bleibt.",
+      "confirm": "Zurücksetzen",
+      "done": "Statistik zurückgesetzt."
+    },
+    "instance": {
+      "title": "Spielzeit",
+      "recent": "{time} in den letzten 30 Tagen",
+      "average": "Schnitt",
+      "last30": "Spielzeit der letzten 30 Tage: {time}",
+      "crashes": "{n} Absturz | {n} Abstürze",
+      "topVersion": "Meist auf {version}",
+      "open": "Alle Statistiken"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} Zeile | {n} Zeilen",
     "copied": "Kopiert"
@@ -3097,6 +3192,7 @@
     "discover": "Entdecken",
     "servers": "Server",
     "screenshots": "Screenshots",
+    "stats": "Statistik",
     "skins": "Skins",
     "admin": "Verwaltung",
     "runningCount": "{n} laufend | {n} laufend",
@@ -3169,6 +3265,7 @@
       "servers": "serverliste",
       "accounts": "konto anmelden microsoft",
       "screenshots": "bilder galerie",
+      "stats": "statistik spielzeit stunden serie kalender diagramm",
       "skins": "umhang cape",
       "settings": "einstellungen optionen",
       "newInstance": "anlegen hinzufügen erstellen",
@@ -3468,6 +3565,7 @@
       "storage": "Speicherverwaltung",
       "network": "Netzwerk",
       "clips": "Clips & Aufnahme",
+      "backups": "Welt-Backups",
       "notifications": "Benachrichtigungen",
       "remote": "Fernbedienung"
     },
@@ -5189,13 +5287,13 @@
     "cheats": "Cheats",
     "backingUp": "Welt wird gesichert …",
     "backupDone": "„{name}“ wurde gesichert",
-    "backup": "Sichern (ZIP)",
+    "backup": "Jetzt sichern",
     "backupOf": "{name} sichern",
     "openFolderOf": "Ordner von {name} öffnen",
     "deleteOf": "{name} löschen",
     "stopFirst": "Erst das Spiel beenden",
     "deleted": "„{name}“ liegt im Papierkorb",
-    "backupHint": "Sicherungen landen als ZIP im Ordner „backups“ der Instanz (siehe Tab „Dateien“).",
+    "backupHint": "Welten werden beim Spielstart und nach dem Spielen automatisch gesichert – nur die, die sich geändert haben. Ein Klick auf die Zeile mit der Uhr zeigt die Backups zum Wiederherstellen oder Löschen.",
     "deleteTitle": "Welt löschen?",
     "deleteText": "„{name}“ wandert in den Windows-Papierkorb.",
     "deleteTextLinux": "„{name}“ wandert in den Papierkorb.",
@@ -5222,6 +5320,88 @@
       "joinNote": "Beitreten startet das Spiel und verbindet sofort. Sehr alte Versionen öffnen nur das Hauptmenü.",
       "pingCooldown": "Bitte ein paar Sekunden bis zum nächsten Ping-Test warten.",
       "sortNote": "Nur die Anzeige ist nach Ping sortiert – die Serverliste im Spiel behält ihre Reihenfolge."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Auto-Backup",
+      "defaultOn": "Standard (an)",
+      "defaultOff": "Standard (aus)",
+      "on": "An",
+      "off": "Aus",
+      "onText": "Automatische Backups sind an: Geänderte Welten werden beim Start und nach dem Spielen gesichert, je Welt bleiben die letzten {n}.",
+      "offText": "Automatische Backups sind für diese Instanz aus – nutze „Jetzt sichern“.",
+      "sharedText": "Diese Instanz teilt ihren Welten-Ordner, die Backups gehören also allen Instanzen, die ihn teilen."
+    },
+    "panel": {
+      "open": "Backups von {name}",
+      "running": "Wird gesichert … {percent} %",
+      "status": "{n} Backup · zuletzt {time} | {n} Backups · zuletzt {time}",
+      "none": "Noch kein Backup",
+      "deletedTitle": "Gelöschte Welten mit Backups",
+      "restoreDeleted": "Wiederherstellen"
+    },
+    "dialog": {
+      "title": "Backups von {name}",
+      "backupNow": "Jetzt sichern",
+      "backingUp": "Wird gesichert … {percent} %",
+      "empty": "Von dieser Welt gibt es noch keine Backups.",
+      "restore": "Wiederherstellen",
+      "deleteConfirm": "Dieses Backup löschen?",
+      "deleteOf": "Backup vom {date} löschen"
+    },
+    "kinds": {
+      "auto": "Automatisch",
+      "manual": "Von Hand",
+      "safety": "Vor dem Wiederherstellen",
+      "legacy": "Älteres Backup"
+    },
+    "restore": {
+      "title": "Backup vom {date} wiederherstellen",
+      "modeLabel": "Wie wiederherstellen",
+      "copy": "Als Kopie",
+      "copyText": "Legt die Welt als „{name}“ an – deine jetzige Welt bleibt, wie sie ist.",
+      "replace": "Jetzige Welt ersetzen",
+      "replaceText": "Der jetzige Stand wird vorher als Backup gesichert, du kannst also zurück.",
+      "bringBack": "Welt zurückholen",
+      "bringBackText": "Die Welt erscheint wieder in deiner Weltenliste.",
+      "confirm": "Wiederherstellen",
+      "stopFirst": "Beende zuerst das Spiel – eine Welt lässt sich nur wiederherstellen, solange es nicht läuft.",
+      "copySuffix": "wiederhergestellt",
+      "taskTitle": "{name} wiederherstellen",
+      "stage": "Welt wird wiederhergestellt …",
+      "doneCopy": "Als „{name}“ wiederhergestellt.",
+      "doneReplace": "„{name}“ wurde wiederhergestellt – der vorige Stand bleibt als Backup.",
+      "doneDeleted": "„{name}“ ist wieder da."
+    },
+    "task": {
+      "title": "Welt-Backup · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Welten werden geprüft …"
+    },
+    "toast": {
+      "opened": "„{world}“ wurde geöffnet, bevor das Backup fertig war. Das vorige Backup bleibt – nach dem Spielen entsteht ein neues.",
+      "failed": "Backup von „{world}“ fehlgeschlagen: {error}"
+    },
+    "settings": {
+      "title": "Welt-Backups",
+      "intro": "Beim Start einer Instanz sichert der Launcher jede Einzelspieler-Welt, die sich seit ihrem letzten Backup geändert hat – im Hintergrund, das Spiel startet sofort. Nach dem Spielen sichert er die gespielten Welten. Unveränderte Welten werden übersprungen.",
+      "enabledTitle": "Automatische Backups",
+      "enabledDescription": "Geänderte Welten beim Start und nach dem Spielen sichern. Jede Instanz kann das im Tab „Welten“ ein- oder ausschalten.",
+      "keepTitle": "Je Welt behalten",
+      "keepDescription": "Ältere automatische Backups werden gelöscht. Backups von Hand und die vor dem Wiederherstellen bleiben immer.",
+      "keepOption": "{n} Backup | {n} Backups",
+      "limitTitle": "Obergrenze",
+      "limitDescription": "Werden alle Backups zusammen größer, fallen die ältesten automatischen zuerst weg – das neueste Backup jeder Welt bleibt immer.",
+      "noLimit": "Keine",
+      "storageTitle": "Speicherplatz",
+      "usage": "Belegt: {size} · Backups: {count} · Welten: {worlds}",
+      "usageNone": "Noch keine Backups.",
+      "where": "Backups liegen als ZIP-Dateien im Ordner „world-backups“ des Launcher-Datenordners.",
+      "orphaned": "{size} gehören zu gelöschten Instanzen.",
+      "prune": "Diese löschen",
+      "pruneConfirm": "Endgültig löschen",
+      "pruned": "{size} freigegeben."
     }
   },
   "share": {

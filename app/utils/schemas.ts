@@ -227,6 +227,10 @@ export const settingsSchema = z
       java25: javaPathSchema.nullable(),
     }),
     clips: clipSettingsSchema,
+    /** Automatische Welt-Backups – fehlt das Feld (älterer Kern), gelten die Standardwerte. */
+    worldBackups: z
+      .object({ enabled: z.boolean().default(true), keep: z.number().int().min(1).max(50).default(5), maxTotalGb: z.number().int().min(0).max(10_000).default(0) })
+      .prefault({}),
     cubiqSync: z.boolean().default(true),
     social: socialSettingsSchema,
     modpackCubiqClient: z.enum(['ask', 'always', 'never']).default('ask'),

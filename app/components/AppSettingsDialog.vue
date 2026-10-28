@@ -749,6 +749,11 @@ async function allowFirewall() {
       <ClipsSettings v-model="form.clips" />
     </div>
 
+    <!-- Welt-Backups ------------------------------------------------------------------- -->
+    <div v-else-if="active === 'backups'">
+      <WorldBackupSettings v-model="form.worldBackups" />
+    </div>
+
     <!-- Speicherverwaltung --------------------------------------------------------------- -->
     <div v-else-if="active === 'storage'">
       <h3 class="section-heading">{{ t('settings.storage.title') }}</h3>

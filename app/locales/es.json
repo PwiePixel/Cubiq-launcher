@@ -776,6 +776,14 @@
       "levelDatBroken": "El level.dat del mundo está dañado.",
       "notFound": "Este mundo ya no existe."
     },
+    "worldBackups": {
+      "tooManyFiles": "Este mundo tiene demasiados archivos para una copia.",
+      "unsafeArchive": "La copia contiene rutas no válidas y no se descomprime.",
+      "broken": "Esta copia está dañada.",
+      "notFound": "Esta copia ya no existe.",
+      "worldOpened": "El mundo se abrió en el juego antes de que su copia terminara.",
+      "worldOpen": "Este mundo está abierto en el juego ahora mismo – ciérralo primero."
+    },
     "logs": {
       "sourceGone": "Este archivo de registro ya no existe.",
       "unreadable": "Este archivo de registro no se puede leer.",
@@ -2031,6 +2039,93 @@
       "javaCustom": "ruta propia"
     }
   },
+  "stats": {
+    "title": "Estadísticas",
+    "subtitle": "Cuánto juegas – en todas tus instancias.",
+    "subtitleInstance": "Tiempo de juego de {name}",
+    "filterLabel": "Mostrar estadísticas de",
+    "allInstances": "Todas las instancias",
+    "live": "Jugando ahora",
+    "units": {
+      "hours": "{n} h"
+    },
+    "empty": {
+      "title": "Aún no hay tiempo de juego",
+      "text": "Inicia una instancia y juega una partida: cada sesión aparece aquí – horas por día, un calendario de tus días de juego, tus instancias y versiones favoritas y tu racha más larga.",
+      "action": "Ir a la biblioteca"
+    },
+    "tiles": {
+      "label": "Cifras clave",
+      "total": "Tiempo total",
+      "totalCarried": "incl. {time} de antes",
+      "since": "desde el {date}",
+      "week": "Esta semana",
+      "today": "Hoy: {time}",
+      "month": "Este mes",
+      "sessions": "Sesiones",
+      "average": "Ø {time} por sesión",
+      "longest": "Sesión más larga",
+      "streak": "Racha actual",
+      "days": "{n} día | {n} días",
+      "bestStreak": "Récord: {days}"
+    },
+    "chart": {
+      "title": "Tiempo de juego",
+      "rangeLabel": "Periodo",
+      "days": "30 días",
+      "weeks": "16 semanas",
+      "labelDays": "Tiempo de juego por día, últimos 30 días",
+      "labelWeeks": "Tiempo de juego por semana, últimas 16 semanas",
+      "total": "Total: {time}",
+      "none": "Sin jugar",
+      "weekOf": "Semana del {date}",
+      "summary": "{label}. Total: {total}. Máximo: {best}.",
+      "showTable": "Mostrar como tabla",
+      "hideTable": "Ocultar tabla",
+      "day": "Día",
+      "week": "Semana",
+      "playTime": "Tiempo de juego"
+    },
+    "heatmap": {
+      "title": "Calendario",
+      "daysPlayed": "{n} día jugado | {n} días jugados",
+      "summary": "{label}: últimas {weeks} semanas, jugaste {days} días.",
+      "less": "Menos",
+      "more": "Más"
+    },
+    "top": {
+      "instances": "Instancias más jugadas",
+      "versions": "Versiones de Minecraft",
+      "versionsHint": "Las versiones con las que has jugado",
+      "noVersions": "Aún no hay sesiones con una versión conocida.",
+      "servers": "Servidores",
+      "serversHint": "Servidores a los que te uniste – desde el launcher o desde el menú multijugador del juego.",
+      "sessions": "{n} sesión | {n} sesiones",
+      "deleted": "{name} (eliminada)",
+      "showAll": "Mostrar todo ({n})",
+      "showLess": "Mostrar menos"
+    },
+    "footer": {
+      "tracking": "Sesiones registradas desde el {date}.",
+      "carried": "El tiempo de juego anterior cuenta para los totales y las instancias, pero no tiene fecha."
+    },
+    "reset": {
+      "button": "Restablecer estadísticas",
+      "title": "¿Restablecer las estadísticas?",
+      "text": "Todas las sesiones registradas desaparecen de las estadísticas: gráficos, calendario, rachas y listas empiezan de cero. El tiempo de juego de tus instancias se mantiene.",
+      "confirm": "Restablecer",
+      "done": "Estadísticas restablecidas."
+    },
+    "instance": {
+      "title": "Tiempo de juego",
+      "recent": "{time} en los últimos 30 días",
+      "average": "Media",
+      "last30": "Tiempo de juego de los últimos 30 días: {time}",
+      "crashes": "{n} cierre inesperado | {n} cierres inesperados",
+      "topVersion": "Sobre todo en {version}",
+      "open": "Todas las estadísticas"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} línea | {n} líneas",
     "copied": "Copiado"
@@ -3097,6 +3192,7 @@
     "discover": "Explorar",
     "servers": "Servidores",
     "screenshots": "Capturas",
+    "stats": "Estadísticas",
     "skins": "Skins",
     "admin": "Administración",
     "runningCount": "{n} en ejecución | {n} en ejecución",
@@ -3169,6 +3265,7 @@
       "servers": "lista de servidores",
       "accounts": "cuenta iniciar sesión microsoft",
       "screenshots": "capturas imágenes galería",
+      "stats": "estadísticas tiempo de juego horas racha calendario gráfico",
       "skins": "capa cape",
       "settings": "ajustes opciones configuración",
       "newInstance": "añadir crear nueva",
@@ -3468,6 +3565,7 @@
       "storage": "Almacenamiento",
       "network": "Red",
       "clips": "Clips y grabación",
+      "backups": "Copias de mundos",
       "notifications": "Notificaciones",
       "remote": "Control remoto"
     },
@@ -5189,13 +5287,13 @@
     "cheats": "Trucos",
     "backingUp": "Guardando copia del mundo …",
     "backupDone": "Se guardó una copia de «{name}»",
-    "backup": "Copia de seguridad (ZIP)",
+    "backup": "Hacer copia ahora",
     "backupOf": "Copia de seguridad de {name}",
     "openFolderOf": "Abrir la carpeta de {name}",
     "deleteOf": "Eliminar {name}",
     "stopFirst": "Cierra primero el juego",
     "deleted": "«{name}» está en la papelera",
-    "backupHint": "Las copias se guardan como ZIP en la carpeta «backups» de la instancia (ver pestaña Archivos).",
+    "backupHint": "Los mundos se copian automáticamente al iniciar el juego y después de jugar – solo los que cambiaron. Haz clic en la línea con el reloj para ver, restaurar o borrar copias.",
     "deleteTitle": "¿Eliminar mundo?",
     "deleteText": "«{name}» va a la Papelera de reciclaje de Windows.",
     "deleteTextLinux": "«{name}» va a la papelera.",
@@ -5222,6 +5320,88 @@
       "joinNote": "Entrar inicia el juego y conecta al momento. Las versiones muy antiguas solo abren el menú principal.",
       "pingCooldown": "Espera unos segundos antes de la próxima prueba de ping.",
       "sortNote": "Ordenado por ping solo en la vista: la lista de servidores del juego mantiene su orden."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Copia automática",
+      "defaultOn": "Predeterminado (activada)",
+      "defaultOff": "Predeterminado (desactivada)",
+      "on": "Activada",
+      "off": "Desactivada",
+      "onText": "Las copias automáticas están activadas: los mundos que cambian se guardan al iniciar y después de jugar, se conservan las últimas {n} de cada mundo.",
+      "offText": "Las copias automáticas están desactivadas para esta instancia – usa “Hacer copia ahora”.",
+      "sharedText": "Esta instancia comparte su carpeta de mundos, así que las copias pertenecen a todas las instancias que la comparten."
+    },
+    "panel": {
+      "open": "Copias de {name}",
+      "running": "Haciendo copia … {percent} %",
+      "status": "{n} copia · última {time} | {n} copias · última {time}",
+      "none": "Aún sin copia",
+      "deletedTitle": "Mundos borrados con copias",
+      "restoreDeleted": "Restaurar"
+    },
+    "dialog": {
+      "title": "Copias de {name}",
+      "backupNow": "Hacer copia ahora",
+      "backingUp": "Haciendo copia … {percent} %",
+      "empty": "Aún no hay copias de este mundo.",
+      "restore": "Restaurar",
+      "deleteConfirm": "¿Borrar esta copia?",
+      "deleteOf": "Borrar la copia del {date}"
+    },
+    "kinds": {
+      "auto": "Automática",
+      "manual": "Manual",
+      "safety": "Antes de restaurar",
+      "legacy": "Copia antigua"
+    },
+    "restore": {
+      "title": "Restaurar la copia del {date}",
+      "modeLabel": "Cómo restaurar",
+      "copy": "Como copia",
+      "copyText": "Añade el mundo como “{name}” – tu mundo actual se queda como está.",
+      "replace": "Reemplazar el mundo actual",
+      "replaceText": "Antes se guarda el estado actual como copia, así que puedes volver a él.",
+      "bringBack": "Recuperar el mundo",
+      "bringBackText": "El mundo vuelve a aparecer en tu lista de mundos.",
+      "confirm": "Restaurar",
+      "stopFirst": "Cierra primero el juego – un mundo solo se puede restaurar mientras no se está jugando.",
+      "copySuffix": "restaurado",
+      "taskTitle": "Restaurar {name}",
+      "stage": "Restaurando el mundo …",
+      "doneCopy": "Restaurado como “{name}”.",
+      "doneReplace": "“{name}” se ha restaurado – el estado anterior se guarda como copia.",
+      "doneDeleted": "“{name}” ha vuelto."
+    },
+    "task": {
+      "title": "Copia de mundos · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Revisando mundos …"
+    },
+    "toast": {
+      "opened": "“{world}” se abrió antes de que terminara su copia. Se conserva la copia anterior – después de jugar se hace una nueva.",
+      "failed": "La copia de “{world}” falló: {error}"
+    },
+    "settings": {
+      "title": "Copias de mundos",
+      "intro": "Al iniciar una instancia, el launcher guarda cada mundo de un jugador que cambió desde su última copia – en segundo plano, el juego arranca enseguida. Después de jugar guarda los mundos que jugaste. Los mundos sin cambios se omiten.",
+      "enabledTitle": "Copias automáticas",
+      "enabledDescription": "Copiar los mundos que cambiaron al iniciar y después de jugar. Cada instancia puede activarlo o desactivarlo en su pestaña Mundos.",
+      "keepTitle": "Conservar por mundo",
+      "keepDescription": "Las copias automáticas más antiguas se borran. Las copias manuales y las hechas antes de restaurar se quedan siempre.",
+      "keepOption": "{n} copia | {n} copias",
+      "limitTitle": "Límite de tamaño",
+      "limitDescription": "Si todas las copias juntas superan el límite, primero se van las automáticas más antiguas – la copia más reciente de cada mundo se queda siempre.",
+      "noLimit": "Sin límite",
+      "storageTitle": "Almacenamiento",
+      "usage": "Ocupado: {size} · Copias: {count} · Mundos: {worlds}",
+      "usageNone": "Aún no hay copias.",
+      "where": "Las copias se guardan como archivos ZIP en la carpeta “world-backups” de la carpeta de datos del launcher.",
+      "orphaned": "{size} pertenecen a instancias borradas.",
+      "prune": "Borrarlas",
+      "pruneConfirm": "Borrar definitivamente",
+      "pruned": "{size} liberados."
     }
   },
   "share": {

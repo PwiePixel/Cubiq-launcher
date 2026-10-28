@@ -748,6 +748,14 @@
       "levelDatBroken": "O level.dat do mundo está danificado.",
       "notFound": "Este mundo não existe mais."
     },
+    "worldBackups": {
+      "tooManyFiles": "Este mundo tem arquivos demais para um backup.",
+      "unsafeArchive": "O backup contém caminhos inválidos e não será extraído.",
+      "broken": "Este backup está danificado.",
+      "notFound": "Este backup não existe mais.",
+      "worldOpened": "O mundo foi aberto no jogo antes de o backup terminar.",
+      "worldOpen": "Este mundo está aberto no jogo agora – feche-o primeiro."
+    },
     "logs": {
       "sourceGone": "Este arquivo de log não existe mais.",
       "unreadable": "Este arquivo de log não pode ser lido.",
@@ -1990,6 +1998,93 @@
       "javaCustom": "caminho próprio"
     }
   },
+  "stats": {
+    "title": "Estatísticas",
+    "subtitle": "Quanto você joga – em todas as suas instâncias.",
+    "subtitleInstance": "Tempo de jogo de {name}",
+    "filterLabel": "Mostrar estatísticas de",
+    "allInstances": "Todas as instâncias",
+    "live": "Jogando agora",
+    "units": {
+      "hours": "{n} h"
+    },
+    "empty": {
+      "title": "Ainda sem tempo de jogo",
+      "text": "Inicie uma instância e jogue uma partida – cada sessão aparece aqui: horas por dia, um calendário dos seus dias de jogo, suas instâncias e versões favoritas e sua maior sequência.",
+      "action": "Abrir biblioteca"
+    },
+    "tiles": {
+      "label": "Números principais",
+      "total": "Tempo total de jogo",
+      "totalCarried": "inclui {time} de antes",
+      "since": "desde {date}",
+      "week": "Esta semana",
+      "today": "Hoje: {time}",
+      "month": "Este mês",
+      "sessions": "Sessões",
+      "average": "Ø {time} por sessão",
+      "longest": "Sessão mais longa",
+      "streak": "Sequência atual",
+      "days": "{n} dia | {n} dias",
+      "bestStreak": "Recorde: {days}"
+    },
+    "chart": {
+      "title": "Tempo de jogo",
+      "rangeLabel": "Período",
+      "days": "30 dias",
+      "weeks": "16 semanas",
+      "labelDays": "Tempo de jogo por dia, últimos 30 dias",
+      "labelWeeks": "Tempo de jogo por semana, últimas 16 semanas",
+      "total": "Total: {time}",
+      "none": "Não jogado",
+      "weekOf": "Semana de {date}",
+      "summary": "{label}. Total: {total}. Máximo: {best}.",
+      "showTable": "Mostrar como tabela",
+      "hideTable": "Ocultar tabela",
+      "day": "Dia",
+      "week": "Semana",
+      "playTime": "Tempo de jogo"
+    },
+    "heatmap": {
+      "title": "Calendário",
+      "daysPlayed": "{n} dia jogado | {n} dias jogados",
+      "summary": "{label}: últimas {weeks} semanas, jogou em {days} dias.",
+      "less": "Menos",
+      "more": "Mais"
+    },
+    "top": {
+      "instances": "Instâncias mais jogadas",
+      "versions": "Versões do Minecraft",
+      "versionsHint": "As versões com que você jogou",
+      "noVersions": "Ainda não há sessões com versão conhecida.",
+      "servers": "Servidores",
+      "serversHint": "Servidores em que você entrou – pelo launcher ou pelo menu multijogador do jogo.",
+      "sessions": "{n} sessão | {n} sessões",
+      "deleted": "{name} (excluída)",
+      "showAll": "Mostrar tudo ({n})",
+      "showLess": "Mostrar menos"
+    },
+    "footer": {
+      "tracking": "Sessões registradas desde {date}.",
+      "carried": "O tempo de jogo anterior conta nos totais e nas instâncias, mas não tem data."
+    },
+    "reset": {
+      "button": "Redefinir estatísticas",
+      "title": "Redefinir estatísticas?",
+      "text": "Todas as sessões registradas somem das estatísticas – gráficos, calendário, sequências e listas recomeçam do zero. O tempo de jogo mostrado nas suas instâncias continua.",
+      "confirm": "Redefinir",
+      "done": "Estatísticas redefinidas."
+    },
+    "instance": {
+      "title": "Tempo de jogo",
+      "recent": "{time} nos últimos 30 dias",
+      "average": "Média",
+      "last30": "Tempo de jogo dos últimos 30 dias: {time}",
+      "crashes": "{n} travamento | {n} travamentos",
+      "topVersion": "Principalmente na {version}",
+      "open": "Todas as estatísticas"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} linha | {n} linhas",
     "copied": "Copiado"
@@ -3054,6 +3149,7 @@
     "discover": "Explorar",
     "servers": "Servidores",
     "screenshots": "Capturas",
+    "stats": "Estatísticas",
     "skins": "Skins",
     "admin": "Admin",
     "runningCount": "{n} em execução | {n} em execução",
@@ -3125,6 +3221,7 @@
       "servers": "servidor lista servidores",
       "accounts": "conta entrar login microsoft",
       "screenshots": "imagens fotos capturas galeria",
+      "stats": "estatísticas tempo de jogo horas sequência calendário gráfico",
       "skins": "capa",
       "settings": "configurações opções preferências",
       "newInstance": "adicionar criar nova",
@@ -3423,6 +3520,7 @@
       "storage": "Armazenamento",
       "network": "Rede",
       "clips": "Clipes e gravação",
+      "backups": "Backups de mundos",
       "notifications": "Notificações",
       "remote": "Controle remoto"
     },
@@ -5122,13 +5220,13 @@
     "cheats": "Comandos",
     "backingUp": "Fazendo backup do mundo …",
     "backupDone": "Backup de “{name}” concluído",
-    "backup": "Backup (ZIP)",
+    "backup": "Fazer backup agora",
     "backupOf": "Fazer backup de {name}",
     "openFolderOf": "Abrir a pasta de {name}",
     "deleteOf": "Excluir {name}",
     "stopFirst": "Feche o jogo primeiro",
     "deleted": "“{name}” está na lixeira",
-    "backupHint": "Os backups são salvos como ZIP na pasta “backups” da instância (veja a aba Arquivos).",
+    "backupHint": "Os mundos são salvos automaticamente ao iniciar o jogo e depois de jogar – só os que mudaram. Clique na linha com o relógio para ver, restaurar ou excluir backups.",
     "deleteTitle": "Excluir mundo?",
     "deleteText": "“{name}” vai para a Lixeira do Windows.",
     "deleteTextLinux": "“{name}” vai para a lixeira.",
@@ -5155,6 +5253,88 @@
       "joinNote": "Entrar inicia o jogo e conecta na hora. Versões muito antigas só abrem o menu principal.",
       "pingCooldown": "Aguarde alguns segundos antes do próximo teste de ping.",
       "sortNote": "Ordenado por ping só na exibição – a lista de servidores do jogo mantém a ordem."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Backup automático",
+      "defaultOn": "Padrão (ligado)",
+      "defaultOff": "Padrão (desligado)",
+      "on": "Ligado",
+      "off": "Desligado",
+      "onText": "Backups automáticos estão ligados: mundos alterados são salvos ao iniciar e depois de jogar, os últimos {n} de cada mundo são mantidos.",
+      "offText": "Backups automáticos estão desligados para esta instância – use “Fazer backup agora”.",
+      "sharedText": "Esta instância compartilha sua pasta de mundos, então os backups pertencem a todas as instâncias que a compartilham."
+    },
+    "panel": {
+      "open": "Backups de {name}",
+      "running": "Fazendo backup … {percent} %",
+      "status": "{n} backup · último {time} | {n} backups · último {time}",
+      "none": "Ainda sem backup",
+      "deletedTitle": "Mundos excluídos com backups",
+      "restoreDeleted": "Restaurar"
+    },
+    "dialog": {
+      "title": "Backups de {name}",
+      "backupNow": "Fazer backup agora",
+      "backingUp": "Fazendo backup … {percent} %",
+      "empty": "Ainda não há backups deste mundo.",
+      "restore": "Restaurar",
+      "deleteConfirm": "Excluir este backup?",
+      "deleteOf": "Excluir o backup de {date}"
+    },
+    "kinds": {
+      "auto": "Automático",
+      "manual": "Manual",
+      "safety": "Antes de restaurar",
+      "legacy": "Backup antigo"
+    },
+    "restore": {
+      "title": "Restaurar o backup de {date}",
+      "modeLabel": "Como restaurar",
+      "copy": "Como cópia",
+      "copyText": "Adiciona o mundo como “{name}” – seu mundo atual fica como está.",
+      "replace": "Substituir o mundo atual",
+      "replaceText": "O estado atual é salvo antes como backup, então você pode voltar a ele.",
+      "bringBack": "Trazer o mundo de volta",
+      "bringBackText": "O mundo aparece de novo na sua lista de mundos.",
+      "confirm": "Restaurar",
+      "stopFirst": "Feche o jogo primeiro – um mundo só pode ser restaurado enquanto o jogo não está rodando.",
+      "copySuffix": "restaurado",
+      "taskTitle": "Restaurar {name}",
+      "stage": "Restaurando o mundo …",
+      "doneCopy": "Restaurado como “{name}”.",
+      "doneReplace": "“{name}” foi restaurado – o estado anterior fica salvo como backup.",
+      "doneDeleted": "“{name}” voltou."
+    },
+    "task": {
+      "title": "Backup de mundos · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Verificando mundos …"
+    },
+    "toast": {
+      "opened": "“{world}” foi aberto antes de o backup terminar. O backup anterior é mantido – um novo é feito depois de jogar.",
+      "failed": "O backup de “{world}” falhou: {error}"
+    },
+    "settings": {
+      "title": "Backups de mundos",
+      "intro": "Ao iniciar uma instância, o launcher salva cada mundo de um jogador que mudou desde o último backup – em segundo plano, o jogo inicia na hora. Depois de jogar, ele salva os mundos jogados. Mundos sem mudanças são ignorados.",
+      "enabledTitle": "Backups automáticos",
+      "enabledDescription": "Salvar mundos alterados ao iniciar e depois de jogar. Cada instância pode ligar ou desligar isso na aba Mundos.",
+      "keepTitle": "Manter por mundo",
+      "keepDescription": "Backups automáticos mais antigos são excluídos. Backups manuais e os feitos antes de restaurar ficam sempre.",
+      "keepOption": "{n} backup | {n} backups",
+      "limitTitle": "Limite de tamanho",
+      "limitDescription": "Quando todos os backups juntos passam do limite, os automáticos mais antigos saem primeiro – o backup mais recente de cada mundo fica sempre.",
+      "noLimit": "Sem limite",
+      "storageTitle": "Armazenamento",
+      "usage": "Usado: {size} · Backups: {count} · Mundos: {worlds}",
+      "usageNone": "Ainda não há backups.",
+      "where": "Os backups ficam como arquivos ZIP na pasta “world-backups” da pasta de dados do launcher.",
+      "orphaned": "{size} pertencem a instâncias excluídas.",
+      "prune": "Excluir esses",
+      "pruneConfirm": "Excluir de vez",
+      "pruned": "{size} liberados."
     }
   },
   "share": {
