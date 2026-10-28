@@ -47,7 +47,7 @@ useOverlayMotion(backdrop, () => (mobile.value ? 'sheet' : 'dialog'))
 </template>
 
 <style scoped>
-/* Hintergrund: tiefes Navy, leicht weichgezeichnet. */
+/* Hintergrund: tiefes Dunkel, leicht weichgezeichnet. */
 .dialog-backdrop {
   background: rgb(var(--shadow-rgb) / 0.62);
   backdrop-filter: blur(3px);

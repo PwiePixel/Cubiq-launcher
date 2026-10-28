@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { inflateSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_TOPIC, FRAMES, TOPICS, pickTopic, releaseArt, releaseFrames, seedFor } from '../scripts/release-art.mjs'
+import { DEFAULT_TOPIC, FRAMES, SPECIAL_TOPICS, TOPICS, pickTopic, releaseArt, releaseFrames, seedFor } from '../scripts/release-art.mjs'
 import { Canvas, encodeApng, encodePng, sprite, upscale } from '../scripts/pixel-art.mjs'
 import { versionSeed } from '../app/utils/changelog'
 
@@ -73,8 +73,12 @@ describe('Bild je Release', () => {
     expect(pickTopic('- **A winter look.** Snow falls on the title screen.').id).toBe('winter')
     expect(pickTopic('').id).toBe(DEFAULT_TOPIC.id)
     // Jedes Thema hat ein eigenes Motiv – und für jedes gibt es eine Zeichnung.
-    expect(new Set(TOPICS.map((t) => t.subject)).size).toBe(TOPICS.length)
-    for (const topic of [...TOPICS, DEFAULT_TOPIC]) expect(releaseFrames('0.1.0', topic.id).frames).toHaveLength(FRAMES)
+    const all = [...TOPICS, ...SPECIAL_TOPICS, DEFAULT_TOPIC]
+    expect(new Set(all.map((t) => t.subject)).size).toBe(all.length)
+    for (const topic of all) expect(releaseFrames('0.1.0', topic.id).frames).toHaveLength(FRAMES)
+    // Sonderthemen gibt es nur auf Wunsch (`--topic`) – nie aus dem Text, auch wenn er genau davon spricht.
+    expect(pickTopic('- **The launcher is green again.** Back to the green colours.').id).not.toBe('green')
+    expect(releaseArt({ version: '0.2.51', topic: 'green' }).topic).toBe('green')
   })
 
   it('zeichnet ein freigestelltes 512er-Bild – je Version anders, dieselbe Version immer gleich', () => {

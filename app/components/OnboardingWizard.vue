@@ -602,7 +602,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Navy-Grund mit einem grünen Schein oben links und dem feinen Würfel-Raster des Logos – in der Mitte, wo
+/* Dunkler Grund mit einem grünen Schein oben links und dem feinen Würfel-Raster des Logos – in der Mitte, wo
    gelesen wird, ruhig, zu den Rändern hin sichtbar. */
 .onboarding {
   background:

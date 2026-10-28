@@ -343,7 +343,7 @@ function openFolder() {
 .crumb {
   @apply inline-flex w-fit items-center gap-1 rounded-lg py-0.5 pr-1.5 text-xs font-medium text-base-400 transition-colors hover:text-base-50;
 }
-/* Kopf: Karte wie die Bühne der Startseite – Titelbild rechts, Navy links für die Schrift. */
+/* Kopf: Karte wie die Bühne der Startseite – Titelbild rechts, dunkel links für die Schrift. */
 .head {
   @apply rounded-3xl border border-line bg-base-900;
   box-shadow: var(--edge-light), var(--elev-2);
@@ -397,7 +397,7 @@ function openFolder() {
   outline: 2px solid var(--color-primary-400);
   outline-offset: -2px;
 }
-/* Aktiver Reiter: Navy mit einem Hauch Grün und grüner Kante – wie jede Auswahl im Launcher. */
+/* Aktiver Reiter: Fläche mit einem Hauch Grün und grüner Kante – wie jede Auswahl im Launcher. */
 .itab-on,
 .itab-on:hover {
   @apply text-base-50;

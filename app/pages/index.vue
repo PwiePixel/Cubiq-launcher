@@ -369,7 +369,7 @@ function play(instance: Instance) {
 
 /*
  * Bühne: eine große Karte mit weichen Ecken. Oben das Titelbild der Instanz (rechts, läuft nach
- * links in Navy aus) mit dem Schein hinter dem Spielen-Knopf, unten das Regal auf einer etwas
+ * links dunkel aus) mit dem Schein hinter dem Spielen-Knopf, unten das Regal auf einer etwas
  * tieferen Fläche.
  */
 .stage {

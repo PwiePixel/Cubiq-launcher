@@ -1,5 +1,5 @@
 // Pixel-Art für „Cubi Hop“ (utils/miniGame.ts): Cubi mit denselben Zeilen und Farben wie im Release-Bild
-// (scripts/release-art.mjs), Gras- und Steinblöcke, Funkeln, Boden und ferne Inseln im Navy des Launchers.
+// (scripts/release-art.mjs), Gras- und Steinblöcke, Funkeln, Boden und ferne Inseln in den Farben des Launchers.
 // Jedes Bild ist eine Liste von Textzeilen; ein Zeichen = ein Bildpunkt, `.` = durchsichtig.
 
 /** Farben (`#rrggbb`) je Zeichen. */
@@ -34,9 +34,9 @@ export const HOP_COLORS: Record<string, string> = {
   y: '#ffffff',
   u: '#fff1a8',
   a: '#f4c34f',
-  // Ferne Inseln (dunkles Navy)
-  v: '#1b2350',
-  V: '#141a3d',
+  // Ferne Inseln (dunkles Grün-Grau)
+  v: '#1d2520',
+  V: '#161c18',
 }
 
 /** Umriss wie im Release-Bild. */

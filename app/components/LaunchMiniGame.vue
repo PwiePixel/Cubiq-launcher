@@ -217,15 +217,15 @@ function setupCanvas() {
   if (!ctx) return
   ctx.imageSmoothingEnabled = false
   sprites = Object.fromEntries((Object.keys(HOP_SPRITES) as HopSpriteName[]).map((name) => [name, bitmap(name)])) as Record<HopSpriteName, HTMLCanvasElement>
-  // Himmel: Navy-Verlauf wie im Update-Banner.
+  // Himmel: dunkler Verlauf wie im Update-Banner.
   sky = document.createElement('canvas')
   sky.width = HOP_W
   sky.height = HOP_H
   const g = sky.getContext('2d')
   if (g) {
     const grad = g.createLinearGradient(0, 0, 0, HOP_H)
-    grad.addColorStop(0, '#0c1028')
-    grad.addColorStop(1, '#070a1d')
+    grad.addColorStop(0, '#111613')
+    grad.addColorStop(1, '#0c100e')
     g.fillStyle = grad
     g.fillRect(0, 0, HOP_W, HOP_H)
     const glow = g.createRadialGradient(HOP_W * 0.78, HOP_H * 0.35, 2, HOP_W * 0.78, HOP_H * 0.35, HOP_W * 0.45)
@@ -660,7 +660,7 @@ const status = computed(() => {
   align-items: center;
   gap: 0.5rem;
 }
-/* Spielfeld: ganzzahlig vergrößert, Pixel scharf, Navy-Rahmen wie die Karten. */
+/* Spielfeld: ganzzahlig vergrößert, Pixel scharf, dunkler Rahmen wie die Karten. */
 .hop-stage {
   position: relative;
   max-width: 100%;
@@ -695,7 +695,7 @@ const status = computed(() => {
   gap: 0.6rem;
   padding: 0.75rem;
   text-align: center;
-  background: linear-gradient(180deg, rgb(7 10 29 / 0.15), rgb(7 10 29 / 0.55));
+  background: linear-gradient(180deg, rgb(12 16 14 / 0.15), rgb(12 16 14 / 0.55));
 }
 .hop-message {
   max-width: 28rem;
@@ -704,7 +704,7 @@ const status = computed(() => {
   font-size: 0.8rem;
   font-weight: 600;
   color: #f3f6f4;
-  background: rgb(7 10 29 / 0.72);
+  background: rgb(12 16 14 / 0.72);
   text-wrap: balance;
 }
 .hop-controls {

@@ -442,7 +442,7 @@ onBeforeUnmount(() => {
   font-size: 0.65rem;
   font-weight: 600;
   color: #e9eef9;
-  background: rgb(7 10 29 / 0.72);
+  background: rgb(12 16 14 / 0.72);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
   opacity: 0;
   translate: 0 4px;

@@ -77,7 +77,7 @@ const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.te
   overflow: hidden;
   height: 100%;
   min-height: 8rem;
-  background: linear-gradient(135deg, #0c1028 0%, #070a1d 100%);
+  background: linear-gradient(135deg, #111613 0%, #0c100e 100%);
 }
 /* Schein in der Farbe des Updates hinter dem Motiv, links dunkel für die Schrift. */
 .ub-glow {
@@ -86,7 +86,7 @@ const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.te
   z-index: -1;
   background:
     radial-gradient(60% 95% at 78% 50%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%),
-    linear-gradient(90deg, rgb(7 10 29 / 0.9) 0%, rgb(7 10 29 / 0.5) 45%, rgb(7 10 29 / 0.05) 75%);
+    linear-gradient(90deg, rgb(12 16 14 / 0.9) 0%, rgb(12 16 14 / 0.5) 45%, rgb(12 16 14 / 0.05) 75%);
 }
 /* Feines isometrisches Raster, nach links ausgeblendet. */
 .ub-grid {

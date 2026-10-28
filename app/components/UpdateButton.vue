@@ -100,7 +100,7 @@ function openRelease() {
 .update-pill {
   @apply flex items-center gap-1.5 rounded-md bg-primary-500 px-2.5 py-1 text-[11px] font-semibold text-on-primary shadow-[0_0_12px_-2px_var(--color-primary-500)] transition-colors hover:bg-primary-400 disabled:opacity-70;
 }
-/* Wie der Ladebildschirm beim Start: Navy mit grünem Schein, Logo und ein ruhig laufender Balken. */
+/* Wie der Ladebildschirm beim Start: dunkler Grund mit grünem Schein, Logo und ein ruhig laufender Balken. */
 .update-splash {
   @apply fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-3;
   background:

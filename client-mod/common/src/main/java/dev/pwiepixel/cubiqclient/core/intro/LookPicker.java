@@ -145,10 +145,10 @@ public final class LookPicker {
 			Paint.frame(c, x - 1, y - 1, w + 2, h + 2, ColorMath.withAlpha(Frost.ICE, 0x60));
 			return;
 		}
-		// Cubiq: Navy-Verlauf, grüner Schein oben rechts, das Zeichen in der Mitte.
+		// Cubiq: dunkler Verlauf mit einem Hauch Grün, grüner Schein oben rechts, das Zeichen in der Mitte.
 		int accent = Theme.of("dark", "cubiq", null).accent;
-		c.fill(x, y, x + w, y + h / 2, 0xFF0C1028);
-		c.fill(x, y + h / 2, x + w, y + h, 0xFF070A1D);
+		c.fill(x, y, x + w, y + h / 2, 0xFF111613);
+		c.fill(x, y + h / 2, x + w, y + h, 0xFF0C100E);
 		c.fill(x + w / 2, y, x + w, y + h / 3, ColorMath.withAlpha(accent, 0x22));
 		int cells = Math.min(h, w);
 		CubiqMark.draw(c, x + (w - cells) / 2, y + (h - cells) / 2, cells, 1, accent, 1f);

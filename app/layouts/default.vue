@@ -281,7 +281,7 @@ onBeforeUnmount(() => void backListener?.unregister())
 
 <style scoped>
 /*
- * Fensterrahmen im tiefsten Navy; die Seiten liegen auf einer Leinwand mit weichen Ecken und feiner
+ * Fensterrahmen in der tiefsten Stufe; die Seiten liegen auf einer Leinwand mit weichen Ecken und feiner
  * Kante, die sich vom Rahmen abhebt. Am Handy füllt die Leinwand den Bildschirm.
  */
 .app-frame {
