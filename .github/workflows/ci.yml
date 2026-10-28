@@ -401,9 +401,18 @@ jobs:
           RESULTS: ${{ toJSON(needs) }}
         run: echo "$RESULTS"
 
-      # „changes“ muss gelaufen sein; alle anderen dürfen erfolgreich oder übersprungen sein.
-      - name: Fail if a job failed or was cancelled
-        if: needs.changes.result != 'success' || contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+      # Streng: „changes“ muss erfolgreich sein, jeder andere Job erfolgreich oder übersprungen. Jedes andere Ergebnis
+      # ist ein Fehler – auch „abandoned“ (Job bekam keinen Runner, z. B. kein macOS frei) und künftige neue Werte;
+      # sonst wäre ci-ok grün, obwohl der Job nie lief. Sind wieder Runner frei: „Re-run failed jobs“.
+      - name: Fail unless every job succeeded or was skipped
+        env:
+          RESULTS: ${{ toJSON(needs) }}
         run: |
-          echo "::error::At least one CI job failed or was cancelled – see the results above."
-          exit 1
+          bad=$(jq -r '[to_entries[]
+            | select(.value.result != "success" and (.key == "changes" or .value.result != "skipped"))
+            | "\(.key) (\(.value.result))"] | join(", ")' <<<"$RESULTS")
+          if [ -n "$bad" ]; then
+            echo "::error::Not every CI job succeeded or was skipped: $bad – see the results above."
+            exit 1
+          fi
+          echo "Every CI job succeeded or was skipped."
