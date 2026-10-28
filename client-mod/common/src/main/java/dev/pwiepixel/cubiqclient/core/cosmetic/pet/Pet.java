@@ -1,6 +1,7 @@
 package dev.pwiepixel.cubiqclient.core.cosmetic.pet;
 
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2;
+import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2Renderer;
 
 import java.util.Random;
 import java.util.UUID;
@@ -11,15 +12,22 @@ import java.util.UUID;
  * ({@link PetSim}). Nur Spiel-/Render-Thread.
  */
 public final class Pet {
-	/** Zustände (Anhang D/E {@code PET_STATES}). */
-	public static final int IDLE = 0, WALK = 1, SLIDE = 2, SWIM = 3, AIR = 4, SNEAK = 5, GRAB = 6, FLEE = 7, HANDSUP = 8;
-	static final String[] STATE_NAMES = { "idle", "walk", "slide", "swim", "air", "sneak", "grab", "flee", "handsup" };
+	/**
+	 * Zustände (Anhang D/E {@code PET_STATES}); dazu die Aktionen {@link #PET} (gestreichelt) und {@link #EAT}
+	 * (gefüttert) – einmal ab ihrem Beginn, angestoßen per Rechtsklick ({@link PetSim#interact}).
+	 */
+	public static final int IDLE = 0, WALK = 1, SLIDE = 2, SWIM = 3, AIR = 4, SNEAK = 5, GRAB = 6, FLEE = 7, HANDSUP = 8,
+			PET = 9, EAT = 10;
+	static final String[] STATE_NAMES = { "idle", "walk", "slide", "swim", "air", "sneak", "grab", "flee", "handsup", "pet",
+			"eat" };
 	/**
 	 * Was das Modell kann ({@link #abilities}, Anhang E): nur dann wird das Verhalten ausgelöst. Ohne {@code sneak}
 	 * schleicht er nicht (läuft normal), ohne {@code grab} schnappt er nie (und flieht dann auch nie), ohne {@code flee}
-	 * flieht er im Lauf-Zustand, ohne {@code handsup} hebt er nie die Flossen.
+	 * flieht er im Lauf-Zustand, ohne {@code handsup} hebt er nie die Flossen. {@link #CAN_PET}/{@link #CAN_EAT}: das
+	 * Modell hat die Aktion {@code pet}/{@code eat} – ohne sie steht er beim Streicheln/Füttern nur still (idle) und es
+	 * gibt Herzchen.
 	 */
-	public static final int CAN_SNEAK = 1, CAN_GRAB = 2, CAN_FLEE = 4, CAN_HANDSUP = 8;
+	public static final int CAN_SNEAK = 1, CAN_GRAB = 2, CAN_FLEE = 4, CAN_HANDSUP = 8, CAN_PET = 16, CAN_EAT = 32;
 	/** Überblenden zwischen zwei Zuständen (wie §7). */
 	public static final long FADE_MS = 250L;
 
@@ -49,6 +57,8 @@ public final class Pet {
 	int state = IDLE;
 	int prevState = IDLE;
 	long stateSince;
+	/** Seit wann der vorige Zustand lief (seine eigene Zeitbasis beim Ausblenden von {@code grab} und den Aktionen). */
+	long prevStateSince;
 	/** Ticks, die der Begleiter schon ohne Boden ist (AIR erst ab 2, gegen Flattern an Stufen). */
 	int airTicks;
 
@@ -61,6 +71,22 @@ public final class Pet {
 	int lookTicks, handsupTicks, handsupCooldown;
 	/** Blickziel beim Schnappen (Gieren) oder NaN. */
 	double grabYaw = Double.NaN;
+
+	// Streicheln/Füttern (Rechtsklick des Besitzers, 2026-10-28)
+	/** Laufende Aktion ({@link #PET}/{@link #EAT}) und ihre restlichen bzw. gesamten Ticks; 0 = keine. */
+	int action, actionTicks, actionTotal;
+	/** Ticks bis zur nächsten Aktion (kurze Pause danach). */
+	int interactCooldown;
+	/** Länge der Aktionen {@code pet}/{@code eat} des Modells in ms (0 = Modell hat sie nicht), je Tick gemeldet. */
+	int petMs, eatMs;
+	/**
+	 * Umriss in Ruhe (Pixel im Modellraum: minX, minY, minZ, maxX, maxY, maxZ) für den Klick-Test und die Höhe der
+	 * Herzchen; null = nicht gezeichnet (Modell nicht geladen, kein Begleiter am Boden, oder Begleiter eines anderen
+	 * Spielers) – dann nicht anklickbar. Je Tick gemeldet.
+	 */
+	float[] box;
+	/** Ruhig (am Boden, nicht im Wasser) im letzten Tick – nur dann beginnt eine Aktion. */
+	boolean calm = true;
 
 	// Verhalten
 	int slideTicks;
@@ -145,6 +171,10 @@ public final class Pet {
 				return CosmeticV2.DRIVER_FLEE;
 			case HANDSUP:
 				return CosmeticV2.DRIVER_HANDSUP;
+			case PET:
+				return CosmeticV2.DRIVER_PET;
+			case EAT:
+				return CosmeticV2.DRIVER_EAT;
 			case WALK:
 				return CosmeticV2.DRIVER_WALK;
 			case SLIDE:
@@ -182,9 +212,23 @@ public final class Pet {
 		return stateSince;
 	}
 
-	/** Spielt dieser Zustand seine Animation einmal ab Zustandsbeginn statt nach der Uhr ({@link #GRAB})? */
+	/** Wanduhr-Zeit, seit der der vorige Zustand ({@link #prevState}) lief – seine Zeitbasis beim Ausblenden. */
+	public long prevStateSince() {
+		return prevStateSince;
+	}
+
+	/** Laufende Aktion ({@link #PET}, {@link #EAT}) oder −1. */
+	public int action() {
+		return actionTicks > 0 ? action : -1;
+	}
+
+	/**
+	 * Spielt dieser Zustand seine Animation einmal ab Zustandsbeginn statt nach der Uhr ({@link #GRAB}, {@link #PET},
+	 * {@link #EAT})? Die Zeichen-Zeit richtet sich nach dem Treiber, der wirklich spielt
+	 * ({@code CosmeticV2#oneShot}): fehlt dem Modell die Aktion, läuft idle nach der Uhr weiter.
+	 */
 	public static boolean fromStateStart(int state) {
-		return state == GRAB;
+		return state == GRAB || state == PET || state == EAT;
 	}
 
 	/**
@@ -198,13 +242,36 @@ public final class Pet {
 		if (m.hasDriver(CosmeticV2.DRIVER_GRAB)) a |= CAN_GRAB;
 		if (m.hasDriver(CosmeticV2.DRIVER_FLEE)) a |= CAN_FLEE;
 		if (m.hasDriver(CosmeticV2.DRIVER_HANDSUP)) a |= CAN_HANDSUP;
+		if (m.action(CosmeticV2.DRIVER_PET) != null) a |= CAN_PET;
+		if (m.action(CosmeticV2.DRIVER_EAT) != null) a |= CAN_EAT;
 		return a;
+	}
+
+	/**
+	 * Zeit der Pose für den Zustand {@code state} mit dem Modell {@code m}: einmalige Animationen ({@code grab}, die
+	 * Aktionen) ab ihrem eigenen Beginn ({@code sinceStartMs}), alles andere nach {@code clockMs} (Uhr + Versatz des
+	 * Begleiters). Maßgeblich ist der Treiber, den das Modell wirklich spielt: fehlt ihm die Aktion, läuft idle nach der
+	 * Uhr weiter (kein Sprung auf Phase 0).
+	 */
+	public static long poseTime(CosmeticV2 m, int state, long sinceStartMs, long clockMs) {
+		if (m == null) return clockMs;
+		int eff = CosmeticV2Renderer.effectiveDriver(m, driver(state));
+		return CosmeticV2.oneShot(eff) ? Math.max(0L, sinceStartMs) : clockMs;
+	}
+
+	/** Länge der Aktion {@code driver} ({@link CosmeticV2#DRIVER_PET}/{@link CosmeticV2#DRIVER_EAT}) in ms, 0 = keine. */
+	public static int actionMs(CosmeticV2 m, int driver) {
+		CosmeticV2.Animation a = m == null ? null : m.action(driver);
+		return a == null ? 0 : a.lengthMs;
 	}
 
 	void setState(int s, long now) {
 		if (s == state) return;
-		// Mitten im Überblenden: vom überwiegend sichtbaren Zustand weiterblenden.
-		prevState = blend(now) >= 0.5f ? state : prevState;
+		// Mitten im Überblenden: vom überwiegend sichtbaren Zustand weiterblenden (samt seiner Zeitbasis).
+		if (blend(now) >= 0.5f) {
+			prevState = state;
+			prevStateSince = stateSince;
+		}
 		state = s;
 		stateSince = now;
 	}
