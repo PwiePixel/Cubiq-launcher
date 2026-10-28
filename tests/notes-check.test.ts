@@ -22,6 +22,8 @@ describe('PR-Prüfung „Spieler-Text“', () => {
     expect(checkNotes([commit('Update docs', '', ['docs/x.md', 'README.md'])], []).ok).toBe(true)
     expect(checkNotes([commit('fix: Typo [skip changelog]')], []).ok).toBe(true)
     expect(checkNotes([], []).ok).toBe(true)
+    // Release im Branch vorbereitet: Die Texte stehen schon im neuen Abschnitt von CHANGELOG.md.
+    expect(checkNotes([commit('feat: Trim clips')], [], { prepared: true }).ok).toBe(true)
   })
 
   it('nimmt auch EN:/DE:-Zeilen im Commit', () => {

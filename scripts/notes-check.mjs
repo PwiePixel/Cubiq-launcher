@@ -17,11 +17,14 @@ import { changelogItem, NOTE_SHOT, parseChangeNote, parseGitLog } from './releas
 
 /**
  * Ergebnis der Prüfung aus den Commits des PRs und den Texten der geänderten Dateien in changes/.
+ * `prepared`: Der PR bringt schon den Abschnitt einer neuen Version in CHANGELOG.md mit (Release im Branch
+ * vorbereitet, z. B. für eine feste Versionsnummer) – die Spieler-Texte stehen dann dort statt in changes/.
  * @param {{ subject: string, body: string, files: string[] }[]} commits
  * @param {{ name: string, text: string }[]} notes
+ * @param {{ prepared?: boolean }} [options]
  * @returns {{ ok: boolean, problems: string[], needed: string[] }}
  */
-export function checkNotes(commits, notes) {
+export function checkNotes(commits, notes, { prepared = false } = {}) {
   const problems = []
   for (const { name, text } of notes) {
     const english = /^###\s+english\s*$/im.test(text)
@@ -35,7 +38,7 @@ export function checkNotes(commits, notes) {
     .filter((c) => changelogItem(c))
     .filter((c) => !(/^EN:\s*\S/im.test(c.body) && /^DE:\s*\S/im.test(c.body)))
     .map((c) => c.subject)
-  const hasNote = notes.some(({ text }) => parseChangeNote(text))
+  const hasNote = prepared || notes.some(({ text }) => parseChangeNote(text))
   if (needed.length && !hasNote) {
     problems.push(
       [
@@ -115,12 +118,18 @@ if (isMain) {
     .map((f) => f.trim())
     .filter((f) => /^changes\/[^/]+\.md$/.test(f) && !/readme\.md$/i.test(f))
   const notes = names.filter((f) => existsSync(join(root, f))).map((f) => ({ name: f.slice('changes/'.length), text: readFileSync(join(root, f), 'utf8') }))
-  const checked = checkNotes(commits, notes)
+  // Neuer Versions-Abschnitt („## x.y.z – …“) in CHANGELOG.md: das Release ist im Branch schon vorbereitet.
+  const prepared = /^\+## \d+\.\d+\.\d+/m.test(git('diff', `${base}...${head}`, '--', 'CHANGELOG.md'))
+  const checked = checkNotes(commits, notes, { prepared })
   const shotProblems = checkNoteShots(notes, join(root, 'changes'))
   const result = { ...checked, ok: checked.ok && !shotProblems.length, problems: [...checked.problems, ...shotProblems] }
   const summary = process.env.GITHUB_STEP_SUMMARY
   if (result.ok) {
-    const what = notes.length ? `Spieler-Text: ${notes.map((n) => n.name).join(', ')}` : 'Nichts für Spieler geändert – kein Spieler-Text nötig.'
+    const what = notes.length
+      ? `Spieler-Text: ${notes.map((n) => n.name).join(', ')}`
+      : prepared
+        ? 'Spieler-Text: vorbereiteter Versions-Abschnitt in CHANGELOG.md'
+        : 'Nichts für Spieler geändert – kein Spieler-Text nötig.'
     console.log(what)
     if (summary) appendFileSync(summary, `### Spieler-Text\n\n✅ ${what}\n`)
     process.exit(0)
