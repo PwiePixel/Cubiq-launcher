@@ -175,6 +175,11 @@ public final class NewSince {
 	 * Chunk-Raster auf der Minimap; Weltkarte mit Maßstab, Entfernung messen und „Gehe zu Koordinaten“.
 	 */
 	public static final String MAPS_3 = "0.24.0";
+	/**
+	 * Begleiter streicheln und füttern (nächste Version nach Cubiq Client 0.23.0): Rechtsklick auf den eigenen
+	 * Begleiter am Boden.
+	 */
+	public static final String PET_INTERACT = "0.24.0";
 
 	private static final Map<String, String> SINCE = new LinkedHashMap<String, String>();
 	/** Zusatzbereiche je Modul (Modul-ID → Einträge). */
@@ -263,6 +268,8 @@ public final class NewSince {
 		add(WINTER_COSMETICS, WARDROBE_PET);
 		// Karten-Update: Blickkegel und Chunk-Raster auf der Minimap.
 		add(MAPS_3, "minimap.viewCone", "minimap.grid");
+		// Begleiter per Rechtsklick streicheln/füttern (Schalter in Cubiq Online).
+		add(PET_INTERACT, "cubiqOnline.petInteract");
 	}
 
 	private NewSince() {

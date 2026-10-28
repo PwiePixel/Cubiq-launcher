@@ -620,6 +620,12 @@ public final class CubiqClient {
 				dev.pwiepixel.cubiqclient.online.LegacyEmotes.onAttack();
 			} else if (button == 1) {
 				rightClicks.record(now);
+				// Rechtsklick auf den eigenen Begleiter am Boden: streicheln/füttern – Minecraft bekommt den Klick nicht
+				// (nichts wird gegessen, nichts geht an den Server).
+				if (dev.pwiepixel.cubiqclient.online.LegacyPets.onUse()) {
+					event.setCanceled(true);
+					return;
+				}
 			}
 		}
 		// Reines Mausrad-Ereignis während des Zooms → Zoomstufe statt Hotbar.

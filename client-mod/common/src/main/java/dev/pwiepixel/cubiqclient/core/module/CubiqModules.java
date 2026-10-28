@@ -324,6 +324,11 @@ public final class CubiqModules {
 	public final BoolSetting cubiqCapes;
 	/** Cubiq-Kosmetik auf dem Kopf (z. B. die Quietscheente) bei allen Spielern zeigen. */
 	public final BoolSetting cubiqCosmetics;
+	/**
+	 * Eigene Begleiter am Boden per Rechtsklick streicheln (leere Hand) bzw. füttern (Essen in der Hand) – nur zu sehen,
+	 * nichts wird gegessen oder an den Server geschickt.
+	 */
+	public final BoolSetting petInteract;
 	/** Cubiq-Client-Einstellungen mit dem Cubiq-Konto synchronisieren (bleibt selbst lokal, siehe core.sync). */
 	public final BoolSetting syncClient;
 	public final ChoiceSetting<CapeSettings.Style> capeStyle;
@@ -889,6 +894,7 @@ public final class CubiqModules {
 		fanSymbolTab = cubiqOnline.add(new BoolSetting("fanSymbolTab", "Fan symbols and creator stars in the tab list", true));
 		cubiqCapes = cubiqOnline.add(new BoolSetting("capes", "Show Cubiq capes", true));
 		cubiqCosmetics = cubiqOnline.add(new BoolSetting("cosmetics", "Show Cubiq cosmetics (hats)", true));
+		petInteract = cubiqOnline.add(new BoolSetting("petInteract", "Pet and feed your companions (right-click)", true));
 		syncClient = cubiqOnline.add(new BoolSetting("sync", "Sync with Cubiq account", true));
 		capeStyle = capePhysics.add(new ChoiceSetting<>("style", "Style", CapeSettings.Style.class, CapeSettings.Style.SMOOTH));
 		capeWindMode = capePhysics.add(new ChoiceSetting<>("windMode", "Wind", CapeSettings.Wind.class, CapeSettings.Wind.WAVES));
