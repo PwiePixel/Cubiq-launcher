@@ -40,6 +40,15 @@ export const PET_BASE_STATES: readonly PetState[] = ['idle', 'walk', 'slide', 's
 export const PET_FALLBACK: Partial<Record<PetState, PetState>> = { sneak: 'walk', flee: 'walk', grab: 'idle', handsup: 'idle' }
 /** Dauer der einmaligen Animation `grab` im Spiel (ms). */
 export const PET_GRAB_MS = 2400
+/**
+ * Einmalige Aktionen eines Begleiters am Boden: Streicheln (`pet`) und Füttern (`eat`). Sie stehen in
+ * der eigenen Liste `actions` neben `animations` (Format bleibt 2) – ältere Launcher und Clients übergehen
+ * den unbekannten Schlüssel, `animations` behält die zehn Treiber. Reihenfolge wie auf der Website und im Client.
+ */
+export const ACTION_DRIVERS = ['pet', 'eat'] as const
+export type ActionDriver = (typeof ACTION_DRIVERS)[number]
+/** Grenzen der Aktionen: höchstens 16 Einträge, Länge 300…10 000 ms (ganzzahlig). */
+export const ACTION_LIMITS = { entries: 16, lengthMs: [300, 10000] } as const
 /** Jeder Zustand, den ein Modell spielen kann (Spieler- oder Begleiter-Zustand). */
 export type AnimState = WingState | PetState
 /** Höchstens so viele Begleiter am Boden je Spieler (`count` vom Server). */
@@ -125,6 +134,18 @@ export interface CosmeticAnimation {
   tracks: CosmeticTrack[]
 }
 
+/**
+ * Einmalige Aktion (Streicheln/Füttern): Spuren wie bei Animationen, läuft exklusiv ab dem Auslösen
+ * (ohne Zeitversatz) und beginnt und endet in der Ruhepose.
+ */
+export interface CosmeticAction {
+  id: string
+  driver: ActionDriver
+  lengthMs: number
+  loop?: false
+  tracks: CosmeticTrack[]
+}
+
 export interface CosmeticPulse {
   periodMs: number
   min: number
@@ -175,6 +196,8 @@ export interface CosmeticModel {
   bones: CosmeticBone[]
   cubes: CosmeticCube[]
   animations?: CosmeticAnimation[]
+  /** Einmalige Aktionen eines Begleiters am Boden (nur slot pet); fehlerhafte Einträge fallen mit Warnung weg. */
+  actions?: CosmeticAction[]
   halos?: CosmeticHalo[]
   meta?: unknown
 }
@@ -352,15 +375,20 @@ export function samplePoses(model: Pick<CosmeticModel, 'animations'>, timeMs: nu
     const len = anim.lengthMs
     let t = timeMs + (anim.offsetMs ?? 0)
     t = anim.loop === false ? Math.min(Math.max(t, 0), len) : ((t % len) + len) % len
-    for (const tr of anim.tracks) {
-      const v = sampleTrack(tr, t)
-      const p = poses.get(tr.bone) ?? { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] }
-      if (tr.channel === 'scale') p.scale = p.scale.map((s, j) => s * v[j]!) as Vec3
-      else p[tr.channel] = p[tr.channel].map((s, j) => s + v[j]!) as Vec3
-      poses.set(tr.bone, p)
-    }
+    addTracks(poses, anim.tracks, t)
   }
   return poses
+}
+
+/** Spuren zur Zeit `t` auf die Posen legen: Drehung/Position addieren, Skalierung multiplizieren. */
+function addTracks(poses: Map<string, BonePose>, tracks: readonly CosmeticTrack[], t: number): void {
+  for (const tr of tracks) {
+    const v = sampleTrack(tr, t)
+    const p = poses.get(tr.bone) ?? { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] }
+    if (tr.channel === 'scale') p.scale = p.scale.map((s, j) => s * v[j]!) as Vec3
+    else p[tr.channel] = p[tr.channel].map((s, j) => s + v[j]!) as Vec3
+    poses.set(tr.bone, p)
+  }
 }
 
 /** Zustand eines Spielers (§7), Vorrang sneak > air > idle. */
@@ -389,9 +417,69 @@ export function stateAnimations(model: Pick<CosmeticModel, 'animations'> & { slo
   return samplePoses(model, timeMs, [resolveDriver(model, state)])
 }
 
+/**
+ * Pose-Zeit eines Begleiters am Boden (Anhang E): Die einmalige Animation `grab` läuft ab ihrem Beginn `stateSince` –
+ * aber nur, wenn das Modell sie wirklich hat (wirksamer Treiber nach dem Rückfall). Sonst läuft der Rückfall (idle)
+ * wie jeder andere Zustand auf Wanduhr + Versatz weiter, ohne Sprung in der Phase. Leucht-Bilder und Höfe bleiben
+ * immer auf Wanduhr + Versatz – diese Zeit geht nur in die Pose.
+ */
+export function petPoseTime(model: Pick<CosmeticModel, 'animations'> & { slot?: string }, state: AnimState, nowMs: number, offsetMs: number, stateSince: number): number {
+  return resolveDriver(model, state) === 'grab' ? nowMs - stateSince : nowMs + offsetMs
+}
+
+// --- Aktionen (Streicheln/Füttern) ----------------------------------------------------------------
+
+/** Gültige Aktionen je Modell-Objekt (Modelle ändern sich nicht; neue Liste, Knochen oder slot → neu geprüft). */
+const actionCache = new WeakMap<object, { src: unknown; bones: unknown; slot: unknown; actions: ReadonlyMap<ActionDriver, CosmeticAction> }>()
+const NO_ACTIONS: ReadonlyMap<ActionDriver, CosmeticAction> = new Map()
+
+function modelActions(model: unknown): ReadonlyMap<ActionDriver, CosmeticAction> {
+  if (!isObject(model) || model.actions == null) return NO_ACTIONS
+  const hit = actionCache.get(model)
+  if (hit && hit.src === model.actions && hit.bones === model.bones && hit.slot === model.slot) return hit.actions
+  const bones = new Set<string>()
+  for (const b of Array.isArray(model.bones) ? (model.bones as unknown[]) : []) if (isObject(b) && ID.test(String(b.id ?? ''))) bones.add(String(b.id))
+  const actions = checkActions(model, bones).actions
+  actionCache.set(model, { src: model.actions, bones: model.bones, slot: model.slot, actions })
+  return actions
+}
+
+/** Die gültige Aktion eines Modells für `driver` (fehlerhafte Einträge fallen weg wie in `validateModel`). */
+export function actionOf(model: unknown, driver: ActionDriver): CosmeticAction | undefined {
+  return modelActions(model).get(driver)
+}
+
+/** Länge einer Aktion in ms (0 = das Modell hat sie nicht) – so lange läuft sie in der Vorschau. */
+export function actionLength(model: unknown, driver: ActionDriver): number {
+  return actionOf(model, driver)?.lengthMs ?? 0
+}
+
+/** Kann die Vorschau diese Aktion zeigen? Nur, wenn der Begleiter sie gültig mitbringt. */
+export function petActionAvailable(model: unknown, driver: ActionDriver): boolean {
+  return !!actionOf(model, driver)
+}
+
+/**
+ * Pose einer Aktion zur eigenen Zeit `localMs` seit dem Auslösen (auf 0…lengthMs geklemmt, kein
+ * Zeitversatz je Begleiter). Exklusiv: nur die Spuren dieser Aktion. `null`, wenn das Modell sie nicht hat.
+ */
+export function sampleAction(model: unknown, driver: ActionDriver, localMs: number): Map<string, BonePose> | null {
+  const action = actionOf(model, driver)
+  if (!action) return null
+  const t = Number.isFinite(localMs) ? Math.min(Math.max(localMs, 0), action.lengthMs) : 0
+  const poses = new Map<string, BonePose>()
+  addTracks(poses, action.tracks, t)
+  return poses
+}
+
 const REST: BonePose = { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] }
 
-/** Zwei Posen mischen (w = 0 → a, 1 → b); fehlende Knochen zählen als Ruhe. */
+/**
+ * Zwei Posen mischen (w = 0 → a, 1 → b); fehlende Knochen zählen als Ruhe. Alles geradlinig, auch Drehungen je
+ * Euler-Winkel: a + (b − a) · w – wie bisher und wie im Cubiq Client. Bewusst kein kürzester Drehweg: gegen ein Ziel,
+ * das sich bewegt (Rollen 0…720°), spränge er von Bild zu Bild um, und Flügel falteten andersherum als im Spiel.
+ * Nach einer Bewegung über mehrere Runden dreht ein Knochen beim Überblenden daher kurz schnell zurück (wie bisher).
+ */
 export function blendPoses(a: Map<string, BonePose>, b: Map<string, BonePose>, w: number): Map<string, BonePose> {
   const out = new Map<string, BonePose>()
   const mix = (x: Vec3, y: Vec3) => x.map((v, j) => v + (y[j]! - v) * w) as Vec3
@@ -403,41 +491,94 @@ export function blendPoses(a: Map<string, BonePose>, b: Map<string, BonePose>, w
   return out
 }
 
+/** Knochen für Effekte (Herzen, Krümel): `fx_*`, in Ruhe im Modell versteckt. */
+const isFxBone = (id: string) => id.startsWith('fx_')
+
+/**
+ * fx-Knochen werden nie überblendet: Während jeder Überblendung zeigen sie sofort die Zielpose (fehlt sie dort: Ruhe,
+ * also versteckt). Unterbrochene Herzen oder Krümel verschwinden so, statt in voller Größe zurückzugleiten.
+ */
+function fxFromTarget(out: Map<string, BonePose>, target: Map<string, BonePose>): Map<string, BonePose> {
+  for (const id of [...out.keys()]) {
+    if (!isFxBone(id)) continue
+    const p = target.get(id)
+    if (p) out.set(id, p)
+    else out.delete(id)
+  }
+  return out
+}
+
+/** Laufende Aktion für den Mischer: Treiber und eigene Zeit seit dem Auslösen (ms). */
+export interface ActionPlay {
+  driver: ActionDriver
+  localMs: number
+}
+
 export interface StateMixer {
-  pose(model: Pick<CosmeticModel, 'animations'> & { slot?: string }, timeMs: number, state?: AnimState): Map<string, BonePose>
+  /**
+   * Pose zur Wanduhr `timeMs` (sie taktet auch die Überblendung). `poseMs` = eigene Pose-Zeit des Zustands, wenn sie
+   * nicht die Wanduhr ist (z. B. `grab` ab dem Klick, siehe `petPoseTime`); springt sie bei gleichem Zustand zurück
+   * (erneuter Klick), beginnt der Zustand mit einer Überblendung von vorn – wie eine Aktion.
+   */
+  pose(model: Pick<CosmeticModel, 'animations'> & { slot?: string }, timeMs: number, state?: AnimState, action?: ActionPlay | null, poseMs?: number): Map<string, BonePose>
   readonly state: AnimState | null
+  /** Gezeigte Aktion (`null` = keine oder das Modell hat sie nicht). */
+  readonly action: ActionDriver | null
 }
 
 /**
  * Zustands-Mischer je Spieler: Pose mit 250-ms-Überblenden. Beim Wechsel wird die aktuelle
  * Pose als Schnappschuss eingefroren und zur neuen Zustands-Pose geblendet (§7).
+ * Eine Aktion (Streicheln/Füttern) ersetzt die Zustands-Pose ganz, solange sie läuft: Ein- und Ausblenden
+ * gehen wie ein Zustandswechsel vom eingefrorenen Bild aus; springt ihre eigene Zeit zurück (erneuter Klick),
+ * beginnt sie mit einer neuen Überblendung von vorn. Die Ausgangsseite behält damit ihre eigene Zeit
+ * (sie steht still), die Zielseite läuft auf ihrer: Zustände zur Wanduhr `timeMs` (oder `poseMs`), die Aktion
+ * zu `localMs`. Hat das Modell die Aktion nicht, läuft der Zustand ungestört weiter.
+ * Überblendet wird geradlinig (`blendPoses`); nur fx-Knochen springen sofort auf die Zielpose. Modelle ohne fx-Knochen
+ * (Flügel, Hüte) blenden damit genau wie bisher.
  */
 export function createStateMixer(fadeMs = STATE_FADE_MS): StateMixer {
   let cur: AnimState | null = null
+  let curAction: ActionDriver | null = null
+  /** `s:<Zustand>` oder `a:<Aktion>` – ein Wechsel startet die Überblendung. */
+  let key: string | null = null
+  /** Eigene Zeit der Zielseite im letzten Bild (Aktion: `localMs`, Zustand: nur mit `poseMs`). */
+  let lastLocal: number | null = null
   let since = 0
   let snap: Map<string, BonePose> | null = null
   let last = new Map<string, BonePose>()
   const smoothstep = (u: number) => u * u * (3 - 2 * u)
   return {
-    pose(model, timeMs, state = 'idle') {
-      if (cur === null) cur = state
-      if (state !== cur) {
+    pose(model, timeMs, state = 'idle', action = null, poseMs) {
+      const acted = action ? sampleAction(model, action.driver, action.localMs) : null
+      const play = acted ? action : null
+      const next = play ? `a:${play.driver}` : `s:${state}`
+      const local = play ? play.localMs : (poseMs ?? null)
+      const again = next === key && local !== null && lastLocal !== null && local < lastLocal
+      if (key === null) key = next
+      else if (next !== key || again) {
         snap = last
         since = timeMs
-        cur = state
+        key = next
       }
-      const target = stateAnimations(model, timeMs, state)
+      cur = state
+      curAction = play?.driver ?? null
+      lastLocal = local
+      const target = acted ?? stateAnimations(model, poseMs ?? timeMs, state)
       let out = target
       if (snap) {
         const u = Math.max(0, Math.min(1, (timeMs - since) / fadeMs))
         if (u >= 1) snap = null
-        else out = blendPoses(snap, target, smoothstep(u))
+        else out = fxFromTarget(blendPoses(snap, target, smoothstep(u)), target)
       }
       last = out
       return out
     },
     get state() {
       return cur
+    },
+    get action() {
+      return curAction
     },
   }
 }
@@ -803,32 +944,11 @@ export function validateModel(m: unknown, images: { texture?: ImageSize | null; 
     const len = a.lengthMs
     if (!Number.isInteger(len) || (len as number) < 50 || (len as number) > LIMITS.lengthMs) err(p, `lengthMs 50…${LIMITS.lengthMs}`)
     if (a.offsetMs != null && !Number.isInteger(a.offsetMs)) err(p, 'offsetMs ganzzahlig')
-    if (!Array.isArray(a.tracks) || !a.tracks.length || a.tracks.length > LIMITS.tracks) {
-      err(p, `1–${LIMITS.tracks} tracks`)
-      return
-    }
-    ;(a.tracks as unknown[]).forEach((rawTrack, j) => {
-      const tr = isObject(rawTrack) ? rawTrack : {}
-      const tp = `${p}.tracks[${j}]`
-      if (!bones.has(String(tr.bone))) err(tp, `unbekannter Knochen ${String(tr.bone)}`)
-      if (!(CHANNELS as readonly unknown[]).includes(tr.channel)) err(tp, `channel eins von ${CHANNELS.join(', ')}`)
-      if (tr.interpolation != null && !(INTERPOLATIONS as readonly unknown[]).includes(tr.interpolation)) err(tp, 'unbekannte interpolation')
-      if (!Array.isArray(tr.keys) || !tr.keys.length || tr.keys.length > LIMITS.keys) {
-        err(tp, `1–${LIMITS.keys} keys`)
-        return
-      }
-      let last = -1
-      ;(tr.keys as unknown[]).forEach((rawKey, k) => {
-        const key = isObject(rawKey) ? rawKey : {}
-        const kt = key.t as number
-        if (!Number.isInteger(kt) || kt < 0 || kt > (len as number) || kt <= last) err(`${tp}.keys[${k}]`, 't aufsteigend in 0…lengthMs')
-        last = Number.isInteger(kt) ? kt : last
-        if (!isVec(key.v)) err(`${tp}.keys[${k}]`, 'v [x,y,z] fehlt')
-        if (key.interpolation != null && !(INTERPOLATIONS as readonly unknown[]).includes(key.interpolation)) err(`${tp}.keys[${k}]`, 'unbekannte interpolation')
-        if (tr.channel === 'scale' && isVec(key.v) && key.v.some((s) => s <= 0 || s > 4)) err(`${tp}.keys[${k}]`, 'scale 0…4')
-      })
-    })
+    checkTracks(p, a.tracks, len, bones, err)
   })
+
+  // Aktionen (Streicheln/Füttern): nie ein Fehler – Probleme werden zu Warnungen, der Eintrag fällt weg.
+  warnings.push(...checkActions(m, bones).warnings)
 
   // Leucht-Höfe
   const halos = m.halos ?? []
@@ -851,6 +971,81 @@ export function validateModel(m: unknown, images: { texture?: ImageSize | null; 
   })
 
   return { ok: errors.length === 0, errors, warnings }
+}
+
+/** Spuren einer Animation oder Aktion: vorhandene Knochen, Kanal, 1–64 Schlüssel mit t aufsteigend in 0…len. */
+function checkTracks(p: string, tracks: unknown, len: unknown, bones: ReadonlySet<string>, err: (p: string, msg: string) => void): void {
+  if (!Array.isArray(tracks) || !tracks.length || tracks.length > LIMITS.tracks) {
+    err(p, `1–${LIMITS.tracks} tracks`)
+    return
+  }
+  ;(tracks as unknown[]).forEach((rawTrack, j) => {
+    const tr = isObject(rawTrack) ? rawTrack : {}
+    const tp = `${p}.tracks[${j}]`
+    // Knochen nur über ihre id als Text – ["head"] ist kein Knochen (wie Website und Cubiq Client).
+    if (typeof tr.bone !== 'string' || !bones.has(tr.bone)) err(tp, `unbekannter Knochen ${typeof tr.bone === 'string' ? tr.bone : (JSON.stringify(tr.bone) ?? String(tr.bone))}`)
+    if (!(CHANNELS as readonly unknown[]).includes(tr.channel)) err(tp, `channel eins von ${CHANNELS.join(', ')}`)
+    if (tr.interpolation != null && !(INTERPOLATIONS as readonly unknown[]).includes(tr.interpolation)) err(tp, 'unbekannte interpolation')
+    if (!Array.isArray(tr.keys) || !tr.keys.length || tr.keys.length > LIMITS.keys) {
+      err(tp, `1–${LIMITS.keys} keys`)
+      return
+    }
+    let last = -1
+    ;(tr.keys as unknown[]).forEach((rawKey, k) => {
+      const key = isObject(rawKey) ? rawKey : {}
+      const kt = key.t as number
+      if (!Number.isInteger(kt) || kt < 0 || kt > (len as number) || kt <= last) err(`${tp}.keys[${k}]`, 't aufsteigend in 0…lengthMs')
+      last = Number.isInteger(kt) ? kt : last
+      if (!isVec(key.v)) err(`${tp}.keys[${k}]`, 'v [x,y,z] fehlt')
+      if (key.interpolation != null && !(INTERPOLATIONS as readonly unknown[]).includes(key.interpolation)) err(`${tp}.keys[${k}]`, 'unbekannte interpolation')
+      if (tr.channel === 'scale' && isVec(key.v) && key.v.some((s) => s <= 0 || s > 4)) err(`${tp}.keys[${k}]`, 'scale 0…4')
+    })
+  })
+}
+
+/**
+ * Aktionen prüfen (`actions`). Nie ein Fehler: Jedes Problem gibt genau EINE Warnung und lässt den Eintrag
+ * (oder die ganze Liste) weg – so bleibt ein Begleiter auch mit Aktionen einer späteren Version ladbar.
+ * Gültige Aktionen ergeben keine Warnung. Je Treiber gilt der erste gültige Eintrag: Ein weiterer Eintrag für
+ * einen Treiber, der schon einen gültigen hat, fällt mit einer Warnung weg; ein ungültiger blockiert keinen späteren.
+ * Nur ein fehlender Schlüssel ist still – `null` ist keine Liste, und jedes `actions` außerhalb von slot pet
+ * (auch eine leere Liste) gibt eine Warnung.
+ */
+function checkActions(m: Record<string, unknown>, bones: ReadonlySet<string>): { actions: Map<ActionDriver, CosmeticAction>; warnings: string[] } {
+  const actions = new Map<ActionDriver, CosmeticAction>()
+  const warnings: string[] = []
+  const list = m.actions
+  if (list === undefined) return { actions, warnings }
+  const ignoreAll = (msg: string) => warnings.push(`actions: ${msg} – Aktionen ignoriert`)
+  if (!Array.isArray(list)) ignoreAll('Liste erwartet')
+  else if (m.slot !== 'pet') ignoreAll('nur für slot pet')
+  else if (list.length > ACTION_LIMITS.entries) ignoreAll(`höchstens ${ACTION_LIMITS.entries} Einträge`)
+  else {
+    ;(list as unknown[]).forEach((raw, i) => {
+      const p = `actions[${i}]`
+      const ignore = (msg: string) => warnings.push(`${p}: ${msg} – Aktion ignoriert`)
+      if (!isObject(raw)) return ignore('Objekt erwartet')
+      const driver = raw.driver as ActionDriver
+      if (!(ACTION_DRIVERS as readonly unknown[]).includes(driver)) return ignore(`unbekannter driver ${String(raw.driver)} (bekannt: ${ACTION_DRIVERS.join(', ')})`)
+      if (actions.has(driver)) return ignore(`driver ${driver} doppelt`)
+      const problems: string[] = []
+      const note = (path: string, msg: string) => problems.push(`${path}: ${msg}`)
+      // id ist Text nach der id-Regel (true oder ["pet"] werden nicht umgewandelt).
+      if (typeof raw.id !== 'string' || !ID.test(raw.id)) note(p, 'ungültige id')
+      const [minMs, maxMs] = ACTION_LIMITS.lengthMs
+      const len = raw.lengthMs
+      if (!Number.isInteger(len) || (len as number) < minMs || (len as number) > maxMs) note(p, `lengthMs ${minMs}…${maxMs}`)
+      if (raw.loop !== undefined && raw.loop !== false) note(p, 'loop nur false (läuft einmal)')
+      if (raw.offsetMs !== undefined) note(p, 'kein offsetMs (läuft ab dem Auslösen)')
+      checkTracks(p, raw.tracks, len, bones, note)
+      if (problems.length) {
+        warnings.push(`${problems[0]}${problems.length > 1 ? ` (+${problems.length - 1} weitere)` : ''} – Aktion ${driver} ignoriert`)
+        return
+      }
+      actions.set(driver, raw as unknown as CosmeticAction)
+    })
+  }
+  return { actions, warnings }
 }
 
 function checkImage(p: string, t: Record<string, number | string | undefined>, err: (p: string, msg: string) => void, main: boolean): boolean {

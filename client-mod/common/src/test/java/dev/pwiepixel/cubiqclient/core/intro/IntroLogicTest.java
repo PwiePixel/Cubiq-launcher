@@ -66,8 +66,8 @@ class IntroLogicTest {
 		CubiqModules again = new CubiqModules();
 		again.registry.apply(saved);
 		assertFalse(again.clientState.news().hasNew(again.cubiqOnline));
-		assertEquals(Arrays.asList("cubiqOnline.fanSymbolNametag", "cubiqOnline.fanSymbolTab", "cubiqOnline.sync"),
-				saved.clientState.newSeen, "alle neuen Einstellungen der Seite gelten als gesehen");
+		assertEquals(Arrays.asList("cubiqOnline.fanSymbolNametag", "cubiqOnline.fanSymbolTab", "cubiqOnline.petInteract",
+				"cubiqOnline.sync"), saved.clientState.newSeen, "alle neuen Einstellungen der Seite gelten als gesehen");
 	}
 
 	@Test

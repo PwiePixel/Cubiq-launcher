@@ -2,6 +2,9 @@ package dev.pwiepixel.cubiqclient.online;
 
 import dev.pwiepixel.cubiqclient.compat.Mc;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetDraw;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetInteract;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSight;
+import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetSim;
 import dev.pwiepixel.cubiqclient.core.cosmetic.pet.PetWorld;
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2Renderer;
 import dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat;
@@ -17,6 +20,9 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemFood;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -44,6 +50,8 @@ import java.util.ArrayList;
  * 1.8–1.12 zeichnen Wasser ohne Tiefe, danach (in {@code RenderWorldLastEvent}) lagen Pinguine sonst unverdeckt über dem
  * Wasser statt darin. Kam der Anker in einem Bild nicht dran (Abschnitt nicht sichtbar), zeichnet
  * {@code RenderWorldLastEvent} wie bisher.
+ *
+ * <p>Rechtsklick auf den eigenen Begleiter (Streicheln/Füttern): {@link #onUse} aus {@code CubiqClient.onMouse}.
  */
 public final class LegacyPets {
 	private static final Blocks BLOCKS = new Blocks();
@@ -93,7 +101,82 @@ public final class LegacyPets {
 					BLOCKS);
 		}
 		f.petsEnd();
+		// Herzchen über Begleitern, die gestreichelt/gefüttert werden, aber keine eigene Aktion im Modell haben (nur hier)
+		for (int i = 0, n = f.petFxCount(); i < n; i++) {
+			PetSim.Fx fx = f.petFx(i);
+			world.spawnParticle(EnumParticleTypes.HEART, fx.x, fx.y, fx.z, 0, 0, 0);
+		}
 		keepAnchor(world, f.pets().size() > 0);
+	}
+
+	/**
+	 * Rechtsklick (aus {@code CubiqClient.onMouse}: Taste gedrückt, kein Bildschirm offen): trifft der Blick zuerst den
+	 * eigenen Begleiter am Boden und ist die Hand leer oder hält Essen, wird er gestreichelt bzw. gefüttert – true =
+	 * Ereignis abbrechen (Minecraft benutzt nichts, nichts geht an den Server). Sonst false = Minecraft wie immer. Ist
+	 * der Block unter dem Fadenkreuz eine Pflanze (Getreide, Gras, Blumen, eine Schneeschicht …, {@code Mc#seeThrough}),
+	 * ist er durchsichtig: der Klick-Test sucht entlang des Blicks ({@link Sight}) bis zum ersten Treffer dahinter, der
+	 * keine ist ({@code PetSight}).
+	 */
+	public static boolean onUse() {
+		OnlineFeatures<Object> f = LegacyOnline.features();
+		EntityPlayer p = Mc.player();
+		World w = Mc.world();
+		if (f == null || p == null || w == null) return false;
+		try {
+			// Auge und Blickrichtung wie Minecrafts eigener Treffer (getPositionEyes/getLook)
+			double yaw = Math.toRadians(p.rotationYaw), pitch = Math.toRadians(p.rotationPitch);
+			double dx = -Math.sin(yaw) * Math.cos(pitch), dy = -Math.sin(pitch), dz = Math.cos(yaw) * Math.cos(pitch);
+			double ex = p.posX, ey = p.posY + p.getEyeHeight(), ez = p.posZ;
+			BlockPos aim = Mc.aimBlock();
+			boolean plant = aim != null && Mc.seeThrough(w, aim);
+			return f.petUse(ex, ey, ez, dx, dy, dz, Mc.aimDistance(p), plant, new Sight(w, p, ex, ey, ez, dx, dy, dz),
+					held(Mc.equipment(p, 4)), held(Mc.offhand(p)), p.isSneaking(), p.isSpectator(), Mc.screen() != null);
+		} catch (RuntimeException e) {
+			f.online().reportError(e);
+			return false;
+		}
+	}
+
+	/**
+	 * Blick-Strahl für den Klick-Test ({@link PetSight.Ray}) aus Auge und Blickrichtung eines Klicks: Umrisse und Wesen
+	 * wie Minecrafts Fadenkreuz ({@link Mc#clipBlock}, {@link Mc#aimEntity}). Nur Spiel-Thread, nur für diesen Klick.
+	 */
+	private static final class Sight implements PetSight.Ray {
+		private final World world;
+		private final EntityPlayer player;
+		private final double ex, ey, ez, dx, dy, dz;
+
+		Sight(World world, EntityPlayer player, double ex, double ey, double ez, double dx, double dy, double dz) {
+			this.world = world;
+			this.player = player;
+			this.ex = ex;
+			this.ey = ey;
+			this.ez = ez;
+			this.dx = dx;
+			this.dy = dy;
+			this.dz = dz;
+		}
+
+		@Override
+		public double block(double from, double to, int[] cell) {
+			return Mc.clipBlock(world, ex, ey, ez, dx, dy, dz, from, to, cell);
+		}
+
+		@Override
+		public boolean seeThrough(int x, int y, int z) {
+			return Mc.seeThrough(world, new BlockPos(x, y, z));
+		}
+
+		@Override
+		public double entity(double to) {
+			return Mc.aimEntity(world, player, ex, ey, ez, dx, dy, dz, to);
+		}
+	}
+
+	/** Was in einer Hand liegt (null = leer); Essen wie in der Hunger-Anzeige ({@code ItemFood}). */
+	private static int held(ItemStack stack) {
+		if (stack == null) return PetInteract.HELD_EMPTY;
+		return stack.getItem() instanceof ItemFood ? PetInteract.HELD_FOOD : PetInteract.HELD_OTHER;
 	}
 
 	/** Anker beim Kamera-Wesen halten, solange es Begleiter gibt; sonst entfernen. */

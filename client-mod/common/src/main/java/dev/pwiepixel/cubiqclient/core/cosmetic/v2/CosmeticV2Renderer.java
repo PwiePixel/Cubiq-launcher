@@ -95,6 +95,41 @@ public final class CosmeticV2Renderer {
 	 */
 	public void pose(CosmeticV2 m, long timeMs, boolean animate, boolean helmet, int driver, int prevDriver, float blend,
 			long hiddenBones) {
+		pose(m, timeMs, timeMs, animate, helmet, driver, prevDriver, blend, hiddenBones, false);
+	}
+
+	/**
+	 * Wie {@link #pose(CosmeticV2, long, boolean, boolean, int, int, float, long)} für einen Begleiter am Boden: jede Seite
+	 * der Überblendung auf ihrer eigenen Zeitbasis – {@code timeMs} für {@code driver}, {@code prevTimeMs} für
+	 * {@code prevDriver} (Uhr + Versatz für Bewegungs-Zustände, Zeit seit dem eigenen Beginn für {@code grab} und die
+	 * Aktionen). Sonst springt die ausgehende Seite beim Wechsel auf eine fremde Phase (sitzender Fuchs → stehend beim
+	 * Schnappen). Aktions-Treiber ({@link CosmeticV2#DRIVER_PET} …) spielen ihre Aktion allein und auf 0…lengthMs begrenzt.
+	 * Gemischt wird genau wie mit einer Zeit ({@link #crossfade}); nur Effekt-Knochen ({@link CosmeticV2#fxBones}) stehen
+	 * sofort in der Pose des Ziels. Ohne Überblendung (fertig eingeblendet) genau wie die Fassung mit einer Zeit; Hüte,
+	 * Flügel und die Garderobe bleiben bei jener.
+	 */
+	public void pose(CosmeticV2 m, long timeMs, long prevTimeMs, boolean animate, boolean helmet, int driver, int prevDriver,
+			float blend, long hiddenBones) {
+		pose(m, timeMs, prevTimeMs, animate, helmet, driver, prevDriver, blend, hiddenBones, true);
+	}
+
+	/**
+	 * Pose für einen Durchgang von {@code hat} (immer animiert): ein Begleiter am Boden ({@link V2Hat#pet}) mit der
+	 * Überblendung der Begleiter – jede Seite auf ihrer eigenen Zeit ({@link V2Hat#poseMs}, {@link V2Hat#prevPoseMs}), siehe
+	 * {@link #pose(CosmeticV2, long, long, boolean, boolean, int, int, float, long)} –, Hüte und Flügel mit der einen Uhr des
+	 * Bildes ({@link V2Hat#now}) wie bisher.
+	 */
+	public void pose(V2Hat<?> hat) {
+		if (hat.pet) {
+			pose(hat.model, hat.poseMs, hat.prevPoseMs, true, hat.helmet, hat.driver, hat.prevDriver, hat.blend, hat.hiddenBones);
+		} else {
+			pose(hat.model, hat.now, true, hat.helmet, hat.driver, hat.prevDriver, hat.blend, hat.hiddenBones);
+		}
+	}
+
+	/** {@code pet}: Überblendung nach {@link #crossfade} (Begleiter), sonst gewichtet addiert wie bisher (Hüte, Flügel). */
+	private void pose(CosmeticV2 m, long timeMs, long prevTimeMs, boolean animate, boolean helmet, int driver, int prevDriver,
+			float blend, long hiddenBones, boolean pet) {
 		this.hidden = hiddenBones;
 		int n = Math.min(MAX, m.bones.size());
 		for (int b = 0; b < n; b++) {
@@ -106,8 +141,12 @@ public final class CosmeticV2Renderer {
 			int cur = effectiveDriver(m, driver);
 			int prev = effectiveDriver(m, prevDriver);
 			float w = blend >= 1f || cur == prev ? 1f : Math.max(0f, blend);
-			samplePoses(m, timeMs, cur, w);
-			if (w < 1f) samplePoses(m, timeMs, prev, 1f - w);
+			if (pet && w < 1f) {
+				crossfade(m, n, timeMs, cur, prevTimeMs, prev, w);
+			} else {
+				samplePoses(m, timeMs, cur, w);
+				if (w < 1f) samplePoses(m, prevTimeMs, prev, 1f - w);
+			}
 		}
 		for (int b = 0; b < n; b++) {
 			CosmeticV2.Bone bone = m.bones.get(b);
@@ -122,6 +161,50 @@ public final class CosmeticV2Renderer {
 				V2Math.multiply(world[b], tmp2, local, tmp);
 			} else {
 				System.arraycopy(local, 0, world[b], 0, 16);
+			}
+		}
+	}
+
+	/** Pose des Ziels für die Effekt-Knochen einer Überblendung (Arbeitsspeicher für {@link #crossfade}). */
+	private final float[][] qPos = new float[MAX][3];
+	private final float[][] qRot = new float[MAX][3];
+	private final float[][] qScale = new float[MAX][3];
+
+	/**
+	 * Überblendung eines Begleiters ({@code w} = Anteil des Ziels): gemischt genau wie mit einer Zeit und wie bis 0.23.0 –
+	 * das Ziel {@code cur} mit Gewicht {@code w}, der Ausgang {@code prev} mit {@code 1 − w} ({@link #samplePoses}: Drehung
+	 * und Position je Achse gewichtet addiert, also linear, Größe je Spur als Faktor {@code 1 + w·(v − 1)}) –, nur jede
+	 * Seite auf ihrer eigenen Zeit: das Ziel zu {@code timeMs}, den Ausgang zu {@code prevTimeMs}. Drehungen bewusst je
+	 * Euler-Winkel, ohne kürzesten Weg: gegen ein Ziel, das sich bewegt (Rolle beim Rutschen 0…720°, Drehungen bei Hände
+	 * hoch; hier laufen sogar beide Seiten weiter), wechselte der mitten in der Überblendung die Richtung, und das Bild
+	 * spränge um 360° · w. Nach einer Bewegung über mehrere Runden dreht ein Knochen dafür kurz schnell zurück, wie bisher.
+	 * Effekt-Knochen ({@link CosmeticV2#fxBones}) werden nie gemischt: sie nehmen sofort die Pose des Ziels (Ruhe, wenn
+	 * es sie nicht bewegt), beim Beginn, Ende und Abbruch einer Aktion. Ergebnis in {@code pPos}/{@code pRot}/{@code pScale}.
+	 */
+	private void crossfade(CosmeticV2 m, int n, long timeMs, int cur, long prevTimeMs, int prev, float w) {
+		long fx = m.fxBones;
+		if (fx != 0L) {
+			// Ziel mit vollem Gewicht vorab (nur für die Effekt-Knochen), danach wieder von der Ruhe aus mischen
+			samplePoses(m, timeMs, cur, 1f);
+			for (int b = 0; b < n; b++) {
+				for (int j = 0; j < 3; j++) {
+					qPos[b][j] = pPos[b][j];
+					qRot[b][j] = pRot[b][j];
+					qScale[b][j] = pScale[b][j];
+					pPos[b][j] = 0f;
+					pRot[b][j] = 0f;
+					pScale[b][j] = 1f;
+				}
+			}
+		}
+		samplePoses(m, timeMs, cur, w);
+		samplePoses(m, prevTimeMs, prev, 1f - w);
+		for (int b = 0; b < n && b < 64; b++) {
+			if ((fx & (1L << b)) == 0L) continue;
+			for (int j = 0; j < 3; j++) {
+				pPos[b][j] = qPos[b][j];
+				pRot[b][j] = qRot[b][j];
+				pScale[b][j] = qScale[b][j];
 			}
 		}
 	}
@@ -144,32 +227,45 @@ public final class CosmeticV2Renderer {
 		V2Math.multiply(out, out, tmp2, tmp);
 	}
 
-	/** Treiber, den das Modell wirklich hat: sonst {@code idle} (Vertrag: fehlende Zustands-Animation spielt idle). */
-	static int effectiveDriver(CosmeticV2 m, int driver) {
+	/**
+	 * Treiber, den das Modell wirklich hat: sonst {@code idle} (Vertrag: fehlende Zustands-Animation bzw. Aktion spielt
+	 * idle). Danach richtet sich auch die Zeitbasis einer Seite ({@link CosmeticV2#oneShot}).
+	 */
+	public static int effectiveDriver(CosmeticV2 m, int driver) {
 		return driver != 0 && m.hasDriver(driver) ? driver : 0;
 	}
 
 	/**
 	 * Pose aller Knochen für einen Treiber mit Gewicht {@code weight} (Überblendung); Drehung/Position addieren
-	 * (gewichtet), Skalierung multiplizieren (Faktor 1 + w·(v - 1)).
+	 * (gewichtet), Skalierung multiplizieren (Faktor 1 + w·(v - 1)). Aktions-Treiber: nur die eine Aktion.
 	 */
 	private void samplePoses(CosmeticV2 m, long timeMs, int driver, float weight) {
+		if (driver >= CosmeticV2.DRIVER_PET) {
+			CosmeticV2.Animation action = m.action(driver);
+			if (action != null) sample(action, timeMs, weight);
+			return;
+		}
 		for (CosmeticV2.Animation anim : m.animations) {
 			if (anim.driver != driver) continue; // exklusiv: nur die Animationen des Zustands (§7)
-			long len = anim.lengthMs;
-			long t = timeMs + anim.offsetMs;
-			double tt;
-			if (!anim.loop) tt = Math.min(Math.max(t, 0L), len);
-			else tt = ((t % len) + len) % len;
-			for (CosmeticV2.Track tr : anim.tracks) {
-				if (tr.bone >= MAX) continue;
-				sampleTrack(tr, tt, v3);
-				float[] target = tr.channel == CosmeticV2.SCALE ? pScale[tr.bone]
-						: tr.channel == CosmeticV2.POSITION ? pPos[tr.bone] : pRot[tr.bone];
-				for (int j = 0; j < 3; j++) {
-					if (tr.channel == CosmeticV2.SCALE) target[j] = (float) (target[j] * (1 + weight * (v3[j] - 1)));
-					else target[j] = (float) (target[j] + weight * v3[j]);
-				}
+			sample(anim, timeMs, weight);
+		}
+	}
+
+	/** Eine Animation zur Zeit {@code timeMs} (+ ihr Versatz; ohne {@code loop} auf 0…lengthMs begrenzt) dazunehmen. */
+	private void sample(CosmeticV2.Animation anim, long timeMs, float weight) {
+		long len = anim.lengthMs;
+		long t = timeMs + anim.offsetMs;
+		double tt;
+		if (!anim.loop) tt = Math.min(Math.max(t, 0L), len);
+		else tt = ((t % len) + len) % len;
+		for (CosmeticV2.Track tr : anim.tracks) {
+			if (tr.bone >= MAX) continue;
+			sampleTrack(tr, tt, v3);
+			float[] target = tr.channel == CosmeticV2.SCALE ? pScale[tr.bone]
+					: tr.channel == CosmeticV2.POSITION ? pPos[tr.bone] : pRot[tr.bone];
+			for (int j = 0; j < 3; j++) {
+				if (tr.channel == CosmeticV2.SCALE) target[j] = (float) (target[j] * (1 + weight * (v3[j] - 1)));
+				else target[j] = (float) (target[j] + weight * v3[j]);
 			}
 		}
 	}

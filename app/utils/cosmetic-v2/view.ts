@@ -16,6 +16,7 @@ import {
   haloIntensity,
   createStateMixer,
   hiddenBones,
+  type ActionPlay,
   type AnimState,
   type CosmeticHalo,
   type CosmeticModel,
@@ -36,9 +37,12 @@ export interface CosmeticInstance {
   /**
    * Pose, Streifen-Bilder und Höfe zur Wanduhr `timeMs` setzen. `state` = Zustand für
    * Zustands-Animationen (idle/air/sneak, §7; Begleiter am Boden idle/walk/slide/swim/air) mit
-   * 250 ms Überblenden; ohne Angabe idle.
+   * 250 ms Überblenden; ohne Angabe idle. `poseMs` = eigene Pose-Zeit des Zustands, falls nicht `timeMs`
+   * (Begleiter: `grab` ab dem Klick, siehe `petPoseTime`). `action` = laufende Aktion eines Begleiters
+   * (Streicheln/Füttern) mit eigener Zeit seit dem Auslösen: ersetzt die Zustands-Pose, solange sie läuft; ein
+   * Modell ohne diese Aktion übergeht sie. Leucht-Bilder und Höfe bleiben immer auf `timeMs`.
    */
-  update(timeMs: number, opts?: { animate?: boolean; glow?: boolean; camera?: THREE.Camera | null; state?: AnimState }): void
+  update(timeMs: number, opts?: { animate?: boolean; glow?: boolean; camera?: THREE.Camera | null; state?: AnimState; poseMs?: number; action?: ActionPlay | null }): void
   /** Umgebungslicht 0…1 (nur cutout/translucent; emissive und Leuchten bleiben voll hell). */
   setLight(f: number): void
   /** Optionen (Anhang D): abgeschaltete Teile samt Kind-Knochen ausblenden; fehlt ein Eintrag, gilt `default`. */
@@ -222,8 +226,8 @@ export function createCosmetic(model: CosmeticModel, images: { texture: Cosmetic
 
   return {
     root,
-    update(timeMs, { animate = true, glow = true, camera = null, state = 'idle' } = {}) {
-      const poses = animate ? mixer.pose(model, timeMs, state) : null
+    update(timeMs, { animate = true, glow = true, camera = null, state = 'idle', poseMs, action = null } = {}) {
+      const poses = animate ? mixer.pose(model, timeMs, state, action, poseMs) : null
       for (const b of model.bones) bones.get(b.id)!.matrix.fromArray(boneLocal(b, poses?.get(b.id)))
       root.updateMatrixWorld(true)
       if (glow !== glowOn) {
