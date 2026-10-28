@@ -7,12 +7,16 @@ name: CI
 # - „ci-ok“ fasst alles zusammen und ist der EINE Pflicht-Check im Ruleset von main: grün, wenn jeder Job
 #   erfolgreich war oder übersprungen wurde – so blockieren übersprungene Jobs keinen PR.
 # - Ist ein Lauf auf main grün, macht .github/workflows/auto-release.yml daraus ein Release (mit Changelog).
+# - „player-notes“ (nur PRs): Änderungen für Spieler brauchen einen Spieler-Text in changes/ (scripts/notes-check.mjs).
+# - workflow_dispatch: startet .github/workflows/pr-sync.yml, nachdem es main in einen PR-Branch gemergt hat (Pushes
+#   mit GITHUB_TOKEN lösen sonst keine Prüfungen aus); läuft dann wie ein Push – alle Jobs.
 #
 # Sicherheit: pull_request (nicht pull_request_target) – fremder Code läuft ohne Secrets und nur mit Lese-Token.
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -115,9 +119,10 @@ jobs:
           persist-credentials: false
 
       - name: System libraries (WebKitGTK 4.1, GTK 3)
+        # Mit Zeitgrenze und Wiederholung – ein hängender Paket-Spiegel soll nicht 90 Minuten blockieren.
+        timeout-minutes: 25
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
+          bash scripts/apt-install.sh libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
             librsvg2-dev libssl-dev libxdo-dev desktop-file-utils appstream
 
       - uses: pnpm/action-setup@v4
@@ -359,9 +364,32 @@ jobs:
           retention-days: 7
 
   # Der Pflicht-Check für das Ruleset. Übersprungen (Pfad nicht geändert) zählt als ok.
+  # Spieler-Text für die Release-Hinweise (nur bei Pull Requests): siehe changes/README.md.
+  player-notes:
+    name: Player notes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Player notes for this pull request
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node --experimental-strip-types scripts/notes-check.mjs "$BASE_SHA" "$HEAD_SHA"
+
   ci-ok:
     name: ci-ok
-    needs: [changes, launcher-windows, launcher-linux, launcher-android, launcher-ios, ios-engine, client-mod]
+    needs: [changes, launcher-windows, launcher-linux, launcher-android, launcher-ios, ios-engine, client-mod, player-notes]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5

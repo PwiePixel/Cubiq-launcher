@@ -35,6 +35,9 @@ const groupsOf: Record<HistoryKind, 'play' | 'content' | 'instance'> = {
 
 // Absturz-Helfer: gespeicherte Analyse wieder öffnen.
 const helper = useCrashHelperStore()
+// Spielzeit-Übersicht nur, wenn die Spielzeit gezeigt werden soll (Einstellung „Spielzeit anzeigen“).
+const settings = useSettingsStore()
+const showPlayTime = computed(() => settings.current?.ui.showPlayTime !== false)
 
 const bulkActions = ['enable', 'disable', 'delete'] as const
 
@@ -221,8 +224,9 @@ const grouped = computed(() => {
 
 <template>
   <div class="min-h-0 max-w-3xl flex-1 overflow-y-auto pr-1">
+    <StatsInstanceCard v-if="showPlayTime" :instance-id="instance.id" :refresh-key="refreshKey" />
     <div class="mb-4 flex items-center gap-2">
-      <div class="flex rounded-full bg-base-900 p-0.5 ring-1 ring-base-800">
+      <div class="flex rounded-xl bg-base-900 p-0.5 ring-1 ring-line">
         <button v-for="k in (['all', 'play', 'content', 'instance'] as const)" :key="k" class="tab px-3 py-1 text-xs" :class="{ 'tab-on': filter === k }" @click="filter = k">
           {{ t(`history.filters.${k}`) }}
         </button>

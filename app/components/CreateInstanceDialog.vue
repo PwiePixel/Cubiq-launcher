@@ -131,10 +131,9 @@ async function submit() {
             v-for="kind in loaderKinds"
             :key="kind"
             type="button"
-            class="rounded-md border px-1 py-2 text-xs font-medium transition-colors mobile:min-h-11"
-            :class="loaderKind === kind
-              ? 'border-primary-500 bg-primary-900 text-base-50'
-              : 'border-base-700 bg-base-900 text-base-400 hover:border-base-600 hover:text-base-50'"
+            class="choice px-1 py-2 text-xs font-medium mobile:min-h-11"
+            :class="{ 'choice-on': loaderKind === kind }"
+            :aria-pressed="loaderKind === kind"
             @click="loaderKind = kind"
           >
             {{ loaderLabels[kind] }}

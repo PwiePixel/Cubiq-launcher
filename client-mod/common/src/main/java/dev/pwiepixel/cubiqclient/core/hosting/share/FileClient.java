@@ -60,7 +60,7 @@ public final class FileClient implements AutoCloseable {
 		byte[] want = FileChannel.unhex(expectedSha256);
 		if (want == null || want.length != 32) throw new FileException("bad_request");
 		byte[] req = FileChannel.get(kind, want);
-		if (!stream.write(req, 0, req.length)) throw new FileException("closed");
+		if (!stream.write(req, 0, req.length)) throw closedOrRejected();
 		FileChannel.Frame f = FileChannel.read(in, 1024);
 		if (f.type == FileChannel.ERROR) throw new FileException(FileChannel.safeCode(f.text()));
 		if (f.type != FileChannel.FILE || f.payload.length != 8) throw new FileException("bad_request");
@@ -92,6 +92,22 @@ public final class FileClient implements AutoCloseable {
 		if (!sha256.equals(expectedSha256)) throw new FileException("hash");
 		if (expectedSha1 != null && !sha1.equals(expectedSha1)) throw new FileException("hash");
 		return new Result(size, sha256, sha1);
+	}
+
+	/**
+	 * Schreiben scheitert auch, wenn der Host schon abgelehnt und geschlossen hat, bevor die Anfrage raus war – dann liegt
+	 * sein ERROR-Frame bereits im Puffer und nennt den eigentlichen Grund (z. B. {@code not_allowed}) statt „closed“.
+	 */
+	private FileException closedOrRejected() {
+		if (in.hasBuffered()) {
+			try {
+				FileChannel.Frame f = FileChannel.read(in, 1024);
+				if (f.type == FileChannel.ERROR) return new FileException(FileChannel.safeCode(f.text()));
+			} catch (IOException ignored) {
+				// Nichts Lesbares gepuffert – dann bleibt es bei „closed“.
+			}
+		}
+		return new FileException("closed");
 	}
 
 	@Override

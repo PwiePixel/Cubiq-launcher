@@ -25,9 +25,8 @@
 </div>
 
 > [!NOTE]
-> Cubiq Launcher is in early development (version 0.1.0). It is based on
-> [TRS Launcher](https://github.com/theredstonee/TRS-Launcher) by Ohev Tamerin (Theredstonee) and, like it, licensed
-> under the GPL-3.0. What was changed is listed in [NOTICE](NOTICE).
+> Cubiq Launcher is in early development (version 0.1.0). It is free software under the GPL-3.0; copyright and
+> third-party notices are in [NOTICE](NOTICE).
 
 ## Features
 
@@ -94,12 +93,12 @@ Your data lives in `~/.local/share/Cubiq-Launcher`. More in the [Linux guide](do
 
 ## Before the first release
 
-These values are your own and are set when building – nothing of the original project is used. Without them the
-matching feature stays off, the rest of the launcher works.
+These values are your own and are set when building. Without them the matching feature stays off, the rest of the
+launcher works.
 
 | What | Where | Without it |
 |---|---|---|
-| **Microsoft sign-in**: client ID of your own Azure app ("Personal Microsoft accounts only", platform "Mobile and desktop applications" with redirect `http://localhost/login`, "Allow public client flows" on), [approved by Mojang](https://aka.ms/mce-reviewappid) for the Minecraft API | Repository variable `CUBIQ_MSA_CLIENT_ID` | No sign-in (development builds start the demo) |
+| **Microsoft sign-in**: already built in – the Azure app "Cubiq Launcher" (client ID `5cc8876f-8fe1-4c27-bc28-9355a79db635`), works as soon as Microsoft has [approved it](https://aka.ms/mce-reviewappid) for the Minecraft API; setup and form answers: [docs/microsoft-sign-in.md](docs/microsoft-sign-in.md) | Optional repository variable `CUBIQ_MSA_CLIENT_ID` for a different Azure app | – (until the approval, sign-in says it is waiting for it) |
 | **Update signing key**: already created (key ID `A427CF588D4DF86A`); the public key is in `src-tauri/tauri.conf.json` and `src-tauri/crates/core/src/client_mod_update.rs` | Secrets `TAURI_SIGNING_PRIVATE_KEY` (content of the key file) and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Installers without update signature – installed launchers don't update themselves |
 | **Cubiq services** (friends, chat, capes, creator codes, …): base URL of your own server implementing the API | Repository variable `CUBIQ_API_BASE`; for the in-game mod also `DEFAULT_API` in `client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/online/OnlineConfig.java` | Services hidden, nothing is sent |
 | **Discord status**: application ID of your Discord app | Repository variable `CUBIQ_DISCORD_APP_ID` | No Discord status |
@@ -151,17 +150,33 @@ Releases make themselves. After every green CI run on `main`, [`auto-release.yml
 checks whether anything changed for players since the last release. If so, it
 
 1. raises the version (`feat:` commits → minor, `feat!:` → major, everything else → patch),
-2. writes the new section of [CHANGELOG.md](CHANGELOG.md) in English and German – from your points under
-   `## Unreleased` if there are any, otherwise from the commit messages ([how](CONTRIBUTING.md#changelog)),
-3. commits "Release vX.Y.Z", tags it and starts [`release.yml`](.github/workflows/release.yml).
+2. writes the new section of [CHANGELOG.md](CHANGELOG.md) in English and German – from the player notes in
+   [`changes/`](changes/README.md) (one file per change), otherwise from the commit messages
+   ([how](CONTRIBUTING.md#release-notes)),
+3. draws the picture of the release to match its notes – a small animated pixel-art scene with Cubi, the cube from
+   the logo, e.g. next to a wrench for fixes or a rocket for a launch (`scripts/release-art.mjs`); the launcher, the
+   website and the GitHub release show it with the update, together with the screenshots from the player notes,
+4. commits "Release vX.Y.Z", tags it and starts [`release.yml`](.github/workflows/release.yml).
 
 `release.yml` builds the Windows installer (`Cubiq-Launcher_<version>_x64-setup.exe`), a portable ZIP and the Linux
 packages and publishes them as the GitHub release "Cubiq Launcher X.Y.Z" with the changelog as description – the
 launcher shows the same text after updating ("What's new"). With the signing key in the secrets it also refreshes the
 update channel, so installed launchers update themselves.
 
+- **Status right away:** as soon as the build starts, the releases page shows a draft "building". If the Windows
+  installer is missing at the end, the release stays a draft (only visible to you) with the reason on top – a failed
+  build step with its error lines, an incomplete CHANGELOG.md section – and a link to the log. The summary of the run
+  lists what was built, whether the update signature worked and why something is missing.
+- **Signing key:** checked before building (`scripts/check-signing.mjs`); pasting mistakes like a trailing line break
+  are fixed automatically. A wrong key or password doesn't stop the build – the installer is built without update
+  signature and the summary says what's wrong.
+- **CI red:** no release; the run "Auto release" is then called "Kein Release – CI …" and names the failed jobs.
 - **By hand:** Actions → Auto release → Run workflow (pick the version step), or push a tag like `v0.2.0` whose
-  version has a section in CHANGELOG.md.
+  version has a section in CHANGELOG.md. To build an existing tag again: Actions → Release → Run workflow.
+- **No merge conflicts:** branches never edit `CHANGELOG.md` or version numbers, only add files in `changes/`;
+  [`pr-sync.yml`](.github/workflows/pr-sync.yml) merges `main` into open pull requests after every merge.
+- **Release texts stay current:** when `CHANGELOG.md` or a release picture changes on `main`,
+  [`release-notes.yml`](.github/workflows/release-notes.yml) rewrites the affected GitHub releases.
 - **Pause:** set the repository variable `CUBIQ_AUTO_RELEASE` to `false`.
 - **Protected `main`:** if only pull requests may change `main`, the release commit is rejected – let GitHub Actions
   bypass that rule.
@@ -195,8 +210,7 @@ Contributions are welcome – read [CONTRIBUTING.md](CONTRIBUTING.md). Report se
 
 Cubiq Launcher is licensed under the [GNU General Public License v3.0](LICENSE).
 
-Copyright (C) 2026 PwiePixel. Based on TRS Launcher, Copyright (C) 2026 Ohev Tamerin (Theredstonee). Copyright and
-third-party notices: [NOTICE](NOTICE). Parts of the process handling are adapted from
+Copyright (C) 2026 PwiePixel. Copyright and third-party notices: [NOTICE](NOTICE). Parts of the process handling are adapted from
 [Polyfrost OneLauncher](https://github.com/Polyfrost/OneLauncher) (GPL-3.0-only).
 
 <sub>Cubiq Launcher is not an official Minecraft product. It is not approved by or associated with Mojang or Microsoft.</sub>

@@ -2,7 +2,7 @@
 
 The in-game client mod of the Cubiq Launcher (Lunar/Badlion style). Client-only, one jar per loader and
 Minecraft release: **Fabric 1.14.4–26.3**, **Forge 1.7.10–26.3**, **NeoForge 1.20.2–26.3** (see below).
-License: GPL-3.0-only. Based on the TRS Client by Ohev Tamerin (Theredstonee), modified by PwiePixel – see the `NOTICE` file in the repository root.
+License: GPL-3.0-only – copyright and third-party notices are in the `NOTICE` file in the repository root.
 
 Chat Heads by dzwdz ([github.com/dzwdz/chat_heads](https://github.com/dzwdz/chat_heads), MPL-2.0): parts of the code reused in `core/chatheads`. The full license is `licenses/chat-heads-MPL-2.0.txt` (also inside the built jars).
 
@@ -72,7 +72,7 @@ All features can be toggled in the Cubiq menu. Settings are stored in `config/cu
 | Partikel | Upper limit of particles at once, share of all particles (*Menge*), explosion particles, rain splashes and smoke off |
 | Welt-Details | Sky, stars, distance fog, rain/snow and texture animations (water, lava, fire …) off – each only where the version has a clean hook |
 | Clips & Aufnahme | **F9** saves the last seconds as a clip, **F10** starts/stops a recording (both changeable in the vanilla controls). The Cubiq Launcher records the game window – the mod only reports the key presses over a local link (see below). HUD element (movable): a subtle ring while the clip buffer runs (*Show buffer indicator*), "Clip saved (30 s)" for a few seconds – with a current Cubiq Launcher both (and the REC timer) appear in the launcher's overlay instead, so they never end up in a clip. Without the Cubiq Launcher (or with clips off there) the keys only show a hint |
-| Startbildschirm | Cubiq title screen: animated redstone circuit on deepslate, glowing pixel wordmark, buttons as redstone lamps (Einzelspieler/Mehrspieler/Einstellungen/Cubiq-Menü/Mods*/Beenden; keyboard: Tab/arrows + Enter, narrated where the version has a narrator); link "Klassischer Titelbildschirm"; setting *Animierter Hintergrund* switches to a still image; disable the module to always get the vanilla one. Servers are only reached through Mehrspieler |
+| Startbildschirm | Cubiq title screen: animated redstone circuit on deepslate, glowing pixel wordmark, buttons as redstone lamps (Einzelspieler/Mehrspieler/Einstellungen/Cubiq-Menü/Mods*/Beenden; keyboard: Tab/arrows + Enter, narrated where the version has a narrator); link "Klassischer Titelbildschirm"; setting *Animierter Hintergrund* switches to a still image (so does *Reduce animations* in the launcher, which leaves the setting itself alone – then the intro also opens without its start animation and loading screens stay still); disable the module to always get the vanilla one. Servers are only reached through Mehrspieler |
 
 *Mods only if ModMenu is installed. The Cubiq menu also has a **Resourcepacks** screen (search, filter all/enabled/available,
 toggle, priority ▲/▼, open folder; applied with one reload).
@@ -310,6 +310,11 @@ every input to `UiScreen.input*`. Contract for engine and overlay: [`docs/touch-
   `clips.enable`), push
   `accountsChanged`. Access tokens arrive sealed (HMAC-SHA256 key stream + tag with a per-connection key). Test vectors
   are shared with the launcher (`CubiqLinkTest` ↔ `src-tauri/crates/core/src/link/proto.rs`).
+- Live performance (`PerfReport`): when the launcher names `perf.report` in its `challenge`, the network thread
+  sends about once per second `{"type":"perf","fps":…,"limited":…,"heapUsed":…,"heapMax":…}` (heap in MB; `fps` =
+  the FPS meter of the last 1.5 s, fed in `Performance.tick`, left out when unknown; `limited` = Dynamic FPS is
+  throttling). Display only – the launcher shows it as live charts on the instance page. Never sent from the game
+  thread. Tests: `PerfReportTest`.
 - Protocol 1 (older launchers): hello with the token from `clips.json`, clips only.
 
 **Accounts** (`common/core/account`, UI `common/core/ui/account/AccountsUi`):
@@ -455,6 +460,9 @@ through them in game.
 
 The colours come from the launcher: before a start it writes `config/cubiqclient/launcher-theme.json` (theme and accent)
 into the instance, and the menu and the editor use that accent. Without the file the dark theme with Redstone red applies.
+The same file carries `"motion"` (`"full"` or `"reduced"`, the launcher's *Animations* setting with *Follow
+Windows/system* already resolved): `"reduced"` calms scenes, the intro and indeterminate progress like *Animierter
+Hintergrund* off, without changing that setting (`MenuStyle.animated()`); missing or unknown counts as `"full"`.
 
 ## Keys
 

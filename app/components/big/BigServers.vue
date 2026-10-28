@@ -65,7 +65,7 @@ function join(server: Server) {
           <span v-else class="display grid size-20 place-items-center bg-base-800 text-4xl text-base-600 ring-2 ring-base-700">{{ s.name.charAt(0).toUpperCase() }}</span>
           <span
             class="absolute -right-1.5 -bottom-1.5 size-5 border-[3px] border-base-900"
-            :class="servers.statuses[s.id] === undefined ? 'animate-live bg-base-600' : servers.statuses[s.id]!.online ? 'bg-ok' : 'bg-primary-500'"
+            :class="servers.statuses[s.id] === undefined ? 'animate-live bg-base-600' : servers.statuses[s.id]!.online ? 'bg-ok' : 'bg-danger-400'"
           />
         </span>
         <span class="min-w-0 flex-1">

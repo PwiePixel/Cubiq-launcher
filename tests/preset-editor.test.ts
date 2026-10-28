@@ -153,7 +153,7 @@ describe('look', () => {
   it('every icon exists and every colour has a value', () => {
     for (const name of PRESET_ICONS) expect(icons[name as keyof typeof icons], name).toBeTruthy()
     for (const c of PRESET_COLORS) expect(presetColorHex[c]).toMatch(/^#[0-9a-f]{6}$/)
-    expect(presetColor('neon')).toBe(presetColorHex.redstone)
+    expect(presetColor('neon')).toBe(presetColorHex.lime)
     expect(presetIconPath('nope')).toBe(icons.presets)
     // Feste Symbole der Cubiq-Presets gibt es auch.
     for (const fixed of ['bolt', 'monitor', 'chat', 'record']) expect(presetIconPath(fixed)).toBe(icons[fixed as keyof typeof icons])

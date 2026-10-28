@@ -1,6 +1,6 @@
 // Cubiq Launcher – C-Schnittstelle der iOS-Spiel-Engine (libcubiqengine.dylib).
 // Swift lädt die Bibliothek zur Laufzeit (dlopen) und holt sich diese Funktionen per dlsym.
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 #pragma once
 

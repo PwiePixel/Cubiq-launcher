@@ -1689,15 +1689,17 @@ public final class WardrobeUi extends UiScreen {
 			y = note(c, I18n.tr(cs.cubiq || cs.loading ? "wardrobe.cosmetics.loading" : "wardrobe.cosmetics.cubiqOff"), x, y, w);
 			return y - start;
 		}
-		y = cosmeticSection(c, cs, "wardrobe.cosmetics.head", "hat", "none", x, y, w, mx, my);
-		y += 4;
-		y = cosmeticSection(c, cs, "wardrobe.cosmetics.companion", "companion", "companion:none", x, y, w, mx, my);
-		y += 4;
-		y = cosmeticSection(c, cs, "wardrobe.cosmetics.wings", "wings", "wings:none", x, y, w, mx, my);
-		y += 4;
-		int petTop = y;
-		y = cosmeticSection(c, cs, "wardrobe.cosmetics.pet", "pet", "pet:none", x, y, w, mx, my);
-		if (isNew(NewSince.WARDROBE_PET)) NewBadge.draw(c, x + w - NewBadge.width(c) - 2, petTop + 1);
+		// Fächer ohne ein einziges Teil (zurzeit die Hüte) fallen ganz weg.
+		if (cs.hasSlot("hat")) y = cosmeticSection(c, cs, "wardrobe.cosmetics.head", "hat", "none", x, y, w, mx, my) + 4;
+		if (cs.hasSlot("companion")) {
+			y = cosmeticSection(c, cs, "wardrobe.cosmetics.companion", "companion", "companion:none", x, y, w, mx, my) + 4;
+		}
+		if (cs.hasSlot("wings")) y = cosmeticSection(c, cs, "wardrobe.cosmetics.wings", "wings", "wings:none", x, y, w, mx, my) + 4;
+		if (cs.hasSlot("pet")) {
+			int petTop = y;
+			y = cosmeticSection(c, cs, "wardrobe.cosmetics.pet", "pet", "pet:none", x, y, w, mx, my);
+			if (isNew(NewSince.WARDROBE_PET)) NewBadge.draw(c, x + w - NewBadge.width(c) - 2, petTop + 1);
+		}
 		return y - start;
 	}
 

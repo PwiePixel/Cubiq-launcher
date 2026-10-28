@@ -6,7 +6,7 @@ import dev.pwiepixel.cubiqclient.core.ui.Textures;
 
 /**
  * Hintergrund zu Halloween: die Mondnacht als Pixel-Textur (gleiche Zahlen wie im Launcher und auf der Website).
- * Wie bei der Winternacht wird in Texeln gemalt (ein Texel = 1 GUI-Pixel, bei sehr großen Fenstern mehr), alle 80 ms
+ * Wie beim Polarlicht wird in Texeln gemalt (ein Texel = 1 GUI-Pixel, bei sehr großen Fenstern mehr), alle 80 ms
  * neu zusammengesetzt und hochgeladen, dazwischen nur die Textur gezeichnet. Die Szene tickt nur, solange sie
  * gezeichnet wird; ohne Animation zeigt sie ein ruhiges Standbild ohne Blitze.
  */

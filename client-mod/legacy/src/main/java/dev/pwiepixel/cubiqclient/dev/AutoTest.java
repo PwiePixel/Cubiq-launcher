@@ -136,7 +136,7 @@ public final class AutoTest {
 			HalloweenTest.install();
 			return;
 		}
-		// -PcubiqAutotestOnly=winter: Design „Winternacht“ (Startbildschirm Nacht/Polarlicht/Pinguin/Tag, Cubiq-Menü, Laden, Pause)
+		// -PcubiqAutotestOnly=winter: Design „Polarlicht“ (Startbildschirm Nacht/Morgen, Cubiq-Menü, Serverliste, Laden, Pause)
 		if ("winter".equals(System.getProperty("cubiqclient.autotest.only"))) {
 			WinterTest.install();
 			return;

@@ -5,8 +5,11 @@ import {
   changelogItem,
   forPlayers,
   generateSection,
+  parseChangeNote,
   parseGitLog,
   prepareChangelog,
+  relocateShots,
+  setBannerMotif,
   setReleaseDate,
   tidy,
   unreleasedReady,
@@ -135,7 +138,7 @@ describe('Release-Automatik', () => {
     expect(entry.en).toBe('- **Skin preview.**')
     expect(entry.de).toBe('- **Skin preview.**')
     // Ohne eigenes Motiv – der Launcher zeigt dann das Logo; die Release-Prüfung verlangt nur das Banner.
-    expect(entry.banner).toEqual({ accent: '#71a330', motif: null })
+    expect(entry.banner).toEqual({ accent: '#71a330', motif: null, anim: null })
     expect(changelogFor(parseChangelog(next), '0.1.0')!.en).toBe('- Old')
     // Nichts zu veröffentlichen.
     expect(prepareChangelog(text, '0.2.0', '2026-11-02', [])).toBeNull()
@@ -162,6 +165,74 @@ describe('Release-Automatik', () => {
     const fromCommits = prepareChangelog(empty, '0.2.0', '2026-11-02', [changelogItem(commit('fix: crash'))])!
     expect(changelogFor(parseChangelog(fromCommits), '0.2.0')!.en).toBe('- Crash.')
     expect(fromCommits).not.toMatch(/^## Unreleased/m)
+  })
+
+  it('nimmt Spieler-Texte aus changes/ – je Datei, fehlende Sprache ergänzt, zusammen mit „## Unreleased“', () => {
+    const a = parseChangeNote('<!-- shots:\n/news/0.2.0/a.png | A\n-->\n\n### English\n\n- **Trim clips.** Cut recordings.\n\n### Deutsch\n\n- **Clips zuschneiden.** Aufnahmen kürzen.\n')!
+    const b = parseChangeNote('### English\n- **Faster start.** The launcher opens quicker.\n')!
+    expect(a.en).toEqual(['- **Trim clips.** Cut recordings.'])
+    expect(b.de).toEqual(b.en)
+    expect(parseChangeNote('Nur ein Satz ohne Punkte.')).toBeNull()
+    expect(parseChangeNote('### English\n\n### Deutsch\n')).toBeNull()
+
+    const text = `${intro}\n${released}`
+    const next = prepareChangelog(text, '0.2.0', '2026-11-02', [changelogItem(commit('feat: ignored'))], [a, b])!
+    const entry = changelogFor(parseChangelog(next), '0.2.0')!
+    expect(entry.en).toBe('- **Trim clips.** Cut recordings.\n- **Faster start.** The launcher opens quicker.')
+    expect(entry.de).toBe('- **Clips zuschneiden.** Aufnahmen kürzen.\n- **Faster start.** The launcher opens quicker.')
+    expect(entry.shots.map((s) => s.src)).toEqual(['/news/0.2.0/a.png'])
+    expect(entry.banner?.accent).toBe('#71a330')
+    expect(next).not.toContain('Ignored')
+    // Ältere Punkte unter „## Unreleased“ kommen zuerst dazu.
+    const legacy = `${intro}\n## Unreleased\n\n### English\n\n- **Old note.** From a branch.\n\n${released}`
+    const both = changelogFor(parseChangelog(prepareChangelog(legacy, '0.2.0', '2026-11-02', [], [b])!), '0.2.0')!
+    expect(both.en).toBe('- **Old note.** From a branch.\n- **Faster start.** The launcher opens quicker.')
+  })
+
+  it('trägt das Motiv in die Banner-Zeile der Version ein', () => {
+    const text = `${intro}\n${released}`
+    const withMotif = setBannerMotif(text, '0.1.0', '/news/0.1.0/banner.png')
+    expect(withMotif).toContain('## 0.1.0 – 2026-10-27 – Hello, Cubiq | Hallo, Cubiq\n<!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png -->\n')
+    expect(changelogFor(parseChangelog(withMotif), '0.1.0')!.banner).toEqual({ accent: '#71a330', motif: '/news/0.1.0/banner.png', anim: null })
+    // Mit bewegter Fassung: beide Bilder in einer Zeile, ein zweiter Aufruf ersetzt beide.
+    const withAnim = setBannerMotif(withMotif, '0.1.0', '/news/0.1.0/banner.png', '/news/0.1.0/banner-anim.png')
+    expect(withAnim).toContain('<!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png anim=/news/0.1.0/banner-anim.png -->')
+    expect(changelogFor(parseChangelog(withAnim), '0.1.0')!.banner!.anim).toBe('/news/0.1.0/banner-anim.png')
+    expect(setBannerMotif(withAnim, '0.1.0', '/news/0.1.0/x.png').match(/anim=/g)).toBeNull()
+    // Ersetzt ein vorhandenes Motiv statt es doppelt einzutragen; andere Versionen bleiben.
+    expect(setBannerMotif(withMotif, '0.1.0', '/news/0.1.0/other.png').match(/motif=/g)).toHaveLength(1)
+    expect(setBannerMotif(text, '0.9.9', '/news/0.9.9/banner.png')).toBe(text)
+    // Ohne Banner-Zeile: neue Zeile unter der Überschrift.
+    expect(setBannerMotif('## 1.0.0 – 2026-01-01\n### English\n- x', '1.0.0', '/news/1.0.0/banner.png')).toBe(
+      '## 1.0.0 – 2026-01-01\n<!-- banner: accent=#71a330 motif=/news/1.0.0/banner.png -->\n### English\n- x',
+    )
+  })
+
+  it('hängt Änderungen ohne eigenen Spieler-Text hinter die Spieler-Texte', () => {
+    const note = parseChangeNote('### English\n- **Faster start.** Opens quicker.\n\n### Deutsch\n- **Schneller Start.** Öffnet schneller.')!
+    const extra = [changelogItem(commit('feat: Calm client', 'EN: Calmer menus in the game\nDE: Ruhigere Menüs im Spiel')), null]
+    const entry = changelogFor(parseChangelog(prepareChangelog(`${intro}\n${released}`, '0.2.0', '2026-11-02', [], [note], extra)!), '0.2.0')!
+    expect(entry.en).toBe('- **Faster start.** Opens quicker.\n- **Calmer menus in the game.**')
+    expect(entry.de).toBe('- **Schneller Start.** Öffnet schneller.\n- **Ruhigere Menüs im Spiel.**')
+  })
+
+  it('zieht Screenshots der Spieler-Texte nach public/news/<version>/ um', () => {
+    const note = parseChangeNote(
+      ['<!-- shots:', 'home.png | The new home | Der neue Start', './menu.webp', '/news/0.1.0/old.png | Old', '-->', '', '### English', '- **New look.** Nicer.', '', '### Deutsch', '- **Neuer Look.** Schöner.'].join('\n'),
+    )!
+    const taken = new Set(['home.png'])
+    const { preamble, moves } = relocateShots(note.preamble, '0.2.0', taken)
+    expect(moves).toEqual([
+      { from: 'home.png', to: 'home-2.png' },
+      { from: 'menu.webp', to: 'menu.webp' },
+    ])
+    expect(preamble).toEqual(['<!-- shots:', '/news/0.2.0/home-2.png | The new home | Der neue Start', '/news/0.2.0/menu.webp', '/news/0.1.0/old.png | Old', '-->'])
+    const next = prepareChangelog(`${intro}\n${released}`, '0.2.0', '2026-11-02', [], [{ ...note, preamble }])!
+    const entry = changelogFor(parseChangelog(next), '0.2.0')!
+    expect(entry.shots.map((shot) => shot.src)).toEqual(['/news/0.2.0/home-2.png', '/news/0.2.0/menu.webp', '/news/0.1.0/old.png'])
+    expect(entry.shots[0]!.caption).toEqual({ en: 'The new home', de: 'Der neue Start' })
+    // Ohne Kommentar bleibt alles, wie es ist.
+    expect(relocateShots(['<!-- banner: accent=#71a330 -->'], '0.2.0')).toEqual({ preamble: ['<!-- banner: accent=#71a330 -->'], moves: [] })
   })
 
   it('behält Windows-Zeilenenden', () => {

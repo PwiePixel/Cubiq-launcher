@@ -459,7 +459,7 @@ const nameDialogTitle = computed(() => {
       <button class="sel-btn" @click="openSelected">{{ t('common.actions.open') }}</button>
       <button v-if="!mobile" class="sel-btn" @click="reveal()">{{ t('files.reveal') }}</button>
       <button class="sel-btn" :disabled="selection.length !== 1" @click="startRename(selection[0]!)">{{ t('files.rename') }}</button>
-      <button class="sel-btn text-primary-300 hover:text-primary-300" @click="confirmTrash = true">{{ t('files.trash') }}</button>
+      <button class="sel-btn text-danger-300 hover:text-danger-200" @click="confirmTrash = true">{{ t('files.trash') }}</button>
       <button class="ml-auto text-base-400 hover:text-base-50" @click="selected = new Set()">{{ t('files.clearSelection') }}</button>
     </div>
 
@@ -554,7 +554,7 @@ const nameDialogTitle = computed(() => {
           <button class="menu-item" :disabled="selection.length !== 1" @click="startRename(menu.entry)">{{ t('files.rename') }}</button>
           <button class="menu-item" @click="copyPath">{{ t('files.copyPath') }}</button>
           <div class="my-1 border-t border-base-700" />
-          <button class="menu-item text-primary-300" @click="menu = null; confirmTrash = true">{{ t('files.trash') }}</button>
+          <button class="menu-item text-danger-300" @click="menu = null; confirmTrash = true">{{ t('files.trash') }}</button>
         </template>
         <template v-else>
           <button class="menu-item" @click="startCreate('folder')">{{ t('files.newFolder') }}</button>
@@ -571,7 +571,7 @@ const nameDialogTitle = computed(() => {
         <button class="menu-item" role="menuitem" :disabled="selection.length !== 1" @click="startRename(menu.entry)">{{ t('files.rename') }}</button>
         <button class="menu-item" role="menuitem" @click="copyPath">{{ t('files.copyPath') }}</button>
         <div class="my-1 border-t border-base-700" />
-        <button class="menu-item text-primary-300" role="menuitem" @click="menu = null; confirmTrash = true">{{ t('files.trash') }}</button>
+        <button class="menu-item text-danger-300" role="menuitem" @click="menu = null; confirmTrash = true">{{ t('files.trash') }}</button>
       </template>
       <template v-else>
         <button class="menu-item" role="menuitem" @click="startCreate('folder')">{{ t('files.newFolder') }}</button>
@@ -656,7 +656,7 @@ const nameDialogTitle = computed(() => {
 .file-icon {
   @apply flex size-6 shrink-0 items-center justify-center rounded-md bg-base-850;
 }
-/* Eigene Kästchen: das native weiße Kästchen passt nicht zum Deepslate-Look. */
+/* Eigene Kästchen: das native weiße Kästchen passt nicht zu den dunklen Flächen. */
 .fcheck {
   appearance: none;
   display: inline-block;

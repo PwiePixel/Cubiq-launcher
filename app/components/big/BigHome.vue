@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { featuredText, featuredTitle, type FeaturedPack } from '~/utils/featured'
 
-// Big Picture „Start“: zuletzt gespielte Instanz groß mit Spielen-Lampe,
+// Big Picture „Start“: zuletzt gespielte Instanz groß mit dem Spielen-Knopf,
 // darunter die nächsten Instanzen zum schnellen Weiterspielen und die vom
 // Cubiq-Team empfohlenen Modpacks (A öffnet die Projektseite).
 const instances = useInstancesStore()
@@ -124,21 +124,25 @@ function openPack(p: FeaturedPack) {
   width: 100%;
   height: 100%;
 }
-/* Die Spielen-Lampe der Startseite, für den Fernseher vergrößert. */
-.hero-play :deep(.lamp) {
+/* Der Spielen-Knopf der Startseite (grüne Pille), für den Fernseher vergrößert. */
+.hero-play :deep(.play) {
   height: 5.5rem;
 }
-.hero-play :deep(.lamp .display) {
+.hero-play :deep(.play .display) {
   font-size: 2.25rem;
 }
-.hero-play :deep(.lamp svg) {
-  width: 2rem;
-  height: 2rem;
+.hero-play :deep(.play-glyph) {
+  width: 3.25rem;
+  height: 3.25rem;
 }
-.hero-play :deep(.lamp .text-xs) {
+.hero-play :deep(.play svg) {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+.hero-play :deep(.play .text-xs) {
   font-size: 1rem;
 }
-/* Der Fokusrahmen sitzt innen (Pixel-Ecken), dazu leuchtet die ganze Lampe. */
+/* Mit Fokus leuchtet der ganze Knopf. */
 .hero-play:focus-within {
   filter: drop-shadow(0 0 22px color-mix(in srgb, var(--color-live-300) 70%, transparent));
 }

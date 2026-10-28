@@ -1,9 +1,11 @@
 <!-- Ladebildschirm, bis die Oberfläche bereit ist (auch nach einem Update-Neustart).
      Sprachneutral: Hier ist noch keine Übersetzung geladen, also nur Logo und Markenname.
-     Halloween: der Merker `cubiq-event` steht, wenn das Event beim letzten Lauf aktiv war. -->
+     Halloween: der Merker `cubiq-event` steht, wenn das Event beim letzten Lauf aktiv war.
+     Design „Polarlicht“: der Merker `cubiq-design` (utils/design.ts, DESIGN_HINT) – Nachtblau statt Grün. -->
 <script>
   try {
     if (localStorage.getItem('cubiq-event') === 'halloween') document.documentElement.dataset.event = 'halloween'
+    if (localStorage.getItem('cubiq-design') === 'winter') document.documentElement.dataset.design = 'winter'
   } catch (e) {}
 </script>
 <div class="cubiq-splash" role="status" aria-busy="true" aria-label="Cubiq Launcher">
@@ -12,21 +14,33 @@
   <div class="cubiq-splash-bar"><span></span></div>
 </div>
 <style>
-  html, body { margin: 0; height: 100%; background: #0c100e; }
+  html, body { margin: 0; height: 100%; background: #070a1d; }
   .cubiq-splash {
     position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-    background: radial-gradient(circle at 50% 46%, rgba(113, 163, 48, 0.16) 0%, rgba(113, 163, 48, 0) 38%), #0c100e;
-    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: #eef4ef;
+    background: radial-gradient(circle at 50% 46%, rgba(113, 163, 48, 0.16) 0%, rgba(113, 163, 48, 0) 38%), #070a1d;
+    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: #f2f4fd;
   }
-  .cubiq-splash img { filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45)); }
+  .cubiq-splash img { filter: drop-shadow(0 10px 28px rgba(2, 4, 20, 0.6)); }
   .cubiq-splash-name { font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
   .cubiq-splash-name span { color: #a9d46b; }
-  .cubiq-splash-bar { position: relative; width: 140px; height: 3px; border-radius: 999px; background: #1d2520; overflow: hidden; }
+  .cubiq-splash-bar { position: relative; width: 140px; height: 3px; border-radius: 999px; background: #1a2046; overflow: hidden; }
   .cubiq-splash-bar span {
     position: absolute; inset: 0; width: 40%; border-radius: 999px;
     background: linear-gradient(90deg, transparent, #71a330, #a9d46b, transparent);
     animation: cubiq-load 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
+  /* Polarlicht: Nachtblau mit einem Schimmer Polarlicht, Schnee auf den oberen Kanten des Logos, Ladebalken aus Eis. */
+  html[data-design="winter"]:not([data-event="halloween"]), html[data-design="winter"]:not([data-event="halloween"]) body { background: #070c18; }
+  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash {
+    background:
+      radial-gradient(ellipse 70% 20% at 50% 16%, rgba(113, 163, 48, 0.16) 0%, rgba(42, 168, 148, 0.08) 55%, rgba(42, 168, 148, 0) 100%),
+      radial-gradient(circle at 50% 46%, rgba(127, 211, 255, 0.12) 0%, rgba(127, 211, 255, 0) 38%), #070c18;
+    color: #eef5fc;
+  }
+  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash img { filter: drop-shadow(0 -2px 0 rgba(244, 250, 255, 0.95)) drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45)); }
+  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash-name span { color: #9fe7ff; }
+  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash-bar { background: #142138; }
+  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash-bar span { background: linear-gradient(90deg, transparent, #2b97d6, #e8fbff, transparent); }
   /* Halloween: Nacht und Mondsilber. */
   html[data-event="halloween"], html[data-event="halloween"] body { background: #07060c; }
   html[data-event="halloween"] .cubiq-splash {

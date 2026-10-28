@@ -1207,7 +1207,7 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
                         <svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4" /></svg>
                       </button>
                       <button
-                        class="card-action hover:bg-primary-600!"
+                        class="card-action hover:bg-danger-600!"
                         :disabled="!!busy"
                         :title="t('common.actions.delete')"
                         :aria-label="t('common.actions.delete')"
@@ -1342,7 +1342,13 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
           </div>
 
           <!-- Kosmetik: altes Kartenbild, nur im Reiter. -->
-          <div v-show="tab === 'cosmetics'" id="skins-panel-cosmetics" role="tabpanel" aria-labelledby="skins-tab-cosmetics">
+          <div
+            v-show="tab === 'cosmetics'"
+            id="skins-panel-cosmetics"
+            class="flex flex-col gap-8"
+            role="tabpanel"
+            aria-labelledby="skins-tab-cosmetics"
+          >
             <CubiqHeadCosmetics
               cosmetic-slot="hat"
               :preview-id="headPreview?.id ?? null"
@@ -1353,7 +1359,6 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
               @redeem="openRedeem"
             />
             <CubiqHeadCosmetics
-              class="mt-8"
               cosmetic-slot="wings"
               :preview-id="wingsPreview?.id ?? null"
               :night="night"
@@ -1363,7 +1368,6 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
               @redeem="openRedeem"
             />
             <CubiqHeadCosmetics
-              class="mt-8"
               cosmetic-slot="companion"
               :preview-id="companionPreview?.id ?? null"
               :night="night"
@@ -1373,7 +1377,6 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
               @redeem="openRedeem"
             />
             <CubiqHeadCosmetics
-              class="mt-8"
               cosmetic-slot="pet"
               :preview-id="petPreview?.id ?? null"
               :night="night"
@@ -1420,31 +1423,25 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
 <style scoped>
 @reference "~/assets/css/main.css";
 
-/* Reiter wie auf der Instanz-Seite: der aktive Reiter bekommt einen Strich in der Akzentfarbe. */
+/* Reiter wie auf der Instanz-Seite: eine Leiste, der aktive trägt die grüne Auswahl-Kante. */
 .tabbar {
-  @apply relative flex flex-wrap gap-0.5 border-b border-base-800;
+  @apply relative inline-flex max-w-full flex-wrap gap-1 rounded-2xl border border-line bg-base-900 p-1;
 }
 .itab {
-  @apply relative -mb-px inline-flex items-center gap-2 rounded-t-lg px-3.5 py-2 text-sm font-medium text-base-400 transition-colors outline-none hover:bg-base-900 hover:text-base-50 focus-visible:bg-base-900 focus-visible:text-base-50 mobile:min-h-11 mobile:shrink-0 mobile:whitespace-nowrap;
+  @apply relative inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-sm font-medium text-base-400 transition-colors outline-none hover:bg-base-850 hover:text-base-50 focus-visible:bg-base-850 focus-visible:text-base-50 mobile:min-h-11 mobile:shrink-0 mobile:whitespace-nowrap;
 }
 .itab:focus-visible {
   outline: 2px solid var(--color-primary-400);
   outline-offset: -2px;
 }
-.itab-on {
+.itab-on,
+.itab-on:hover {
   @apply text-base-50;
-}
-.itab-on::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0.5rem;
-  bottom: 0;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--color-primary-400);
+  background: var(--pick-bg);
+  box-shadow: inset 0 0 0 1px var(--pick-edge);
 }
 .itab-on svg {
-  @apply text-primary-400;
+  @apply text-primary-300;
 }
 /* „Skin hinzufügen“: gestrichelte Fläche, beim Drüberfahren Rand in der Akzentfarbe. */
 .add-card {

@@ -7,14 +7,11 @@ import {
   changelogFor,
   changesSince,
   compareVersions,
-  contributorsComment,
   parseBanner,
   parseChangelog,
-  parseContributors,
   parseShot,
   postContent,
   releaseNotes,
-  setContributors,
   splitPost,
   versionSeed,
 } from '../app/utils/changelog'
@@ -104,7 +101,7 @@ describe('Changelog', () => {
     const [a, b, c] = parseChangelog(
       [
         '## 0.4.4 – 2026-09-25 – The Clip Update | Das Clip-Update',
-        '<!-- banner: accent=#FF7AB8 motif=/news/0.4.4/banner.png -->',
+        '<!-- banner: accent=#FF7AB8 motif=/news/0.4.4/banner.png anim=/news/0.4.4/banner-anim.png -->',
         '### English',
         '- A',
         '### Deutsch',
@@ -114,16 +111,18 @@ describe('Changelog', () => {
         '### English',
         '- B',
         '## 0.4.2 – 2026-09-23',
-        '<!-- banner: accent=#00ff00 motif=/news/../secret.png -->',
+        '<!-- banner: accent=#00ff00 motif=/news/../secret.png anim=/news/0.4.2/a.png -->',
         '### English',
         '- C',
       ].join('\n'),
     )
-    expect(a!.banner).toEqual({ accent: '#ff7ab8', motif: '/news/0.4.4/banner.png' })
+    expect(a!.banner).toEqual({ accent: '#ff7ab8', motif: '/news/0.4.4/banner.png', anim: '/news/0.4.4/banner-anim.png' })
     expect(a!.en).toBe('- A')
     expect(b!.banner).toBeNull()
-    expect(c!.banner).toEqual({ accent: '#00ff00', motif: null })
+    // Bewegte Fassung nur zusammen mit einem gültigen ruhigen Motiv.
+    expect(c!.banner).toEqual({ accent: '#00ff00', motif: null, anim: null })
     expect(parseBanner('motif=/news/1/x.png')).toBeNull()
+    expect(parseBanner('accent=#71a330 motif=/news/1/x.png anim=https://evil.example/a.png')!.anim).toBeNull()
   })
 
   it('vergleicht Versionen', () => {
@@ -155,6 +154,7 @@ describe('Changelog', () => {
       expect(e.banner, `${e.version}: Banner`).not.toBeNull()
       // Eigenes Motiv ist freiwillig (sonst das Logo) – angegeben muss es aber da sein.
       if (e.banner?.motif) expect(existsSync(path.join(root, 'public', e.banner.motif)), `${e.version}: ${e.banner.motif} fehlt`).toBe(true)
+      if (e.banner?.anim) expect(existsSync(path.join(root, 'public', e.banner.anim)), `${e.version}: ${e.banner.anim} fehlt`).toBe(true)
       // Screenshots (freiwillig): gültig, vorhanden, echte PNG/WebP in vernünftiger Größe.
       expect(checkShots(e, path.join(root, 'public')), `${e.version}: Screenshots`).toEqual([])
     }
@@ -299,12 +299,12 @@ describe('Changelog', () => {
     }
   })
 
-  it('liest Mitwirkende und dankt ihnen am Ende der Release-Hinweise', () => {
+  it('Release-Hinweise: Bild des Updates oben, nur Text für Spieler – keine Namen, kein Dank', () => {
     const [a, b] = parseChangelog(
       [
         '## 0.15.0 – 2026-10-01 – Together | Zusammen',
         '<!-- banner: accent=#ff7ab8 motif=/news/0.15.0/banner.png -->',
-        '<!-- contributors: zoe-builds, @Alex,alex,-bad,x-->,,max -->',
+        '<!-- contributors: zoe-builds,max -->',
         '### English',
         '- A',
         '### Deutsch',
@@ -316,33 +316,20 @@ describe('Changelog', () => {
         '- B',
       ].join('\n'),
     )
-    expect(a!.contributors).toEqual(['zoe-builds', 'Alex', 'max'])
+    // Alte Zeilen „contributors:“ bleiben unsichtbar und landen nirgends.
     expect(a!.en).toBe('- A')
-    expect(b!.contributors).toEqual([])
+    expect(a).not.toHaveProperty('contributors')
     const notes = releaseNotes(a!)
-    expect(notes.endsWith('- A\n\n## Thanks to / Danke an\n\n@zoe-builds, @Alex, @max\n\n<!-- contributors: zoe-builds,Alex,max -->\n')).toBe(true)
-    // Ohne Mitwirkende: kein Abschnitt, der Text bleibt wie bisher.
-    expect(releaseNotes(b!)).not.toContain('Thanks')
+    expect(notes.startsWith('<p align="center"><img src="https://raw.githubusercontent.com/PwiePixel/Cubiq-launcher/v0.15.0/public/news/0.15.0/banner.png" alt="" width="220"></p>\n\n# Together')).toBe(true)
+    expect(notes).not.toMatch(/thanks|danke|@zoe|contributors/i)
+    expect(notes.endsWith('- A\n')).toBe(true)
+    // Aus einem anderen Stand (z. B. main), wenn die Hinweise später neu geschrieben werden.
+    expect(releaseNotes(a!, { ref: 'main' })).toContain('/Cubiq-launcher/main/public/news/0.15.0/banner.png')
+    // Mit bewegter Fassung zeigt GitHub die Animation.
+    const animated = parseChangelog('## 0.16.0 – 2026-10-02\n<!-- banner: accent=#71a330 motif=/news/0.16.0/banner.png anim=/news/0.16.0/banner-anim.png -->\n### English\n- C\n### Deutsch\n- C')[0]!
+    expect(releaseNotes(animated)).toContain('/v0.16.0/public/news/0.16.0/banner-anim.png" alt=""')
+    // Ohne Motiv: kein Bild, der Text bleibt wie bisher.
+    expect(releaseNotes(b!).startsWith("## What's new")).toBe(true)
     expect(releaseNotes(b!).endsWith('- B\n')).toBe(true)
-    expect(parseContributors('a b,c')).toEqual(['a', 'b', 'c'])
-    expect(contributorsComment(['b', 'a', 'B'])).toBe('<!-- contributors: b,a -->')
-  })
-
-  it('schreibt die Mitwirkenden in den Abschnitt einer Version', () => {
-    const text = ['# Changelog', '', '## Unreleased', '### English', '- U', '', '## 0.15.0 – 2026-10-01', '<!-- banner: accent=#ff7ab8 motif=/news/0.15.0/banner.png -->', '', '### English', '- A', '### Deutsch', '- A', '', '## 0.14.0 – 2026-09-28', '### English', '- B'].join('\n')
-    const once = setContributors(text, 'v0.15.0', ['zoe', 'max'])
-    expect(once).toContain('<!-- banner: accent=#ff7ab8 motif=/news/0.15.0/banner.png -->\n\n<!-- contributors: zoe,max -->\n### English\n- A')
-    // Nochmal: ersetzt statt doppelt.
-    const twice = setContributors(once, '0.15.0', ['zoe', 'robin'])
-    expect(twice.match(/contributors:/g)).toHaveLength(1)
-    expect(changelogFor(parseChangelog(twice), '0.15.0')!.contributors).toEqual(['zoe', 'robin'])
-    expect(changelogFor(parseChangelog(twice), '0.14.0')!.contributors).toEqual([])
-    expect(parseChangelog(twice)[0]!.contributors).toEqual([])
-    // Leere Liste (API nicht erreichbar): nichts ändern, eine vorhandene Zeile bleibt.
-    expect(setContributors(once, '0.15.0', [])).toBe(once)
-    expect(setContributors(once, '0.15.0', ['-->'])).toBe(once)
-    // Ohne „### English“ direkt unter die Überschrift; Windows-Zeilenenden bleiben erhalten.
-    expect(setContributors('## 1.0.0 – 2026-01-01\r\n- x\r\n', '1.0.0', ['a'])).toBe('## 1.0.0 – 2026-01-01\r\n<!-- contributors: a -->\r\n- x\r\n')
-    expect(() => setContributors(text, '9.9.9', ['a'])).toThrow('9.9.9')
   })
 })

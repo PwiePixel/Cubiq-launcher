@@ -748,6 +748,14 @@
       "levelDatBroken": "Plik level.dat świata jest uszkodzony.",
       "notFound": "Ten świat już nie istnieje."
     },
+    "worldBackups": {
+      "tooManyFiles": "Ten świat ma za dużo plików na kopię.",
+      "unsafeArchive": "Kopia zawiera nieprawidłowe ścieżki i nie zostanie rozpakowana.",
+      "broken": "Ta kopia jest uszkodzona.",
+      "notFound": "Ta kopia już nie istnieje.",
+      "worldOpened": "Świat został otwarty w grze, zanim jego kopia była gotowa.",
+      "worldOpen": "Ten świat jest teraz otwarty w grze – najpierw go zamknij."
+    },
     "logs": {
       "sourceGone": "Ten plik dziennika już nie istnieje.",
       "unreadable": "Nie można odczytać tego pliku dziennika.",
@@ -1990,6 +1998,93 @@
       "javaCustom": "własna ścieżka"
     }
   },
+  "stats": {
+    "title": "Statystyki",
+    "subtitle": "Ile grasz – we wszystkich instancjach.",
+    "subtitleInstance": "Czas gry: {name}",
+    "filterLabel": "Pokaż statystyki dla",
+    "allInstances": "Wszystkie instancje",
+    "live": "Trwa gra",
+    "units": {
+      "hours": "{n} godz."
+    },
+    "empty": {
+      "title": "Brak czasu gry",
+      "text": "Uruchom instancję i zagraj – każda sesja pojawi się tutaj: godziny dziennie, kalendarz dni gry, ulubione instancje i wersje oraz najdłuższa seria.",
+      "action": "Otwórz bibliotekę"
+    },
+    "tiles": {
+      "label": "Najważniejsze liczby",
+      "total": "Łączny czas gry",
+      "totalCarried": "w tym {time} wcześniejszej gry",
+      "since": "od {date}",
+      "week": "Ten tydzień",
+      "today": "Dziś: {time}",
+      "month": "Ten miesiąc",
+      "sessions": "Sesje",
+      "average": "Ø {time} na sesję",
+      "longest": "Najdłuższa sesja",
+      "streak": "Obecna seria",
+      "days": "{n} dzień | {n} dni | {n} dni",
+      "bestStreak": "Rekord: {days}"
+    },
+    "chart": {
+      "title": "Czas gry",
+      "rangeLabel": "Okres",
+      "days": "30 dni",
+      "weeks": "16 tygodni",
+      "labelDays": "Czas gry dziennie, ostatnie 30 dni",
+      "labelWeeks": "Czas gry tygodniowo, ostatnie 16 tygodni",
+      "total": "Razem: {time}",
+      "none": "Bez gry",
+      "weekOf": "Tydzień od {date}",
+      "summary": "{label}. Razem: {total}. Najwięcej: {best}.",
+      "showTable": "Pokaż jako tabelę",
+      "hideTable": "Ukryj tabelę",
+      "day": "Dzień",
+      "week": "Tydzień",
+      "playTime": "Czas gry"
+    },
+    "heatmap": {
+      "title": "Kalendarz",
+      "daysPlayed": "{n} dzień gry | {n} dni gry | {n} dni gry",
+      "summary": "{label}: liczba tygodni: {weeks}, dni z grą: {days}.",
+      "less": "Mniej",
+      "more": "Więcej"
+    },
+    "top": {
+      "instances": "Najczęściej grane instancje",
+      "versions": "Wersje Minecrafta",
+      "versionsHint": "Wersje, na których grałeś",
+      "noVersions": "Brak sesji ze znaną wersją.",
+      "servers": "Serwery",
+      "serversHint": "Serwery, do których dołączyłeś – przez launcher lub menu gry wieloosobowej.",
+      "sessions": "{n} sesja | {n} sesje | {n} sesji",
+      "deleted": "{name} (usunięta)",
+      "showAll": "Pokaż wszystkie ({n})",
+      "showLess": "Pokaż mniej"
+    },
+    "footer": {
+      "tracking": "Sesje zapisywane od {date}.",
+      "carried": "Wcześniejszy czas gry wlicza się do sum i instancji, ale nie ma daty."
+    },
+    "reset": {
+      "button": "Resetuj statystyki",
+      "title": "Zresetować statystyki?",
+      "text": "Wszystkie zapisane sesje znikną ze statystyk – wykresy, kalendarz, serie i listy zaczną od zera. Czas gry widoczny przy instancjach zostanie.",
+      "confirm": "Resetuj",
+      "done": "Statystyki zresetowane."
+    },
+    "instance": {
+      "title": "Czas gry",
+      "recent": "{time} w ostatnich 30 dniach",
+      "average": "Średnio",
+      "last30": "Czas gry z ostatnich 30 dni: {time}",
+      "crashes": "{n} awaria | {n} awarie | {n} awarii",
+      "topVersion": "Najczęściej na {version}",
+      "open": "Wszystkie statystyki"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} linia | {n} linie | {n} linii",
     "copied": "Skopiowano"
@@ -2379,6 +2474,21 @@
       "updatesPortable": "Wersja przenośna – aktualizacje są na stronie pobierania"
     },
     "appearance": {
+      "look": {
+        "title": "Styl",
+        "text": "Zmienia cały wygląd – scenę w tle, kolory i drobne detale. Motyw kolorów i kolor akcentu zostają takie, jak je ustawiłeś, a Cubiq Client przenosi styl do gry.",
+        "choose": "Użyj stylu {name}",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Ciemne powierzchnie z odrobiną zieleni i akcentami w zieleni Cubiq"
+          },
+          "winter": {
+            "name": "Zorza polarna",
+            "text": "Zorza w zieleni Cubiq nad unoszącymi się śnieżnymi wyspami"
+          }
+        }
+      },
       "colorScheme": "Motyw kolorów",
       "themes": {
         "dark": "Ciemny",
@@ -3039,14 +3149,13 @@
     "discover": "Odkrywaj",
     "servers": "Serwery",
     "screenshots": "Zrzuty ekranu",
+    "stats": "Statystyki",
     "skins": "Skiny",
     "admin": "Admin",
     "runningCount": "Uruchomione: {n} | Uruchomione: {n} | Uruchomione: {n}",
     "quickLaunch": "Szybkie uruchamianie",
     "openNamed": "Otwórz {name}",
     "newInstance": "Nowa instancja",
-    "searchShortcut": "Szukaj (Ctrl+K)",
-    "searchTip": "Szukaj · Ctrl K",
     "settings": "Ustawienia",
     "accountNamed": "Konto: {name}",
     "signIn": "Zaloguj się",
@@ -3061,7 +3170,12 @@
     "achievements": "Osiągnięcia",
     "localServers": "Moje serwery",
     "controls": "Sterowanie",
-    "pc": "PC"
+    "pc": "PC",
+    "groups": {
+      "together": "Razem",
+      "collection": "Kolekcja",
+      "tools": "Narzędzia"
+    }
   },
   "accountMenu": {
     "menuLabel": "Konta",
@@ -3107,6 +3221,7 @@
       "servers": "serwery lista serwerów server",
       "accounts": "konto konta logowanie zaloguj microsoft",
       "screenshots": "zrzuty ekranu obrazy zdjęcia galeria screenshot",
+      "stats": "statystyki czas gry godziny seria kalendarz wykres",
       "skins": "peleryna skin cape",
       "settings": "ustawienia opcje preferencje",
       "newInstance": "dodaj utwórz nowa",
@@ -3335,6 +3450,9 @@
       "add": "Dodaj serwer",
       "addHint": "Status na żywo i dołączanie jednym kliknięciem",
       "addHintEmpty": "Twoje serwery ze statusem na żywo – dołączaj jednym kliknięciem"
+    },
+    "stage": {
+      "pick": "Wybierz {name}"
     }
   },
   "news": {
@@ -3364,6 +3482,26 @@
     "preparing": "Przygotowywanie Minecrafta",
     "crashed": "Gra zamknęła się nieoczekiwanie – logi zwykle pokazują przyczynę."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Przeskakuj bloki, gdy Minecraft się uruchamia.",
+    "start": "Graj",
+    "controls": "Spacja, ↑ lub kliknięcie, aby skoczyć – naciśnij jeszcze raz w powietrzu, aby wykonać podwójny skok.",
+    "areaLabel": "Cubi Hop. Naciśnij spację, strzałkę w górę lub kliknij, aby skoczyć.",
+    "score": "Wynik {score}",
+    "best": "Rekord {score}",
+    "newBest": "Nowy rekord!",
+    "over": "Auć! Kliknij lub naciśnij spację, aby spróbować ponownie.",
+    "paused": "Pauza – kliknij lub naciśnij spację, aby kontynuować.",
+    "result": "Koniec gry. Wynik: {score}.",
+    "resultBest": "Koniec gry. Wynik: {score} – nowy rekord!",
+    "windowSoon": "Minecraft otwiera swoje okno…",
+    "ready": "Minecraft jest gotowy!",
+    "closesIn": "Zamknie się za {seconds} s",
+    "keepPlaying": "Graj dalej",
+    "closeNow": "Zamknij",
+    "close": "Zamknij minigrę"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Interfejs",
@@ -3382,6 +3520,7 @@
       "storage": "Pamięć dyskowa",
       "network": "Sieć",
       "clips": "Klipy i nagrywanie",
+      "backups": "Kopie światów",
       "notifications": "Powiadomienia",
       "remote": "Pilot"
     },
@@ -3444,7 +3583,7 @@
       "button": "Dowiedz się więcej i włącz",
       "shares": "Aby udostępniać zrzuty ekranu jako link, launcher loguje się na serwerze Cubiq. Dzieje się to dopiero po Twojej zgodzie.",
       "achievements": "Aby pokazać twoje osiągnięcia, launcher loguje się na serwer Cubiq. Dzieje się to dopiero po twojej zgodzie.",
-      "cosmetics": "Aby wyświetlić kosmetyki na głowę Cubiq, launcher loguje się do serwera Cubiq. Dzieje się to dopiero po twojej zgodzie.",
+      "cosmetics": "Aby wyświetlić kosmetyki Cubiq, launcher loguje się do serwera Cubiq. Dzieje się to dopiero po twojej zgodzie.",
       "remote": "Aby sterować komputerem z tego telefonu, launcher loguje się na serwerze Cubiq. Dzieje się to dopiero po Twojej zgodzie."
     },
     "account": {
@@ -3862,7 +4001,6 @@
     "glows": "Świeci",
     "tryOn": "Przymierz {name}",
     "tryOnLocked": "Przymierz {name} (zablokowane)",
-    "empty": "Nie ma jeszcze kosmetyków na głowę.",
     "offline": "Serwer Cubiq jest w tej chwili nieosiągalny.",
     "previewFailed": "Nie udało się wczytać podglądu 3D tego przedmiotu.",
     "how": {
@@ -3894,8 +4032,7 @@
     },
     "companion": {
       "title": "Towarzysze",
-      "intro": "Lata wokół głowy oprócz kapelusza. Podgląd pokazuje kapelusz, towarzysza i pelerynę razem.",
-      "empty": "Nie ma jeszcze towarzyszy.",
+      "intro": "Lata wokół głowy. Podgląd pokazuje towarzysza i pelerynę razem.",
       "wearing": "Towarzysz: {name}",
       "selectedWorn": "Lata z tobą – widzą go wszyscy z Cubiq Client.",
       "toasts": {
@@ -3907,7 +4044,6 @@
       "title": "Towarzysze na ziemi",
       "intro": "Chodzi obok ciebie – widzą go wszyscy z Cubiq Client. Podgląd pokazuje go obok twojej postaci.",
       "creatorHint": "Zwierzak twórcy: fani dostają go dzięki kodom twórcy, a sam twórca ma ich więcej zależnie od fanów (dwa od 10, trzy od 100, cztery od 1000).",
-      "empty": "Brak towarzyszy na ziemi.",
       "wearing": "Obok ciebie: {name}",
       "selectedWorn": "Chodzi obok ciebie – widzą go wszyscy z Cubiq Client.",
       "toasts": {
@@ -4665,8 +4801,11 @@
     "imageOf": "Obraz {n} z {total}",
     "versions": "Wersje",
     "more": "Więcej obrazów: {n}",
-    "thanks": "Dziękujemy za wkład w tę aktualizację: {names}.",
     "openRelease": "Zobacz wydanie na GitHubie"
+  },
+  "updateModel": {
+    "label": "Model 3D obrazka aktualizacji. Przeciągnij go lub użyj strzałek, aby go obrócić.",
+    "hint": "Przeciągnij, aby obrócić"
   },
   "clips": {
     "title": "Klipy",
@@ -4885,6 +5024,53 @@
     "allHint": "Pokaż znowu wszystko",
     "nothingSelected": "Nie wybrano poziomu – kliknij jeden z przycisków powyżej."
   },
+  "perfLive": {
+    "title": "Wydajność na żywo",
+    "client": "Cubiq Client",
+    "expand": "Pokaż wykresy",
+    "collapse": "Ukryj wykresy",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS tylko z Cubiq Client",
+    "fpsLimited": "Ograniczone w tle",
+    "fpsWaiting": "Czekam na pierwsze klatki…",
+    "fpsStats": "Śr. {avg} · min. {min}",
+    "heap": "Java: {used} z {max}",
+    "systemFree": "PC: wolne {free}",
+    "cpuNote": "całego PC ({cores} wątków)",
+    "noData": "jeszcze brak wartości",
+    "chartSummary": "{label} w ostatniej minucie: teraz {now}, średnio {avg}, najniżej {min}, najwyżej {max}",
+    "now": "teraz",
+    "secondsAgo": "{seconds} s temu",
+    "dismissTip": "Ukryj wskazówkę",
+    "tips": {
+      "performanceAction": "Ustawienia wydajności",
+      "memory": {
+        "title": "Minecraftowi kończy się pamięć",
+        "text": "Pamięć Javy od dłuższego czasu jest prawie pełna. To powoduje przycięcia i może wywołać awarię gry – daj tej instancji więcej pamięci.",
+        "action": "Ustawienia pamięci"
+      },
+      "systemMemory": {
+        "title": "Twojemu PC prawie brakuje pamięci",
+        "text": "Wolne jest tylko {free}. Zamknij programy, których teraz nie potrzebujesz – dawanie Minecraftowi jeszcze więcej pamięci tylko by to pogorszyło."
+      },
+      "stutter": {
+        "title": "Krótkie przycięcia",
+        "text": "Liczba klatek co chwilę na moment spada. Zmniejsz odległość renderowania lub użyj optymalizacji Cubiq – a jeśli pamięć Javy jest prawie pełna, daj instancji więcej."
+      },
+      "lowFps": {
+        "title": "Niska liczba klatek",
+        "text": "Zmniejsz odległość renderowania w ustawieniach grafiki lub użyj zwiększenia FPS w grze: menu Cubiq (prawy Shift) → Wydajność.",
+        "boostOff": "Optymalizacja Cubiq jest wyłączona dla tej instancji. Włącz ją – Sodium i inne mody wydajnościowe zwykle dają dużo więcej FPS."
+      },
+      "cpu": {
+        "title": "Procesor na granicy możliwości",
+        "text": "Minecraft używa prawie całego procesora. Zmniejsz odległość renderowania i symulacji lub zamknij programy działające w tle."
+      }
+    }
+  },
   "logShare": {
     "qrLabel": "Kod QR linku",
     "qrFailed": "Brak kodu QR",
@@ -5034,13 +5220,13 @@
     "cheats": "Kody",
     "backingUp": "Tworzenie kopii świata …",
     "backupDone": "Utworzono kopię „{name}”",
-    "backup": "Kopia zapasowa (ZIP)",
+    "backup": "Utwórz kopię teraz",
     "backupOf": "Utwórz kopię {name}",
     "openFolderOf": "Otwórz folder {name}",
     "deleteOf": "Usuń {name}",
     "stopFirst": "Najpierw zamknij grę",
     "deleted": "„{name}” jest w koszu",
-    "backupHint": "Kopie zapisują się jako ZIP w folderze „backups” instancji (zobacz kartę Pliki).",
+    "backupHint": "Światy są kopiowane automatycznie przy uruchomieniu gry i po grze – tylko te, które się zmieniły. Kliknij wiersz z zegarem, aby zobaczyć, przywrócić lub usunąć kopie.",
     "deleteTitle": "Usunąć świat?",
     "deleteText": "„{name}” trafi do Kosza systemu Windows.",
     "deleteTextLinux": "„{name}” trafi do kosza.",
@@ -5067,6 +5253,88 @@
       "joinNote": "Dołącz uruchamia grę i od razu łączy. Bardzo stare wersje otwierają tylko menu główne.",
       "pingCooldown": "Odczekaj kilka sekund przed kolejnym testem pingu.",
       "sortNote": "Posortowano według pingu tylko w widoku – lista serwerów w grze zachowuje swoją kolejność."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Automatyczna kopia",
+      "defaultOn": "Domyślnie (wł.)",
+      "defaultOff": "Domyślnie (wył.)",
+      "on": "Wł.",
+      "off": "Wył.",
+      "onText": "Automatyczne kopie są włączone: zmienione światy są zapisywane przy uruchomieniu i po grze, dla każdego świata zostaje ostatnich {n}.",
+      "offText": "Automatyczne kopie są wyłączone dla tej instancji – użyj „Utwórz kopię teraz”.",
+      "sharedText": "Ta instancja współdzieli folder światów, więc kopie należą do wszystkich instancji, które go współdzielą."
+    },
+    "panel": {
+      "open": "Kopie: {name}",
+      "running": "Tworzenie kopii … {percent} %",
+      "status": "{n} kopia · ostatnio {time} | {n} kopie · ostatnio {time} | {n} kopii · ostatnio {time}",
+      "none": "Brak kopii",
+      "deletedTitle": "Usunięte światy z kopiami",
+      "restoreDeleted": "Przywróć"
+    },
+    "dialog": {
+      "title": "Kopie: {name}",
+      "backupNow": "Utwórz kopię teraz",
+      "backingUp": "Tworzenie kopii … {percent} %",
+      "empty": "Brak kopii tego świata.",
+      "restore": "Przywróć",
+      "deleteConfirm": "Usunąć tę kopię?",
+      "deleteOf": "Usuń kopię z {date}"
+    },
+    "kinds": {
+      "auto": "Automatyczna",
+      "manual": "Ręczna",
+      "safety": "Przed przywróceniem",
+      "legacy": "Starsza kopia"
+    },
+    "restore": {
+      "title": "Przywróć kopię z {date}",
+      "modeLabel": "Sposób przywrócenia",
+      "copy": "Jako kopia",
+      "copyText": "Dodaje świat jako „{name}” – obecny świat zostaje bez zmian.",
+      "replace": "Zastąp obecny świat",
+      "replaceText": "Obecny stan zostanie najpierw zapisany jako kopia, więc możesz do niego wrócić.",
+      "bringBack": "Przywróć świat",
+      "bringBackText": "Świat znów pojawi się na liście światów.",
+      "confirm": "Przywróć",
+      "stopFirst": "Najpierw zamknij grę – świat można przywrócić tylko wtedy, gdy gra nie działa.",
+      "copySuffix": "przywrócony",
+      "taskTitle": "Przywracanie: {name}",
+      "stage": "Przywracanie świata …",
+      "doneCopy": "Przywrócono jako „{name}”.",
+      "doneReplace": "Przywrócono „{name}” – poprzedni stan zostaje jako kopia.",
+      "doneDeleted": "„{name}” wrócił."
+    },
+    "task": {
+      "title": "Kopia światów · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Sprawdzanie światów …"
+    },
+    "toast": {
+      "opened": "„{world}” został otwarty, zanim kopia była gotowa. Poprzednia kopia zostaje – nowa powstanie po grze.",
+      "failed": "Kopia „{world}” nie powiodła się: {error}"
+    },
+    "settings": {
+      "title": "Kopie światów",
+      "intro": "Przy uruchomieniu instancji launcher zapisuje każdy świat jednoosobowy, który zmienił się od ostatniej kopii – w tle, gra startuje od razu. Po grze zapisuje rozgrywane światy. Niezmienione światy są pomijane.",
+      "enabledTitle": "Automatyczne kopie",
+      "enabledDescription": "Kopiuj zmienione światy przy uruchomieniu i po grze. Każda instancja może to włączyć lub wyłączyć w karcie Światy.",
+      "keepTitle": "Zachowaj na świat",
+      "keepDescription": "Starsze automatyczne kopie są usuwane. Kopie ręczne i te sprzed przywrócenia zostają zawsze.",
+      "keepOption": "{n} kopia | {n} kopie | {n} kopii",
+      "limitTitle": "Limit rozmiaru",
+      "limitDescription": "Gdy wszystkie kopie razem przekroczą limit, najpierw znikają najstarsze automatyczne – najnowsza kopia każdego świata zostaje zawsze.",
+      "noLimit": "Bez limitu",
+      "storageTitle": "Miejsce",
+      "usage": "Zajęte: {size} · Kopie: {count} · Światy: {worlds}",
+      "usageNone": "Brak kopii.",
+      "where": "Kopie są zapisywane jako pliki ZIP w folderze „world-backups” w folderze danych launchera.",
+      "orphaned": "{size} należy do usuniętych instancji.",
+      "prune": "Usuń je",
+      "pruneConfirm": "Usuń na zawsze",
+      "pruned": "Zwolniono {size}."
     }
   },
   "share": {
@@ -7083,7 +7351,7 @@
       "grid": "Siatka",
       "notch": "Wcięcie",
       "discard": "Odrzucić zmiany?",
-      "selectHint": "Dotknij przycisku, aby go zmienić. Przeciągnij, aby przesunąć, czerwony róg zmienia rozmiar. Strzałki przesuwają dokładnie.",
+      "selectHint": "Dotknij przycisku, aby go zmienić. Przeciągnij, aby przesunąć, zielony róg zmienia rozmiar. Strzałki przesuwają dokładnie.",
       "actionType": "Akcja",
       "key": "Klawisz",
       "chord": "Najpierw przytrzymaj",

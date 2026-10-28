@@ -71,6 +71,9 @@ pub struct Settings {
     /// Clips & Aufnahme (Standard aus).
     #[serde(deserialize_with = "crate::clips::settings::lenient")]
     pub clips: ClipSettings,
+    /// Automatische Welt-Backups (ab Werk an, siehe [`crate::world_backups`]).
+    #[serde(deserialize_with = "lenient_world_backups")]
+    pub world_backups: WorldBackupSettings,
     /// Eigene Skins, eigene Presets sowie Theme, Akzentfarbe und Sprache mit
     /// dem Cubiq-Konto abgleichen – nur mit eingeschalteten Cubiq-Diensten. Ab
     /// Werk an; ältere Dateien ohne Feld ebenfalls an.
@@ -89,6 +92,39 @@ pub struct Settings {
     pub shared_folders: Vec<crate::shared_folders::SharedFolder>,
     /// PC-Fernbedienung vom Handy (ab Werk aus).
     pub remote: RemoteSettings,
+}
+
+/// Automatische Welt-Backups vor dem Start und nach dem Spielen (siehe [`crate::world_backups`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct WorldBackupSettings {
+    /// Geänderte Welten automatisch sichern – ab Werk an.
+    pub enabled: bool,
+    /// So viele automatische Backups je Welt bleiben (1–50, ab Werk 5).
+    pub keep: u8,
+    /// Obergrenze aller Backups in GB; 0 = keine (älteste automatische zuerst).
+    pub max_total_gb: u16,
+}
+
+impl Default for WorldBackupSettings {
+    fn default() -> Self {
+        Self { enabled: true, keep: 5, max_total_gb: 0 }
+    }
+}
+
+impl WorldBackupSettings {
+    pub const MAX_KEEP: u8 = 50;
+    pub const MAX_TOTAL_GB: u16 = 10_000;
+
+    pub fn normalized(self) -> Self {
+        Self { keep: self.keep.clamp(1, Self::MAX_KEEP), max_total_gb: self.max_total_gb.min(Self::MAX_TOTAL_GB), ..self }
+    }
+}
+
+/// Unlesbare Backup-Einstellungen (z. B. aus einer neueren Version) → Standard, Rest bleibt.
+fn lenient_world_backups<'de, D: serde::Deserializer<'de>>(deserializer: D) -> std::result::Result<WorldBackupSettings, D::Error> {
+    let value = serde_json::Value::deserialize(deserializer)?;
+    Ok(serde_json::from_value::<WorldBackupSettings>(value).unwrap_or_default().normalized())
 }
 
 /// PC-Fernbedienung (API §33): das Handy desselben Cubiq-Kontos darf diesen PC steuern.
@@ -201,19 +237,25 @@ fn lenient_accent<'de, D: serde::Deserializer<'de>>(deserializer: D) -> std::res
 }
 
 /// Gesamtes Aussehen des Launchers: Hintergrund-Szene, Muster und Farben.
-/// Akzent und Farbschema bleiben eigene Einstellungen. Bisher gibt es ein Design.
+/// Akzent und Farbschema bleiben eigene Einstellungen. Der Cubiq Client bekommt
+/// das Design über `launcher-theme.json` und sieht im Spiel gleich aus.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Design {
     /// Schlichte, dunkle Flächen mit dem Grün aus dem Logo (Standard).
     #[default]
     Cubiq,
+    /// „Polarlicht“: Nachthimmel mit Polarlicht, schwebende Schnee-Inseln, Eisblau.
+    Winter,
 }
 
 impl Design {
+    pub const ALL: [Design; 2] = [Self::Cubiq, Self::Winter];
+
     pub fn code(self) -> &'static str {
         match self {
             Self::Cubiq => "cubiq",
+            Self::Winter => "winter",
         }
     }
 }
@@ -237,6 +279,19 @@ pub enum Motion {
     Full,
     System,
     Reduced,
+}
+
+impl Motion {
+    /// Gilt gerade „reduziert“? `System` folgt `system_reduced` – „Bewegung reduzieren“ des
+    /// Systems, wie es die Oberfläche sieht (der Kern kann es nicht selbst abfragen). Wie
+    /// `isReducedMotion` in `app/utils/motion.ts`.
+    pub fn is_reduced(self, system_reduced: bool) -> bool {
+        match self {
+            Self::Full => false,
+            Self::System => system_reduced,
+            Self::Reduced => true,
+        }
+    }
 }
 
 /// Ein unbekannter Wert (z. B. aus einer neueren Version) setzt nur die
@@ -294,7 +349,7 @@ pub struct UiSettings {
     pub theme: Theme,
     #[serde(deserialize_with = "lenient_accent")]
     pub accent: Accent,
-    /// Gesamtes Aussehen (derzeit nur „Cubiq“).
+    /// Gesamtes Aussehen („Cubiq“ oder „Polarlicht“).
     #[serde(deserialize_with = "lenient_design")]
     pub design: Design,
     /// Unschärfe-Effekte (Backdrop-Blur) – aus spart GPU auf schwachen Rechnern.
@@ -441,6 +496,7 @@ impl Default for Settings {
             discord_presence: true,
             java: JavaPaths::default(),
             clips: ClipSettings::default(),
+            world_backups: WorldBackupSettings::default(),
             cubiq_sync: true,
             social: SocialSettings::default(),
             modpack_cubiq_client: crate::cubiq_choice::ModpackCubiqPolicy::Ask,
@@ -516,6 +572,7 @@ impl Settings {
         self.hooks = self.hooks.normalized();
         self.env = hooks::normalize_env(self.env);
         self.clips = self.clips.normalized();
+        self.world_backups = self.world_backups.normalized();
         self.social = self.social.normalized();
         self.shared_folders = crate::shared_folders::normalize(&self.shared_folders);
         self
@@ -804,6 +861,15 @@ mod tests {
         assert_eq!(Settings::load(&file).await.unwrap().ui.motion, Motion::Reduced);
     }
 
+    #[test]
+    fn only_system_motion_follows_the_system() {
+        for system_reduced in [false, true] {
+            assert!(!Motion::Full.is_reduced(system_reduced), "„Immer“ läuft auch bei reduzierter Systembewegung");
+            assert!(Motion::Reduced.is_reduced(system_reduced));
+            assert_eq!(Motion::System.is_reduced(system_reduced), system_reduced);
+        }
+    }
+
     #[tokio::test]
     async fn design_and_ice_accent_are_lenient() {
         // Ältere Dateien ohne Feld: Cubiq.
@@ -827,6 +893,32 @@ mod tests {
         s.save(&file).await.unwrap();
         let back = Settings::load(&file).await.unwrap();
         assert_eq!((back.ui.design, back.ui.accent), (Design::Cubiq, Accent::Orange));
+    }
+
+    #[tokio::test]
+    async fn winter_design_round_trips() {
+        // Jeder Wert serialisiert als sein Code – den liest auch der Cubiq Client.
+        for design in Design::ALL {
+            assert_eq!(serde_json::to_value(design).unwrap(), design.code());
+            assert_eq!(serde_json::from_value::<Design>(serde_json::json!(design.code())).unwrap(), design);
+        }
+        assert_eq!(Design::Winter.code(), "winter");
+        let ui: UiSettings = serde_json::from_value(serde_json::json!({ "design": "winter", "accent": "ice", "theme": "oled" })).unwrap();
+        assert_eq!((ui.design, ui.accent, ui.theme), (Design::Winter, Accent::Ice, Theme::Oled));
+        let json = serde_json::to_value(&ui).unwrap();
+        assert_eq!((json["design"].as_str(), json["accent"].as_str()), (Some("winter"), Some("ice")));
+        // Groß geschrieben oder anders getippt ist es kein bekanntes Design → Cubiq, der Rest bleibt.
+        let ui: UiSettings = serde_json::from_value(serde_json::json!({ "design": "Winter", "accent": "lapis" })).unwrap();
+        assert_eq!((ui.design, ui.accent), (Design::Cubiq, Accent::Lapis));
+        let ui: UiSettings = serde_json::from_value(serde_json::json!({ "design": 7, "accent": "amber" })).unwrap();
+        assert_eq!((ui.design, ui.accent), (Design::Cubiq, Accent::Amber));
+
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("settings.json");
+        let s = Settings { ui: UiSettings { design: Design::Winter, accent: Accent::Ice, theme: Theme::Light, ..Default::default() }, ..Default::default() };
+        s.save(&file).await.unwrap();
+        let back = Settings::load(&file).await.unwrap();
+        assert_eq!((back.ui.design, back.ui.accent, back.ui.theme), (Design::Winter, Accent::Ice, Theme::Light));
     }
 
     #[tokio::test]

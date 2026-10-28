@@ -24,6 +24,8 @@ pub mod meta;
 pub mod moderation;
 pub mod news;
 pub mod packs;
+/// Spielzeit-Statistik.
+pub mod play_stats;
 pub mod presets;
 pub mod relocate;
 pub mod remote;
@@ -36,4 +38,6 @@ pub mod social;
 pub mod system;
 pub mod tasks;
 pub mod cubiq;
+/// Welt-Backups.
+pub mod world_backups;
 pub mod worlds;

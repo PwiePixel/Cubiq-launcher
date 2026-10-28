@@ -128,6 +128,36 @@ impl ProcessHandle {
     }
 }
 
+// --- Live-Leistung --------------------------------------------------------------------
+
+/// CPU-Zeit (ms) und Arbeitsspeicher (RSS, Bytes) eines Prozesses aus `/proc` – samt Kindern des Hauptthreads, damit
+/// auch ein Wrapper-Befehl (der Java als Kind startet) richtig zählt. Ohne `/proc` (andere Unix-Systeme): `None`.
+pub fn process_usage(pid: u32) -> Option<crate::game_perf::ProcessUsage> {
+    use crate::game_perf::{parse_children, parse_stat_cpu_ticks, parse_statm_resident};
+    // SAFETY: reine Abfragen von Systemkonstanten ohne Zeiger.
+    let (ticks, page) = unsafe { (libc::sysconf(libc::_SC_CLK_TCK), libc::sysconf(libc::_SC_PAGESIZE)) };
+    let (Ok(ticks), Ok(page)) = (u64::try_from(ticks), u64::try_from(page)) else { return None };
+    if ticks == 0 || page == 0 || pid == 0 {
+        return None;
+    }
+    let mut total = crate::game_perf::ProcessUsage::default();
+    let mut found = false;
+    let mut queue = vec![pid];
+    // Höchstens ein paar Prozesse – das Spiel startet keine Bäume.
+    for _ in 0..16 {
+        let Some(p) = queue.pop() else { break };
+        let Some(cpu) = std::fs::read_to_string(format!("/proc/{p}/stat")).ok().as_deref().and_then(parse_stat_cpu_ticks) else { continue };
+        let pages = std::fs::read_to_string(format!("/proc/{p}/statm")).ok().as_deref().and_then(parse_statm_resident).unwrap_or(0);
+        total.cpu_ms = total.cpu_ms.saturating_add(cpu.saturating_mul(1000) / ticks);
+        total.rss_bytes = total.rss_bytes.saturating_add(pages.saturating_mul(page));
+        found = true;
+        if let Ok(text) = std::fs::read_to_string(format!("/proc/{p}/task/{p}/children")) {
+            queue.extend(parse_children(&text));
+        }
+    }
+    found.then_some(total)
+}
+
 // --- Grafikkarte ----------------------------------------------------------------------
 
 /// Anzahl der Grafikkarten laut `/sys/class/drm` (`card0`, `card1`, …).

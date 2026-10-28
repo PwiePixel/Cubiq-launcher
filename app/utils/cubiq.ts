@@ -568,6 +568,16 @@ export function cubiqIsQuiet(kind: string | undefined): boolean {
 }
 
 /**
+ * Ein Kosmetik-Fach ohne ein einziges Teil wird gar nicht gezeigt (kein leerer Abschnitt). Hüte gibt es zurzeit
+ * keine: Ihr Abschnitt erscheint deshalb erst, wenn die geladene Liste wirklich Hüte enthält – auch nicht vorher als
+ * Lade-, Offline- oder Anmelde-Hinweis. `items` = geladene Liste, `null` = noch nicht geladen (oder nicht angemeldet).
+ */
+export function cubiqSlotHidden(slot: CubiqCosmeticSlot, items: readonly { slot: string }[] | null): boolean {
+  if (!items) return slot === 'hat'
+  return !items.some((item) => item.slot === slot)
+}
+
+/**
  * Dezenter Hinweis zur Synchronisation („Mit Cubiq-Konto synchronisiert · vor 2 Minuten“).
  * `null` = aus (keine Einwilligung, Schalter aus oder kein Account).
  */

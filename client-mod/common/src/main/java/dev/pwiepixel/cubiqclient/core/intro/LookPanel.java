@@ -9,7 +9,7 @@ import dev.pwiepixel.cubiqclient.core.ui.Theme;
 import dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel;
 
 /**
- * „Aussehen“ auf den Seiten „Startbildschirm“ und „Menü-Stil“ des Cubiq-Menüs: Design (Cubiq | Winternacht | Fuchsbau) mit
+ * „Aussehen“ auf den Seiten „Startbildschirm“ und „Menü-Stil“ des Cubiq-Menüs: Design (Cubiq | Polarlicht | Fuchsbau) mit
  * Vorschau, Farbschema und Akzent – dieselbe Wahl wie im ersten Schritt der Einführung.
  */
 public final class LookPanel implements ModulePanel {

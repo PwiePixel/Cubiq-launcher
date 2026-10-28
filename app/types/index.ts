@@ -82,8 +82,8 @@ export interface SyncSettings {
 
 export type Theme = 'dark' | 'oled' | 'light' | 'system'
 export type Accent = 'cubiq' | 'amber' | 'emerald' | 'lapis' | 'amethyst' | 'ice' | 'orange'
-/** Gesamtes Aussehen: derzeit nur „Cubiq“ (weitere Designs kommen hier dazu). */
-export type Design = 'cubiq'
+/** Gesamtes Aussehen: „Cubiq“ (Standard) oder „Polarlicht“ (`winter`). */
+export type Design = 'cubiq' | 'winter'
 /** Animationen: immer, wie im System („Bewegung reduzieren“) oder reduziert. */
 export type Motion = 'full' | 'system' | 'reduced'
 
@@ -238,6 +238,8 @@ export interface Settings {
   discordPresence: boolean
   java: JavaPaths
   clips: ClipSettings
+  /** Automatische Welt-Backups (fehlt bei älteren Kernen – dann Standard). */
+  worldBackups?: import('~/utils/worldBackups').WorldBackupSettings
   /** Eigene Skins, eigene Presets, Theme, Akzentfarbe und Sprache mit dem Cubiq-Konto abgleichen – ab Werk an */
   cubiqSync: boolean
   /** Benachrichtigungen aus „Sozial“ (nur lokal) */

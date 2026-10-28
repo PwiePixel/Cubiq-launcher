@@ -175,7 +175,7 @@ watch([filter, kind, reason, assigned, highOnly, sort], () => {
     <EmptyState v-else-if="!reports.length" :title="t('admin.mod.none')" compact :seed="0x3a" />
     <ul v-else class="space-y-2">
       <li v-for="(r, i) in reports" :key="r.id" :data-row="i">
-        <div class="adm-row card flex items-stretch" :class="{ 'adm-row-active': active === i, 'adm-row-selected': selected.has(r.id), 'border-primary-600/50': r.priority === 'high' && r.status !== 'resolved' }">
+        <div class="adm-row card flex items-stretch" :class="{ 'adm-row-active': active === i, 'adm-row-selected': selected.has(r.id), 'border-danger-600/50': r.priority === 'high' && r.status !== 'resolved' }">
           <label v-if="team.can('reports.handle')" class="flex items-center px-3" :class="{ invisible: r.status === 'resolved' }">
             <input type="checkbox" class="accent-primary-500" :checked="selected.has(r.id)" :aria-label="r.id" @change="toggle(r.id)" />
           </label>

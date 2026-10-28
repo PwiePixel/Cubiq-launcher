@@ -2,6 +2,7 @@ package dev.pwiepixel.cubiqclient.core.ui.title;
 
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.intro.IntroGate;
+import dev.pwiepixel.cubiqclient.core.menus.MenuStyle;
 import dev.pwiepixel.cubiqclient.core.module.NewSince;
 import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
 import dev.pwiepixel.cubiqclient.core.skin.PlayerLook;
@@ -41,7 +42,8 @@ import java.util.List;
  * <p>Links steht die eigene Spielerfigur auf einem sich langsam drehenden Würfel-Sockel (ziehen dreht ihn), darunter
  * Name und „Garderobe“; rechts eine Leiste mit Symbolen (Konten, Freunde, Clips/Bilder, Cubiq-Einstellungen). Bereiche,
  * die es noch nicht gibt, melden „Kommt bald“. In schmalen Fenstern wird die Leiste zu Symbolen (bzw. einer Zeile oben
- * rechts) und die Figur entfällt. Winternacht, Fuchsbau und Halloween behalten ihre Szenen und Laternen.
+ * rechts) und die Figur entfällt. Polarlicht zeigt dasselbe in Nachtblau vor der Polarlicht-Szene (Schnee auf dem Zeichen,
+ * der Figur-Sockel als verschneiter Würfel); Fuchsbau und Halloween behalten ihre Szenen und Laternen.
  */
 public final class TitleUi extends UiScreen {
 	/** Gemeinsamer Zeitbezug – die Animation läuft beim Zurückkehren weiter statt neu zu starten. */
@@ -392,8 +394,9 @@ public final class TitleUi extends UiScreen {
 		introCheck();
 		offerCheck();
 		Theme t = Theme.get();
-		boolean seasonal = t.halloween || t.winter || t.fox;
-		boolean animated = host.animated();
+		boolean seasonal = t.halloween || t.fox;
+		// Eigene Einstellung „Animierter Hintergrund“ – „Reduziert“ im Launcher beruhigt zusätzlich.
+		boolean animated = MenuStyle.animated(host.animated());
 		float time = animated ? (System.nanoTime() - EPOCH) / 1_000_000_000f : 1.35f;
 		boolean compact = height < 300;
 		lastHeight = height;
@@ -447,8 +450,8 @@ public final class TitleUi extends UiScreen {
 		readingPlate(bg, colX - 26, top - 6, BTN_W + 52, rowsY + buttonsH + 6 - (top - 6), plate);
 		if (panel != null) readingPlate(bg, panel[0], panel[1], panel[2] - panel[0], panel[3] - panel[1], plate);
 		if (sb != null && sideMode != SIDE_ROW) readingPlate(bg, sb[0], sb[1], sb[2] - sb[0], sb[3] - sb[1], plate);
-		// Winternacht: die Fußzeile steht auf dem Schnee – ein Schleier hält sie lesbar.
-		if (t.winter) bg.fill(0, height - 14, width, height, t.light ? 0x70FFFFFF : 0x90060A14);
+		// Polarlicht: die Fußzeile steht auf dem Wolkenmeer – ein Schleier hält sie lesbar.
+		if (t.winter) bg.fill(0, height - 14, width, height, t.light ? 0x70FFFFFF : 0x90070C18);
 		// Fuchsbau: die Fußzeile steht auf den Grasblöcken – ein warmer Schleier hält sie lesbar.
 		if (t.fox) bg.fill(0, height - 14, width, height, t.light ? 0x70FFF8F0 : 0x90170D14);
 		if (t.halloween) bg.fill(0, height - 14, width, height, 0x9007060C);
@@ -632,7 +635,7 @@ public final class TitleUi extends UiScreen {
 		// Name und Garderobe-Knopf
 		String n = c.clip(name == null ? "" : name, Math.max(10, accW + 20));
 		int nw = c.textWidth(n);
-		boolean seasonal = t.halloween || t.winter || t.fox;
+		boolean seasonal = t.halloween || t.fox;
 		labels.add(new Label(n, panelCx - nw / 2, panelNameY, t.text, seasonal));
 		final int focusIndex = buttons.size() + side.size();
 		boolean hover = inside(mx, my, accX, accY, accW, 16);
@@ -743,7 +746,7 @@ public final class TitleUi extends UiScreen {
 
 	private void drawSide(Canvas c, Theme t, int width, int mx, int my) {
 		int base = buttons.size();
-		boolean seasonal = t.halloween || t.winter || t.fox;
+		boolean seasonal = t.halloween || t.fox;
 		for (int i = 0; i < side.size(); i++) {
 			Button b = side.get(i);
 			int dy = b.flash > 0.45f ? 1 : 0;
@@ -898,11 +901,11 @@ public final class TitleUi extends UiScreen {
 		}
 	}
 
-	/** Farbe der Lese-Fläche: dunkler Schleier, im Winter Nachtblau bzw. am hellen Tag ein weißer Schleier. */
+	/** Farbe der Lese-Fläche: dunkler Schleier, im Polarlicht Nachtblau bzw. am hellen Morgen ein weißer Schleier. */
 	private static int plateColor(Theme t) {
 		if (t.halloween) return 0x2407060C;
 		if (t.fox) return t.light ? 0x1CFFFFFF : 0x12120810;
-		if (t.winter) return t.light ? 0x26FFFFFF : 0x22030814;
+		if (t.winter) return t.light ? 0x26FFFFFF : 0x22070C18;
 		return t.light ? 0x22FFFFFF : 0x160C100E;
 	}
 
@@ -910,7 +913,7 @@ public final class TitleUi extends UiScreen {
 	private static int dimText(Theme t) {
 		if (t.halloween) return HalloweenPalette.MUTED_LIGHT;
 		if (t.fox) return t.light ? 0xFF5A3E34 : 0xFFC8AAB4;
-		if (t.winter) return t.light ? 0xFF26344D : 0xFFB4C4E0;
+		if (t.winter) return t.light ? 0xFF25354C : 0xFFA2B3CD;
 		return t.textDim;
 	}
 
@@ -971,7 +974,7 @@ public final class TitleUi extends UiScreen {
 	/** Breite des Schriftzugs (Cubiq: mit dem Zeichen davor). */
 	private static int logoWidth(Theme t, int big) {
 		int word = PixelFont.width("CUBIQ") * big;
-		return t.halloween || t.winter || t.fox ? word : CubiqMark.textOffset(big) + word;
+		return t.halloween || t.fox ? word : CubiqMark.textOffset(big) + word;
 	}
 
 	private void logo(Canvas c, Theme t, int width, int top, int big, int small, int logoH, int gapA, float time, boolean animated) {
@@ -979,18 +982,19 @@ public final class TitleUi extends UiScreen {
 			halloweenLogo(c, width, top, big, small, logoH, gapA, time, animated);
 			return;
 		}
-		if (t.winter || t.fox) {
+		if (t.fox) {
 			seasonLogo(c, t, width, top, big, small, logoH, gapA, time, animated);
 			return;
 		}
 		// Cubiq: das Zeichen vor dem Schriftzug (wie im Launcher), flach in der Akzentfarbe mit weichem Schatten;
-		// „CLIENT“ ruhig darunter, unter dem Schriftzug mittig.
+		// „CLIENT“ ruhig darunter, unter dem Schriftzug mittig. Im Polarlicht liegt Schnee auf dem Zeichen.
 		int x = (width - logoWidth(t, big)) / 2;
 		int px = Math.max(1, big / 3);
 		int cells = CubiqMark.markSize(big) / px;
 		int markY = top + (logoH - cells * px) / 2;
 		CubiqMark.draw(c, x + px, markY + px, cells, px, ColorMath.lerp(t.accent, 0xFF000000, 0.7f), 0.45f);
-		CubiqMark.draw(c, x, markY, cells, px, 1f);
+		if (t.winter) Frost.mark(c, x, markY, cells, px, 1f);
+		else CubiqMark.draw(c, x, markY, cells, px, 1f);
 		int wx = x + CubiqMark.textOffset(big);
 		List<int[]> rects = PixelFont.rects("CUBIQ");
 		int off = Math.max(1, big / 4);
@@ -1001,13 +1005,13 @@ public final class TitleUi extends UiScreen {
 		int subW = PixelFont.width("CLIENT") * small;
 		int sx = wx + (wordW - subW) / 2;
 		int sy = top + logoH + gapA;
-		int sub = t.light ? 0xFF45514A : 0xFFA6B2A9;
+		int sub = t.winter ? (t.light ? 0xFF33455D : 0xFFBFCCE0) : (t.light ? 0xFF45514A : 0xFFA6B2A9);
 		for (int[] r : PixelFont.rects("CLIENT")) {
 			c.fill(sx + r[0] * small, sy + r[1] * small, sx + r[2] * small, sy + r[3] * small, sub);
 		}
 	}
 
-	/** Schriftzug in Winternacht und Fuchsbau: leuchtende Pixel, Schnee bzw. Blätter darauf, Zeichen neben „CLIENT“. */
+	/** Schriftzug im Fuchsbau: leuchtende Pixel, Blätter darauf, das Fuchsgesicht neben „CLIENT“. */
 	private static void seasonLogo(Canvas c, Theme t, int width, int top, int big, int small, int logoH, int gapA, float time,
 			boolean animated) {
 		int logoW = PixelFont.width("CUBIQ") * big;
@@ -1039,8 +1043,7 @@ public final class TitleUi extends UiScreen {
 			int color = r[1] == 0 ? light : (r[1] == PixelFont.HEIGHT - 1 ? dark : face);
 			c.fill(x + r[0] * big, y + r[1] * big, x + r[2] * big, y + r[3] * big, color);
 		}
-		if (t.winter) snowCaps(c, rects, x, y, big);
-		if (t.fox) Ember.leafCaps(c, rects, x, y, big);
+		Ember.leafCaps(c, rects, x, y, big);
 		// Glanzpunkt: ein heller Pixel oben links in jedem Buchstaben.
 		int sheen = ColorMath.withAlpha(0xFFFFFFFF, Math.round(90 * pulse));
 		c.fill(x, y, x + Math.max(1, big / 3), y + Math.max(1, big / 3), sheen);
@@ -1048,65 +1051,15 @@ public final class TitleUi extends UiScreen {
 		int subW = PixelFont.width("CLIENT") * small;
 		int sx = (width - subW) / 2;
 		int sy = top + logoH + gapA;
-		int sub = t.winter ? (t.light ? 0xFF26344D : 0xFFDCE8F8) : (t.light ? 0xFF3D2A24 : 0xFFF6DCC8);
+		int sub = t.light ? 0xFF3D2A24 : 0xFFF6DCC8;
 		for (int[] r : PixelFont.rects("CLIENT")) {
 			c.fill(sx + r[0] * small, sy + r[1] * small, sx + r[2] * small, sy + r[3] * small, sub);
-		}
-		if (t.winter) {
-			// Schneeflocke neben „CLIENT“ (wie neben dem Logo im Launcher), die Spitzen glitzern ab und zu.
-			int px = Math.max(1, small * 2 / 3);
-			int size = 9 * px;
-			int fx = sx + subW + small * 3;
-			int fy = sy + (PixelFont.HEIGHT * small - size) / 2;
-			c.fill(fx - 1, fy - 1, fx + size + 1, fy + size + 1, ColorMath.withAlpha(t.glow, Math.round(28 * pulse)));
-			Frost.snowflake(c, fx, fy, px, t.light ? 0xFF2B97D6 : 0xFFB8E7FF, animated ? Frost.glint(time) : 0f);
-			return;
 		}
 		// Das kleine Fuchsgesicht neben „CLIENT“ (wie neben dem Logo im Launcher), blinzelt ab und zu.
 		int px = Math.max(1, small * 2 / 3);
 		int fx = sx + subW + small * 3;
 		int fy = sy + (PixelFont.HEIGHT * small - 7 * px) / 2;
 		Ember.foxMarkGlow(c, fx, fy, px, ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.2f), time, animated, pulse);
-	}
-
-	/**
-	 * Winternacht: Schnee liegt auf dem Schriftzug – auf jeder nach oben offenen Pixelkante eine Schneehaube, an ein paar
-	 * Unterkanten kleine Eiszapfen.
-	 */
-	public static void snowCaps(Canvas c, List<int[]> rects, int x, int y, int px) {
-		int gw = 0;
-		for (int[] r : rects) gw = Math.max(gw, r[2]);
-		boolean[][] on = new boolean[PixelFont.HEIGHT][gw];
-		for (int[] r : rects) {
-			for (int col = r[0]; col < r[2]; col++) on[r[1]][col] = true;
-		}
-		int snow = 0xFFF2F8FF;
-		int shade = 0xFFC9DCF5;
-		int cap = Math.max(1, px / 3);
-		for (int row = 0; row < PixelFont.HEIGHT; row++) {
-			int start = -1;
-			for (int col = 0; col <= gw; col++) {
-				boolean edge = col < gw && on[row][col] && (row == 0 || !on[row - 1][col]);
-				if (edge && start < 0) start = col;
-				if (!edge && start >= 0) {
-					int x1 = x + start * px;
-					int x2 = x + col * px;
-					int top = y + row * px;
-					c.fill(x1, top - cap, x2, top + cap, snow);
-					c.fill(x1, top + cap, x2, top + cap + Math.max(1, cap / 2), shade);
-					if (col - start >= 3) c.fill(x1 + px, top - cap - Math.max(1, cap / 2), x2 - px, top - cap, snow);
-					start = -1;
-				}
-			}
-		}
-		// Eiszapfen unter einigen Pixeln der untersten Zeile.
-		int ice = 0xD0DDF3FF;
-		int last = PixelFont.HEIGHT - 1;
-		for (int col = 0; col < gw; col++) {
-			if (!on[last][col] || (col * 7) % 5 != 1) continue;
-			int ix = x + col * px + Math.max(0, px / 2 - cap / 2);
-			c.fill(ix, y + PixelFont.HEIGHT * px, ix + cap, y + PixelFont.HEIGHT * px + Math.max(2, px * 2 / 3), ice);
-		}
 	}
 
 	private void footer(Canvas c, Theme t, int width, int height, int mx, int my, float dt) {
@@ -1124,7 +1077,7 @@ public final class TitleUi extends UiScreen {
 		boolean hover = inside(mx, my, lx - 10, height - 12, cw + 10, 12);
 		boolean on = hover || focus == linkIndex();
 		linkLit = on ? Math.min(1f, linkLit + dt / 0.08f) : Math.max(0f, linkLit - dt / 0.08f);
-		if (t.halloween || t.winter || t.fox) {
+		if (t.halloween || t.fox) {
 			Paint.pip(c, lx - 9, height - 9, 5, linkLit);
 			int lit = t.halloween ? HalloweenPalette.SILVER_LIGHT : (t.light ? t.accentText : t.faceOn);
 			labels.add(new Label(classic, lx, height - 10, ColorMath.lerp(dimText(t), lit, linkLit), false));

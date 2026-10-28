@@ -43,19 +43,13 @@ function step(delta: number) {
         :tabindex="tier === value ? 0 : -1"
         :disabled="unavailable(value)"
         :title="value !== 'fpsBoost' && !shadersOk ? t('presets.tiers.noShaders') : undefined"
-        class="flex flex-col gap-0.5 rounded-md border px-2.5 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45"
-        :class="tier === value
-          ? 'border-primary-500 bg-primary-900 text-base-50'
-          : 'border-base-700 bg-base-900 text-base-400 hover:border-base-600 hover:text-base-50'"
+        class="choice flex flex-col gap-0.5 px-2.5 py-2 text-left"
+        :class="{ 'choice-on': tier === value }"
         @click="pick(value)"
       >
         <span class="flex items-center gap-1.5 text-xs font-semibold">
-          <!-- Lampe: an = gewählt -->
-          <span
-            class="size-2 shrink-0 rounded-full"
-            :class="tier === value ? 'bg-live-400 shadow-[0_0_6px_var(--color-live-400)]' : 'bg-base-600'"
-            aria-hidden="true"
-          />
+          <!-- Raute aus dem Logo: grün = gewählt -->
+          <span class="diamond" :class="tier === value ? 'text-primary-400' : 'text-base-600'" aria-hidden="true" />
           {{ t(fpsTierTexts[value].name) }}
         </span>
         <span class="text-[11px] leading-snug text-base-400">{{ t(fpsTierTexts[value].hint) }}</span>

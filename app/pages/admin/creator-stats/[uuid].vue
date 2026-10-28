@@ -77,7 +77,7 @@ function openDashboard() {
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <div class="flex rounded-full bg-base-900 p-1 ring-1 ring-base-800" role="radiogroup" :aria-label="t('team.creatorStats.detail.range')">
+          <div class="flex rounded-2xl bg-base-900 p-1 ring-1 ring-line" role="radiogroup" :aria-label="t('team.creatorStats.detail.range')">
             <button
               v-for="r in ranges"
               :key="r"

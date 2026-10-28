@@ -22,8 +22,8 @@ function layer(x: number, y: number) {
 
 <template>
   <div
-    class="relative shrink-0 overflow-hidden rounded bg-base-800 [image-rendering:pixelated]"
-    :style="{ width: `${px}px`, height: `${px}px` }"
+    class="squircle relative shrink-0 overflow-hidden bg-base-800 [image-rendering:pixelated]"
+    :style="{ width: `${px}px`, height: `${px}px`, borderRadius: `${Math.max(3, Math.round(px * 0.24))}px` }"
     :aria-label="name"
     role="img"
   >

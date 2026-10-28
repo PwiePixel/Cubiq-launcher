@@ -30,7 +30,7 @@ export const presetColorHex: Record<PresetColorName, string> = {
 }
 
 export function presetColor(color: string | null | undefined): string {
-  return (PRESET_COLORS as readonly string[]).includes(color ?? '') ? presetColorHex[color as PresetColorName] : presetColorHex.redstone
+  return (PRESET_COLORS as readonly string[]).includes(color ?? '') ? presetColorHex[color as PresetColorName] : presetColorHex.lime
 }
 
 /** Pfad des Symbols – auch die festen Symbole der Cubiq-Presets (z. B. `chat`). */

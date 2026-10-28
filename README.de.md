@@ -25,9 +25,8 @@
 </div>
 
 > [!NOTE]
-> Der Cubiq Launcher ist noch früh in der Entwicklung (Version 0.1.0). Er basiert auf dem
-> [TRS Launcher](https://github.com/theredstonee/TRS-Launcher) von Ohev Tamerin (Theredstonee) und steht wie dieser
-> unter der GPL-3.0. Was geändert wurde, steht in [NOTICE](NOTICE).
+> Der Cubiq Launcher ist noch früh in der Entwicklung (Version 0.1.0). Er ist freie Software unter der GPL-3.0;
+> Copyright- und Drittanbieter-Hinweise stehen in [NOTICE](NOTICE).
 
 ## Funktionen
 
@@ -97,12 +96,12 @@ Deine Daten liegen in `~/.local/share/Cubiq-Launcher`. Mehr in der [Linux-Anleit
 
 ## Vor dem ersten Release
 
-Diese Werte gehören dir und werden beim Bauen eingetragen – vom ursprünglichen Projekt wird nichts verwendet. Fehlt
-ein Wert, bleibt nur die jeweilige Funktion aus; der Rest des Launchers läuft.
+Diese Werte gehören dir und werden beim Bauen eingetragen. Fehlt ein Wert, bleibt nur die jeweilige Funktion aus;
+der Rest des Launchers läuft.
 
 | Was | Wo | Ohne |
 |---|---|---|
-| **Microsoft-Anmeldung**: Client-ID einer eigenen Azure-App („Nur persönliche Microsoft-Konten“, Plattform „Mobile und Desktopanwendungen“ mit Umleitung `http://localhost/login`, „Öffentliche Clientflows zulassen“ an), [von Mojang freigegeben](https://aka.ms/mce-reviewappid) für die Minecraft-API | Repo-Variable `CUBIQ_MSA_CLIENT_ID` | Keine Anmeldung (Entwicklungs-Builds starten die Demo) |
+| **Microsoft-Anmeldung**: schon eingebaut – die Azure-App „Cubiq Launcher“ (Client-ID `5cc8876f-8fe1-4c27-bc28-9355a79db635`), funktioniert, sobald Microsoft sie [für die Minecraft-API freigegeben](https://aka.ms/mce-reviewappid) hat; Einrichtung und Antworten fürs Formular: [docs/microsoft-sign-in.md](docs/microsoft-sign-in.md) | Optional Repo-Variable `CUBIQ_MSA_CLIENT_ID` für eine andere Azure-App | – (bis zur Freigabe meldet die Anmeldung, dass sie darauf wartet) |
 | **Update-Schlüssel**: schon erstellt (Schlüssel-ID `A427CF588D4DF86A`); der öffentliche Schlüssel steht in `src-tauri/tauri.conf.json` und `src-tauri/crates/core/src/client_mod_update.rs` | Secrets `TAURI_SIGNING_PRIVATE_KEY` (Inhalt der Schlüsseldatei) und `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Installer ohne Update-Signatur – installierte Launcher aktualisieren sich nicht selbst |
 | **Cubiq-Dienste** (Freunde, Chat, Umhänge, Creator-Codes, …): Basis-URL deines eigenen Servers mit der API | Repo-Variable `CUBIQ_API_BASE`; für den Mod im Spiel zusätzlich `DEFAULT_API` in `client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/online/OnlineConfig.java` | Dienste ausgeblendet, es wird nichts gesendet |
 | **Discord-Status**: Application-ID deiner Discord-App | Repo-Variable `CUBIQ_DISCORD_APP_ID` | Kein Discord-Status |
@@ -156,17 +155,37 @@ Releases entstehen von selbst. Nach jedem grünen CI-Lauf auf `main` prüft
 hat. Wenn ja,
 
 1. erhöht der Workflow die Version (Commits mit `feat:` → Minor, `feat!:` → Major, alles andere → Patch),
-2. schreibt den neuen Abschnitt in [CHANGELOG.md](CHANGELOG.md) auf Englisch und Deutsch – aus deinen Punkten unter
-   `## Unreleased`, falls vorhanden, sonst aus den Commit-Nachrichten ([so geht's](CONTRIBUTING.md#changelog)),
-3. committet „Release vX.Y.Z“, setzt das Tag und startet [`release.yml`](.github/workflows/release.yml).
+2. schreibt den neuen Abschnitt in [CHANGELOG.md](CHANGELOG.md) auf Englisch und Deutsch – aus den Spieler-Texten in
+   [`changes/`](changes/README.md) (eine Datei je Änderung), sonst aus den Commit-Nachrichten
+   ([so geht's](CONTRIBUTING.md#release-notes)),
+3. zeichnet das Bild des Release passend zum Text – eine kleine animierte Pixel-Art-Szene mit Cubi, dem Würfel aus
+   dem Logo, z. B. neben einem Schraubenschlüssel für Fehlerbehebungen oder einer Rakete für einen Start
+   (`scripts/release-art.mjs`); Launcher, Website und GitHub-Release zeigen es mit dem Update, dazu die Screenshots
+   aus den Spieler-Texten,
+4. committet „Release vX.Y.Z“, setzt das Tag und startet [`release.yml`](.github/workflows/release.yml).
 
 `release.yml` baut den Windows-Installer (`Cubiq-Launcher_<version>_x64-setup.exe`), eine portable ZIP und die
 Linux-Pakete und veröffentlicht sie als GitHub-Release „Cubiq Launcher X.Y.Z“ mit dem Changelog als Beschreibung –
 denselben Text zeigt der Launcher nach dem Update („Was ist neu“). Mit dem Signaturschlüssel in den Secrets
 aktualisiert er auch den Update-Kanal, sodass sich installierte Launcher selbst aktualisieren.
 
+- **Status sofort:** Sobald der Build startet, steht auf der Release-Seite ein Entwurf „wird gebaut“. Fehlt am Ende
+  der Windows-Installer, bleibt das Release ein Entwurf (nur für dich sichtbar) mit dem Grund ganz oben – ein
+  fehlgeschlagener Build-Schritt mit seinen Fehlerzeilen, ein unvollständiger Abschnitt in CHANGELOG.md – und einem
+  Link zum Log. Die Zusammenfassung des Laufs zeigt, was gebaut wurde, ob die Update-Signatur geklappt hat und warum
+  etwas fehlt.
+- **Signaturschlüssel:** wird vor dem Build geprüft (`scripts/check-signing.mjs`); Einfügefehler wie ein Zeilenumbruch
+  am Ende werden automatisch korrigiert. Ein falscher Schlüssel oder ein falsches Passwort stoppt den Build nicht –
+  der Installer entsteht ohne Update-Signatur, und die Zusammenfassung sagt, was nicht stimmt.
+- **CI rot:** kein Release; der Lauf „Auto release“ heißt dann „Kein Release – CI …“ und nennt die fehlgeschlagenen
+  Jobs.
 - **Von Hand:** Actions → Auto release → Run workflow (Versionssprung wählbar) oder ein Tag wie `v0.2.0` pushen, zu
-  dessen Version es einen Abschnitt in CHANGELOG.md gibt.
+  dessen Version es einen Abschnitt in CHANGELOG.md gibt. Ein vorhandenes Tag neu bauen: Actions → Release → Run
+  workflow.
+- **Keine Merge-Konflikte:** Branches ändern nie `CHANGELOG.md` oder Versionsnummern, sondern legen nur Dateien in
+  `changes/` an; [`pr-sync.yml`](.github/workflows/pr-sync.yml) mergt `main` nach jedem Merge in offene Pull Requests.
+- **Release-Texte bleiben aktuell:** Ändert sich `CHANGELOG.md` oder ein Release-Bild auf `main`, schreibt
+  [`release-notes.yml`](.github/workflows/release-notes.yml) die betroffenen GitHub-Releases neu.
 - **Pausieren:** Repo-Variable `CUBIQ_AUTO_RELEASE` auf `false` setzen.
 - **Geschützter `main`:** Dürfen nur Pull Requests `main` ändern, wird der Release-Commit abgelehnt – dann GitHub
   Actions von dieser Regel ausnehmen.
@@ -200,8 +219,7 @@ Beiträge sind willkommen – lies [CONTRIBUTING.md](CONTRIBUTING.md). Sicherhei
 
 Der Cubiq Launcher steht unter der [GNU General Public License v3.0](LICENSE).
 
-Copyright (C) 2026 PwiePixel. Basiert auf dem TRS Launcher, Copyright (C) 2026 Ohev Tamerin (Theredstonee).
-Copyright- und Drittanbieter-Hinweise: [NOTICE](NOTICE). Teile der Prozessverwaltung stammen aus
+Copyright (C) 2026 PwiePixel. Copyright- und Drittanbieter-Hinweise: [NOTICE](NOTICE). Teile der Prozessverwaltung stammen aus
 [Polyfrost OneLauncher](https://github.com/Polyfrost/OneLauncher) (GPL-3.0-only).
 
 <sub>Der Cubiq Launcher ist kein offizielles Minecraft-Produkt und weder von Mojang noch von Microsoft genehmigt oder mit ihnen verbunden.</sub>

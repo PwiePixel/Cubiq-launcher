@@ -137,7 +137,7 @@ function back() {
   <BaseDialog :title="list ? t('presets.pick.titleFrom', { name: list.name }) : t('presets.pick.title')" huge @close="emit('close')">
     <!-- Schritt 1: Quelle -->
     <div v-if="!list" class="space-y-4">
-      <div class="inline-flex rounded-full bg-base-900 p-1 ring-1 ring-base-800 mobile-scroll-x mobile:flex mobile:w-full" role="tablist" :aria-label="t('presets.pick.sourceLabel')">
+      <div class="inline-flex rounded-2xl bg-base-900 p-1 ring-1 ring-line mobile-scroll-x mobile:flex mobile:w-full" role="tablist" :aria-label="t('presets.pick.sourceLabel')">
         <button v-for="s in sourceTabs" :key="s" type="button" role="tab" :aria-selected="tab === s" class="tab px-4 py-1.5 mobile:shrink-0" :class="{ 'tab-on': tab === s }" @click="tab = s">
           {{ t(`presets.pick.source.${s}`) }}
         </button>
@@ -168,7 +168,7 @@ function back() {
       <div v-else-if="tab === 'modpack'" class="space-y-3">
         <div class="flex flex-wrap items-center gap-2">
           <input v-model="packQuery" class="field min-w-60 flex-1" maxlength="100" :placeholder="t('browse.searchPlaceholder.modpack')" :aria-label="t('presets.pick.searchPack')" spellcheck="false" />
-          <div class="inline-flex rounded-full bg-base-900 p-1 ring-1 ring-base-800" role="radiogroup" :aria-label="t('browse.source.label')">
+          <div class="inline-flex rounded-2xl bg-base-900 p-1 ring-1 ring-line" role="radiogroup" :aria-label="t('browse.source.label')">
             <button
               v-for="p in platforms"
               :key="p"

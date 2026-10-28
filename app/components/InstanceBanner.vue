@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Instance } from '~/types'
-import { generatedBanner } from '~/utils/banner'
+import { generatedBanner, isPixelBanner } from '~/utils/banner'
 
 // Breites Titelbild einer Instanz. Ohne eigenes Banner entsteht ein ruhiges Motiv im Stil des
 // Logos (Würfel und Pixel-Rauten in der Akzentfarbe) aus der Instanz-ID, leicht in der Farbe des
@@ -22,14 +22,17 @@ watch(banner, () => (failed.value = false))
 
 // Das Motiv folgt Theme und Akzent; erzeugt wird es erst im Browser.
 const settings = useSettingsStore()
-// Halloween: Mondnacht-Motiv (auch beim Ein- und Ausschalten des Events).
+// Halloween: Mondnacht-Motiv (auch beim Ein- und Ausschalten des Events), Polarlicht: Winter-Szene.
 const events = useEventsStore()
+const design = useDesign()
 const generated = ref<string | null>(null)
+const pixel = ref(false)
 function regenerate() {
   generated.value = banner.value && !failed.value ? null : generatedBanner(props.instance.id)
+  pixel.value = isPixelBanner(generated.value)
 }
 onMounted(regenerate)
-watch([banner, failed, () => props.instance.id, () => settings.current?.ui.theme, () => settings.current?.ui.accent, () => events.lookHalloween], () =>
+watch([banner, failed, () => props.instance.id, () => settings.current?.ui.theme, () => settings.current?.ui.accent, () => events.lookHalloween, design], () =>
   nextTick(regenerate),
 )
 </script>
@@ -45,7 +48,7 @@ watch([banner, failed, () => props.instance.id, () => settings.current?.ui.theme
       @error="failed = true"
     />
     <template v-else>
-      <img v-if="generated" :src="generated" alt="" class="absolute inset-0 size-full object-cover" draggable="false" />
+      <img v-if="generated" :src="generated" alt="" class="absolute inset-0 size-full object-cover" :class="{ '[image-rendering:pixelated]': pixel }" draggable="false" />
       <img v-else-if="icon" :src="icon" alt="" class="absolute inset-0 size-full scale-125 object-cover opacity-35 blur-2xl" draggable="false" />
       <div class="tint absolute inset-0" />
     </template>

@@ -1,0 +1,40 @@
+name: Release notes
+
+# Hält die Texte der GitHub-Releases auf dem Stand von CHANGELOG.md: Ändert sich der Changelog oder ein Release-Bild
+# auf main (bessere Hinweise, neues Bild, anderes Format), werden die betroffenen Releases neu geschrieben
+# (scripts/release-notes-sync.mjs) – ohne Handarbeit. Von Hand: Actions → Release notes → Run workflow.
+# Neue Releases schreibt release.yml selbst; Release-Commits (mit GITHUB_TOKEN gepusht) starten diesen Workflow nicht.
+on:
+  push:
+    branches: [main]
+    paths:
+      - CHANGELOG.md
+      - 'public/news/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-notes
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Rewrite release texts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Release texts from CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: node --experimental-strip-types scripts/release-notes-sync.mjs

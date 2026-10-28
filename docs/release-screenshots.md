@@ -1,35 +1,58 @@
 # Release screenshots
 
 A launcher release can show screenshots of its new features: in the launcher (update card, news, "What's new" – a
-dialog with banner, gallery and notes), on the website blog and in the GitHub release notes. They are optional –
-automatic releases have none until you add them. Add them to the version's section in `CHANGELOG.md` before the release
-(write the notes under `## Unreleased` yourself, the automatic release keeps the comments there), or later by hand.
+dialog with banner, gallery and notes), on the website blog and in the GitHub release notes. They are optional, but
+every visible change should bring one to three.
 
-The update banner works the same way: `<!-- banner: accent=#71a330 -->` shows the Cubiq logo in the release colour;
-`motif=/news/<version>/banner.png` (a picture with a transparent background in `public/news/<version>/`) replaces the
-logo.
+The update banner gets its picture automatically: the release draws a small pixel-art scene that matches the notes –
+Cubi, the cube from the logo, on a floating grass island next to an object for the topic (a rocket for a launch, a
+wrench for fixes, a screen for the Cubiq Client, a snowman in winter …). `scripts/release-art.mjs` writes a still
+picture (`public/news/<version>/banner.png`) and the same scene animated (`banner-anim.png`, an animated PNG) and puts
+both into the banner line: `motif=/news/<version>/banner.png anim=/news/<version>/banner-anim.png`. The launcher and
+the website play the animation and show the still picture when animations are reduced. Replace the files with your own
+pictures (transparent background) if you like; preview all topics with
+`node scripts/release-art.mjs --sheet <folder>`.
 
-## Where they go
+## With your player note (branches)
 
-1. Save the images as `public/news/<version>/<name>.png` (or `.webp`).
-   - PNG or WebP, at most **8** per release, each at most **2 MB**, between **640×360** and **3840×2400** px.
-   - Launcher pages: 1280×800. In-game: the autotest size (854×480) or larger.
-   - Only made-up test data – no real account names, e-mail addresses, tokens or private paths.
-2. List them in `CHANGELOG.md` right below the banner line of the version, one per line, captions English | German
-   (both optional; without German the English caption is used for both):
+Put the images next to your note in `changes/` and list them by file name in a comment at the top of the note, above
+`### English` – captions English | German (both optional; without German the English caption is used for both):
 
-   ```md
-   ## 0.2.0 – 2026-10-01 – The Clip Update | Das Clip-Update
-   <!-- banner: accent=#71a330 motif=/news/0.2.0/banner.png -->
-   <!-- shots:
-   /news/0.2.0/clip-gallery.png | The clip gallery | Die Clip-Galerie
-   /news/0.2.0/clip-trim.png | Trimming a clip | Einen Clip zuschneiden
-   -->
-   ```
+```md
+<!-- shots:
+clip-gallery.png | The clip gallery | Die Clip-Galerie
+clip-trim.png | Trimming a clip | Einen Clip zuschneiden
+-->
 
-   A single line works too, entries separated by `;`. Captions must not contain `[ ] < >` or `|`, max. 160 characters.
-3. Check: `node scripts/changelog.mjs check <version>` and `npx vitest run --dir tests` (`tests/changelog.test.ts`
-   validates the screenshots of every release).
+### English
+
+- **Trim your clips.** …
+```
+
+The release moves the files to `public/news/<version>/` and rewrites the paths; the CI check "Player notes" makes sure
+the files exist and fit the rules below.
+
+- PNG or WebP, at most **8** per release, each at most **2 MB**, between **640×360** and **3840×2400** px.
+- Launcher pages: 1280×800. In-game: the autotest size (854×480) or larger.
+- Only made-up test data – no real account names, e-mail addresses, tokens or private paths.
+- File names: letters, digits, `.`, `_`, `-`. Captions must not contain `[ ] < >` or `|`, max. 160 characters.
+
+## Later, on `main`
+
+For a release that is already out, save the images as `public/news/<version>/<name>.png` and list them in
+`CHANGELOG.md` right below the banner line of the version:
+
+```md
+## 0.2.0 – 2026-10-01 – The Clip Update | Das Clip-Update
+<!-- banner: accent=#71a330 motif=/news/0.2.0/banner.png anim=/news/0.2.0/banner-anim.png -->
+<!-- shots:
+/news/0.2.0/clip-gallery.png | The clip gallery | Die Clip-Galerie
+-->
+```
+
+A single line works too, entries separated by `;`. Check: `node scripts/changelog.mjs check <version>` and
+`npx vitest run --dir tests` (`tests/changelog.test.ts` validates the screenshots of every release). The GitHub
+release text follows automatically (workflow "Release notes").
 
 ## Launcher pages (nuxt dev + headless Chrome)
 
@@ -74,4 +97,4 @@ cd client-mod
 - Runs must be **silent** (`ALSOFT_DRIVERS=null`, master volume 0 – the autotest sets it) and **one at a time**.
 - New feature without a matching screenshot step? Add a `shot(mc, "cubiqclient-<name>")` step to the autotest.
 
-Copy the best picture per feature to `public/news/<version>/`, list it in the `shots:` comment and run the check.
+Copy the best picture per feature next to your player note in `changes/` and list it in its `shots:` comment.

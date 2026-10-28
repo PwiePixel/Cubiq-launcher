@@ -264,9 +264,19 @@ impl Launcher {
         let cubiq_enabled = self.cubiq.enabled().await;
         let updates = Some(&self.client_mod_updates);
         let (events, look) = (self.cubiq.active_events(), self.cubiq.look_events());
-        if let Err(e) =
-            client_mod::sync(&self.http, &self.paths, client_mod_dir.as_deref(), updates, instance, &settings.ui, cubiq_enabled, &events, &look)
-                .await
+        if let Err(e) = client_mod::sync(
+            &self.http,
+            &self.paths,
+            client_mod_dir.as_deref(),
+            updates,
+            instance,
+            &settings.ui,
+            self.system_reduced_motion(),
+            cubiq_enabled,
+            &events,
+            &look,
+        )
+        .await
         {
             tracing::warn!("Cubiq Client konnte nicht eingerichtet werden: {e}");
         }

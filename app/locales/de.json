@@ -776,6 +776,14 @@
       "levelDatBroken": "Die level.dat der Welt ist beschädigt.",
       "notFound": "Diese Welt gibt es nicht mehr."
     },
+    "worldBackups": {
+      "tooManyFiles": "Diese Welt hat zu viele Dateien für ein Backup.",
+      "unsafeArchive": "Das Backup enthält ungültige Pfade und wird nicht entpackt.",
+      "broken": "Dieses Backup ist beschädigt.",
+      "notFound": "Dieses Backup gibt es nicht mehr.",
+      "worldOpened": "Die Welt wurde im Spiel geöffnet, bevor ihr Backup fertig war.",
+      "worldOpen": "Diese Welt ist gerade im Spiel geöffnet – schließe sie zuerst."
+    },
     "logs": {
       "sourceGone": "Diese Log-Datei gibt es nicht mehr.",
       "unreadable": "Diese Log-Datei lässt sich nicht lesen.",
@@ -2031,6 +2039,93 @@
       "javaCustom": "eigener Pfad"
     }
   },
+  "stats": {
+    "title": "Statistik",
+    "subtitle": "Wie viel du spielst – über alle deine Instanzen.",
+    "subtitleInstance": "Spielzeit von {name}",
+    "filterLabel": "Statistik anzeigen für",
+    "allInstances": "Alle Instanzen",
+    "live": "Läuft gerade",
+    "units": {
+      "hours": "{n} Std."
+    },
+    "empty": {
+      "title": "Noch keine Spielzeit",
+      "text": "Starte eine Instanz und spiel eine Runde – jede Sitzung landet hier: Stunden pro Tag, ein Kalender deiner Spieltage, deine Lieblings-Instanzen und -Versionen und deine längste Serie.",
+      "action": "Zur Bibliothek"
+    },
+    "tiles": {
+      "label": "Kennzahlen",
+      "total": "Spielzeit gesamt",
+      "totalCarried": "inkl. {time} von früher",
+      "since": "seit {date}",
+      "week": "Diese Woche",
+      "today": "Heute: {time}",
+      "month": "Dieser Monat",
+      "sessions": "Sitzungen",
+      "average": "Ø {time} pro Sitzung",
+      "longest": "Längste Sitzung",
+      "streak": "Aktuelle Serie",
+      "days": "{n} Tag | {n} Tage",
+      "bestStreak": "Rekord: {days}"
+    },
+    "chart": {
+      "title": "Spielzeit",
+      "rangeLabel": "Zeitraum",
+      "days": "30 Tage",
+      "weeks": "16 Wochen",
+      "labelDays": "Spielzeit pro Tag, letzte 30 Tage",
+      "labelWeeks": "Spielzeit pro Woche, letzte 16 Wochen",
+      "total": "Summe: {time}",
+      "none": "Nicht gespielt",
+      "weekOf": "Woche ab {date}",
+      "summary": "{label}. Summe: {total}. Am meisten: {best}.",
+      "showTable": "Als Tabelle anzeigen",
+      "hideTable": "Tabelle ausblenden",
+      "day": "Tag",
+      "week": "Woche",
+      "playTime": "Spielzeit"
+    },
+    "heatmap": {
+      "title": "Kalender",
+      "daysPlayed": "{n} Tag gespielt | {n} Tage gespielt",
+      "summary": "{label}: letzte {weeks} Wochen, an {days} Tagen gespielt.",
+      "less": "Weniger",
+      "more": "Mehr"
+    },
+    "top": {
+      "instances": "Meistgespielte Instanzen",
+      "versions": "Minecraft-Versionen",
+      "versionsHint": "Mit diesen Versionen hast du gespielt",
+      "noVersions": "Noch keine Sitzungen mit bekannter Version.",
+      "servers": "Server",
+      "serversHint": "Server, denen du beigetreten bist – über den Launcher oder das Mehrspieler-Menü im Spiel.",
+      "sessions": "{n} Sitzung | {n} Sitzungen",
+      "deleted": "{name} (gelöscht)",
+      "showAll": "Alle zeigen ({n})",
+      "showLess": "Weniger zeigen"
+    },
+    "footer": {
+      "tracking": "Sitzungen werden seit {date} aufgezeichnet.",
+      "carried": "Spielzeit von davor zählt zu den Summen und den Instanzen, hat aber kein Datum."
+    },
+    "reset": {
+      "button": "Statistik zurücksetzen",
+      "title": "Statistik zurücksetzen?",
+      "text": "Alle aufgezeichneten Sitzungen verschwinden aus der Statistik – Diagramme, Kalender, Serien und Listen beginnen wieder bei null. Die Spielzeit an deinen Instanzen bleibt.",
+      "confirm": "Zurücksetzen",
+      "done": "Statistik zurückgesetzt."
+    },
+    "instance": {
+      "title": "Spielzeit",
+      "recent": "{time} in den letzten 30 Tagen",
+      "average": "Schnitt",
+      "last30": "Spielzeit der letzten 30 Tage: {time}",
+      "crashes": "{n} Absturz | {n} Abstürze",
+      "topVersion": "Meist auf {version}",
+      "open": "Alle Statistiken"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} Zeile | {n} Zeilen",
     "copied": "Kopiert"
@@ -2420,6 +2515,21 @@
       "updatesPortable": "Portable Version – Updates gibt es auf der Download-Seite"
     },
     "appearance": {
+      "look": {
+        "title": "Design",
+        "text": "Ändert das ganze Aussehen – Hintergrund-Szene, Farben und kleine Details. Farbschema und Akzentfarbe bleiben, wie du sie eingestellt hast, und der Cubiq Client übernimmt das Design ins Spiel.",
+        "choose": "Design {name} verwenden",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Dunkle Flächen mit einem Hauch Grün und Akzenten in Cubiq-Grün"
+          },
+          "winter": {
+            "name": "Polarlicht",
+            "text": "Polarlicht in Cubiq-Grün über schwebenden Schneeinseln"
+          }
+        }
+      },
       "colorScheme": "Farbschema",
       "themes": {
         "dark": "Dunkel",
@@ -2448,7 +2558,7 @@
       "eventLookTitle": "Event-Design anzeigen (z. B. Halloween)",
       "eventLookDescription": "Farben, Hintergründe, Ladebalken, Atmosphäre und Event-Symbol während eines Events. Aus = normales Aussehen. Kürbis-Suche, Süßes oder Saures und Belohnungen bleiben.",
       "motionTitle": "Animationen",
-      "motionDescription": "Animierter Hintergrund, Lauflichter, Seiten- und Dialog-Übergänge und Listen, die an ihren Platz gleiten. „Animationen reduzieren“ schaltet alles ab; „Wie Windows/System“ folgt der Animations-Einstellung von Windows bzw. des Desktops – auf optimierten oder Remote-PCs ist sie oft aus.",
+      "motionDescription": "Animierter Hintergrund, Lauflichter, Seiten- und Dialog-Übergänge und Listen, die an ihren Platz gleiten. „Animationen reduzieren“ schaltet alles ab; „Wie Windows/System“ folgt der Animations-Einstellung von Windows bzw. des Desktops – auf optimierten oder Remote-PCs ist sie oft aus. Der Cubiq Client folgt reduzierten Animationen ebenfalls – Startbildschirm und Ladebildschirme stehen dann still.",
       "motionModes": {
         "full": "Immer an",
         "system": "Wie Windows/System",
@@ -3082,14 +3192,13 @@
     "discover": "Entdecken",
     "servers": "Server",
     "screenshots": "Screenshots",
+    "stats": "Statistik",
     "skins": "Skins",
     "admin": "Verwaltung",
     "runningCount": "{n} laufend | {n} laufend",
     "quickLaunch": "Schnellstart",
     "openNamed": "{name} öffnen",
     "newInstance": "Neue Instanz",
-    "searchShortcut": "Suchen (Strg+K)",
-    "searchTip": "Suchen · Strg K",
     "settings": "Einstellungen",
     "accountNamed": "Konto: {name}",
     "signIn": "Anmelden",
@@ -3105,7 +3214,12 @@
     "localServers": "Meine Server",
     "controls": "Steuerung",
     "pc": "PC",
-    "creator": "Creator"
+    "creator": "Creator",
+    "groups": {
+      "together": "Gemeinsam",
+      "collection": "Sammlung",
+      "tools": "Werkzeuge"
+    }
   },
   "accountMenu": {
     "menuLabel": "Konten",
@@ -3151,6 +3265,7 @@
       "servers": "serverliste",
       "accounts": "konto anmelden microsoft",
       "screenshots": "bilder galerie",
+      "stats": "statistik spielzeit stunden serie kalender diagramm",
       "skins": "umhang cape",
       "settings": "einstellungen optionen",
       "newInstance": "anlegen hinzufügen erstellen",
@@ -3380,6 +3495,9 @@
       "add": "Server hinzufügen",
       "addHint": "Live-Status und Beitritt per Klick",
       "addHintEmpty": "Deine Server mit Live-Status – Beitritt per Klick"
+    },
+    "stage": {
+      "pick": "{name} auswählen"
     }
   },
   "news": {
@@ -3409,6 +3527,26 @@
     "preparing": "Minecraft wird vorbereitet",
     "crashed": "Das Spiel wurde unerwartet beendet – die Logs zeigen meist die Ursache."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Hüpf über die Blöcke, während Minecraft startet.",
+    "start": "Spielen",
+    "controls": "Leertaste, ↑ oder Klick zum Hüpfen – in der Luft noch einmal für einen Doppelsprung.",
+    "areaLabel": "Cubi Hop. Leertaste, Pfeil nach oben oder Klick zum Hüpfen.",
+    "score": "Punkte {score}",
+    "best": "Rekord {score}",
+    "newBest": "Neuer Rekord!",
+    "over": "Autsch! Klicken oder Leertaste für einen neuen Versuch.",
+    "paused": "Pause – klicken oder Leertaste zum Weitermachen.",
+    "result": "Vorbei. Punkte: {score}.",
+    "resultBest": "Vorbei. Punkte: {score} – neuer Rekord!",
+    "windowSoon": "Minecraft öffnet sein Fenster …",
+    "ready": "Minecraft ist bereit!",
+    "closesIn": "Schließt in {seconds} s",
+    "keepPlaying": "Weiterspielen",
+    "closeNow": "Schließen",
+    "close": "Minispiel schließen"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Darstellung",
@@ -3427,6 +3565,7 @@
       "storage": "Speicherverwaltung",
       "network": "Netzwerk",
       "clips": "Clips & Aufnahme",
+      "backups": "Welt-Backups",
       "notifications": "Benachrichtigungen",
       "remote": "Fernbedienung"
     },
@@ -3491,7 +3630,7 @@
       "button": "Mehr erfahren & einschalten",
       "shares": "Um Screenshots als Link zu teilen, meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
       "achievements": "Um deine Erfolge zu zeigen, meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
-      "cosmetics": "Für Cubiq-Kopf-Kosmetik meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
+      "cosmetics": "Für Cubiq-Kosmetik meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
       "remote": "Um deinen PC vom Handy aus zu steuern, meldet sich der Launcher beim Cubiq-Server an. Das passiert erst, wenn du zustimmst.",
       "creator": "Das Creator-Programm (Codes, Fan-Symbole, Fan-Umhänge) braucht die Cubiq-Dienste."
     },
@@ -3912,7 +4051,6 @@
     "glows": "Leuchtet",
     "tryOn": "{name} anprobieren",
     "tryOnLocked": "{name} anprobieren (gesperrt)",
-    "empty": "Noch keine Kopf-Kosmetik verfügbar.",
     "offline": "Der Cubiq-Server ist gerade nicht erreichbar.",
     "previewFailed": "Die 3D-Vorschau dieses Teils konnte nicht geladen werden.",
     "how": {
@@ -3945,8 +4083,7 @@
     },
     "companion": {
       "title": "Begleiter",
-      "intro": "Fliegt zusätzlich zum Hut um deinen Kopf. Die Vorschau zeigt Hut, Begleiter und Umhang zusammen.",
-      "empty": "Noch keine Begleiter.",
+      "intro": "Fliegt um deinen Kopf. Die Vorschau zeigt Begleiter und Umhang zusammen.",
       "wearing": "Begleiter: {name}",
       "selectedWorn": "Fliegt mit – alle mit Cubiq Client sehen ihn.",
       "toasts": {
@@ -3956,8 +4093,7 @@
     },
     "wings": {
       "title": "Flügel",
-      "intro": "Sitzen zusätzlich zu Hut und Begleiter auf deinem Rücken. Die Vorschau zeigt sie am Boden, in der Luft und beim Schleichen.",
-      "empty": "Noch keine Flügel.",
+      "intro": "Sitzen zusätzlich zu einem Begleiter auf deinem Rücken. Die Vorschau zeigt sie am Boden, in der Luft und beim Schleichen.",
       "wearing": "Flügel: {name}",
       "selectedWorn": "Auf deinem Rücken – alle mit Cubiq Client sehen sie.",
       "toasts": {
@@ -3975,7 +4111,6 @@
       "title": "Begleiter am Boden",
       "intro": "Läuft neben dir her – alle mit Cubiq Client sehen ihn. Die Vorschau zeigt ihn neben deiner Figur.",
       "creatorHint": "Creator-Haustier: Fans bekommen es über die Codes des Creators, der Creator selbst läuft mit mehr je nach Fans (ab 10 zwei, ab 100 drei, ab 1000 vier).",
-      "empty": "Noch keine Begleiter am Boden.",
       "wearing": "Neben dir: {name}",
       "selectedWorn": "Läuft neben dir her – alle mit Cubiq Client sehen ihn.",
       "toasts": {
@@ -4733,8 +4868,11 @@
     "imageOf": "Bild {n} von {total}",
     "versions": "Versionen",
     "more": "{n} weitere Bilder",
-    "thanks": "Danke an {names} für die Mitarbeit an diesem Update.",
     "openRelease": "Release auf GitHub ansehen"
+  },
+  "updateModel": {
+    "label": "3D-Modell des Update-Bilds. Zum Drehen ziehen oder die Pfeiltasten nutzen.",
+    "hint": "Zum Drehen ziehen"
   },
   "clips": {
     "title": "Clips",
@@ -4953,6 +5091,53 @@
     "allHint": "Wieder alles zeigen",
     "nothingSelected": "Keine Stufe ausgewählt – klick oben einen der Knöpfe an."
   },
+  "perfLive": {
+    "title": "Live-Leistung",
+    "client": "Cubiq Client",
+    "expand": "Kurven zeigen",
+    "collapse": "Kurven ausblenden",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS nur mit dem Cubiq Client",
+    "fpsLimited": "Im Hintergrund gebremst",
+    "fpsWaiting": "Warte auf die ersten Bilder …",
+    "fpsStats": "Ø {avg} · min. {min}",
+    "heap": "Java: {used} von {max}",
+    "systemFree": "PC: {free} frei",
+    "cpuNote": "vom ganzen PC ({cores} Threads)",
+    "noData": "noch keine Werte",
+    "chartSummary": "{label} in der letzten Minute: jetzt {now}, Durchschnitt {avg}, niedrigster Wert {min}, höchster {max}",
+    "now": "jetzt",
+    "secondsAgo": "vor {seconds} s",
+    "dismissTip": "Tipp ausblenden",
+    "tips": {
+      "performanceAction": "Leistungs-Einstellungen",
+      "memory": {
+        "title": "Minecraft geht der Speicher aus",
+        "text": "Der Java-Speicher ist seit einer Weile fast voll. Das sorgt für Ruckler und kann das Spiel abstürzen lassen – gib dieser Instanz mehr Speicher.",
+        "action": "Speicher-Einstellungen"
+      },
+      "systemMemory": {
+        "title": "Dein PC hat kaum noch freien Speicher",
+        "text": "Nur noch {free} sind frei. Schließ Programme, die du gerade nicht brauchst – Minecraft noch mehr Speicher zu geben, würde es schlimmer machen."
+      },
+      "stutter": {
+        "title": "Kurze Ruckler",
+        "text": "Die Bildrate bricht immer wieder kurz ein. Senk die Sichtweite oder nutz die Cubiq-Optimierung – und ist der Java-Speicher fast voll, gib der Instanz mehr."
+      },
+      "lowFps": {
+        "title": "Niedrige Bildrate",
+        "text": "Senk die Sichtweite in den Grafikeinstellungen oder nutz den FPS-Boost im Spiel: Cubiq-Menü (rechte Umschalttaste) → Leistung.",
+        "boostOff": "Die Cubiq-Optimierung ist für diese Instanz aus. Schalt sie ein – Sodium und andere Leistungs-Mods bringen meist deutlich mehr FPS."
+      },
+      "cpu": {
+        "title": "Prozessor am Limit",
+        "text": "Minecraft nutzt fast den ganzen Prozessor. Senk Sicht- und Simulationsweite oder schließ Programme, die im Hintergrund laufen."
+      }
+    }
+  },
   "logShare": {
     "qrLabel": "QR-Code des Links",
     "qrFailed": "Kein QR-Code verfügbar",
@@ -5102,13 +5287,13 @@
     "cheats": "Cheats",
     "backingUp": "Welt wird gesichert …",
     "backupDone": "„{name}“ wurde gesichert",
-    "backup": "Sichern (ZIP)",
+    "backup": "Jetzt sichern",
     "backupOf": "{name} sichern",
     "openFolderOf": "Ordner von {name} öffnen",
     "deleteOf": "{name} löschen",
     "stopFirst": "Erst das Spiel beenden",
     "deleted": "„{name}“ liegt im Papierkorb",
-    "backupHint": "Sicherungen landen als ZIP im Ordner „backups“ der Instanz (siehe Tab „Dateien“).",
+    "backupHint": "Welten werden beim Spielstart und nach dem Spielen automatisch gesichert – nur die, die sich geändert haben. Ein Klick auf die Zeile mit der Uhr zeigt die Backups zum Wiederherstellen oder Löschen.",
     "deleteTitle": "Welt löschen?",
     "deleteText": "„{name}“ wandert in den Windows-Papierkorb.",
     "deleteTextLinux": "„{name}“ wandert in den Papierkorb.",
@@ -5135,6 +5320,88 @@
       "joinNote": "Beitreten startet das Spiel und verbindet sofort. Sehr alte Versionen öffnen nur das Hauptmenü.",
       "pingCooldown": "Bitte ein paar Sekunden bis zum nächsten Ping-Test warten.",
       "sortNote": "Nur die Anzeige ist nach Ping sortiert – die Serverliste im Spiel behält ihre Reihenfolge."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Auto-Backup",
+      "defaultOn": "Standard (an)",
+      "defaultOff": "Standard (aus)",
+      "on": "An",
+      "off": "Aus",
+      "onText": "Automatische Backups sind an: Geänderte Welten werden beim Start und nach dem Spielen gesichert, je Welt bleiben die letzten {n}.",
+      "offText": "Automatische Backups sind für diese Instanz aus – nutze „Jetzt sichern“.",
+      "sharedText": "Diese Instanz teilt ihren Welten-Ordner, die Backups gehören also allen Instanzen, die ihn teilen."
+    },
+    "panel": {
+      "open": "Backups von {name}",
+      "running": "Wird gesichert … {percent} %",
+      "status": "{n} Backup · zuletzt {time} | {n} Backups · zuletzt {time}",
+      "none": "Noch kein Backup",
+      "deletedTitle": "Gelöschte Welten mit Backups",
+      "restoreDeleted": "Wiederherstellen"
+    },
+    "dialog": {
+      "title": "Backups von {name}",
+      "backupNow": "Jetzt sichern",
+      "backingUp": "Wird gesichert … {percent} %",
+      "empty": "Von dieser Welt gibt es noch keine Backups.",
+      "restore": "Wiederherstellen",
+      "deleteConfirm": "Dieses Backup löschen?",
+      "deleteOf": "Backup vom {date} löschen"
+    },
+    "kinds": {
+      "auto": "Automatisch",
+      "manual": "Von Hand",
+      "safety": "Vor dem Wiederherstellen",
+      "legacy": "Älteres Backup"
+    },
+    "restore": {
+      "title": "Backup vom {date} wiederherstellen",
+      "modeLabel": "Wie wiederherstellen",
+      "copy": "Als Kopie",
+      "copyText": "Legt die Welt als „{name}“ an – deine jetzige Welt bleibt, wie sie ist.",
+      "replace": "Jetzige Welt ersetzen",
+      "replaceText": "Der jetzige Stand wird vorher als Backup gesichert, du kannst also zurück.",
+      "bringBack": "Welt zurückholen",
+      "bringBackText": "Die Welt erscheint wieder in deiner Weltenliste.",
+      "confirm": "Wiederherstellen",
+      "stopFirst": "Beende zuerst das Spiel – eine Welt lässt sich nur wiederherstellen, solange es nicht läuft.",
+      "copySuffix": "wiederhergestellt",
+      "taskTitle": "{name} wiederherstellen",
+      "stage": "Welt wird wiederhergestellt …",
+      "doneCopy": "Als „{name}“ wiederhergestellt.",
+      "doneReplace": "„{name}“ wurde wiederhergestellt – der vorige Stand bleibt als Backup.",
+      "doneDeleted": "„{name}“ ist wieder da."
+    },
+    "task": {
+      "title": "Welt-Backup · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Welten werden geprüft …"
+    },
+    "toast": {
+      "opened": "„{world}“ wurde geöffnet, bevor das Backup fertig war. Das vorige Backup bleibt – nach dem Spielen entsteht ein neues.",
+      "failed": "Backup von „{world}“ fehlgeschlagen: {error}"
+    },
+    "settings": {
+      "title": "Welt-Backups",
+      "intro": "Beim Start einer Instanz sichert der Launcher jede Einzelspieler-Welt, die sich seit ihrem letzten Backup geändert hat – im Hintergrund, das Spiel startet sofort. Nach dem Spielen sichert er die gespielten Welten. Unveränderte Welten werden übersprungen.",
+      "enabledTitle": "Automatische Backups",
+      "enabledDescription": "Geänderte Welten beim Start und nach dem Spielen sichern. Jede Instanz kann das im Tab „Welten“ ein- oder ausschalten.",
+      "keepTitle": "Je Welt behalten",
+      "keepDescription": "Ältere automatische Backups werden gelöscht. Backups von Hand und die vor dem Wiederherstellen bleiben immer.",
+      "keepOption": "{n} Backup | {n} Backups",
+      "limitTitle": "Obergrenze",
+      "limitDescription": "Werden alle Backups zusammen größer, fallen die ältesten automatischen zuerst weg – das neueste Backup jeder Welt bleibt immer.",
+      "noLimit": "Keine",
+      "storageTitle": "Speicherplatz",
+      "usage": "Belegt: {size} · Backups: {count} · Welten: {worlds}",
+      "usageNone": "Noch keine Backups.",
+      "where": "Backups liegen als ZIP-Dateien im Ordner „world-backups“ des Launcher-Datenordners.",
+      "orphaned": "{size} gehören zu gelöschten Instanzen.",
+      "prune": "Diese löschen",
+      "pruneConfirm": "Endgültig löschen",
+      "pruned": "{size} freigegeben."
     }
   },
   "share": {
@@ -7230,7 +7497,7 @@
       "grid": "Raster",
       "notch": "Notch",
       "discard": "Änderungen verwerfen?",
-      "selectHint": "Tippe einen Knopf an, um ihn zu ändern. Ziehen verschiebt, die rote Ecke ändert die Größe. Pfeiltasten schieben fein.",
+      "selectHint": "Tippe einen Knopf an, um ihn zu ändern. Ziehen verschiebt, die grüne Ecke ändert die Größe. Pfeiltasten schieben fein.",
       "actionType": "Aktion",
       "key": "Taste",
       "chord": "Vorher halten",
@@ -8057,7 +8324,6 @@
         "other": "Belohnung"
       },
       "pool": {
-        "cape": "Mondnacht-Umhang – zufällige Farbe, jeder nur einen",
         "emotes": "4 Emotes",
         "stickers": "6 Chat-Sticker",
         "sour": "Saures ≈ 1 von 4"
@@ -8067,10 +8333,10 @@
       "title": "Kürbis-Suche",
       "text": "13 Kürbisse, versteckt in Launcher, Website und Cubiq Client. Jeder Fund zählt fürs Konto (der Server prüft jeden Kürbis, doppelt zählt nicht).",
       "found": "Kürbis gefunden! {n}/{total}",
-      "complete": "Alle 13! Abzeichen „Kürbisjäger 2026“ und Umhang freigeschaltet.",
+      "complete": "Alle 13! Abzeichen „Kürbisjäger 2026“ freigeschaltet, dazu Halloween-Flügel deiner Wahl.",
       "pumpkinLabel": "Ein versteckter Kürbis",
       "rewardLabel": "Belohnung für alle 13:",
-      "rewardCape": "+ Umhang „Kürbisjäger“ und eine von 4 Halloween-Flügeln zur Wahl",
+      "rewardWings": "+ eine von 4 Halloween-Flügeln zur Wahl",
       "logLine": "[🎃] Zwischen diesen Zeilen grinst etwas …"
     },
     "badges": {

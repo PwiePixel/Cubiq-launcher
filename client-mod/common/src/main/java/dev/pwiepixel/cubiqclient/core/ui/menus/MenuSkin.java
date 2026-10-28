@@ -16,7 +16,6 @@ import dev.pwiepixel.cubiqclient.core.ui.halloween.HorrorLayer;
 import dev.pwiepixel.cubiqclient.core.ui.halloween.MoonBar;
 import dev.pwiepixel.cubiqclient.core.ui.halloween.NightScene;
 import dev.pwiepixel.cubiqclient.core.ui.title.CubeScene;
-import dev.pwiepixel.cubiqclient.core.ui.title.TitleUi;
 import dev.pwiepixel.cubiqclient.core.ui.winter.Frost;
 import dev.pwiepixel.cubiqclient.core.ui.winter.WinterScene;
 
@@ -29,7 +28,8 @@ import java.util.List;
  * Versionsunabhängig; die Loader-Varianten rufen es aus ihren Hooks auf.
  *
  * <p>Vanilla schreibt weiß auf die Knöpfe; darum sind die Flächen hier immer dunkel (auch im hellen Theme),
- * nur die Akzentfarbe kommt aus dem {@link Theme}. Winternacht, Fuchsbau und Halloween haben eigene Flächen.
+ * nur die Akzentfarbe kommt aus dem {@link Theme}. Polarlicht hat dieselben Flächen in Nachtblau (mit Schneesaum auf den
+ * Karten), Fuchsbau und Halloween haben eigene.
  */
 public final class MenuSkin {
 	/** Höhe der Kopfleiste (Vanilla-Titel steht bei y = 15…20). */
@@ -46,7 +46,7 @@ public final class MenuSkin {
 	/** Mittlere Zeichenzeit des Hintergrunds (µs, gleitend) – für den Selbsttest. */
 	private static float avgMicros;
 
-	// Cubiq: flache Flächen in den dunklen Farben des Launchers (base-800/850/700/600).
+	// Cubiq: flache Flächen in den dunklen, grün getönten Farben des Launchers (base-800/850/700, helle Kante wie line-strong).
 	private static final int SURFACE = 0xFF1D2520;
 	private static final int SURFACE_HOVER = 0xFF242D27;
 	private static final int SURFACE_OFF = 0xFF141A16;
@@ -56,15 +56,14 @@ public final class MenuSkin {
 	/** Tiefster Grund (base-950) für Schleier und Felder. */
 	private static final int DEEP = 0xFF0C100E;
 
-	// Winternacht: Eis- und Schneeplatten (immer dunkel – Vanilla schreibt weiß).
-	private static final int ICE = 0xFF1C2C48;
-	private static final int ICE_HOVER = 0xFF26406A;
-	private static final int ICE_OFF = 0xFF121B2D;
-	private static final int ICE_EDGE = 0xFF050A14;
-	private static final int FROST_LIGHT = 0xFF6F8FBF;
-	private static final int FROST_DARK = 0xFF0A1222;
-	private static final int ICE_FIELD = 0xFF060B16;
-	private static final int ICE_FIELD_EDGE = 0xFF2D4166;
+	// Polarlicht: dieselben Flächen in Nachtblau (winter.css: base-800/850/700/950, helle Kante wie line-strong) – ebenfalls
+	// immer dunkel.
+	private static final int NIGHT_SURFACE = 0xFF142138;
+	private static final int NIGHT_SURFACE_HOVER = 0xFF192841;
+	private static final int NIGHT_SURFACE_OFF = 0xFF0C1527;
+	private static final int NIGHT_EDGE = 0xFF1E2E4A;
+	private static final int NIGHT_BEVEL_LIGHT = 0xFF2E4568;
+	private static final int NIGHT_DEEP = 0xFF070C18;
 
 	// Fuchsbau: Platten aus dunklem Pflaumenholz mit Abendlicht-Kante (immer dunkel – Vanilla schreibt weiß).
 	private static final int WOOD = 0xFF2F1F2C;
@@ -86,17 +85,38 @@ public final class MenuSkin {
 
 	/** Lichtkante (oben) passend zum Design. */
 	private static int bevelLight(Theme t) {
-		return t.winter ? FROST_LIGHT : (t.fox ? DUSK_LIGHT : BEVEL_LIGHT);
+		return t.winter ? NIGHT_BEVEL_LIGHT : (t.fox ? DUSK_LIGHT : BEVEL_LIGHT);
 	}
 
 	/** Schattenkante (unten) passend zum Design. */
 	private static int bevelDark(Theme t) {
-		return t.winter ? FROST_DARK : (t.fox ? DUSK_DARK : BEVEL_DARK);
+		return t.winter ? NIGHT_DEEP : (t.fox ? DUSK_DARK : BEVEL_DARK);
+	}
+
+	/** Flächen im Cubiq-Aufbau – im Polarlicht in Nachtblau. */
+	private static int surface(Theme t) {
+		return t.winter ? NIGHT_SURFACE : SURFACE;
+	}
+
+	private static int surfaceHover(Theme t) {
+		return t.winter ? NIGHT_SURFACE_HOVER : SURFACE_HOVER;
+	}
+
+	private static int surfaceOff(Theme t) {
+		return t.winter ? NIGHT_SURFACE_OFF : SURFACE_OFF;
+	}
+
+	private static int edge(Theme t) {
+		return t.winter ? NIGHT_EDGE : EDGE;
+	}
+
+	private static int deep(Theme t) {
+		return t.winter ? NIGHT_DEEP : DEEP;
 	}
 
 	/** Grund von Kopf- und Fußleiste. */
 	private static int barFill(Theme t, boolean inWorld) {
-		if (t.winter) return inWorld ? 0x8C060B16 : 0xD80B1222;
+		if (t.winter) return inWorld ? 0x8C070C18 : 0xD80A1222;
 		if (t.fox) return inWorld ? 0x8C0E080D : 0xD8170E15;
 		return inWorld ? 0x8C0C100E : 0xD8111613;
 	}
@@ -111,6 +131,14 @@ public final class MenuSkin {
 	/** Sekunden seit dem Start (Animationen). */
 	public static float time() {
 		return seconds();
+	}
+
+	/**
+	 * Uhr der Hintergründe und Ladebilder: ohne Bewegung ({@link dev.pwiepixel.cubiqclient.core.menus.MenuStyle#animated()})
+	 * ein fester Zeitpunkt – das Bild steht.
+	 */
+	private static float sceneSeconds() {
+		return dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated() ? seconds() : 0f;
 	}
 
 	public static float averageMicros() {
@@ -134,22 +162,13 @@ public final class MenuSkin {
 	public static void background(Canvas c, int width, int height, boolean inWorld, int headerH, int footerTop) {
 		long start = System.nanoTime();
 		Theme t = Theme.get();
-		float time = seconds();
+		float time = sceneSeconds();
 		if (t.halloween) {
 			halloweenBackground(c, width, height, inWorld, headerH, footerTop, time);
 			measure(start);
 			return;
 		}
-		if (inWorld && t.winter) {
-			// Winternacht in der Welt: nachtblauer Schleier, unten Frostschein und eine Frostlinie.
-			c.fill(0, 0, width, height, 0x9A060B16);
-			for (int i = 0; i < 6; i++) {
-				int band = Math.max(4, height / 24);
-				int y2 = height - i * band;
-				c.fill(0, y2 - band, width, y2, ColorMath.withAlpha(t.faceGlow, Math.max(0, 18 - i * 3)));
-			}
-			Paint.lineH(c, 0, width, height - 2, ColorMath.lerp(t.track, t.accentText, 0.55f + 0.2f * pulse(time)), 0.4f);
-		} else if (inWorld && t.fox) {
+		if (inWorld && t.fox) {
 			// Fuchsbau in der Welt: Schleier in später Dämmerung, unten warmer Feuerschein und ein glimmender Ast.
 			c.fill(0, 0, width, height, 0x9A100A10);
 			for (int i = 0; i < 6; i++) {
@@ -159,9 +178,10 @@ public final class MenuSkin {
 			}
 			Paint.lineH(c, 0, width, height - 2, ColorMath.lerp(t.track, t.accentText, 0.55f + 0.2f * pulse(time)), 0.4f);
 		} else if (inWorld) {
-			// Cubiq: Schleier in base-950, nach unten etwas dichter.
+			// Cubiq und Polarlicht: Schleier in base-950, nach unten etwas dichter.
+			int veil = deep(t);
 			for (int i = 0; i < 8; i++) {
-				c.fill(0, height * i / 8, width, height * (i + 1) / 8, ColorMath.withAlpha(DEEP, 0x84 + i * 5));
+				c.fill(0, height * i / 8, width, height * (i + 1) / 8, ColorMath.withAlpha(veil, 0x84 + i * 5));
 			}
 		} else {
 			scene(c, width, height, time);
@@ -236,11 +256,11 @@ public final class MenuSkin {
 			return;
 		}
 		c.fill(0, 0, width, h, barFill(t, inWorld));
-		if (t.winter || t.fox) {
+		if (t.fox) {
 			c.fill(0, 0, width, 1, ColorMath.withAlpha(bevelLight(t), 0x60));
 			Paint.lineH(c, 0, width, h - 2, ColorMath.lerp(t.track, t.accentText, 0.8f), 0.7f);
 		} else {
-			c.fill(0, h - 1, width, h, EDGE);
+			c.fill(0, h - 1, width, h, edge(t));
 		}
 		logo(c, 8, (h - PixelFont.HEIGHT * 2) / 2, 2, 1f);
 	}
@@ -254,13 +274,14 @@ public final class MenuSkin {
 			return;
 		}
 		c.fill(0, top, width, height, barFill(t, inWorld));
-		if (t.winter || t.fox) Paint.lineH(c, 0, width, top, ColorMath.lerp(t.track, t.accentText, 0.8f), 0.7f);
-		else c.fill(0, top, width, top + 1, EDGE);
+		if (t.fox) Paint.lineH(c, 0, width, top, ColorMath.lerp(t.track, t.accentText, 0.8f), 0.7f);
+		else c.fill(0, top, width, top + 1, edge(t));
 	}
 
 	/**
-	 * Cubiq-Zeichen mit „Cubiq“ in der Pixelschrift (Winternacht/Fuchsbau: glühender Schriftzug mit Schnee bzw. Blättern,
-	 * Halloween: Mondsilber); {@code scale} = Pixel je Schriftpunkt, (x, y) = linke obere Ecke. Breite: {@link #logoWidth}.
+	 * Cubiq-Zeichen mit „Cubiq“ in der Pixelschrift (Polarlicht: Schnee auf dem Zeichen, Fuchsbau: glühender Schriftzug mit
+	 * Blättern, Halloween: Mondsilber); {@code scale} = Pixel je Schriftpunkt, (x, y) = linke obere Ecke. Breite:
+	 * {@link #logoWidth}.
 	 */
 	public static void logo(Canvas c, int x, int y, int scale, float alpha) {
 		Theme t = Theme.get();
@@ -268,7 +289,11 @@ public final class MenuSkin {
 			HalloweenLook.silverWord(c, "CUBIQ", x, y, scale, alpha, 1f);
 			return;
 		}
-		if (!t.winter && !t.fox) {
+		if (t.winter) {
+			Frost.lockup(c, x, y, scale, alpha);
+			return;
+		}
+		if (!t.fox) {
 			CubiqMark.lockup(c, x, y, scale, alpha);
 			return;
 		}
@@ -280,13 +305,7 @@ public final class MenuSkin {
 			int col = r[1] == 0 ? light : t.accent;
 			c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, ColorMath.fade(col, alpha));
 		}
-		if (t.winter && alpha > 0.5f) {
-			// Schnee auf dem Schriftzug und die kleine Schneeflocke daneben (wie im Launcher).
-			TitleUi.snowCaps(c, rects, x, y, scale);
-			int fx = x + PixelFont.width("CUBIQ") * scale + scale * 2;
-			int px = Math.max(1, scale / 2);
-			Frost.snowflake(c, fx, y + (PixelFont.HEIGHT * scale - 9 * px) / 2, px, 0xFFB8E7FF, Frost.glint(seconds()));
-		} else if (t.fox && alpha > 0.5f) {
+		if (t.fox && alpha > 0.5f) {
 			// Ein paar Blätter auf dem Schriftzug und das kleine Fuchsgesicht daneben (wie im Launcher).
 			Ember.leafCaps(c, rects, x, y, scale);
 			int fx = x + PixelFont.width("CUBIQ") * scale + scale * 2;
@@ -300,7 +319,7 @@ public final class MenuSkin {
 	public static int logoWidth(int scale) {
 		Theme t = Theme.get();
 		int word = PixelFont.width("CUBIQ") * scale;
-		return t.halloween || t.winter || t.fox ? word : CubiqMark.textOffset(scale) + word;
+		return t.halloween || t.fox ? word : CubiqMark.textOffset(scale) + word;
 	}
 
 	/** Eingelassene Mulde hinter einer Liste (Server, Welten, Optionen). */
@@ -314,22 +333,22 @@ public final class MenuSkin {
 			return;
 		}
 		boolean f = fox();
-		c.fill(x1, y1, x2, y2, w ? (inWorld ? 0x70020610 : 0xA8050A16) : (f ? (inWorld ? 0x700A0408 : 0xA80E070C) : (inWorld ? 0x700C100E : 0xA80C100E)));
+		c.fill(x1, y1, x2, y2, w ? (inWorld ? 0x70070C18 : 0xA8070C18) : (f ? (inWorld ? 0x700A0408 : 0xA80E070C) : (inWorld ? 0x700C100E : 0xA80C100E)));
 		c.fill(x1, y1, x2, y1 + 1, 0x80000000);
 		c.fill(x1, y2 - 1, x2, y2, ColorMath.withAlpha(bevelLight(Theme.get()), 0x50));
 	}
 
-	/** Trennlinien einer Liste (oben/unten): feine Linien; Winternacht/Fuchsbau/Halloween mit Frost, Ast bzw. Faden. */
+	/** Trennlinien einer Liste (oben/unten): feine Linien; Fuchsbau/Halloween mit Ast bzw. Faden. */
 	public static void listSeparators(Canvas c, int x1, int y1, int x2, int y2) {
 		Theme t = Theme.get();
-		if (t.halloween || t.winter || t.fox) {
+		if (t.halloween || t.fox) {
 			int line = ColorMath.lerp(t.track, t.accentText, 0.6f);
 			Paint.lineH(c, x1, x2, y1 - 2, line, 0.3f);
 			Paint.lineH(c, x1, x2, y2, line, 0.3f);
 			return;
 		}
-		c.fill(x1, y1 - 1, x2, y1, EDGE);
-		c.fill(x1, y2, x2, y2 + 1, EDGE);
+		c.fill(x1, y1 - 1, x2, y1, edge(t));
+		c.fill(x1, y2, x2, y2 + 1, edge(t));
 	}
 
 	// --- Knöpfe ---
@@ -346,53 +365,20 @@ public final class MenuSkin {
 			HalloweenLook.vanillaButton(c, x, y, w, h, hot, active);
 			return;
 		}
-		if (t.winter) {
-			iceButton(c, t, x, y, w, h, hot, active);
-			return;
-		}
 		if (t.fox) {
 			woodButton(c, t, x, y, w, h, hot, active);
 			return;
 		}
-		int fill = !active ? SURFACE_OFF : (hot ? SURFACE_HOVER : SURFACE);
+		// Cubiq und Polarlicht (dort in Nachtblau).
+		int off = surfaceOff(t);
+		int e = edge(t);
+		int fill = !active ? off : (hot ? surfaceHover(t) : surface(t));
 		int r = Paint.radius(w, h);
 		if (hot) Paint.glow(c, x, y, w, h, t.glow, 0.4f);
-		Paint.roundRect(c, x, y, w, h, r, hot ? ColorMath.lerp(EDGE, t.accent, 0.75f) : (active ? EDGE : ColorMath.lerp(EDGE, SURFACE_OFF, 0.5f)));
+		Paint.roundRect(c, x, y, w, h, r, hot ? ColorMath.lerp(e, t.accent, 0.75f) : (active ? e : ColorMath.lerp(e, off, 0.5f)));
 		if (h < 5) return;
 		Paint.roundRect(c, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill);
 		if (active) c.fill(x + Math.max(2, r), y + 1, x + w - Math.max(2, r), y + 2, hot ? 0x18FFFFFF : 0x0CFFFFFF);
-	}
-
-	/**
-	 * Winternacht: Eisplatte mit Schneekante oben, Reif in der Ecke und frostiger Kante; beim Überfahren leuchtet das Eis
-	 * und eine Frostlinie glimmt unten auf.
-	 */
-	private static void iceButton(Canvas c, Theme t, int x, int y, int w, int h, boolean hot, boolean active) {
-		int fill = !active ? ICE_OFF : (hot ? ICE_HOVER : ICE);
-		if (hot) Paint.glow(c, x, y, w, h, t.faceGlow, 0.55f);
-		Paint.block(c, x, y, w, h, hot ? ColorMath.lerp(ICE_EDGE, t.faceGlow, 0.6f) : ICE_EDGE);
-		if (h < 5) return;
-		c.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
-		// Schnee auf der Oberkante, an ein paar Stellen etwas dicker.
-		int snow = active ? (hot ? 0xFFF2FAFF : 0xFFB9CDE9) : 0xFF52617A;
-		c.fill(x + 1, y + 1, x + w - 1, y + 2, snow);
-		if (active && w > 12) {
-			int lump = ColorMath.withAlpha(snow, 0x90);
-			for (int sx = x + 4 + Math.floorMod(x * 5 + y, 7); sx < x + w - 6; sx += 13 + Math.floorMod(sx * 3, 9)) {
-				c.fill(sx, y + 2, sx + 3 + Math.floorMod(sx, 3), y + 3, lump);
-			}
-		}
-		c.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, FROST_DARK);
-		if (active && w >= 10 && h >= 8) {
-			int rime = ColorMath.withAlpha(0xFFFFFFFF, hot ? 0x70 : 0x34);
-			c.fill(x + w - 4, y + h - 3, x + w - 2, y + h - 2, rime);
-			c.fill(x + w - 3, y + h - 5, x + w - 2, y + h - 3, rime);
-		}
-		if (hot) {
-			Paint.lineH(c, x + 3, x + w - 3, y + h - 4, t.faceOn, 0f);
-		} else if (active && w > 12) {
-			c.fill(x + 3, y + h - 4, x + w - 3, y + h - 3, ColorMath.withAlpha(t.track, 0x90));
-		}
 	}
 
 	/**
@@ -438,15 +424,15 @@ public final class MenuSkin {
 		if (w < 3 || h < 3) return;
 		Theme t = Theme.get();
 		if (focused && active) Paint.glow(c, x, y, w, h, t.glow, 0.45f);
-		int fieldEdge = t.halloween ? HalloweenPalette.BUTTON_EDGE : (t.winter ? ICE_FIELD_EDGE : (t.fox ? FOX_FIELD_EDGE : FIELD_EDGE));
+		int fieldEdge = t.halloween ? HalloweenPalette.BUTTON_EDGE : (t.winter ? NIGHT_BEVEL_LIGHT : (t.fox ? FOX_FIELD_EDGE : FIELD_EDGE));
 		int edge = focused && active ? t.accent : (hover && active ? ColorMath.lerp(fieldEdge, t.accent, 0.4f) : fieldEdge);
 		int r = Paint.radius(w, h);
 		Paint.roundRect(c, x, y, w, h, r, edge);
 		if (h < 5) return;
 		int fill = t.halloween ? (active ? HalloweenPalette.NIGHT : 0xFF0B0912)
-				: (active ? (t.winter ? ICE_FIELD : (t.fox ? FOX_FIELD : FIELD)) : (t.winter ? ICE_OFF : (t.fox ? WOOD_OFF : SURFACE_OFF)));
+				: (active ? (t.winter ? NIGHT_DEEP : (t.fox ? FOX_FIELD : FIELD)) : (t.winter ? NIGHT_SURFACE_OFF : (t.fox ? WOOD_OFF : SURFACE_OFF)));
 		Paint.roundRect(c, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill);
-		if (!t.halloween && !t.winter && !t.fox) return;
+		if (!t.halloween && !t.fox) return;
 		c.fill(x + 1, y + 1, x + w - 1, y + 2, bevelDark(t));
 		c.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, ColorMath.lerp(fill, bevelLight(t), 0.35f));
 		if (focused && active && w > 8) Paint.lineH(c, x + 2, x + w - 2, y + h - 1, t.accentText, 0f);
@@ -463,13 +449,13 @@ public final class MenuSkin {
 		if (x2 - x1 < 8 || y2 - y1 < 8) return;
 		listWell(c, x1, y1, x2, y2, inWorld);
 		Theme t = Theme.get();
-		if (t.halloween || t.winter || t.fox) {
+		if (t.halloween || t.fox) {
 			Paint.lineH(c, x1, x2, y1, ColorMath.lerp(t.track, t.accentText, 0.6f), 0.3f);
 			Paint.lineH(c, x1, x2, y2 - 2, ColorMath.withAlpha(t.track, 0xC0), 0f);
 			return;
 		}
-		c.fill(x1, y1, x2, y1 + 1, EDGE);
-		c.fill(x1, y2 - 1, x2, y2, EDGE);
+		c.fill(x1, y1, x2, y1 + 1, edge(t));
+		c.fill(x1, y2 - 1, x2, y2, edge(t));
 	}
 
 	/** Symbol links auf einem Knopf (Cubiq-Knöpfe im Pausenmenü). */
@@ -486,13 +472,13 @@ public final class MenuSkin {
 		int w = Math.max(9, c.textWidth(s) + 5);
 		int x = right - w + 3;
 		int y = top - 3;
-		if (t.halloween || t.winter || t.fox) {
+		if (t.halloween || t.fox) {
 			Paint.glow(c, x, y, w, 10, t.faceGlow, 0.6f);
 			Paint.block(c, x, y, w, 10, t.faceOnEdge);
 			c.fill(x + 1, y + 1, x + w - 1, y + 9, t.faceOn);
 		} else {
 			// Zähler wie im Launcher: Pille in der Akzentfarbe, mit dunklem Rand vom Knopf abgesetzt.
-			Paint.roundRect(c, x - 1, y - 1, w + 2, 12, 6, DEEP);
+			Paint.roundRect(c, x - 1, y - 1, w + 2, 12, 6, deep(t));
 			Paint.roundRect(c, x, y, w, 10, 5, t.accent);
 		}
 		c.text(s, x + (w - c.textWidth(s)) / 2 + 1, y + 1, t.faceTextOn, false);
@@ -505,21 +491,18 @@ public final class MenuSkin {
 		Theme t = Theme.get();
 		if (w < 4 || h < 4) return;
 		if (selected) Paint.glow(c, x, y, w, h, t.glow, 0.5f);
-		int e0 = t.halloween ? HalloweenPalette.LINE : (t.winter ? ICE_EDGE : (t.fox ? WOOD_EDGE : EDGE));
+		int e0 = t.halloween ? HalloweenPalette.LINE : (t.winter ? NIGHT_EDGE : (t.fox ? WOOD_EDGE : EDGE));
 		int edge = selected ? ColorMath.lerp(e0, t.accent, 0.8f) : (hover ? ColorMath.lerp(e0, t.accent, 0.35f) : e0);
 		int r = Paint.radius(w, h);
 		Paint.roundRect(c, x, y, w, h, r, edge);
 		int fill = cardFill(selected, hover);
 		Paint.roundRect(c, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill);
-		if (t.halloween || t.winter || t.fox) {
+		if (t.halloween || t.fox) {
 			c.fill(x + 2, y + 1, x + w - 2, y + 2, ColorMath.withAlpha(t.halloween ? HalloweenPalette.SILVER : bevelLight(t), t.halloween ? 0x18 : 0x70));
 		}
 		if (t.halloween && w >= 24 && h >= 16) HalloweenLook.cobweb(c, x + w - 2, y + 1, Math.min(9, h / 2), 1, 0x30CFD5E3);
-		if (t.winter && w >= 12 && h >= 10) {
-			int rime = ColorMath.withAlpha(0xFFFFFFFF, selected ? 0x60 : 0x30);
-			c.fill(x + 1, y + 2, x + 4, y + 3, rime);
-			c.fill(x + 1, y + 3, x + 2, y + 5, rime);
-		}
+		// Polarlicht: der Schneesaum oben auf jeder Karte, wie auf den Karten im Launcher.
+		if (t.winter) Frost.lipOn(c, x, y, w, h, selected || hover ? 1f : 0.85f);
 		if (t.fox && w >= 12 && h >= 10) {
 			int sun = ColorMath.withAlpha(0xFFFFB878, selected ? 0x60 : 0x2C);
 			c.fill(x + 1, y + 2, x + 4, y + 3, sun);
@@ -534,16 +517,18 @@ public final class MenuSkin {
 	/** Füllfarbe einer Karte (deckend – die Ping-Anzeige deckt damit die Vanilla-Balken ab). */
 	public static int cardFill(boolean selected, boolean hover) {
 		if (Theme.get().halloween) return selected ? 0xFF261B3B : (hover ? 0xFF1C1630 : 0xFF13101F);
-		if (winter()) return selected ? 0xFF1F3354 : (hover ? 0xFF18284A : 0xFF111B31);
+		// Polarlicht: wie Cubiq in Nachtblau (base-850 aus winter.css, unter der Maus etwas heller, gewählt wie --pick-bg
+		// mit dem Eisblau ab Werk).
+		if (winter()) return selected ? 0xFF122B45 : (hover ? 0xFF121E35 : 0xFF0E182C);
 		if (fox()) return selected ? 0xFF3A2434 : (hover ? 0xFF2F1E2B : 0xFF221620);
-		// Cubiq: base-850, unter der Maus etwas heller, gewählt mit einem Hauch Akzent.
+		// Cubiq: base-850, unter der Maus etwas heller, gewählt mit einem Hauch Akzent (wie --pick-bg).
 		return selected ? 0xFF1E2A20 : (hover ? 0xFF1A221C : 0xFF141A16);
 	}
 
 	/** Markierung „angeheftet“: Stecknadel in der Akzentfarbe (Feld 8×12 ab x, y). */
 	public static void pin(Canvas c, int x, int y) {
 		Theme t = Theme.get();
-		Icons.draw(c, "pin", x, y + 3, 1, t.halloween || t.winter || t.fox ? t.faceOn : t.accentText);
+		Icons.draw(c, "pin", x, y + 3, 1, t.halloween || t.fox ? t.faceOn : t.accentText);
 	}
 
 	/**
@@ -570,9 +555,9 @@ public final class MenuSkin {
 			lit = 1;
 		}
 		int running = (int) (seconds() * 8) % 8;
-		boolean seasonal = t.halloween || t.winter || t.fox;
+		boolean seasonal = t.halloween || t.fox;
 		int on = seasonal ? t.accentText : t.accent;
-		int off = seasonal ? t.track : EDGE;
+		int off = seasonal ? t.track : edge(t);
 		for (int i = 0; i < 5; i++) {
 			int bh = 2 + i * 1 + (i > 2 ? 1 : 0) + 1;
 			int bx = x + i * 2;
@@ -642,7 +627,7 @@ public final class MenuSkin {
 			int avoidTop, int avoidBottom) {
 		long start = System.nanoTime();
 		Theme t = Theme.get();
-		float time = seconds();
+		float time = sceneSeconds();
 		dev.pwiepixel.cubiqclient.core.halloween.Jumpscares.LoadingView scare = null;
 		if (t.halloween) {
 			scare = dev.pwiepixel.cubiqclient.core.halloween.Jumpscares.get().loading(progress, System.currentTimeMillis());
@@ -654,10 +639,10 @@ public final class MenuSkin {
 			scene(c, width, height, time);
 			c.fill(0, 0, width, height, 0x8C07060C);
 		} else if (inWorld) {
-			c.fill(0, 0, width, height, t.winter ? 0xE0060B16 : (t.fox ? 0xE00E080D : 0xE00C100E));
+			c.fill(0, 0, width, height, t.winter ? 0xE0070C18 : (t.fox ? 0xE00E080D : 0xE00C100E));
 		} else {
 			scene(c, width, height, time);
-			c.fill(0, 0, width, height, t.winter ? (t.light ? 0x30000000 : 0x50030814) : (t.fox ? (t.light ? 0x30000000 : 0x500E0610) : 0x400C100E));
+			c.fill(0, 0, width, height, t.winter ? (t.light ? 0x30000000 : 0x48070C18) : (t.fox ? (t.light ? 0x30000000 : 0x500E0610) : 0x400C100E));
 		}
 		int cx = width / 2;
 		int[] layout = loadingLayout(height, avoidTop, avoidBottom);
@@ -673,7 +658,7 @@ public final class MenuSkin {
 		int y = top + PixelFont.HEIGHT * scale + 12;
 		if (title != null && !title.isEmpty()) {
 			String s = c.clip(title, pw - 16);
-			c.text(s, cx - c.textWidth(s) / 2, y, t.text, t.halloween || t.winter || t.fox);
+			c.text(s, cx - c.textWidth(s) / 2, y, t.text, t.halloween || t.fox);
 		}
 		y += 16;
 		progress(c, cx, y, Math.min(pw - 24, 176), progress, time);
@@ -692,29 +677,33 @@ public final class MenuSkin {
 
 	/**
 	 * Fortschritt mittig um {@code cx} (Höhe 12 ab {@code y}): im Cubiq-Design ein schlanker Balken wie im Launcher
-	 * ({@link Paint#progress}), in Winternacht ein Eisbalken, im Fuchsbau ein glimmender Ast, zu Halloween der Mondlauf.
-	 * {@code progress} 0..1, &lt; 0 = unbestimmt.
+	 * ({@link Paint#progress}), im Polarlicht der eisige Balken mit Schimmer (wie im Launcher), im Fuchsbau ein glimmender
+	 * Ast, zu Halloween der Mondlauf.
+	 * {@code progress} 0..1, &lt; 0 = unbestimmt. Ohne Bewegung ({@link dev.pwiepixel.cubiqclient.core.menus.MenuStyle#animated()})
+	 * steht die Anzeige still – unbestimmt liegt dann ein gleichmäßiger, halb heller Schimmer auf dem ganzen Balken, wie im
+	 * Launcher bei reduzierter Bewegung.
 	 */
 	public static void progress(Canvas c, int cx, int y, int maxWidth, float progress, float time) {
 		Theme t = Theme.get();
+		boolean animated = dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated();
 		if (t.halloween) {
 			// Halloween: „Mondlauf“ – der Mond nimmt mit dem Fortschritt zu.
 			int w = Math.max(40, maxWidth - 16);
-			MoonBar.draw(c, cx - w / 2, y - 1, w, progress, time, dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated());
+			MoonBar.draw(c, cx - w / 2, y - 1, w, progress, time, animated);
 			return;
 		}
 		if (t.winter) {
-			// Winternacht: ein Eisbalken, der von links zufriert.
-			Frost.bar(c, cx, y + 3, maxWidth, progress, time);
+			// Polarlicht: Akzent über Eis-Weiß, ein heller Schimmer wandert darüber.
+			Frost.bar(c, cx, y + 3, maxWidth, progress, time, animated);
 			return;
 		}
 		if (t.fox) {
 			// Fuchsbau: ein glimmender Ast, durch den sich die Glut von links frisst.
-			Ember.bar(c, cx, y + 3, maxWidth, progress, time);
+			Ember.bar(c, cx, y + 3, maxWidth, progress, time, animated);
 			return;
 		}
 		int w = Math.max(40, maxWidth - 16);
-		Paint.progress(c, cx - w / 2, y + 3, w, 6, progress, time, dev.pwiepixel.cubiqclient.core.menus.MenuStyle.animated());
+		Paint.progress(c, cx - w / 2, y + 3, w, 6, progress, time, animated);
 	}
 
 	/**
@@ -746,24 +735,11 @@ public final class MenuSkin {
 		if (alpha <= 0.004f) return;
 		Canvas c = FadeCanvas.of(raw, Math.min(1f, alpha));
 		Theme t = Theme.get();
-		int cell = 32;
 		if (t.halloween) {
 			halloweenResources(c, width, height, progress);
 			return;
 		}
-		if (t.winter) {
-			// Winternacht: Nachtblau mit Eisfliesen und leise fallenden Schneeflocken.
-			c.fill(0, 0, width, height, 0xFF0D1424);
-			for (int x = cell / 2; x < width; x += cell) c.fill(x, 0, x + 1, height, 0x0CBFE3FF);
-			for (int y = cell / 2; y < height; y += cell) c.fill(0, y, width, y + 1, 0x0CBFE3FF);
-			float drift = seconds() * 6f;
-			for (int i = 0; i < 40; i++) {
-				int fx = Math.floorMod(i * 97 + (int) (drift * (0.4f + (i % 3) * 0.3f)), Math.max(1, width));
-				int fy = Math.floorMod(i * 57 + (int) (drift * (1f + (i % 3))), Math.max(1, height));
-				int size = i % 7 == 0 ? 2 : 1;
-				c.fill(fx, fy, fx + size, fy + size, i % 3 == 0 ? 0xC0F4F9FF : 0x709FB4D6);
-			}
-		} else if (t.fox) {
+		if (t.fox) {
 			foxResources(c, width, height);
 		} else {
 			cubiqResources(c, t, width, height, progress);
@@ -779,17 +755,18 @@ public final class MenuSkin {
 		for (int[] r : rects) c.fill(x + r[0] * scale - 1, y + r[1] * scale - 1, x + r[2] * scale + 1, y + r[3] * scale + 1, glow);
 		int light = ColorMath.lerp(t.accent, 0xFFFFFFFF, 0.3f);
 		for (int[] r : rects) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, r[1] == 0 ? light : t.accent);
-		if (t.winter) TitleUi.snowCaps(c, rects, x, y, scale);
 		if (t.fox) Ember.leafCaps(c, rects, x, y, scale);
 		progress(c, width / 2, height / 2 + 14, Math.min(width - 40, 220), progress, seconds());
 	}
 
 	/**
 	 * Cubiq beim Laden der Ressourcen – wie die Start-Animation des Launchers: tiefster Grund, ein weicher Schein in der
-	 * Akzentfarbe, das Cubiq-Zeichen, darunter „CUBIQ CLIENT“ und der Fortschritt. Immer dunkel, nur Rechtecke.
+	 * Akzentfarbe, das Cubiq-Zeichen, darunter „CUBIQ CLIENT“ und der Fortschritt. Im Polarlicht in Nachtblau mit einem
+	 * Schimmer Polarlicht oben, Schnee auf dem Zeichen und leise fallenden Pixel-Flocken. Immer dunkel, nur Rechtecke.
 	 */
 	private static void cubiqResources(Canvas c, Theme t, int width, int height, float progress) {
-		c.fill(0, 0, width, height, DEEP);
+		c.fill(0, 0, width, height, deep(t));
+		if (t.winter) winterSky(c, width, height);
 		int scale = Math.max(2, Math.min(5, width / 150));
 		int px = Math.min(width, height) >= 360 ? 2 : 1;
 		int cells = Math.max(24, Math.min(60, Math.min(width, height) / (3 * px)));
@@ -798,17 +775,36 @@ public final class MenuSkin {
 		int top = Math.max(8, (height - (mark + 14 + wordH + 18 + 12)) / 2);
 		int cx = width / 2;
 		Paint.radialGlow(c, cx, top + mark / 2, mark * 3 / 2, mark * 3 / 2, t.accent, 54, width, height);
-		CubiqMark.draw(c, cx - mark / 2, top, cells, px, 1f);
+		if (t.winter) Frost.mark(c, cx - mark / 2, top, cells, px, 1f);
+		else CubiqMark.draw(c, cx - mark / 2, top, cells, px, 1f);
 		// „CUBIQ“ hell, „CLIENT“ in der Akzentfarbe (wie „Cubiq Launcher“ in der Start-Animation).
 		int gap = scale * 4;
 		int wCubiq = PixelFont.width("CUBIQ") * scale;
 		int wClient = PixelFont.width("CLIENT") * scale;
 		int x = cx - (wCubiq + gap + wClient) / 2;
 		int y = top + mark + 14;
-		for (int[] r : PixelFont.rects("CUBIQ")) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, 0xFFEEF4EF);
+		int word = t.winter ? 0xFFEEF5FC : 0xFFEEF4EF;
+		for (int[] r : PixelFont.rects("CUBIQ")) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, word);
 		x += wCubiq + gap;
 		for (int[] r : PixelFont.rects("CLIENT")) c.fill(x + r[0] * scale, y + r[1] * scale, x + r[2] * scale, y + r[3] * scale, t.accentHover);
 		progress(c, cx, y + wordH + 14, Math.min(width - 40, 200), progress, seconds());
+	}
+
+	/**
+	 * Polarlicht beim Laden der Ressourcen (nur Rechtecke): oben ein weicher Schimmer in Cubiq-Grün und Türkis wie ein
+	 * Polarlicht-Band, darüber leise fallende quadratische Pixel-Flocken (ohne Bewegung stehen sie).
+	 */
+	private static void winterSky(Canvas c, int width, int height) {
+		Paint.radialGlow(c, width * 2 / 5, height / 6, width * 2 / 5, Math.max(8, height / 9), 0xFF71A330, 40, width, height);
+		Paint.radialGlow(c, width * 3 / 5, height / 8, width * 2 / 5, Math.max(8, height / 10), 0xFF2AA894, 30, width, height);
+		float t = sceneSeconds();
+		for (int i = 0; i < 48; i++) {
+			int depth = i % 3;
+			int fx = Math.floorMod(i * 151 + (int) (t * (2 + depth * 2)), Math.max(1, width));
+			int fy = Math.floorMod(i * 89 + (int) (t * (6 + depth * 5)), Math.max(1, height));
+			int size = depth == 2 ? 2 : 1;
+			c.fill(fx, fy, fx + size, fy + size, depth == 0 ? 0x907A90B4 : 0xE0F4F9FF);
+		}
 	}
 
 	/**
@@ -842,7 +838,8 @@ public final class MenuSkin {
 		}
 		c.fill(0, horizon + block, width, height, 0xFF261C22);
 		c.fill(0, height * 92 / 100, width, height, 0xFF170D14);
-		float drift = seconds() * 6f;
+		float time = sceneSeconds();
+		float drift = time * 6f;
 		for (int i = 0; i < 36; i++) {
 			int fx = Math.floorMod(i * 97 + (int) (drift * (0.6f + (i % 3) * 0.3f)), Math.max(1, width));
 			int fy = Math.floorMod(i * 57 + (int) (drift * (0.5f + (i % 3) * 0.4f)), Math.max(1, height));
@@ -850,7 +847,7 @@ public final class MenuSkin {
 			c.fill(fx, fy, fx + (i % 4 == 0 ? 2 : 1), fy + 1, ColorMath.withAlpha(col, 0xC0));
 		}
 		for (int i = 0; i < 14; i++) {
-			float a = 0.5f + 0.5f * (float) Math.sin(seconds() * (0.8 + (i % 4) * 0.3) + i * 1.7);
+			float a = 0.5f + 0.5f * (float) Math.sin(time * (0.8 + (i % 4) * 0.3) + i * 1.7);
 			if (a < 0.4f) continue;
 			int fx = Math.floorMod(i * 211 + 37, Math.max(1, width));
 			int fy = horizon + 4 + Math.floorMod(i * 89, Math.max(1, height - horizon - 8));
@@ -868,7 +865,7 @@ public final class MenuSkin {
 		int horizon = height * 3 / 4;
 		for (int i = 0; i < sky.length; i++) c.fill(0, horizon * i / sky.length, width, horizon * (i + 1) / sky.length, sky[i]);
 		c.fill(0, horizon, width, height, sky[sky.length - 1]);
-		float time = seconds();
+		float time = sceneSeconds();
 		for (int i = 0; i < 70; i++) {
 			int sx = Math.floorMod(i * 977 + 31, Math.max(1, width));
 			int sy = Math.floorMod(i * 571 + 17, Math.max(1, horizon - 8));

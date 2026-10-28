@@ -26,7 +26,7 @@ public final class Theme {
 		String theme;
 		String accent;
 		String accentColor;
-		/** "cubiq" (der Launcher kennt nur noch dieses Design); "winter"/"fox" wählt man im Spiel, alles andere = Cubiq. */
+		/** "cubiq" oder "winter" (Polarlicht) wie im Launcher; "fox" wählt man im Spiel, alles andere = Cubiq. */
 		String design;
 		/** Aktives Cubiq-Event für dieses Konto ({@code "halloween"}) – fehlt sonst. */
 		String event;
@@ -37,9 +37,25 @@ public final class Theme {
 		 * Launcher). {@link #event} bleibt davon unberührt (Funktionen).
 		 */
 		Boolean eventLook;
+		/**
+		 * Animationen im Launcher: {@code "reduced"} = Standbilder („Wie System“ löst der Launcher selbst auf);
+		 * fehlt (ältere Launcher) oder unbekannt = {@code "full"}.
+		 */
+		String motion;
 	}
 
-	/** Design „Cubiq“ (Standard, wie der Launcher), „Winternacht“ und „Fuchsbau“. */
+	/** Werte von {@code motion} in der Launcher-Datei. */
+	public static final String MOTION_FULL = "full";
+	public static final String MOTION_REDUCED = "reduced";
+
+	/**
+	 * Steht „Animationen“ im Launcher auf „Reduziert“? Nur ein zusätzliches Signal neben der eigenen Einstellung
+	 * „Animierter Hintergrund“ – die bleibt, wie der Spieler sie gesetzt hat (siehe
+	 * {@link dev.pwiepixel.cubiqclient.core.menus.MenuStyle#animated(boolean)}).
+	 */
+	private static volatile boolean launcherReducedMotion;
+
+	/** Design „Cubiq“ (Standard, wie der Launcher), „Polarlicht“ (wie der Launcher) und „Fuchsbau“. */
 	public static final String CUBIQ = "cubiq";
 	public static final String WINTER = "winter";
 	public static final String FOX = "fox";
@@ -73,7 +89,10 @@ public final class Theme {
 	public final String accentName;
 	/** Design: {@link #CUBIQ}, {@link #WINTER} oder {@link #FOX}. */
 	public final String designName;
-	/** Winternacht? (Nachtblau, Eislaternen statt leuchtender Flächen, Frost-Linien.) */
+	/**
+	 * Polarlicht? Aufbau wie Cubiq, aber in den Farben von {@code app/assets/css/winter.css}: Nachtblau, Eis-Akzent ab Werk,
+	 * dazu der Schneesaum und der Hauch Schnee auf dem Zeichen ({@link dev.pwiepixel.cubiqclient.core.ui.winter.Frost}).
+	 */
 	public final boolean winter;
 	/** Fuchsbau? (Warme Abenddämmerung: Pflaume und Kastanie, Laternen mit Glut, glimmende Äste als Linien.) */
 	public final boolean fox;
@@ -121,7 +140,7 @@ public final class Theme {
 	public final int glow;
 	/**
 	 * Fläche, die mit der Auswahl aufleuchtet ({@link Paint#accentFace}): aus (Fläche/Kante), an (Fläche/hellere
-	 * Fläche/Kante), Schein. Im Cubiq-Design wird sie zur Akzentfarbe, in Winternacht/Fuchsbau ist sie eine Laterne.
+	 * Fläche/Kante), Schein. In Cubiq und Polarlicht wird sie zur Akzentfarbe, im Fuchsbau ist sie eine Laterne.
 	 */
 	public final int faceOff;
 	public final int faceOffEdge;
@@ -147,44 +166,47 @@ public final class Theme {
 		this.danger = light ? DANGER_LIGHT : DANGER_DARK;
 		boolean oled = "oled".equals(themeName);
 		if (winter) {
-			// Winternacht: Nachtblau. Die Laternen sind Eis – eisblau unabhängig vom Akzent; Frost-Linien in Akzentfarbe.
-			this.accentHover = ColorMath.lerp(accent, 0xFFFFFFFF, 0.22f);
-			this.track = ColorMath.lerp(ColorMath.scaleRgb(accent, 0.42f), oled ? 0xFF070C17 : 0xFF101A2E, 0.3f);
-			this.accentText = ColorMath.lerp(accent, 0xFFFFFFFF, 0.3f);
+			// Polarlicht: wie Cubiq aufgebaut, die Grundskala in kaltem Nachtblau bzw. als heller Morgen (winter.css: base-900
+			// Fenster, base-850 Kacheln, base-800 Knöpfe, base-700 Kanten, base-50 Schrift, base-400 gedämpft, Lichtkante
+			// knapp über line-strong).
+			int[] scale = scale(accent);
+			this.accentHover = scale[1];
+			this.accentText = light ? ColorMath.lerp(scale[3], 0xFF000000, 0.18f) : scale[0];
 			this.glow = accent;
-			this.faceOff = 0xFF172338;
-			this.faceOffEdge = 0xFF0A111F;
-			this.faceOn = 0xFF8FDCFF;
-			this.faceHot = 0xFFEAF9FF;
-			this.faceOnEdge = 0xFF2A6E9E;
-			this.faceGlow = 0xFF8FDCFF;
-			this.faceText = 0xFFDBE8F8;
-			this.faceTextOn = 0xFF06263B;
+			this.faceOn = accent;
+			this.faceHot = scale[1];
+			this.faceOnEdge = scale[3];
+			this.faceGlow = accent;
+			this.faceTextOn = onAccent(accent);
 			if (light) {
-				background = 0xFFE8EFF7;
-				surface = 0xFFFFFFFF;
-				surfaceHover = 0xFFE0E9F3;
-				surfaceHigh = 0xFFEAF1F8;
-				border = 0xFFC3D2E4;
-				text = 0xFF0B1426;
-				textDim = 0xFF55698B;
-				scrim = 0x500B1426;
-				deep = 0xFFD5E1EE;
+				background = 0xFFFFFFFF;
+				surface = 0xFFF4F8FC;
+				surfaceHover = 0xFFE3ECF5;
+				surfaceHigh = 0xFFEAF2F9;
+				border = 0xFFCFDBE8;
+				text = 0xFF0C1422;
+				textDim = 0xFF40536C;
+				scrim = 0x500C1422;
+				deep = 0xFFEAF2F9;
 				bevelLight = 0xFFFFFFFF;
-				bevelDark = 0xFFA6B9D0;
+				bevelDark = 0xFFA6B8CC;
 			} else {
-				background = oled ? 0xFF000000 : 0xFF0D1424;
-				surface = oled ? 0xFF070C17 : 0xFF15203A;
-				surfaceHover = oled ? 0xFF0E1626 : 0xFF1C2A48;
-				surfaceHigh = oled ? 0xFF0A111E : 0xFF18253F;
-				border = oled ? 0xFF19243A : 0xFF283A5E;
-				text = 0xFFEAF4FF;
-				textDim = oled ? 0xFF7D8FB3 : 0xFF889BC2;
-				scrim = oled ? 0xB0000000 : 0xA8060A14;
-				deep = oled ? 0xFF02040A : 0xFF080D19;
-				bevelLight = oled ? 0xFF1F2C47 : 0xFF31476F;
-				bevelDark = oled ? 0xFF000000 : 0xFF070B15;
+				background = oled ? 0xFF04070E : 0xFF0A1222;
+				surface = oled ? 0xFF080D18 : 0xFF0E182C;
+				surfaceHover = oled ? 0xFF131C2F : 0xFF192841;
+				surfaceHigh = oled ? 0xFF0E1524 : 0xFF142138;
+				border = oled ? 0xFF18233A : 0xFF1E2E4A;
+				text = 0xFFEEF5FC;
+				textDim = 0xFFA2B3CD;
+				scrim = oled ? 0xB0000000 : 0xA8070C18;
+				deep = oled ? 0xFF000000 : 0xFF070C18;
+				bevelLight = oled ? 0xFF263652 : 0xFF2E4568;
+				bevelDark = oled ? 0xFF000000 : 0xFF070C18;
 			}
+			this.track = border;
+			this.faceOff = surfaceHigh;
+			this.faceOffEdge = border;
+			this.faceText = text;
 			return;
 		}
 		if (fox) {
@@ -230,7 +252,7 @@ public final class Theme {
 			}
 			return;
 		}
-		// Cubiq (wie der Launcher): ruhige, dunkle Flächen mit einem Hauch Grün, die Akzentfarbe für Aktionen.
+		// Cubiq (wie der Launcher): ruhige, dunkle Flächen mit einem Hauch Grün in klaren Höhenstufen, die Akzentfarbe für Aktionen.
 		int[] scale = scale(accent);
 		this.accentHover = scale[1];
 		this.accentText = light ? ColorMath.lerp(scale[3], 0xFF000000, 0.18f) : scale[0];
@@ -241,7 +263,7 @@ public final class Theme {
 		this.faceGlow = accent;
 		this.faceTextOn = onAccent(accent);
 		if (light) {
-			// Launcher „Hell“: base-900 als Fensterfläche, base-850/800/700 darüber.
+			// Launcher „Hell“: base-900 als Fensterfläche, base-850/800/700 darüber, Schrift fast schwarz mit einem Hauch Grün.
 			background = 0xFFFFFFFF;
 			surface = 0xFFF5F8F6;
 			surfaceHover = 0xFFE5EBE6;
@@ -382,7 +404,7 @@ public final class Theme {
 		return new Theme(t, a.isEmpty() ? "cubiq" : a, accent, normalizeDesign(design));
 	}
 
-	/** "winter" → Winternacht, "fox" → Fuchsbau, alles andere (fehlt, das frühere „redstone“, Tippfehler) → Cubiq. */
+	/** "winter" → Polarlicht, "fox" → Fuchsbau, alles andere (fehlt, ältere Werte, Tippfehler) → Cubiq. */
 	public static String normalizeDesign(String design) {
 		String d = normalize(design);
 		if (WINTER.equals(d)) return WINTER;
@@ -400,7 +422,7 @@ public final class Theme {
 
 	/**
 	 * Akzent beim Wechsel des Designs: ist noch der Akzent eines Designs gewählt (Cubiq-Grün, Eisblau, Fuchsorange), kommt
-	 * der des neuen Designs – Winternacht wird Eisblau, Fuchsbau Orange, zurück zu Cubiq wieder Cubiq-Grün. Jede andere
+	 * der des neuen Designs – Polarlicht wird Eisblau, Fuchsbau Orange, zurück zu Cubiq wieder Cubiq-Grün. Jede andere
 	 * (selbst gewählte) Farbe bleibt.
 	 */
 	public static String accentForDesign(String design, String accent) {
@@ -434,6 +456,7 @@ public final class Theme {
 				File parsed = new Gson().fromJson(reader, File.class);
 				if (parsed == null) return false;
 				set(of(parsed.theme, parsed.accent, parsed.accentColor, parsed.design));
+				motionFromLauncher(parsed.motion);
 				dev.pwiepixel.cubiqclient.core.halloween.Halloween.fromLauncher(parsed.event);
 				dev.pwiepixel.cubiqclient.core.halloween.Halloween.flickerFromLauncher(parsed.halloweenFlicker);
 				dev.pwiepixel.cubiqclient.core.halloween.Halloween.lookFromLauncher(parsed.eventLook);
@@ -443,6 +466,19 @@ public final class Theme {
 			// JsonParseException, IllegalStateException, ClassCastException … – das Thema bleibt Standard.
 			return false;
 		}
+	}
+
+	/**
+	 * Feld {@code motion} aus {@code launcher-theme.json}: {@value #MOTION_REDUCED} → reduzierte Bewegung, alles andere
+	 * (fehlt, ältere Launcher, unbekannt) → volle Bewegung.
+	 */
+	public static void motionFromLauncher(String motion) {
+		launcherReducedMotion = MOTION_REDUCED.equals(normalize(motion));
+	}
+
+	/** Will der Launcher reduzierte Bewegung? (Ohne Launcher-Datei: nein.) */
+	public static boolean launcherReducedMotion() {
+		return launcherReducedMotion;
 	}
 
 	/** Akzentfarbe aus dem Namen des Launchers (auch frühere Namen), sonst aus dem Hex-Wert, sonst Cubiq-Grün. */

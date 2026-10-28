@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Der ganze Update-Beitrag im Launcher: Update-Banner (feste Vorlage + Motiv), Screenshot-Galerie der
+// Der ganze Update-Beitrag im Launcher: Update-Banner (feste Vorlage + Motiv als drehbares 3D-Modell), Screenshot-Galerie der
 // Neuerungen, die Versionshinweise und „Auf Website ansehen“ (Blog-Beitrag im Browser).
 // Mehrere Versionen (z. B. „Was ist neu“ nach einem Sprung über mehrere Updates) → Umschalter im Fuß.
 // Text läuft über MarkdownView (DOMPurify); Bilder nur aus dem mitgelieferten Ordner /news/.
@@ -24,8 +24,6 @@ const englishOnly = computed(() => !['de', 'en'].includes(currentLocale.value))
 
 const title = computed(() => postTitle(entry.value, currentLocale.value) ?? t('updateNews.version', { version: entry.value.version ?? '' }))
 const kicker = computed(() => updateKicker(entry.value))
-/** Dank an die Mitwirkenden (GitHub-Namen, schlicht als Text – kein Link, kein „@“). */
-const thanks = computed(() => contributorNames(entry.value, currentLocale.value))
 const content = computed(() => {
   const { markdown, shots } = postContent(entry.value, lang.value)
   // Umbrüche aus der Datei (eingerückte Folgezeilen) zu einem Absatz zusammenziehen – MarkdownView bricht sonst dort um.
@@ -48,15 +46,13 @@ function openWebsite() {
 <template>
   <BaseDialog :title="heading ?? title" huge @close="emit('close')">
     <div ref="body">
-      <div class="-mx-5 -mt-4 mb-5 h-44">
-        <UpdateBanner :kicker="kicker" :title="title" :accent="entry.banner?.accent" :motif="entry.banner?.motif" tag="p" />
+      <!-- Das Motiv als drehbares 3D-Modell (ohne WebGL oder am Handy das Bild). -->
+      <div class="-mx-5 -mt-4 mb-5 h-52 mobile:h-44">
+        <UpdateBanner :kicker="kicker" :title="title" :accent="entry.banner?.accent" :motif="entry.banner?.motif" :anim="entry.banner?.anim" tag="p" model3d />
       </div>
       <UpdateShotGallery v-if="content.shots.length" v-model="shotIndex" :shots="content.shots" :accent="entry.banner?.accent" class="mb-6" />
       <p v-if="englishOnly" class="mb-3 text-xs text-base-400">{{ t('whatsNew.englishOnly') }}</p>
       <MarkdownView :source="content.markdown" class="post-notes" />
-      <p v-if="thanks" class="post-notes mt-5 border-t border-base-800 pt-3 text-sm text-base-300">
-        {{ t('updateNews.thanks', { names: thanks }) }}
-      </p>
     </div>
     <template #actions>
       <div v-if="entries.length > 1" class="mr-auto flex flex-wrap items-center gap-1" role="group" :aria-label="t('updateNews.versions')">

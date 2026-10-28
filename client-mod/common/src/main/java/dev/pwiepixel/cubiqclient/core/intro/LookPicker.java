@@ -9,9 +9,12 @@ import dev.pwiepixel.cubiqclient.core.ui.CubiqMark;
 import dev.pwiepixel.cubiqclient.core.ui.Hits;
 import dev.pwiepixel.cubiqclient.core.ui.Paint;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
+import dev.pwiepixel.cubiqclient.core.ui.winter.Frost;
+import dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath;
+import dev.pwiepixel.cubiqclient.core.ui.winter.WinterPalette;
 
 /**
- * Aussehen im Client wählen (Einführung und Cubiq-Menü): Farbschema, Akzent und Design (Cubiq | Winternacht | Fuchsbau). Die Wahl
+ * Aussehen im Client wählen (Einführung und Cubiq-Menü): Farbschema, Akzent und Design (Cubiq | Polarlicht | Fuchsbau). Die Wahl
  * gilt sofort, wird lokal gemerkt und – Thema, Akzent, Sprache – mit dem Cubiq-Konto synchronisiert; das Design bleibt
  * auf diesem PC (die Konto-Einstellungen kennen es nicht), der Launcher übergibt beim Start sein eigenes. Die Akzente
  * heißen wie im Launcher, damit die Wahl dort ankommt.
@@ -56,7 +59,7 @@ public final class LookPicker {
 	}
 
 	/**
-	 * Wahl-Knopf eines Designs: kleines Vorschaubild und Name; gewählt = in der Akzentfarbe (Winternacht: Eislaterne).
+	 * Wahl-Knopf eines Designs: kleines Vorschaubild und Name; gewählt = in der Akzentfarbe (Fuchsbau: Laterne).
 	 * Liefert nichts – die Klickfläche registriert der Aufrufer.
 	 */
 	public static void designChip(Canvas c, int x, int y, int w, int h, String design, boolean selected, boolean hover) {
@@ -76,8 +79,8 @@ public final class LookPicker {
 	}
 
 	/**
-	 * Kleines Vorschaubild eines Designs (nur Rechtecke): dunkler Grund mit dem Cubiq-Zeichen, Nacht mit Bergen, Schnee
-	 * und Hütte, oder Dämmerung mit Sonne, Fichten und Lagerfeuer.
+	 * Kleines Vorschaubild eines Designs (nur Rechtecke): dunkler Grund mit dem Cubiq-Zeichen, Nachthimmel mit Polarlicht
+	 * und verschneiter Würfel-Insel, oder Dämmerung mit Sonne, Fichten und Lagerfeuer.
 	 */
 	public static void preview(Canvas c, int x, int y, int w, int h, String design) {
 		if (w < 6 || h < 6) return;
@@ -111,35 +114,38 @@ public final class LookPicker {
 			return;
 		}
 		if (Theme.WINTER.equals(Theme.normalizeDesign(design))) {
-			c.fill(x, y, x + w, y + h, 0xFF0A1224);
-			c.fill(x, y + h / 3, x + w, y + h * 2 / 3, 0xFF152442);
-			// Polarlicht-Streifen, Mond, Berge, Schnee.
-			c.fill(x + w / 3, y + h / 5, x + w - 2, y + h / 5 + 1, 0xC03DFF86);
-			c.fill(x + w - 4, y + 1, x + w - 2, y + 3, 0xFFEEF4FF);
-			int horizon = y + h * 3 / 5;
-			// Zwei Gipfel mit Schneehaube.
+			// Polarlicht: Nachthimmel, ein Band Polarlicht (heller Saum, Cubiq-Grün, Türkis), eine verschneite Würfel-Insel
+			// über dem Wolkenmeer und ein paar Flocken – die Szene des Launchers im Kleinen, in denselben Farben.
+			WinterPalette p = new WinterPalette(WinterPalette.DARK);
+			int sea = y + h - Math.max(2, h / 5);
+			for (int i = 0; i < 3; i++) c.fill(x, y + (sea - y) * i / 3, x + w, y + (sea - y) * (i + 1) / 3, p.sky[i * 2 + 1]);
 			for (int i = 0; i < w; i++) {
-				float u = i / (float) w;
-				float m1 = 1f - Math.abs(u - 0.3f) / 0.32f;
-				float m2 = 1f - Math.abs(u - 0.72f) / 0.26f;
-				int top = Math.round(Math.max(Math.max(m1 * 0.42f, m2 * 0.32f), 0f) * h);
-				if (top <= 0) continue;
-				c.fill(x + i, horizon - top, x + i + 1, horizon, u > 0.3f && u < 0.72f ? 0xFF1A2744 : 0xFF25365A);
-				c.fill(x + i, horizon - top, x + i + 1, horizon - top + Math.max(1, top / 3), 0xFFE3EFFF);
+				int band = y + h / 3 + (int) Math.round(WinterMath.wave(i / (double) Math.max(8, w)) * Math.max(1, h / 9));
+				c.fill(x + i, band - 2, x + i + 1, band - 1, ColorMath.withAlpha(WinterPalette.AURORA[2], 0x90));
+				c.fill(x + i, band - 1, x + i + 1, band, WinterPalette.AURORA[1]);
+				c.fill(x + i, band, x + i + 1, band + 1, WinterPalette.AURORA[0]);
 			}
-			c.fill(x, horizon, x + w, y + h, 0xFFAAC2E4);
-			c.fill(x, horizon, x + w, horizon + 1, 0xFFE3EFFF);
-			// Hütte mit warmem Fenster.
-			int hx = x + w - Math.max(5, w / 3);
-			c.fill(hx, y + h - 4, hx + 4, y + h - 1, 0xFF553A30);
-			c.fill(hx, y + h - 5, hx + 4, y + h - 4, 0xFFFFFFFF);
-			c.fill(hx + 1, y + h - 3, hx + 2, y + h - 2, 0xFFFFC66B);
-			c.fill(x + 2, y + 2, x + 3, y + 3, 0xFFF4F9FF);
-			c.fill(x + w / 2, y + 4, x + w / 2 + 1, y + 5, 0xFFF4F9FF);
-			Paint.frame(c, x - 1, y - 1, w + 2, h + 2, 0x60B8E7FF);
+			// Insel: ein Würfel (Schnee oben, Fels an den Seiten) mit einem Eiszapfen.
+			int a = Math.max(2, Math.min(w, h) / 5);
+			int ix = x + w * 2 / 3;
+			int iy = y + h / 2 - a / 2;
+			for (int r = 0; r < a; r++) {
+				int half = Math.min(a, r + 1);
+				c.fill(ix - half, iy + r, ix + half, iy + r + 1, p.snowTop);
+			}
+			c.fill(ix - a, iy + a, ix, iy + 2 * a, p.rockLeft);
+			c.fill(ix, iy + a, ix + a, iy + 2 * a, p.rockRight);
+			c.fill(ix - a, iy + a, ix + a, iy + a + 1, p.snowLeft);
+			c.fill(ix, iy + 2 * a, ix + 1, iy + 2 * a + 1, p.ice);
+			c.fill(x, sea, x + w, y + h, p.cloudNear);
+			c.fill(x, sea, x + w, sea + 1, p.cloudNearRim);
+			c.fill(x + 2, y + 2, x + 3, y + 3, p.flake);
+			c.fill(x + w / 3, y + h * 2 / 3, x + w / 3 + 1, y + h * 2 / 3 + 1, p.flake);
+			c.fill(x + w - 3, y + 3, x + w - 2, y + 4, p.flakeFar);
+			Paint.frame(c, x - 1, y - 1, w + 2, h + 2, ColorMath.withAlpha(Frost.ICE, 0x60));
 			return;
 		}
-		// Cubiq: dunkler Verlauf mit einem Hauch Grün, Schein oben rechts, das Zeichen in der Mitte.
+		// Cubiq: dunkler Verlauf mit einem Hauch Grün, grüner Schein oben rechts, das Zeichen in der Mitte.
 		int accent = Theme.of("dark", "cubiq", null).accent;
 		c.fill(x, y, x + w, y + h / 2, 0xFF111613);
 		c.fill(x, y + h / 2, x + w, y + h, 0xFF0C100E);

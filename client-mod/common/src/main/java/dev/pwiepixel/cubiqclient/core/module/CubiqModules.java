@@ -556,7 +556,7 @@ public final class CubiqModules {
 		titleScreen = registry.register(new Module("titleScreen", "Title Screen",
 				"Cubiq title screen instead of the vanilla one", true));
 		menuStyle = registry.register(new Module("menuStyle", "Menu Style",
-				"Cubiq look (Cubiq, Winter Night or Fox Den) for the pause menu, server list, loading screens, options and world list. All buttons "
+				"Cubiq look (Cubiq, Northern Lights or Fox Den) for the pause menu, server list, loading screens, options and world list. All buttons "
 						+ "(also those of other mods) keep working; turn single menus back to the classic look.", true));
 		oldAnimations = registry.register(new Module("oldAnimations", "1.7 Animations",
 				"Old hand movements: the hand does not dip during the attack cooldown, "
@@ -776,7 +776,7 @@ public final class CubiqModules {
 		hitColorColor = hitColor.add(new ColorSetting("color", "Color", 0xB07CFF));
 		hitColorOpacity = hitColor.add(new NumberSetting("opacity", "Opacity (%)", 70, 10, 100, 10, ""));
 		titleAnimated = titleScreen.add(new BoolSetting("animated", "Animated background", true));
-		// Aussehen (Design Cubiq | Winternacht | Fuchsbau, Farbschema, Akzent) auf den Seiten „Startbildschirm“ und „Menü-Stil“.
+		// Aussehen (Design Cubiq | Polarlicht | Fuchsbau, Farbschema, Akzent) auf den Seiten „Startbildschirm“ und „Menü-Stil“.
 		dev.pwiepixel.cubiqclient.core.intro.LookPanel look = new dev.pwiepixel.cubiqclient.core.intro.LookPanel(this);
 		dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel.Registry.set(titleScreen, look);
 		dev.pwiepixel.cubiqclient.core.ui.menu.ModulePanel.Registry.set(menuStyle, look);

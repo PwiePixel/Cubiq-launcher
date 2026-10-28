@@ -1,0 +1,77 @@
+name: Keep pull requests up to date
+
+# Nach jedem Merge auf main: main in alle offenen Pull Requests aus diesem Repo mergen, damit sie aktuell und
+# mergebar bleiben – ohne Handarbeit. Danach startet die CI des PRs (workflow_dispatch; Pushes mit GITHUB_TOKEN lösen
+# sonst keine Prüfungen aus). Gibt es einen echten Konflikt (zwei Branches ändern dieselben Zeilen), wird nichts
+# gepusht; der PR bekommt einen Hinweis mit den betroffenen Dateien – die Sitzung, die den Branch gebaut hat, löst ihn.
+# Release-Commits (mit GITHUB_TOKEN gepusht) starten diesen Workflow nicht; sie ändern nur Dateien, die Branches nicht
+# anfassen (CHANGELOG.md, Versionsnummern, public/news, changes/ – siehe CLAUDE.md).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: pr-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Merge main into open pull requests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge main into open pull requests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          main=$(git rev-parse origin/main)
+          gh pr list --state open --base main --limit 50 --json number,headRefName,isCrossRepository \
+            --jq '.[] | select(.isCrossRepository | not) | "\(.number) \(.headRefName)"' |
+          while read -r number ref; do
+            git fetch -q origin "$ref" || { echo "#$number: Branch $ref nicht gefunden"; continue; }
+            git checkout -q -B "pr-sync" "origin/$ref"
+            if git merge-base --is-ancestor origin/main HEAD; then
+              echo "#$number ($ref): schon aktuell"
+              continue
+            fi
+            if git merge -q --no-edit -m "Merge main into $ref" origin/main; then
+              if git push -q origin "HEAD:refs/heads/$ref"; then
+                gh workflow run ci.yml --ref "$ref" || true
+                echo "#$number ($ref): main übernommen, CI gestartet"
+              else
+                echo "#$number ($ref): Push abgelehnt (Branch hat sich gerade geändert) – beim nächsten Merge erneut"
+              fi
+            else
+              files=$(git diff --name-only --diff-filter=U | head -20 | sed 's/^/- `/; s/$/`/')
+              git merge --abort
+              marker="<!-- pr-sync:conflict:$main -->"
+              if gh pr view "$number" --json comments --jq '.comments[].body' | grep -qF "$marker"; then
+                echo "#$number ($ref): Konflikt schon gemeldet"
+                continue
+              fi
+              printf '%s\n' \
+                "$marker" \
+                "**Merge-Konflikt mit \`main\`** – automatisch übernehmen ging nicht, weil dieser Branch und \`main\` dieselben Stellen ändern:" \
+                "" \
+                "$files" \
+                "" \
+                "In der Claude-Sitzung dieses Branches schreiben: *„Merge main in diesen Branch und löse die Konflikte.“*" \
+                > comment.md
+              gh pr comment "$number" --body-file comment.md
+              echo "#$number ($ref): Konflikt gemeldet"
+            fi
+          done

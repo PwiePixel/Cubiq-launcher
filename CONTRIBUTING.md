@@ -55,28 +55,27 @@ cd client-mod
 Clippy warnings count as errors. Add tests for new logic: Vitest files in `tests/`, Rust unit tests next to the code,
 JUnit tests in `client-mod/common`.
 
-## Changelog
+## Release notes
 
-The changelog writes itself. After every green CI run on `main`, the workflow **Auto release** makes a new version:
-the first line of every commit since the last release becomes a point in [`CHANGELOG.md`](CHANGELOG.md) – players see
-it in the launcher ("What's new") and in the GitHub release. Pull requests are squash-merged, so their **title** is
-that line.
+Every change that players notice brings **its own text for them**: a file `changes/<topic>.md` with the same points in
+English and German ([`changes/README.md`](changes/README.md) has the template and the rules). After every green CI run
+on `main`, the workflow **Auto release** turns all files in `changes/` into the next section of
+[`CHANGELOG.md`](CHANGELOG.md), deletes them, draws the picture of the release and publishes it – players see the text
+in the launcher ("What's new"), in the GitHub release and on the website.
 
-- **Write it for players**, in plain words, without file or function names: `Log search finds text in folded stack
-  traces`, not `Fix regex in logview.ts`.
-- **`feat: …`** marks a new feature (shown in bold, raises the minor version), **`fix: …`** a bug fix; anything else is
-  a change (patch version). `feat!: …` or `BREAKING CHANGE` in the body raises the major version.
-- **German text:** a line `DE: …` further down in the commit message replaces the point in the German part, `EN: …`
-  the English one (when squash-merging, add it to the message in the merge dialog). Without them both parts use the
-  first line.
-- **Left out automatically:** commits starting with `ci:`, `chore:`, `docs:`, `test:`, `build:`, `style:` or
-  `refactor:`, dependency bumps, commits that only touch docs, tests, workflows or scripts, and anything with
-  `[skip changelog]` in the message. Nothing for players since the last release → no release.
-- **Nicer notes:** write them yourself in `CHANGELOG.md` under `## Unreleased` (`### English` and `### Deutsch`, same
-  points, see the comment at the top of the file). The next release takes them instead of the commit messages.
-
-Everyone whose commits end up in a release is thanked by their GitHub name in the release notes and in the launcher's
-"What's new" window – automatically, you don't need to do anything.
+- **Write it for players**, in plain words: what changed for them, where to find it and why it helps – no file or
+  function names, no commit language. Bold only the short headline of each point.
+- **Only the update:** no names, mentions or thanks.
+- **Never edit `CHANGELOG.md` or version numbers in a branch.** The release commits on `main` change them all the
+  time, so every branch that touches them ends up with a merge conflict. Files in `changes/` never collide.
+- **No text needed** for changes players don't notice: start the commit with `refactor:`, `test:`, `ci:`, `docs:`,
+  `chore:`, `build:` or `style:`, or put `[skip changelog]` in the message. Commits that only touch docs, tests,
+  workflows or scripts are left out automatically.
+- **Version step:** `feat: …` raises the minor version, `feat!: …` or `BREAKING CHANGE` in the body the major version,
+  everything else the patch version.
+- **Check:** the CI job "Player notes" fails when a pull request changes something for players without a text.
+- **Fallback:** lines `EN: …` and `DE: …` in a commit message still work for a one-line point; without any text the
+  release uses the first line of each commit.
 
 ## Code style
 

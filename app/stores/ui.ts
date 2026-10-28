@@ -31,12 +31,13 @@ export const useUiStore = defineStore('ui', () => {
   const importing = ref(false)
   /** Modpack, das vor der Installation fragt „mit oder ohne Cubiq Client“. */
   const modpackInstall = ref<{ pack: { projectId: string; title: string; iconUrl: string | null }; platform: Platform } | null>(null)
-  const navExpanded = ref(false)
+  const navExpanded = ref(true)
   /** Zuletzt benutzte Befehle (IDs), neueste zuerst. */
   const recentCommands = ref<string[]>([])
 
   function restore() {
-    navExpanded.value = read(NAV_KEY, '0') === '1'
+    // Ab Werk ausgeklappt (Dock mit Beschriftung); eingeklappt nur, wenn man es selbst so gewählt hat.
+    navExpanded.value = read(NAV_KEY, '1') === '1'
     try {
       const raw: unknown = JSON.parse(read(RECENT_KEY, '[]'))
       recentCommands.value = Array.isArray(raw)

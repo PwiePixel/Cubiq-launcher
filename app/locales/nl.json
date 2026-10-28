@@ -748,6 +748,14 @@
       "levelDatBroken": "Het level.dat-bestand van de wereld is beschadigd.",
       "notFound": "Deze wereld bestaat niet meer."
     },
+    "worldBackups": {
+      "tooManyFiles": "Deze wereld heeft te veel bestanden voor een back-up.",
+      "unsafeArchive": "De back-up bevat ongeldige paden en wordt niet uitgepakt.",
+      "broken": "Deze back-up is beschadigd.",
+      "notFound": "Deze back-up bestaat niet meer.",
+      "worldOpened": "De wereld werd in het spel geopend voordat de back-up klaar was.",
+      "worldOpen": "Deze wereld is nu open in het spel – sluit hem eerst."
+    },
     "logs": {
       "sourceGone": "Dit logbestand bestaat niet meer.",
       "unreadable": "Dit logbestand kan niet worden gelezen.",
@@ -1990,6 +1998,93 @@
       "javaCustom": "eigen pad"
     }
   },
+  "stats": {
+    "title": "Statistieken",
+    "subtitle": "Hoeveel je speelt – over al je instanties.",
+    "subtitleInstance": "Speeltijd van {name}",
+    "filterLabel": "Statistieken tonen voor",
+    "allInstances": "Alle instanties",
+    "live": "Nu aan het spelen",
+    "units": {
+      "hours": "{n} u"
+    },
+    "empty": {
+      "title": "Nog geen speeltijd",
+      "text": "Start een instantie en speel een potje – elke sessie verschijnt hier: uren per dag, een kalender van je speeldagen, je favoriete instanties en versies en je langste reeks.",
+      "action": "Bibliotheek openen"
+    },
+    "tiles": {
+      "label": "Kerncijfers",
+      "total": "Totale speeltijd",
+      "totalCarried": "incl. {time} van eerder",
+      "since": "sinds {date}",
+      "week": "Deze week",
+      "today": "Vandaag: {time}",
+      "month": "Deze maand",
+      "sessions": "Sessies",
+      "average": "Ø {time} per sessie",
+      "longest": "Langste sessie",
+      "streak": "Huidige reeks",
+      "days": "{n} dag | {n} dagen",
+      "bestStreak": "Record: {days}"
+    },
+    "chart": {
+      "title": "Speeltijd",
+      "rangeLabel": "Periode",
+      "days": "30 dagen",
+      "weeks": "16 weken",
+      "labelDays": "Speeltijd per dag, laatste 30 dagen",
+      "labelWeeks": "Speeltijd per week, laatste 16 weken",
+      "total": "Totaal: {time}",
+      "none": "Niet gespeeld",
+      "weekOf": "Week van {date}",
+      "summary": "{label}. Totaal: {total}. Meest: {best}.",
+      "showTable": "Als tabel tonen",
+      "hideTable": "Tabel verbergen",
+      "day": "Dag",
+      "week": "Week",
+      "playTime": "Speeltijd"
+    },
+    "heatmap": {
+      "title": "Kalender",
+      "daysPlayed": "{n} dag gespeeld | {n} dagen gespeeld",
+      "summary": "{label}: laatste {weeks} weken, op {days} dagen gespeeld.",
+      "less": "Minder",
+      "more": "Meer"
+    },
+    "top": {
+      "instances": "Meest gespeelde instanties",
+      "versions": "Minecraft-versies",
+      "versionsHint": "De versies waarmee je speelde",
+      "noVersions": "Nog geen sessies met een bekende versie.",
+      "servers": "Servers",
+      "serversHint": "Servers waar je op kwam – via de launcher of het multiplayer-menu in het spel.",
+      "sessions": "{n} sessie | {n} sessies",
+      "deleted": "{name} (verwijderd)",
+      "showAll": "Alles tonen ({n})",
+      "showLess": "Minder tonen"
+    },
+    "footer": {
+      "tracking": "Sessies worden bijgehouden sinds {date}.",
+      "carried": "Speeltijd van daarvoor telt mee in de totalen en de instanties, maar heeft geen datum."
+    },
+    "reset": {
+      "button": "Statistieken resetten",
+      "title": "Statistieken resetten?",
+      "text": "Alle opgeslagen sessies verdwijnen uit de statistieken – grafieken, kalender, reeksen en lijsten beginnen weer bij nul. De speeltijd bij je instanties blijft.",
+      "confirm": "Resetten",
+      "done": "Statistieken gereset."
+    },
+    "instance": {
+      "title": "Speeltijd",
+      "recent": "{time} in de laatste 30 dagen",
+      "average": "Gemiddeld",
+      "last30": "Speeltijd van de laatste 30 dagen: {time}",
+      "crashes": "{n} crash | {n} crashes",
+      "topVersion": "Meestal op {version}",
+      "open": "Alle statistieken"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} regel | {n} regels",
     "copied": "Gekopieerd"
@@ -2379,6 +2474,21 @@
       "updatesPortable": "Draagbare versie – updates staan op de downloadpagina"
     },
     "appearance": {
+      "look": {
+        "title": "Ontwerp",
+        "text": "Verandert het hele uiterlijk: achtergrondscène, kleuren en kleine details. Kleurthema en accentkleur blijven zoals je ze hebt ingesteld, en de Cubiq Client neemt het ontwerp mee in het spel.",
+        "choose": "Ontwerp {name} gebruiken",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Donkere vlakken met een vleugje groen en accenten in Cubiq-groen"
+          },
+          "winter": {
+            "name": "Noorderlicht",
+            "text": "Noorderlicht in Cubiq-groen boven zwevende sneeuweilanden"
+          }
+        }
+      },
       "colorScheme": "Kleurthema",
       "themes": {
         "dark": "Donker",
@@ -3039,14 +3149,13 @@
     "discover": "Ontdekken",
     "servers": "Servers",
     "screenshots": "Screenshots",
+    "stats": "Statistieken",
     "skins": "Skins",
     "admin": "Admin",
     "runningCount": "{n} actief | {n} actief",
     "quickLaunch": "Snel starten",
     "openNamed": "{name} openen",
     "newInstance": "Nieuwe instantie",
-    "searchShortcut": "Zoeken (Ctrl+K)",
-    "searchTip": "Zoeken · Ctrl K",
     "settings": "Instellingen",
     "accountNamed": "Account: {name}",
     "signIn": "Inloggen",
@@ -3061,7 +3170,12 @@
     "achievements": "Prestaties",
     "localServers": "Mijn servers",
     "controls": "Bediening",
-    "pc": "PC"
+    "pc": "PC",
+    "groups": {
+      "together": "Samen",
+      "collection": "Collectie",
+      "tools": "Hulpmiddelen"
+    }
   },
   "accountMenu": {
     "menuLabel": "Accounts",
@@ -3107,6 +3221,7 @@
       "servers": "server lijst serverlijst",
       "accounts": "account inloggen aanmelden login microsoft",
       "screenshots": "afbeeldingen foto’s galerij screenshots",
+      "stats": "statistieken speeltijd uren reeks kalender grafiek",
       "skins": "cape skin",
       "settings": "instellingen opties voorkeuren",
       "newInstance": "toevoegen aanmaken nieuw",
@@ -3335,6 +3450,9 @@
       "add": "Server toevoegen",
       "addHint": "Live status en joinen met één klik",
       "addHintEmpty": "Je servers met live status – joinen met één klik"
+    },
+    "stage": {
+      "pick": "{name} selecteren"
     }
   },
   "news": {
@@ -3364,6 +3482,26 @@
     "preparing": "Minecraft voorbereiden",
     "crashed": "Het spel is onverwacht gesloten – de logs tonen meestal de oorzaak."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Spring over de blokken terwijl Minecraft start.",
+    "start": "Spelen",
+    "controls": "Spatie, ↑ of klik om te springen – druk in de lucht nog eens voor een dubbele sprong.",
+    "areaLabel": "Cubi Hop. Druk op spatie, pijl omhoog of klik om te springen.",
+    "score": "Score {score}",
+    "best": "Record {score}",
+    "newBest": "Nieuw record!",
+    "over": "Au! Klik of druk op spatie om het opnieuw te proberen.",
+    "paused": "Gepauzeerd – klik of druk op spatie om verder te gaan.",
+    "result": "Spel voorbij. Score: {score}.",
+    "resultBest": "Spel voorbij. Score: {score} – nieuw record!",
+    "windowSoon": "Minecraft opent zijn venster …",
+    "ready": "Minecraft is klaar!",
+    "closesIn": "Sluit over {seconds} s",
+    "keepPlaying": "Verder spelen",
+    "closeNow": "Sluiten",
+    "close": "Minispel sluiten"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Interface",
@@ -3382,6 +3520,7 @@
       "storage": "Opslag",
       "network": "Netwerk",
       "clips": "Clips en opnemen",
+      "backups": "Wereldback-ups",
       "notifications": "Meldingen",
       "remote": "Afstandsbediening"
     },
@@ -3444,7 +3583,7 @@
       "button": "Meer info & inschakelen",
       "shares": "Om screenshots als link te delen, meldt de launcher zich aan bij de Cubiq-server. Dat gebeurt pas als je toestemming geeft.",
       "achievements": "Om je prestaties te tonen, meldt de launcher zich aan bij de Cubiq-server. Dat gebeurt pas als je akkoord gaat.",
-      "cosmetics": "Om Cubiq-hoofdcosmetica te tonen, logt de launcher in bij de Cubiq-server. Dat gebeurt pas als je akkoord gaat.",
+      "cosmetics": "Om Cubiq-cosmetica te tonen, logt de launcher in bij de Cubiq-server. Dat gebeurt pas als je akkoord gaat.",
       "remote": "Om je pc vanaf deze telefoon te bedienen, meldt de launcher zich aan bij de Cubiq-server. Dat gebeurt pas als je toestemming geeft."
     },
     "account": {
@@ -3862,7 +4001,6 @@
     "glows": "Gloeit",
     "tryOn": "{name} passen",
     "tryOnLocked": "{name} passen (vergrendeld)",
-    "empty": "Nog geen hoofdcosmetica beschikbaar.",
     "offline": "De Cubiq-server is op dit moment niet bereikbaar.",
     "previewFailed": "De 3D-preview van dit item kon niet worden geladen.",
     "how": {
@@ -3894,8 +4032,7 @@
     },
     "companion": {
       "title": "Metgezellen",
-      "intro": "Vliegt om je hoofd, naast een hoed. De preview toont hoed, metgezel en cape samen.",
-      "empty": "Nog geen metgezellen.",
+      "intro": "Vliegt om je hoofd. De preview toont metgezel en cape samen.",
       "wearing": "Metgezel: {name}",
       "selectedWorn": "Vliegt mee – iedereen met de Cubiq Client ziet het.",
       "toasts": {
@@ -3907,7 +4044,6 @@
       "title": "Metgezellen op de grond",
       "intro": "Loopt naast je mee – iedereen met Cubiq Client ziet hem. De voorbeeldweergave toont hem naast je personage.",
       "creatorHint": "Creator-huisdier: fans krijgen het met de codes van de creator, de creator zelf loopt met meer naargelang de fans (twee vanaf 10, drie vanaf 100, vier vanaf 1000).",
-      "empty": "Nog geen metgezellen op de grond.",
       "wearing": "Naast je: {name}",
       "selectedWorn": "Loopt naast je mee – iedereen met Cubiq Client ziet hem.",
       "toasts": {
@@ -4665,8 +4801,11 @@
     "imageOf": "Afbeelding {n} van {total}",
     "versions": "Versies",
     "more": "Nog {n} afbeeldingen",
-    "thanks": "Dank aan {names} voor hun bijdrage aan deze update.",
     "openRelease": "Release op GitHub bekijken"
+  },
+  "updateModel": {
+    "label": "3D-model van de update-afbeelding. Sleep het of gebruik de pijltjestoetsen om het te draaien.",
+    "hint": "Sleep om te draaien"
   },
   "clips": {
     "title": "Clips",
@@ -4885,6 +5024,53 @@
     "allHint": "Weer alles tonen",
     "nothingSelected": "Geen niveau gekozen – klik hierboven op een van de knoppen."
   },
+  "perfLive": {
+    "title": "Live prestaties",
+    "client": "Cubiq Client",
+    "expand": "Grafieken tonen",
+    "collapse": "Grafieken verbergen",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS alleen met de Cubiq Client",
+    "fpsLimited": "Beperkt op de achtergrond",
+    "fpsWaiting": "Wachten op de eerste beelden …",
+    "fpsStats": "Gem. {avg} · min. {min}",
+    "heap": "Java: {used} van {max}",
+    "systemFree": "PC: {free} vrij",
+    "cpuNote": "van de hele pc ({cores} threads)",
+    "noData": "nog geen waarden",
+    "chartSummary": "{label} in de laatste minuut: nu {now}, gemiddeld {avg}, laagste {min}, hoogste {max}",
+    "now": "nu",
+    "secondsAgo": "{seconds} s geleden",
+    "dismissTip": "Tip verbergen",
+    "tips": {
+      "performanceAction": "Prestatie-instellingen",
+      "memory": {
+        "title": "Minecraft heeft bijna geen geheugen meer",
+        "text": "Het Java-geheugen is al een tijdje bijna vol. Dat zorgt voor haperingen en kan het spel laten crashen – geef deze instantie meer geheugen.",
+        "action": "Geheugeninstellingen"
+      },
+      "systemMemory": {
+        "title": "Je pc heeft bijna geen vrij geheugen meer",
+        "text": "Er is nog maar {free} vrij. Sluit programma's die je nu niet nodig hebt – Minecraft nog meer geheugen geven zou het erger maken."
+      },
+      "stutter": {
+        "title": "Korte haperingen",
+        "text": "De framerate zakt steeds even in. Verlaag de kijkafstand of gebruik de Cubiq-optimalisatie – en is het Java-geheugen bijna vol, geef de instantie dan meer."
+      },
+      "lowFps": {
+        "title": "Lage framerate",
+        "text": "Verlaag de kijkafstand in de video-instellingen, of gebruik de FPS-boost in het spel: Cubiq-menu (Rechter Shift) → Prestaties.",
+        "boostOff": "De Cubiq-optimalisatie staat uit voor deze instantie. Zet haar aan – Sodium en andere prestatiemods geven meestal veel meer FPS."
+      },
+      "cpu": {
+        "title": "Processor aan zijn limiet",
+        "text": "Minecraft gebruikt bijna de hele processor. Verlaag de kijk- en simulatieafstand, of sluit programma's die op de achtergrond draaien."
+      }
+    }
+  },
   "logShare": {
     "qrLabel": "QR-code van de link",
     "qrFailed": "Geen QR-code beschikbaar",
@@ -5034,13 +5220,13 @@
     "cheats": "Cheats",
     "backingUp": "Wereld wordt geback-upt …",
     "backupDone": "“{name}” is geback-upt",
-    "backup": "Back-up (ZIP)",
+    "backup": "Nu back-up maken",
     "backupOf": "{name} back-uppen",
     "openFolderOf": "Map van {name} openen",
     "deleteOf": "{name} verwijderen",
     "stopFirst": "Sluit eerst het spel",
     "deleted": "“{name}” staat in de prullenbak",
-    "backupHint": "Back-ups worden als ZIP opgeslagen in de map “backups” van de instantie (zie het tabblad Bestanden).",
+    "backupHint": "Werelden worden automatisch geback-upt bij het starten van het spel en na het spelen – alleen de werelden die veranderd zijn. Klik op de regel met de klok om back-ups te bekijken, terug te zetten of te verwijderen.",
     "deleteTitle": "Wereld verwijderen?",
     "deleteText": "“{name}” gaat naar de Windows-prullenbak.",
     "deleteTextLinux": "“{name}” gaat naar de prullenbak.",
@@ -5067,6 +5253,88 @@
       "joinNote": "Joinen start het spel en verbindt meteen. Heel oude versies openen alleen het hoofdmenu.",
       "pingCooldown": "Wacht een paar seconden tot de volgende pingtest.",
       "sortNote": "Alleen de weergave is op ping gesorteerd – de serverlijst in het spel behoudt haar volgorde."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Automatische back-up",
+      "defaultOn": "Standaard (aan)",
+      "defaultOff": "Standaard (uit)",
+      "on": "Aan",
+      "off": "Uit",
+      "onText": "Automatische back-ups staan aan: gewijzigde werelden worden bij het starten en na het spelen opgeslagen, per wereld blijven de laatste {n}.",
+      "offText": "Automatische back-ups staan uit voor deze instantie – gebruik “Nu back-up maken”.",
+      "sharedText": "Deze instantie deelt haar wereldmap, dus de back-ups horen bij alle instanties die hem delen."
+    },
+    "panel": {
+      "open": "Back-ups van {name}",
+      "running": "Back-up maken … {percent} %",
+      "status": "{n} back-up · laatst {time} | {n} back-ups · laatst {time}",
+      "none": "Nog geen back-up",
+      "deletedTitle": "Verwijderde werelden met back-ups",
+      "restoreDeleted": "Terugzetten"
+    },
+    "dialog": {
+      "title": "Back-ups van {name}",
+      "backupNow": "Nu back-up maken",
+      "backingUp": "Back-up maken … {percent} %",
+      "empty": "Nog geen back-ups van deze wereld.",
+      "restore": "Terugzetten",
+      "deleteConfirm": "Deze back-up verwijderen?",
+      "deleteOf": "Back-up van {date} verwijderen"
+    },
+    "kinds": {
+      "auto": "Automatisch",
+      "manual": "Handmatig",
+      "safety": "Voor het terugzetten",
+      "legacy": "Oudere back-up"
+    },
+    "restore": {
+      "title": "Back-up van {date} terugzetten",
+      "modeLabel": "Hoe terugzetten",
+      "copy": "Als kopie",
+      "copyText": "Voegt de wereld toe als “{name}” – je huidige wereld blijft zoals hij is.",
+      "replace": "Huidige wereld vervangen",
+      "replaceText": "De huidige stand wordt eerst als back-up bewaard, zodat je terug kunt.",
+      "bringBack": "Wereld terughalen",
+      "bringBackText": "De wereld verschijnt weer in je wereldlijst.",
+      "confirm": "Terugzetten",
+      "stopFirst": "Sluit eerst het spel – een wereld kan alleen worden teruggezet als het spel niet draait.",
+      "copySuffix": "teruggezet",
+      "taskTitle": "{name} terugzetten",
+      "stage": "Wereld wordt teruggezet …",
+      "doneCopy": "Teruggezet als “{name}”.",
+      "doneReplace": "“{name}” is teruggezet – de vorige stand blijft als back-up bewaard.",
+      "doneDeleted": "“{name}” is terug."
+    },
+    "task": {
+      "title": "Wereldback-up · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Werelden controleren …"
+    },
+    "toast": {
+      "opened": "“{world}” werd geopend voordat de back-up klaar was. De vorige back-up blijft – na het spelen komt er een nieuwe.",
+      "failed": "Back-up van “{world}” mislukt: {error}"
+    },
+    "settings": {
+      "title": "Wereldback-ups",
+      "intro": "Bij het starten van een instantie bewaart de launcher elke singleplayerwereld die sinds de laatste back-up veranderd is – op de achtergrond, het spel start meteen. Na het spelen bewaart hij de gespeelde werelden. Ongewijzigde werelden worden overgeslagen.",
+      "enabledTitle": "Automatische back-ups",
+      "enabledDescription": "Gewijzigde werelden back-uppen bij het starten en na het spelen. Elke instantie kan dit in haar tabblad Werelden aan- of uitzetten.",
+      "keepTitle": "Per wereld bewaren",
+      "keepDescription": "Oudere automatische back-ups worden verwijderd. Handmatige back-ups en die van voor het terugzetten blijven altijd.",
+      "keepOption": "{n} back-up | {n} back-ups",
+      "limitTitle": "Maximale grootte",
+      "limitDescription": "Worden alle back-ups samen groter, dan gaan de oudste automatische eerst – de nieuwste back-up van elke wereld blijft altijd.",
+      "noLimit": "Geen limiet",
+      "storageTitle": "Opslag",
+      "usage": "In gebruik: {size} · Back-ups: {count} · Werelden: {worlds}",
+      "usageNone": "Nog geen back-ups.",
+      "where": "Back-ups worden als ZIP-bestanden bewaard in de map “world-backups” van de datamap van de launcher.",
+      "orphaned": "{size} hoort bij verwijderde instanties.",
+      "prune": "Die verwijderen",
+      "pruneConfirm": "Definitief verwijderen",
+      "pruned": "{size} vrijgemaakt."
     }
   },
   "share": {
@@ -7083,7 +7351,7 @@
       "grid": "Raster",
       "notch": "Notch",
       "discard": "Wijzigingen weggooien?",
-      "selectHint": "Tik op een knop om hem te wijzigen. Sleep om te verplaatsen, de rode hoek wijzigt de grootte. Pijltjestoetsen schuiven precies.",
+      "selectHint": "Tik op een knop om hem te wijzigen. Sleep om te verplaatsen, de groene hoek wijzigt de grootte. Pijltjestoetsen schuiven precies.",
       "actionType": "Actie",
       "key": "Toets",
       "chord": "Eerst vasthouden",

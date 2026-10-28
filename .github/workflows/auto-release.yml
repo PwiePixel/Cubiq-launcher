@@ -4,15 +4,25 @@ name: Auto release
 # hat (scripts/release.mjs):
 #   1. Versionsnummer erhöhen (feat → Minor, sonst Patch, feat!/BREAKING CHANGE → Major) – in package.json,
 #      tauri.conf.json, Cargo.toml und Cargo.lock.
-#   2. Abschnitt in CHANGELOG.md schreiben (Englisch + Deutsch): Punkte unter „## Unreleased“, sonst die erste Zeile
-#      jedes Commits seit dem letzten Release. Den Text zeigt der Launcher unter „Was ist neu“.
-#   3. Commit „Release vX.Y.Z“ + Tag auf main pushen und release.yml starten: Installer bauen, GitHub-Release mit
-#      Titel („Cubiq Launcher X.Y.Z“) und Beschreibung aus dem Changelog, Update-Kanal für den Auto-Updater.
+#   2. Abschnitt in CHANGELOG.md schreiben (Englisch + Deutsch): die Spieler-Texte aus changes/*.md (je Änderung
+#      eine Datei, danach gelöscht), sonst die erste Zeile jedes Commits seit dem letzten Release. Den Text zeigt der
+#      Launcher unter „Was ist neu“.
+#   3. Bild des Release zeichnen (scripts/release-art.mjs → public/news/<version>/banner.png), passend zum Text.
+#   4. Commit „Release vX.Y.Z“ + Tag auf main pushen und release.yml starten: Installer bauen, GitHub-Release mit
+#      Titel („Cubiq Launcher X.Y.Z“), Bild und Beschreibung aus dem Changelog, Update-Kanal für den Auto-Updater.
+# Der Release-Commit ändert nur CHANGELOG.md (neuer Abschnitt oben), die Versionsnummern, public/news/<version>/ und
+# changes/ – Branches schreiben ihre Texte in eigene Dateien unter changes/, daher gibt es keine Merge-Konflikte.
 #
 # Von Hand: Actions → Auto release → Run workflow (Sprung wählbar, wartet nicht auf CI).
 # Abschalten: Repo-Variable CUBIQ_AUTO_RELEASE = false (Settings → Secrets and variables → Actions → Variables).
+# War CI rot, gibt es kein Release – der Lauf heißt dann „Kein Release – CI …“ und nennt die fehlgeschlagenen Jobs.
 # Pushes mit GITHUB_TOKEN starten keine Workflows – der Release-Commit löst also weder CI noch diesen Workflow aus;
 # release.yml wird deshalb ausdrücklich gestartet (workflow_dispatch ist davon ausgenommen).
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' && format('Auto release (von Hand, Sprung: {0})', inputs.bump)
+  || github.event.workflow_run.conclusion == 'success' && 'Auto release nach grünem CI'
+  || format('Kein Release – CI auf main: {0}', github.event.workflow_run.conclusion) }}
+
 on:
   workflow_run:
     workflows: [CI]
@@ -35,6 +45,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # CI auf main war nicht grün: kein Release, aber sagen warum.
+  ci-not-green:
+    name: No release – CI not green
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion != 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - name: Explain
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          failed=$(gh run view "$RUN_ID" --json jobs --jq '[.jobs[] | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .name] | join(", ")' || echo "")
+          msg="Kein Release: Der CI-Lauf auf main ist nicht grün ($CONCLUSION)${failed:+ – fehlgeschlagen: $failed}."
+          echo "::warning title=Kein Release::$msg"
+          {
+            echo "### Kein Release"
+            echo
+            echo "$msg"
+            echo
+            echo "- CI-Lauf: $RUN_URL"
+            echo "- Nach der Korrektur einfach weiter pushen – der nächste grüne CI-Lauf auf main erstellt das Release."
+            echo "- Sofort trotzdem veröffentlichen: Actions → Auto release → Run workflow."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   release:
     name: Prepare release
     # Nur grüne CI-Läufe von Pushes auf main dieses Repos (nicht PRs aus einem Fork-Branch namens main).
@@ -78,7 +122,18 @@ jobs:
         if: steps.current.outputs.skip != 'true'
         env:
           BUMP: ${{ inputs.bump || 'auto' }}
-        run: node --experimental-strip-types scripts/release.mjs prepare --bump "$BUMP" >> "$GITHUB_OUTPUT"
+        run: |
+          node --experimental-strip-types scripts/release.mjs prepare --bump "$BUMP" 2> "$RUNNER_TEMP/prepare.log" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/prepare.log"
+          if grep -q '^skipped=true' "$GITHUB_OUTPUT"; then
+            {
+              echo "### Kein Release"
+              echo
+              echo "$(tail -1 "$RUNNER_TEMP/prepare.log")"
+              echo
+              echo "Nur Commits, die Spieler nicht betreffen (Doku, Tests, CI, Skripte …). Erzwingen: Actions → Auto release → Run workflow mit Sprung „patch“."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Commit, tag and push
         if: steps.prepare.outputs.skipped == 'false'
@@ -88,7 +143,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+          git add -A -- CHANGELOG.md package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock public/news changes
           # Erstes Release einer schon eingetragenen Version: evtl. nichts zu committen.
           git diff --cached --quiet || git commit -m "Release $TAG"
           git tag -a "$TAG" -m "Cubiq Launcher ${TAG#v}"
@@ -107,7 +162,8 @@ jobs:
           {
             echo "### $TITLE"
             echo
-            echo "Tag \`$TAG\` ist gesetzt, der Release-Build läuft: Actions → Release."
+            echo "Tag \`$TAG\` ist gesetzt, der Release-Build läuft: Actions → Release. Auf der Release-Seite steht"
+            echo "sofort ein Entwurf „wird gebaut“; fehlt am Ende der Windows-Installer, steht dort der Grund."
             echo
             node --experimental-strip-types scripts/changelog.mjs notes "${TAG#v}"
           } >> "$GITHUB_STEP_SUMMARY"

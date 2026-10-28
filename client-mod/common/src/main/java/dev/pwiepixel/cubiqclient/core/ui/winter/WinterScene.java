@@ -6,41 +6,41 @@ import dev.pwiepixel.cubiqclient.core.ui.Textures;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 /**
- * Hintergrund im Design „Winternacht“ (Gegenstück zu {@code app/components/WinterScene.vue}): eine verschneite
- * Pixel-Landschaft von der Seite – Berge mit Schneegrenze, Waldstreifen, Tannen, die Blockhütte mit warmen Fenstern,
- * Rauch und dem Pinguin, Mond und Sterne, Schneefall in drei Tiefen und hin und wieder grünes Polarlicht; im hellen
- * Farbschema ein heller Wintertag mit Sonne und Wolken.
+ * Hintergrund im Design „Polarlicht“ – dieselbe Szene wie {@code app/components/WinterScene.vue} im Launcher: Nachthimmel
+ * mit Polarlicht-Bändern in Cubiq-Grün, schwebende Inseln aus verschneiten Würfeln mit Würfel-Tannen, ein Wolkenmeer und
+ * Schnee in drei Tiefen; im hellen Farbschema ein heller Morgen. Seed, Aufbau, Farben und Rechnung sind dieselben wie im
+ * Launcher – bei gleicher Größe Pixel für Pixel dasselbe Bild.
  *
  * <p>Gemalt wird in Texeln (ein Texel = 1 GUI-Pixel, bei sehr großen Fenstern mehr) in einen eigenen Puffer, der als
- * Textur hochgeladen und pixelig hochskaliert gezeichnet wird. Wie im Launcher läuft ein eigener Takt von 80 ms: nur
- * dann wird das Bild neu zusammengesetzt und hochgeladen, dazwischen nur die Textur gezeichnet. Die Szene tickt nur,
- * solange sie gezeichnet wird (also sichtbar ist); ohne Animation zeigt sie ein ruhiges Standbild.
+ * Textur hochgeladen und pixelig hochskaliert gezeichnet wird. Wie im Launcher entsteht alle 80 ms ein neues Bild,
+ * dazwischen wird nur die Textur gezeichnet; die Szene tickt nur, solange sie gezeichnet wird. Ohne Animation (eigene
+ * Einstellung „Animierter Hintergrund“ oder „Animationen reduzieren“ im Launcher) zeigt sie ein ruhiges Standbild.
  */
 public final class WinterScene {
-	/** Seed der Landschaft (wie im Launcher). */
-	public static final int SEED = 0x5a0;
-	/** Ein Bild alle 80 ms – genug für ruhigen Schneefall. */
+	/** Seed der Szene (wie im Launcher). */
+	public static final int SEED = WinterLayout.SEED;
+	/** Ein Bild alle 80 ms. */
 	public static final double TICK = 0.08;
+	/** Standbild: ein ruhiger Moment mit kräftigem Polarlicht (wie im Launcher). */
+	static final int REST_TICK = 40;
+	static final double REST_SECONDS = 21;
 	/** Größte Texturbreite/-höhe in Texeln (darüber werden die Texel größer). */
 	private static final int MAX_COLS = 640;
 	private static final int MAX_ROWS = 400;
 
 	private static final WinterScene SHARED = new WinterScene("winter/scene");
 
-	/** Gemeinsame Szene für Startbildschirm und Menüs (der Pinguin bleibt beim Wechsel derselbe). */
+	/** Gemeinsame Szene für Startbildschirm, Menüs und Ladebilder. */
 	public static WinterScene shared() {
 		return SHARED;
 	}
 
 	private final String textureName;
-	private final WinterMath.Rng rand = new WinterMath.Rng((int) System.nanoTime() ^ 0x51);
-	private Landscape land;
+	private WinterLayout layout;
 	private WinterPainter painter;
-	private Snow.Fall snow;
-	private Snow.Smoke smoke;
-	private Penguin penguin;
-	private final WinterPainter.Frame state = new WinterPainter.Frame();
-	private int[] frame;
+	private WinterSnow snow;
+	private final WinterPainter.Frame frame = new WinterPainter.Frame();
+	private int[] pixels;
 	private TextureRef texture;
 	private boolean dirty = true;
 	private int builtCols = -1;
@@ -63,22 +63,12 @@ public final class WinterScene {
 		return avgMicros;
 	}
 
-	/** Landschaft des letzten Aufbaus (Tests) oder null. */
-	public Landscape landscape() {
-		return land;
+	/** Aufbau des letzten Bildes (Tests) oder null. */
+	public WinterLayout layout() {
+		return layout;
 	}
 
-	/** Der Pinguin kommt sofort heraus (Selbsttest; im Launcher Strg+Alt+P). */
-	public void penguinOut() {
-		if (penguin != null) penguin.trigger();
-	}
-
-	/** Phase des Pinguins ({@link Penguin#WINDOW} …) oder -1 (keine Hütte). */
-	public int penguinPhase() {
-		return penguin == null ? -1 : penguin.phase();
-	}
-
-	/** Polarlicht-Uhr auf {@code s} Sekunden stellen (Selbsttest: Polarlicht sofort zeigen). */
+	/** Uhr der Szene auf {@code s} Sekunden stellen (Selbsttest: eine bestimmte Lage des Polarlichts zeigen). */
 	public void setSeconds(double s) {
 		seconds = Math.max(0, s);
 		dirty = true;
@@ -92,7 +82,7 @@ public final class WinterScene {
 	/**
 	 * Zeichnet die Szene über die ganze Fläche.
 	 *
-	 * @param animated false = ruhiges Standbild (Einstellung „Animierter Hintergrund“ aus)
+	 * @param animated false = ruhiges Standbild
 	 */
 	public void draw(Canvas c, int width, int height, boolean animated) {
 		if (width <= 0 || height <= 0) return;
@@ -101,31 +91,30 @@ public final class WinterScene {
 		int texel = texelFor(width, height);
 		int cols = (width + texel - 1) / texel;
 		int rows = (height + texel - 1) / texel;
-		String key = t.themeName + "/" + t.accentName + "/" + Integer.toHexString(t.accent);
 		if (cols != builtCols || rows != builtRows) {
-			layout(cols, rows, t);
-			paletteKey = key;
-		} else if (!key.equals(paletteKey)) {
-			paletteKey = key;
-			repaint(t);
+			build(cols, rows);
+			paletteKey = "";
+		}
+		if (!t.themeName.equals(paletteKey)) {
+			paletteKey = t.themeName;
+			painter = new WinterPainter(layout, WinterPalette.of(t.themeName));
+			dirty = true;
 		}
 		if (animated != wasAnimated) {
 			wasAnimated = animated;
-			if (penguin != null) penguin.setStill(!animated);
 			dirty = true;
 		}
 		advance(start, animated);
 		if (dirty) {
 			dirty = false;
-			state.tick = tick;
-			state.seconds = seconds;
-			state.aurora = animated ? Landscape.auroraEnvelope(seconds, SEED) : 0.75;
-			state.penguin = penguin;
-			state.flakes = snow;
-			state.smoke = smoke;
-			painter.compose(frame, state);
+			frame.tick = animated ? tick : REST_TICK;
+			frame.seconds = animated ? seconds : REST_SECONDS;
+			frame.level = animated ? WinterLayout.auroraLevel(seconds) : 0.8;
+			frame.moving = animated;
+			frame.snow = snow;
+			painter.compose(pixels, frame);
 			Textures.Store store = Textures.store();
-			texture = store != null && c.images() ? store.upload(textureName, cols, rows, frame) : null;
+			texture = store != null && c.images() ? store.upload(textureName, cols, rows, pixels) : null;
 		}
 		if (texture != null) {
 			c.push();
@@ -140,7 +129,7 @@ public final class WinterScene {
 		avgMicros = frames == 1 ? us : avgMicros + (us - avgMicros) * 0.05f;
 	}
 
-	/** Takt: je 80 ms ein Schritt (Schnee, Rauch, Pinguin); nach einer Pause geht es ohne Sprung weiter. */
+	/** Takt: je 80 ms ein Bild; nach einer Pause geht es ohne Sprung weiter. */
 	private void advance(long now, boolean animated) {
 		double dt = lastNanos == 0 ? TICK : (now - lastNanos) / 1e9;
 		lastNanos = now;
@@ -152,56 +141,28 @@ public final class WinterScene {
 		while (acc >= TICK && steps < 3) {
 			acc -= TICK;
 			steps++;
-			step();
+			tick++;
 		}
 		if (acc > TICK * 3) acc = 0;
 		if (steps > 0) dirty = true;
 	}
 
-	private void step() {
-		tick++;
-		if (snow != null) snow.step(tick);
-		int[] ch = land.chimney();
-		if (smoke != null) smoke.step(ch != null, ch == null ? 0 : ch[0], ch == null ? 0 : ch[1], tick);
-		if (penguin != null) penguin.step();
-	}
-
-	private void layout(int cols, int rows, Theme t) {
+	private void build(int cols, int rows) {
 		builtCols = cols;
 		builtRows = rows;
-		land = Landscape.build(cols, rows, SEED, -1, true);
-		snow = new Snow.Fall(land.w, land.h, rand, 1);
-		smoke = new Snow.Smoke(rand);
-		WinterPalette p = WinterPalette.of(t.themeName, t.accentName, t.accent);
-		boolean day = p.variant == WinterPalette.LIGHT;
-		// Der Pinguin bleibt bei Größenänderungen derselbe (seine Lage ist relativ zur Hütte).
-		if (!land.hasCabin()) penguin = null;
-		else if (penguin == null) penguin = new Penguin(rand, day, !wasAnimated);
-		// Etwas Rauch schon da, damit er nicht erst aus dem Nichts aufsteigt.
-		int[] ch = land.chimney();
-		for (int i = 0; i < 60; i++) smoke.step(ch != null, ch == null ? 0 : ch[0], ch == null ? 0 : ch[1], i);
-		frame = new int[land.w * land.h];
-		painter = new WinterPainter(land, p);
-		if (penguin != null) penguin.setDay(day);
+		layout = WinterLayout.build(cols, rows, SEED);
+		// Schnee wie im Launcher-Hintergrund (Seed der Szene, volle Dichte).
+		snow = new WinterSnow(layout.w, layout.h, SEED ^ 0x5e0, 1);
+		pixels = new int[layout.w * layout.h];
 		dirty = true;
 	}
 
-	private void repaint(Theme t) {
-		WinterPalette p = WinterPalette.of(t.themeName, t.accentName, t.accent);
-		painter = new WinterPainter(land, p);
-		if (penguin != null) penguin.setDay(p.variant == WinterPalette.LIGHT);
-		dirty = true;
-	}
-
-	/** Ohne Texturen (sollte es nicht geben): Himmel, Berge und Schnee als Flächen. */
+	/** Ohne Texturen (sollte es nicht geben): Himmel in Stufen und das Wolkenmeer als Flächen. */
 	private void fallback(Canvas c, int width, int height) {
 		WinterPalette p = painter.P;
-		int horizon = height * land.horizon / Math.max(1, land.h);
-		int bands = p.sky.length;
-		for (int i = 0; i < bands; i++) {
-			c.fill(0, horizon * i / bands, width, horizon * (i + 1) / bands, p.sky[i]);
-		}
-		c.fill(0, horizon, width, height, p.snow);
-		c.fill(0, horizon, width, horizon + 2, p.snowLit);
+		int sea = height * 86 / 100;
+		for (int i = 0; i < p.sky.length; i++) c.fill(0, sea * i / p.sky.length, width, sea * (i + 1) / p.sky.length, p.sky[i]);
+		c.fill(0, sea, width, height, p.cloudNear);
+		c.fill(0, sea, width, sea + 1, p.cloudNearRim);
 	}
 }

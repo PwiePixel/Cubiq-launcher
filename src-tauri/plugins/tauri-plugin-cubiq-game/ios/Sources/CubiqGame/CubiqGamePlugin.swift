@@ -2,7 +2,7 @@
 //   probe   → Gerätedaten (JIT, Speicher, Bildschirm, Pfade)
 //   launch  → Spielansicht zeigen, ggf. auf JIT warten, JVM starten; Ereignisse über `events`
 //   runJava, stop → auf iOS nicht möglich (siehe unten)
-// Copyright (C) 2026 Ohev Tamerin (Theredstonee) – GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only
 
 import Tauri
 import UIKit

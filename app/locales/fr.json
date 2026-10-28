@@ -748,6 +748,14 @@
       "levelDatBroken": "Le level.dat du monde est endommagé.",
       "notFound": "Ce monde n’existe plus."
     },
+    "worldBackups": {
+      "tooManyFiles": "Ce monde contient trop de fichiers pour une sauvegarde.",
+      "unsafeArchive": "La sauvegarde contient des chemins invalides et n'est pas décompressée.",
+      "broken": "Cette sauvegarde est endommagée.",
+      "notFound": "Cette sauvegarde n'existe plus.",
+      "worldOpened": "Le monde a été ouvert dans le jeu avant la fin de sa sauvegarde.",
+      "worldOpen": "Ce monde est ouvert dans le jeu en ce moment – ferme-le d'abord."
+    },
     "logs": {
       "sourceGone": "Ce fichier journal n’existe plus.",
       "unreadable": "Ce fichier journal est illisible.",
@@ -1990,6 +1998,93 @@
       "javaCustom": "chemin personnalisé"
     }
   },
+  "stats": {
+    "title": "Statistiques",
+    "subtitle": "Combien tu joues – sur toutes tes instances.",
+    "subtitleInstance": "Temps de jeu de {name}",
+    "filterLabel": "Afficher les statistiques de",
+    "allInstances": "Toutes les instances",
+    "live": "En jeu",
+    "units": {
+      "hours": "{n} h"
+    },
+    "empty": {
+      "title": "Pas encore de temps de jeu",
+      "text": "Lance une instance et joue une partie : chaque session apparaît ici – heures par jour, un calendrier de tes jours de jeu, tes instances et versions préférées et ta plus longue série.",
+      "action": "Ouvrir la bibliothèque"
+    },
+    "tiles": {
+      "label": "Chiffres clés",
+      "total": "Temps de jeu total",
+      "totalCarried": "dont {time} d'avant",
+      "since": "depuis le {date}",
+      "week": "Cette semaine",
+      "today": "Aujourd'hui : {time}",
+      "month": "Ce mois-ci",
+      "sessions": "Sessions",
+      "average": "Ø {time} par session",
+      "longest": "Plus longue session",
+      "streak": "Série en cours",
+      "days": "{n} jour | {n} jours",
+      "bestStreak": "Record : {days}"
+    },
+    "chart": {
+      "title": "Temps de jeu",
+      "rangeLabel": "Période",
+      "days": "30 jours",
+      "weeks": "16 semaines",
+      "labelDays": "Temps de jeu par jour, 30 derniers jours",
+      "labelWeeks": "Temps de jeu par semaine, 16 dernières semaines",
+      "total": "Total : {time}",
+      "none": "Pas joué",
+      "weekOf": "Semaine du {date}",
+      "summary": "{label}. Total : {total}. Maximum : {best}.",
+      "showTable": "Afficher en tableau",
+      "hideTable": "Masquer le tableau",
+      "day": "Jour",
+      "week": "Semaine",
+      "playTime": "Temps de jeu"
+    },
+    "heatmap": {
+      "title": "Calendrier",
+      "daysPlayed": "{n} jour joué | {n} jours joués",
+      "summary": "{label} : {weeks} dernières semaines, joué {days} jours.",
+      "less": "Moins",
+      "more": "Plus"
+    },
+    "top": {
+      "instances": "Instances les plus jouées",
+      "versions": "Versions de Minecraft",
+      "versionsHint": "Les versions avec lesquelles tu as joué",
+      "noVersions": "Pas encore de session avec une version connue.",
+      "servers": "Serveurs",
+      "serversHint": "Serveurs rejoints – via le launcher ou le menu multijoueur du jeu.",
+      "sessions": "{n} session | {n} sessions",
+      "deleted": "{name} (supprimée)",
+      "showAll": "Tout afficher ({n})",
+      "showLess": "Afficher moins"
+    },
+    "footer": {
+      "tracking": "Sessions enregistrées depuis le {date}.",
+      "carried": "Le temps de jeu d'avant compte dans les totaux et les instances, mais n'a pas de date."
+    },
+    "reset": {
+      "button": "Réinitialiser les statistiques",
+      "title": "Réinitialiser les statistiques ?",
+      "text": "Toutes les sessions enregistrées disparaissent des statistiques : graphiques, calendrier, séries et listes repartent de zéro. Le temps de jeu affiché sur tes instances reste.",
+      "confirm": "Réinitialiser",
+      "done": "Statistiques réinitialisées."
+    },
+    "instance": {
+      "title": "Temps de jeu",
+      "recent": "{time} ces 30 derniers jours",
+      "average": "Moyenne",
+      "last30": "Temps de jeu des 30 derniers jours : {time}",
+      "crashes": "{n} plantage | {n} plantages",
+      "topVersion": "Surtout en {version}",
+      "open": "Toutes les statistiques"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} ligne | {n} lignes",
     "copied": "Copié"
@@ -2379,6 +2474,21 @@
       "updatesPortable": "Version portable – les mises à jour sont sur la page de téléchargement"
     },
     "appearance": {
+      "look": {
+        "title": "Design",
+        "text": "Change tout l'aspect : scène d'arrière-plan, couleurs et petits détails. Le thème et la couleur d'accent restent comme tu les as réglés, et le Cubiq Client reprend le design en jeu.",
+        "choose": "Utiliser le design {name}",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Surfaces sombres avec une touche de vert et des accents vert Cubiq"
+          },
+          "winter": {
+            "name": "Aurore boréale",
+            "text": "Aurore vert Cubiq au-dessus d'îles enneigées flottantes"
+          }
+        }
+      },
       "colorScheme": "Thème de couleurs",
       "themes": {
         "dark": "Sombre",
@@ -3039,14 +3149,13 @@
     "discover": "Découvrir",
     "servers": "Serveurs",
     "screenshots": "Captures",
+    "stats": "Statistiques",
     "skins": "Skins",
     "admin": "Admin",
     "runningCount": "{n} en cours | {n} en cours",
     "quickLaunch": "Lancement rapide",
     "openNamed": "Ouvrir {name}",
     "newInstance": "Nouvelle instance",
-    "searchShortcut": "Rechercher (Ctrl+K)",
-    "searchTip": "Rechercher · Ctrl K",
     "settings": "Paramètres",
     "accountNamed": "Compte : {name}",
     "signIn": "Se connecter",
@@ -3061,7 +3170,12 @@
     "achievements": "Succès",
     "localServers": "Mes serveurs",
     "controls": "Commandes",
-    "pc": "PC"
+    "pc": "PC",
+    "groups": {
+      "together": "Ensemble",
+      "collection": "Collection",
+      "tools": "Outils"
+    }
   },
   "accountMenu": {
     "menuLabel": "Comptes",
@@ -3107,6 +3221,7 @@
       "servers": "serveurs liste",
       "accounts": "compte connexion login microsoft",
       "screenshots": "images captures photos galerie",
+      "stats": "statistiques temps de jeu heures série calendrier graphique",
       "skins": "cape skin",
       "settings": "paramètres options préférences réglages",
       "newInstance": "ajouter créer nouvelle",
@@ -3335,6 +3450,9 @@
       "add": "Ajouter un serveur",
       "addHint": "Statut en direct et connexion en un clic",
       "addHintEmpty": "Tes serveurs avec statut en direct – rejoins-les en un clic"
+    },
+    "stage": {
+      "pick": "Sélectionner {name}"
     }
   },
   "news": {
@@ -3364,6 +3482,26 @@
     "preparing": "Préparation de Minecraft",
     "crashed": "Le jeu s'est fermé de manière inattendue – les journaux indiquent généralement la cause."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Sautez par-dessus les blocs pendant que Minecraft démarre.",
+    "start": "Jouer",
+    "controls": "Espace, ↑ ou clic pour sauter – appuyez encore en l’air pour un double saut.",
+    "areaLabel": "Cubi Hop. Appuyez sur Espace, la flèche du haut ou cliquez pour sauter.",
+    "score": "Score {score}",
+    "best": "Record {score}",
+    "newBest": "Nouveau record !",
+    "over": "Aïe ! Cliquez ou appuyez sur Espace pour réessayer.",
+    "paused": "En pause – cliquez ou appuyez sur Espace pour continuer.",
+    "result": "Partie terminée. Score : {score}.",
+    "resultBest": "Partie terminée. Score : {score} – nouveau record !",
+    "windowSoon": "Minecraft ouvre sa fenêtre…",
+    "ready": "Minecraft est prêt !",
+    "closesIn": "Fermeture dans {seconds} s",
+    "keepPlaying": "Continuer à jouer",
+    "closeNow": "Fermer",
+    "close": "Fermer le mini-jeu"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Interface",
@@ -3382,6 +3520,7 @@
       "storage": "Stockage",
       "network": "Réseau",
       "clips": "Clips et enregistrement",
+      "backups": "Sauvegardes des mondes",
       "notifications": "Notifications",
       "remote": "Télécommande"
     },
@@ -3444,7 +3583,7 @@
       "button": "En savoir plus et activer",
       "shares": "Pour partager des captures par lien, le launcher se connecte au serveur Cubiq. Cela n’arrive qu’après ton accord.",
       "achievements": "Pour afficher tes succès, le launcher se connecte au serveur Cubiq. Cela n'arrive qu'une fois que tu as accepté.",
-      "cosmetics": "Pour afficher les cosmétiques de tête Cubiq, le launcher se connecte au serveur Cubiq. Cela n’arrive qu’une fois que tu as donné ton accord.",
+      "cosmetics": "Pour afficher les cosmétiques Cubiq, le launcher se connecte au serveur Cubiq. Cela n’arrive qu’une fois que tu as donné ton accord.",
       "remote": "Pour contrôler ton PC depuis ce téléphone, le launcher se connecte au serveur Cubiq. Cela n’arrive qu’après ton accord."
     },
     "account": {
@@ -3862,7 +4001,6 @@
     "glows": "Brille",
     "tryOn": "Essayer {name}",
     "tryOnLocked": "Essayer {name} (verrouillé)",
-    "empty": "Aucun cosmétique de tête pour le moment.",
     "offline": "Le serveur Cubiq est injoignable pour le moment.",
     "previewFailed": "Impossible de charger l’aperçu 3D de cet objet.",
     "how": {
@@ -3894,8 +4032,7 @@
     },
     "companion": {
       "title": "Compagnons",
-      "intro": "Vole autour de ta tête en plus du chapeau. L’aperçu montre chapeau, compagnon et cape ensemble.",
-      "empty": "Pas encore de compagnon.",
+      "intro": "Vole autour de ta tête. L’aperçu montre compagnon et cape ensemble.",
       "wearing": "Compagnon : {name}",
       "selectedWorn": "Il vole avec toi – tous les joueurs avec le Cubiq Client le voient.",
       "toasts": {
@@ -3907,7 +4044,6 @@
       "title": "Compagnons au sol",
       "intro": "Marche à côté de toi – tous ceux qui ont Cubiq Client le voient. L’aperçu le montre à côté de ton personnage.",
       "creatorHint": "Compagnon de créateur : les fans l'obtiennent avec les codes du créateur, et le créateur en a plus selon ses fans (deux dès 10, trois dès 100, quatre dès 1000).",
-      "empty": "Pas encore de compagnons au sol.",
       "wearing": "À côté de toi : {name}",
       "selectedWorn": "Marche à côté de toi – tous ceux qui ont Cubiq Client le voient.",
       "toasts": {
@@ -4665,8 +4801,11 @@
     "imageOf": "Image {n} sur {total}",
     "versions": "Versions",
     "more": "{n} images de plus",
-    "thanks": "Merci à {names} pour leur contribution à cette mise à jour.",
     "openRelease": "Voir la version sur GitHub"
+  },
+  "updateModel": {
+    "label": "Modèle 3D de l’image de la mise à jour. Faites-le glisser ou utilisez les flèches pour le faire pivoter.",
+    "hint": "Glisser pour pivoter"
   },
   "clips": {
     "title": "Clips",
@@ -4885,6 +5024,53 @@
     "allHint": "Tout afficher à nouveau",
     "nothingSelected": "Aucun niveau sélectionné – clique sur un des boutons ci-dessus."
   },
+  "perfLive": {
+    "title": "Performances en direct",
+    "client": "Cubiq Client",
+    "expand": "Afficher les courbes",
+    "collapse": "Masquer les courbes",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS uniquement avec le Cubiq Client",
+    "fpsLimited": "Limité en arrière-plan",
+    "fpsWaiting": "En attente des premières images…",
+    "fpsStats": "Moy. {avg} · min. {min}",
+    "heap": "Java : {used} sur {max}",
+    "systemFree": "PC : {free} libres",
+    "cpuNote": "de tout le PC ({cores} threads)",
+    "noData": "pas encore de valeurs",
+    "chartSummary": "{label} sur la dernière minute : maintenant {now}, moyenne {avg}, minimum {min}, maximum {max}",
+    "now": "maintenant",
+    "secondsAgo": "il y a {seconds} s",
+    "dismissTip": "Masquer le conseil",
+    "tips": {
+      "performanceAction": "Réglages de performance",
+      "memory": {
+        "title": "Minecraft manque de mémoire",
+        "text": "La mémoire Java est presque pleine depuis un moment. Cela provoque des saccades et peut faire planter le jeu – donnez plus de mémoire à cette instance.",
+        "action": "Réglages de mémoire"
+      },
+      "systemMemory": {
+        "title": "Votre PC n’a presque plus de mémoire",
+        "text": "Il ne reste que {free} de libre. Fermez les programmes dont vous n’avez pas besoin – donner encore plus de mémoire à Minecraft aggraverait la situation."
+      },
+      "stutter": {
+        "title": "Courtes saccades",
+        "text": "La fréquence d’images chute régulièrement un instant. Réduisez la distance d’affichage ou utilisez l’optimisation Cubiq – et si la mémoire Java est presque pleine, donnez-en plus à l’instance."
+      },
+      "lowFps": {
+        "title": "Fréquence d’images basse",
+        "text": "Réduisez la distance d’affichage dans les réglages vidéo ou utilisez le boost FPS en jeu : menu Cubiq (Maj droite) → Performances.",
+        "boostOff": "L’optimisation Cubiq est désactivée pour cette instance. Activez-la – Sodium et d’autres mods de performance apportent généralement beaucoup plus de FPS."
+      },
+      "cpu": {
+        "title": "Processeur à la limite",
+        "text": "Minecraft utilise presque tout votre processeur. Réduisez la distance d’affichage et de simulation, ou fermez les programmes qui tournent en arrière-plan."
+      }
+    }
+  },
   "logShare": {
     "qrLabel": "QR code du lien",
     "qrFailed": "Pas de QR code disponible",
@@ -5034,13 +5220,13 @@
     "cheats": "Commandes",
     "backingUp": "Sauvegarde du monde …",
     "backupDone": "« {name} » a été sauvegardé",
-    "backup": "Sauvegarder (ZIP)",
+    "backup": "Sauvegarder maintenant",
     "backupOf": "Sauvegarder {name}",
     "openFolderOf": "Ouvrir le dossier de {name}",
     "deleteOf": "Supprimer {name}",
     "stopFirst": "Ferme d’abord le jeu",
     "deleted": "« {name} » est dans la corbeille",
-    "backupHint": "Les sauvegardes sont enregistrées en ZIP dans le dossier « backups » de l’instance (voir l’onglet Fichiers).",
+    "backupHint": "Les mondes sont sauvegardés automatiquement au lancement du jeu et après avoir joué – seulement ceux qui ont changé. Clique sur la ligne avec l'horloge pour voir, restaurer ou supprimer les sauvegardes.",
     "deleteTitle": "Supprimer le monde ?",
     "deleteText": "« {name} » va dans la Corbeille de Windows.",
     "deleteTextLinux": "« {name} » va dans la corbeille.",
@@ -5067,6 +5253,88 @@
       "joinNote": "Rejoindre lance le jeu et se connecte directement. Les très anciennes versions n’ouvrent que le menu principal.",
       "pingCooldown": "Attends quelques secondes avant le prochain test de ping.",
       "sortNote": "Trié par ping uniquement à l’affichage : la liste des serveurs du jeu garde son ordre."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Sauvegarde auto",
+      "defaultOn": "Par défaut (activée)",
+      "defaultOff": "Par défaut (désactivée)",
+      "on": "Activée",
+      "off": "Désactivée",
+      "onText": "Les sauvegardes automatiques sont activées : les mondes modifiés sont sauvegardés au lancement et après avoir joué, les {n} dernières de chaque monde sont conservées.",
+      "offText": "Les sauvegardes automatiques sont désactivées pour cette instance – utilise « Sauvegarder maintenant ».",
+      "sharedText": "Cette instance partage son dossier de mondes, les sauvegardes appartiennent donc à toutes les instances qui le partagent."
+    },
+    "panel": {
+      "open": "Sauvegardes de {name}",
+      "running": "Sauvegarde … {percent} %",
+      "status": "{n} sauvegarde · dernière {time} | {n} sauvegardes · dernière {time}",
+      "none": "Pas encore de sauvegarde",
+      "deletedTitle": "Mondes supprimés avec sauvegardes",
+      "restoreDeleted": "Restaurer"
+    },
+    "dialog": {
+      "title": "Sauvegardes de {name}",
+      "backupNow": "Sauvegarder maintenant",
+      "backingUp": "Sauvegarde … {percent} %",
+      "empty": "Pas encore de sauvegarde de ce monde.",
+      "restore": "Restaurer",
+      "deleteConfirm": "Supprimer cette sauvegarde ?",
+      "deleteOf": "Supprimer la sauvegarde du {date}"
+    },
+    "kinds": {
+      "auto": "Automatique",
+      "manual": "Manuelle",
+      "safety": "Avant restauration",
+      "legacy": "Ancienne sauvegarde"
+    },
+    "restore": {
+      "title": "Restaurer la sauvegarde du {date}",
+      "modeLabel": "Comment restaurer",
+      "copy": "Comme copie",
+      "copyText": "Ajoute le monde sous le nom « {name} » – ton monde actuel reste tel quel.",
+      "replace": "Remplacer le monde actuel",
+      "replaceText": "L'état actuel est d'abord sauvegardé, tu peux donc y revenir.",
+      "bringBack": "Récupérer le monde",
+      "bringBackText": "Le monde réapparaît dans ta liste de mondes.",
+      "confirm": "Restaurer",
+      "stopFirst": "Ferme d'abord le jeu – un monde ne peut être restauré que lorsque le jeu n'est pas lancé.",
+      "copySuffix": "restauré",
+      "taskTitle": "Restaurer {name}",
+      "stage": "Restauration du monde …",
+      "doneCopy": "Restauré sous le nom « {name} ».",
+      "doneReplace": "« {name} » a été restauré – l'état précédent est conservé comme sauvegarde.",
+      "doneDeleted": "« {name} » est de retour."
+    },
+    "task": {
+      "title": "Sauvegarde des mondes · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Vérification des mondes …"
+    },
+    "toast": {
+      "opened": "« {world} » a été ouvert avant la fin de sa sauvegarde. La sauvegarde précédente est conservée – une nouvelle est faite après avoir joué.",
+      "failed": "La sauvegarde de « {world} » a échoué : {error}"
+    },
+    "settings": {
+      "title": "Sauvegardes des mondes",
+      "intro": "Au lancement d'une instance, le launcher sauvegarde chaque monde solo modifié depuis sa dernière sauvegarde – en arrière-plan, le jeu démarre tout de suite. Après avoir joué, il sauvegarde les mondes joués. Les mondes inchangés sont ignorés.",
+      "enabledTitle": "Sauvegardes automatiques",
+      "enabledDescription": "Sauvegarder les mondes modifiés au lancement et après avoir joué. Chaque instance peut l'activer ou le désactiver dans son onglet Mondes.",
+      "keepTitle": "Conserver par monde",
+      "keepDescription": "Les anciennes sauvegardes automatiques sont supprimées. Les sauvegardes manuelles et celles faites avant une restauration restent toujours.",
+      "keepOption": "{n} sauvegarde | {n} sauvegardes",
+      "limitTitle": "Limite de taille",
+      "limitDescription": "Si l'ensemble des sauvegardes dépasse la limite, les plus anciennes automatiques partent en premier – la plus récente de chaque monde reste toujours.",
+      "noLimit": "Aucune",
+      "storageTitle": "Stockage",
+      "usage": "Utilisé : {size} · Sauvegardes : {count} · Mondes : {worlds}",
+      "usageNone": "Pas encore de sauvegarde.",
+      "where": "Les sauvegardes sont stockées en fichiers ZIP dans le dossier « world-backups » du dossier de données du launcher.",
+      "orphaned": "{size} appartiennent à des instances supprimées.",
+      "prune": "Les supprimer",
+      "pruneConfirm": "Supprimer définitivement",
+      "pruned": "{size} libérés."
     }
   },
   "share": {
@@ -7083,7 +7351,7 @@
       "grid": "Grille",
       "notch": "Encoche",
       "discard": "Abandonner les modifications ?",
-      "selectHint": "Touche un bouton pour le modifier. Glisse pour le déplacer, le coin rouge change la taille. Les flèches l’ajustent finement.",
+      "selectHint": "Touche un bouton pour le modifier. Glisse pour le déplacer, le coin vert change la taille. Les flèches l’ajustent finement.",
       "actionType": "Action",
       "key": "Touche",
       "chord": "Maintenir avant",

@@ -85,10 +85,10 @@ function openRelease() {
   <Teleport to="body">
     <Transition name="fade">
       <div v-if="updater.phase === 'installing'" class="update-splash" role="status" aria-live="polite">
-        <img src="/logo.png" alt="" width="64" height="64" />
-        <p class="display text-sm tracking-widest text-base-200 uppercase">Cubiq Launcher {{ updater.version }}</p>
+        <img src="/logo.png" alt="" width="80" height="80" />
+        <p class="display text-lg text-base-50">Cubiq <span class="text-primary-300">Launcher</span> <span class="font-medium text-base-400">{{ updater.version }}</span></p>
         <p class="text-xs text-base-400">{{ t('updater.splash') }}</p>
-        <div class="update-wire"><span /></div>
+        <div class="update-bar"><span /></div>
       </div>
     </Transition>
   </Teleport>
@@ -100,28 +100,29 @@ function openRelease() {
 .update-pill {
   @apply flex items-center gap-1.5 rounded-md bg-primary-500 px-2.5 py-1 text-[11px] font-semibold text-on-primary shadow-[0_0_12px_-2px_var(--color-primary-500)] transition-colors hover:bg-primary-400 disabled:opacity-70;
 }
+/* Wie der Ladebildschirm beim Start: dunkler Grund mit grünem Schein, Logo und ein ruhig laufender Balken. */
 .update-splash {
   @apply fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-3;
-  background: radial-gradient(ellipse at center, #1c1a1d 0%, #111114 70%);
+  background:
+    radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--color-primary-500) 16%, transparent) 0%, transparent 38%),
+    var(--color-base-950);
 }
 .update-splash img {
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 14px rgb(224 40 30 / 0.55));
+  filter: drop-shadow(0 10px 28px rgb(var(--shadow-rgb) / 0.6));
 }
-.update-wire {
-  @apply relative mt-1 h-[3px] w-40 overflow-hidden bg-[#3a1512];
+.update-bar {
+  @apply relative mt-1 h-[3px] w-36 overflow-hidden rounded-full bg-base-800;
 }
-.update-wire span {
-  @apply absolute inset-y-0 w-2/5;
-  background: linear-gradient(90deg, transparent, var(--color-primary-500), #ff6a4d, var(--color-primary-500), transparent);
-  box-shadow: 0 0 10px var(--color-primary-500);
-  animation: update-signal 1.1s steps(16) infinite;
+.update-bar span {
+  @apply absolute inset-y-0 w-2/5 rounded-full;
+  background: linear-gradient(90deg, transparent, var(--color-primary-500), var(--color-primary-300), transparent);
+  animation: update-signal 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 @keyframes update-signal {
   from { transform: translateX(-100%); }
   to { transform: translateX(250%); }
 }
-:root[data-reduced-motion] .update-wire span { animation: none; @apply w-full; }
+:root[data-reduced-motion] .update-bar span { animation: none; @apply w-full; }
 .fade-enter-active { transition: opacity 0.2s ease; }
 .fade-enter-from { opacity: 0; }
 .update-pill-failed {

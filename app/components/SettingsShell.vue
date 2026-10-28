@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { IconName } from '~/utils/icons'
 
-// Gemeinsamer Rahmen für die globalen und die Instanz-Einstellungen:
-// Titel + runder Schließen-Knopf, links eine Navigation mit Gruppen und
-// aktiver Pille, rechts eine eigenständig scrollende Inhaltsspalte.
+// Gemeinsamer Rahmen für die globalen und die Instanz-Einstellungen: Titel mit Würfel-Zeichen (oder
+// dem Bild der Instanz) und Schließen-Knopf, links eine Navigation mit Gruppen – der gewählte Abschnitt
+// ist eine grüne Fläche wie im Dock –, rechts eine eigenständig scrollende Inhaltsspalte.
 export interface ShellSection {
   key: string
   label: string
@@ -56,32 +56,32 @@ useOverlayMotion(backdrop, () => 'dialog')
 </script>
 
 <template>
-  <div ref="backdrop" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-[2px] mobile:p-0" @mousedown.self="emit('close')">
+  <div ref="backdrop" class="shell-backdrop fixed inset-0 z-50 flex items-center justify-center p-6 mobile:p-0" @mousedown.self="emit('close')">
     <section
       role="dialog"
       aria-modal="true"
       :aria-label="title"
       data-motion-panel
-      class="flex h-[min(720px,90vh)] w-[min(1000px,94vw)] flex-col overflow-hidden rounded-2xl border border-base-800 bg-base-900 shadow-2xl shadow-black/50 mobile:h-full mobile:w-full mobile:rounded-none mobile:border-0 mobile:pt-[var(--safe-top)]"
+      class="shell-panel flex h-[min(720px,90vh)] w-[min(1000px,94vw)] flex-col overflow-hidden rounded-2xl border border-line bg-base-900 mobile:h-full mobile:w-full mobile:rounded-none mobile:border-0 mobile:pt-[var(--safe-top)]"
     >
-      <header class="flex items-center gap-3 border-b border-base-800 px-6 py-4 mobile:px-4 mobile:py-2.5">
-        <slot name="title-icon" />
-        <h2 class="min-w-0 flex-1 truncate text-lg font-semibold">{{ title }}</h2>
-        <span v-if="status" role="status" class="text-xs" :class="status.ok ? 'text-base-400' : 'text-primary-300'">{{ status.text }}</span>
-        <button class="grid size-9 place-items-center rounded-full bg-base-800 mobile:size-11 text-base-200 transition-colors hover:bg-base-700 hover:text-base-50" :aria-label="t('common.actions.close')" @click="emit('close')">
+      <header class="shell-head flex items-center gap-3 border-b border-line px-6 py-4 mobile:px-4 mobile:py-2.5">
+        <slot name="title-icon"><CubeMark :size="18" /></slot>
+        <h2 class="display min-w-0 flex-1 truncate text-lg text-base-50">{{ title }}</h2>
+        <span v-if="status" role="status" class="text-xs" :class="status.ok ? 'text-base-400' : 'text-danger-300'">{{ status.text }}</span>
+        <button class="btn-icon mobile:size-11" :aria-label="t('common.actions.close')" @click="emit('close')">
           <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path :d="icons.close" /></svg>
         </button>
       </header>
 
       <div class="flex min-h-0 flex-1 mobile:flex-col">
-        <nav ref="nav" class="flex w-64 shrink-0 flex-col overflow-y-auto border-r border-base-800 p-3 mobile-scroll-x mobile:w-full mobile:flex-row mobile:gap-1 mobile:overflow-y-hidden mobile:border-r-0 mobile:border-b mobile:px-3 mobile:py-2" :aria-label="t('settingsShell.sectionsLabel')">
+        <nav ref="nav" class="shell-nav flex w-64 shrink-0 flex-col overflow-y-auto border-r border-line p-3 mobile-scroll-x mobile:w-full mobile:flex-row mobile:gap-1 mobile:overflow-y-hidden mobile:border-r-0 mobile:border-b mobile:px-3 mobile:py-2" :aria-label="t('settingsShell.sectionsLabel')">
           <div v-for="(g, i) in grouped" :key="i" :class="{ 'mt-4': i > 0 && g.group }" class="mobile:mt-0! mobile:flex mobile:shrink-0 mobile:gap-1">
-            <p v-if="g.group" class="mobile:hidden mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-base-600 uppercase">{{ g.group }}</p>
+            <p v-if="g.group" class="mobile:hidden mb-1.5 px-3 text-[10.5px] font-semibold tracking-[0.12em] text-base-600 uppercase">{{ g.group }}</p>
             <button
               v-for="s in g.items"
               :key="s.key"
-              class="mb-0.5 flex w-full items-center gap-2.5 rounded-full px-3 py-2 text-left text-sm font-medium transition-colors mobile:mb-0 mobile:min-h-10 mobile:w-auto mobile:shrink-0 mobile:whitespace-nowrap"
-              :class="active === s.key ? 'bg-primary-500 text-on-primary' : 'text-base-400 hover:bg-base-800 hover:text-base-50'"
+              class="mb-0.5 flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors mobile:mb-0 mobile:min-h-10 mobile:w-auto mobile:shrink-0 mobile:whitespace-nowrap"
+              :class="active === s.key ? 'shell-on' : 'text-base-400 hover:bg-base-850 hover:text-base-50'"
               :aria-current="active === s.key ? 'page' : undefined"
               @click="active = s.key"
             >
@@ -101,3 +101,37 @@ useOverlayMotion(backdrop, () => 'dialog')
     </section>
   </div>
 </template>
+
+<style scoped>
+@reference "~/assets/css/main.css";
+
+.shell-backdrop {
+  background: rgb(var(--shadow-rgb) / 0.62);
+  backdrop-filter: blur(3px);
+}
+.shell-panel {
+  box-shadow: var(--edge-light), var(--elev-3);
+}
+@supports (corner-shape: squircle) {
+  .shell-panel {
+    corner-shape: squircle;
+    border-radius: 2rem;
+  }
+  :root.is-mobile .shell-panel {
+    border-radius: 0;
+  }
+}
+/* Navigation eine Stufe tiefer als der Inhalt – wie das Dock neben der Leinwand. */
+.shell-nav {
+  background: color-mix(in srgb, var(--color-base-950) 45%, var(--color-base-900));
+}
+/* Gewählter Abschnitt: grüne Fläche mit Lichtkante, Schrift dunkel darauf (wie im Dock). */
+.shell-on {
+  @apply bg-primary-500;
+  color: var(--color-on-primary);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    inset 0 -1px 0 rgb(0 0 0 / 0.14),
+    0 6px 18px -8px var(--glow-primary);
+}
+</style>

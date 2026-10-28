@@ -72,7 +72,8 @@ async fn v2_login_with(
             "hosting.join",
             "hosting.mods",
             "hosting.open",
-            "clips.overlay"
+            "clips.overlay",
+            "perf.report"
         ])
     );
     let mut proof = proto::game_proof(&key, &sid, &nc, &nl);
@@ -1059,4 +1060,69 @@ async fn fremder_prozess_bekommt_kein_overlay() {
     assert_eq!(denied["type"], "denied");
     assert_eq!(link.hud("survival"), LinkHud::default());
     assert!(seen.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn leistung_kommt_vom_spiel_geprueft_und_gebremst() {
+    let link = CubiqLink::new(None);
+    let handoff = link.open_session("survival", false).await.unwrap();
+    assert_eq!(link.perf("survival"), None, "ohne Meldung nichts");
+    let mut c = v2_login(&handoff, false).await.expect("Anmeldung");
+
+    send(&mut c.w, json!({ "type": "perf", "fps": 143.6, "limited": false, "heapUsed": 1834, "heapMax": 4096 })).await;
+    let expected = LinkPerf { fps: Some(144), limited: false, heap_used_mb: Some(1834), heap_max_mb: Some(4096) };
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+    while link.perf("survival") != Some(expected) {
+        assert!(tokio::time::Instant::now() < deadline, "Meldung kommt an: {:?}", link.perf("survival"));
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    // Gleich danach: zu schnell, wird verworfen.
+    send(&mut c.w, json!({ "type": "perf", "fps": 20 })).await;
+    tokio::time::sleep(Duration::from_millis(150)).await;
+    assert_eq!(link.perf("survival"), Some(expected));
+
+    // Nach der Bremse: Unsinn wird ignoriert, Gebremst-Hinweis kommt an.
+    tokio::time::sleep(Duration::from_millis(450)).await;
+    send(&mut c.w, json!({ "type": "perf", "fps": -5, "heapUsed": 99_999_999 })).await;
+    tokio::time::sleep(Duration::from_millis(150)).await;
+    assert_eq!(link.perf("survival"), Some(expected), "nur unsinnige Werte → keine Meldung");
+    send(&mut c.w, json!({ "type": "perf", "fps": 15, "limited": true, "heapUsed": 9000, "heapMax": 4096 })).await;
+    let throttled = LinkPerf { fps: Some(15), limited: true, heap_used_mb: None, heap_max_mb: Some(4096) };
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+    while link.perf("survival") != Some(throttled) {
+        assert!(tokio::time::Instant::now() < deadline, "belegt > Maximum wird verworfen: {:?}", link.perf("survival"));
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+
+    // Spielende: Sitzung weg, Meldung weg.
+    link.close_session("survival");
+    assert_eq!(link.perf("survival"), None);
+}
+
+#[tokio::test]
+async fn alte_mods_melden_keine_leistung() {
+    let link = CubiqLink::new(None);
+    link.open_session("legacy", true).await.unwrap();
+    let token = link.clips_config("legacy", true).token.unwrap();
+    let (mut r, mut w) = connect(link.port().unwrap()).await;
+    send(&mut w, json!({ "type": "hello", "v": 1, "token": token })).await;
+    assert_eq!(line(&mut r).await["type"], "state");
+    send(&mut w, json!({ "type": "perf", "fps": 60 })).await;
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    assert_eq!(link.perf("legacy"), None, "nur über Protokoll 2");
+}
+
+#[test]
+fn leistungsmeldung_wird_streng_gelesen() {
+    let parse = |v: serde_json::Value| LinkPerf::parse(&serde_json::from_value::<Incoming>(v).unwrap());
+    assert_eq!(parse(json!({ "type": "perf" })), None);
+    assert_eq!(parse(json!({ "type": "perf", "fps": "60" })), None, "nur Zahlen");
+    assert_eq!(parse(json!({ "type": "perf", "fps": 1e9 })), None);
+    assert_eq!(parse(json!({ "type": "perf", "fps": 0 })), Some(LinkPerf { fps: Some(0), ..Default::default() }));
+    assert_eq!(parse(json!({ "type": "perf", "heapMax": 0 })), None, "Maximum 0 ist unsinnig");
+    assert_eq!(
+        parse(json!({ "type": "perf", "heapUsed": 512, "limited": "ja" })),
+        Some(LinkPerf { heap_used_mb: Some(512), ..Default::default() }),
+        "gebremst nur als echtes true"
+    );
 }

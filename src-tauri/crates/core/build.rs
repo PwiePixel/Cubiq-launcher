@@ -33,7 +33,9 @@ fn main() {
         .or_else(|| key_file.and_then(|f| std::fs::read_to_string(f).ok()).map(|k| k.trim().to_owned()))
         .filter(|k| is_plausible(k))
         .unwrap_or_default();
-    if key.is_empty() {
+    // Nur Release-Builds brauchen den Schlüssel. Prüfungen (Clippy, Tests in der CI) und Entwicklungs-Builds
+    // laufen absichtlich ohne – dort wäre die Warnung nur Lärm.
+    if key.is_empty() && std::env::var("PROFILE").as_deref() == Ok("release") {
         println!("cargo:warning=Kein CurseForge-API-Schlüssel gefunden – CurseForge bleibt in diesem Build ausgeschaltet.");
     }
 

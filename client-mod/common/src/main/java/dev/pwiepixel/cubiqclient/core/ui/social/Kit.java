@@ -171,7 +171,7 @@ public final class Kit {
 		String s = count > 99 ? "99+" : String.valueOf(count);
 		int w = Math.max(10, c.textWidth(s) + 5);
 		int x = right - w;
-		if (t.halloween || t.winter || t.fox) {
+		if (t.halloween || t.fox) {
 			Paint.glow(c, x, y, w, 10, t.faceGlow, 0.3f);
 			Paint.block(c, x, y, w, 10, t.faceOnEdge);
 			c.fill(x + 1, y + 1, x + w - 1, y + 9, t.faceOn);

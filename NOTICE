@@ -1,11 +1,6 @@
 Cubiq Launcher, Cubiq Client and the Cubiq server plugin
 Copyright (C) 2026 PwiePixel
 
-Based on TRS Launcher by Ohev Tamerin (Theredstonee)
-Copyright (C) 2026 Ohev Tamerin (Theredstonee)
-https://github.com/theredstonee/TRS-Launcher (version 0.31.0, commit
-036366033e0ece45d43daf5399ee0ab17ce3e4b8)
-
 This program is free software: you can redistribute it and/or modify it under the terms of the
 GNU General Public License as published by the Free Software Foundation, version 3 of the License
 (see LICENSE).
@@ -13,22 +8,6 @@ GNU General Public License as published by the Free Software Foundation, version
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
 even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 General Public License for more details.
-
-Modifications
--------------
-Cubiq Launcher is a modified version of TRS Launcher. On 2026-10-27 PwiePixel made these changes
-(the full list is in the Git history of this repository):
-- New name (Cubiq Launcher, Cubiq Client), own logo, app icons and start animation.
-- New launcher design: a clean, dark look in the green of the Cubiq logo instead of the redstone
-  look; the launcher's extra designs of the original (winter, fox) were removed.
-- New identifiers and namespaces (app id dev.pwiepixel.cubiqlauncher, Java/Kotlin packages
-  dev.pwiepixel.*, mod id cubiqclient, data folder Cubiq-Launcher, cubiq-launcher:// links).
-- Online services, Microsoft sign-in and Discord status are switched off until this build is given
-  its own server, Azure app and Discord app; no data is sent to the services of the original.
-- Version numbering restarted at 0.1.0.
-Files that carry the original copyright header keep it.
-
-Cubiq Launcher is not affiliated with or endorsed by the TRS Launcher project or its author.
 
 Third-party parts
 -----------------
@@ -41,6 +20,8 @@ Third-party parts
   that ship AppleSkin textures are supported.
 - Inter by Rasmus Andersson (SIL Open Font License 1.1, via @fontsource-variable/inter): the
   launcher's font.
+- Sora by The Sora Project Authors (SIL Open Font License 1.1, via @fontsource-variable/sora): the
+  launcher's heading font.
 - Fonts for the Halloween look (SIL Open Font License 1.1, bundled in app/assets/fonts with their
   license texts): IM Fell English SC by Igino Marini; Cormorant Garamond by The Cormorant Project
   Authors (Christian Thalmann).

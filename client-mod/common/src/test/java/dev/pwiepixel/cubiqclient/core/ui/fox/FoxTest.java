@@ -2,8 +2,6 @@ package dev.pwiepixel.cubiqclient.core.ui.fox;
 
 import dev.pwiepixel.cubiqclient.core.intro.LookPicker;
 import dev.pwiepixel.cubiqclient.core.ui.Theme;
-import dev.pwiepixel.cubiqclient.core.ui.winter.Snow;
-import dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -223,7 +221,7 @@ class FoxTest {
 		assertTrue(midCherries >= 4, "mehrere Kirschbäume im Mittel- und Vordergrund: " + midCherries);
 		assertTrue(bigByTheFire, "ein großer Kirschbaum gleich links vom Lagerfeuer");
 		// Meist treiben Kirschblüten durch die Luft, dazwischen Herbstblätter.
-		FoxParticles.Leaves many = new FoxParticles.Leaves(1260, 120, new WinterMath.Rng(9), 1);
+		FoxParticles.Leaves many = new FoxParticles.Leaves(1260, 120, new FoxMath.Rng(9), 1);
 		int petals = 0;
 		for (int i = 0; i < many.count; i++) if (many.petal[i]) petals++;
 		assertTrue(petals * 2 > many.count && petals < many.count, "Blüten " + petals + " von " + many.count);
@@ -309,13 +307,13 @@ class FoxTest {
 
 	@Test
 	void particlesMatchTheLauncher() {
-		FoxParticles.Leaves lv = new FoxParticles.Leaves(427, 240, new WinterMath.Rng(42), 1);
+		FoxParticles.Leaves lv = new FoxParticles.Leaves(427, 240, new FoxMath.Rng(42), 1);
 		for (int t = 0; t < 50; t++) lv.step(t);
 		assertEquals(31, lv.count);
 		assertEquals(366.0585646694701, lv.x[0], 1e-9);
 		assertEquals(165.05866055817017, lv.y[0], 1e-9);
 		assertEquals(2, lv.tone[0]);
-		FoxParticles.Fireflies ff = new FoxParticles.Fireflies(new WinterMath.Rng(9), 5, 10, 100, 20, 60);
+		FoxParticles.Fireflies ff = new FoxParticles.Fireflies(new FoxMath.Rng(9), 5, 10, 100, 20, 60);
 		ff.at(1, 12.3, false);
 		assertEquals(80, ff.ax);
 		assertEquals(30, ff.ay);
@@ -326,7 +324,7 @@ class FoxTest {
 
 	@Test
 	void sparksRiseAndFade() {
-		FoxParticles.Sparks sp = new FoxParticles.Sparks(new WinterMath.Rng(3));
+		FoxParticles.Sparks sp = new FoxParticles.Sparks(new FoxMath.Rng(3));
 		double[] origin = {100, 50, 6};
 		for (int t = 0; t < 200; t++) sp.step(origin, t, 1);
 		assertTrue(sp.count > 0 && sp.count <= FoxParticles.Sparks.MAX);
@@ -345,9 +343,9 @@ class FoxTest {
 			FoxPainter.Frame f = new FoxPainter.Frame();
 			f.tick = 40;
 			f.seconds = 3.2;
-			WinterMath.Rng r = new WinterMath.Rng(1);
+			FoxMath.Rng r = new FoxMath.Rng(1);
 			f.leaves = new FoxParticles.Leaves(L.w, L.h, r, 1);
-			f.smoke = new Snow.Smoke(r);
+			f.smoke = new Smoke(r);
 			f.sparks = new FoxParticles.Sparks(r);
 			int[] out = new int[L.w * L.h];
 			P.compose(out, f);

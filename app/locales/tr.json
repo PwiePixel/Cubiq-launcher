@@ -748,6 +748,14 @@
       "levelDatBroken": "Dünyanın level.dat dosyası bozuk.",
       "notFound": "Bu dünya artık yok."
     },
+    "worldBackups": {
+      "tooManyFiles": "Bu dünyada yedek için çok fazla dosya var.",
+      "unsafeArchive": "Yedek geçersiz yollar içeriyor ve açılmıyor.",
+      "broken": "Bu yedek bozuk.",
+      "notFound": "Bu yedek artık yok.",
+      "worldOpened": "Dünya, yedeği bitmeden oyunda açıldı.",
+      "worldOpen": "Bu dünya şu an oyunda açık – önce kapat."
+    },
     "logs": {
       "sourceGone": "Bu günlük dosyası artık yok.",
       "unreadable": "Bu günlük dosyası okunamıyor.",
@@ -1990,6 +1998,93 @@
       "javaCustom": "özel yol"
     }
   },
+  "stats": {
+    "title": "İstatistikler",
+    "subtitle": "Ne kadar oynadığın – tüm örneklerinde.",
+    "subtitleInstance": "{name} oynama süresi",
+    "filterLabel": "İstatistikleri göster",
+    "allInstances": "Tüm örnekler",
+    "live": "Şu an oynanıyor",
+    "units": {
+      "hours": "{n} sa"
+    },
+    "empty": {
+      "title": "Henüz oynama süresi yok",
+      "text": "Bir örneği başlat ve bir tur oyna – her oturum burada görünür: günlük saatler, oyun günlerinin takvimi, en sevdiğin örnekler ve sürümler ve en uzun serin.",
+      "action": "Kütüphaneyi aç"
+    },
+    "tiles": {
+      "label": "Temel rakamlar",
+      "total": "Toplam oynama süresi",
+      "totalCarried": "öncesinden {time} dahil",
+      "since": "{date} tarihinden beri",
+      "week": "Bu hafta",
+      "today": "Bugün: {time}",
+      "month": "Bu ay",
+      "sessions": "Oturumlar",
+      "average": "Oturum başına Ø {time}",
+      "longest": "En uzun oturum",
+      "streak": "Güncel seri",
+      "days": "{n} gün | {n} gün",
+      "bestStreak": "Rekor: {days}"
+    },
+    "chart": {
+      "title": "Oynama süresi",
+      "rangeLabel": "Zaman aralığı",
+      "days": "30 gün",
+      "weeks": "16 hafta",
+      "labelDays": "Günlük oynama süresi, son 30 gün",
+      "labelWeeks": "Haftalık oynama süresi, son 16 hafta",
+      "total": "Toplam: {time}",
+      "none": "Oynanmadı",
+      "weekOf": "{date} haftası",
+      "summary": "{label}. Toplam: {total}. En çok: {best}.",
+      "showTable": "Tablo olarak göster",
+      "hideTable": "Tabloyu gizle",
+      "day": "Gün",
+      "week": "Hafta",
+      "playTime": "Oynama süresi"
+    },
+    "heatmap": {
+      "title": "Takvim",
+      "daysPlayed": "{n} gün oynandı | {n} gün oynandı",
+      "summary": "{label}: son {weeks} hafta, {days} gün oynandı.",
+      "less": "Az",
+      "more": "Çok"
+    },
+    "top": {
+      "instances": "En çok oynanan örnekler",
+      "versions": "Minecraft sürümleri",
+      "versionsHint": "Oynadığın sürümler",
+      "noVersions": "Henüz sürümü bilinen oturum yok.",
+      "servers": "Sunucular",
+      "serversHint": "Katıldığın sunucular – başlatıcı veya oyundaki çok oyunculu menü üzerinden.",
+      "sessions": "{n} oturum | {n} oturum",
+      "deleted": "{name} (silindi)",
+      "showAll": "Tümünü göster ({n})",
+      "showLess": "Daha az göster"
+    },
+    "footer": {
+      "tracking": "Oturumlar {date} tarihinden beri kaydediliyor.",
+      "carried": "Önceki oynama süresi toplamlara ve örneklere dahildir, ancak tarihi yoktur."
+    },
+    "reset": {
+      "button": "İstatistikleri sıfırla",
+      "title": "İstatistikler sıfırlansın mı?",
+      "text": "Kaydedilen tüm oturumlar istatistiklerden silinir – grafikler, takvim, seriler ve listeler sıfırdan başlar. Örneklerinde gösterilen oynama süresi kalır.",
+      "confirm": "Sıfırla",
+      "done": "İstatistikler sıfırlandı."
+    },
+    "instance": {
+      "title": "Oynama süresi",
+      "recent": "Son 30 günde {time}",
+      "average": "Ortalama",
+      "last30": "Son 30 günün oynama süresi: {time}",
+      "crashes": "{n} çökme | {n} çökme",
+      "topVersion": "Çoğunlukla {version}",
+      "open": "Tüm istatistikler"
+    }
+  },
   "logConsole": {
     "lineCount": "{n} satır | {n} satır",
     "copied": "Kopyalandı"
@@ -2379,6 +2474,21 @@
       "updatesPortable": "Taşınabilir sürüm – güncellemeler indirme sayfasında"
     },
     "appearance": {
+      "look": {
+        "title": "Tasarım",
+        "text": "Tüm görünümü değiştirir: arka plan sahnesi, renkler ve küçük ayrıntılar. Renk teması ve vurgu rengi senin ayarladığın gibi kalır; Cubiq Client tasarımı oyuna taşır.",
+        "choose": "{name} tasarımını kullan",
+        "options": {
+          "cubiq": {
+            "name": "Cubiq",
+            "text": "Hafif yeşil tonlu koyu yüzeyler ve Cubiq yeşili vurgular"
+          },
+          "winter": {
+            "name": "Kuzey Işıkları",
+            "text": "Yüzen karlı adaların üzerinde Cubiq yeşili kutup ışıkları"
+          }
+        }
+      },
       "colorScheme": "Renk teması",
       "themes": {
         "dark": "Koyu",
@@ -3039,14 +3149,13 @@
     "discover": "Keşfet",
     "servers": "Sunucular",
     "screenshots": "Ekran görüntüleri",
+    "stats": "İstatistikler",
     "skins": "Skinler",
     "admin": "Yönetim",
     "runningCount": "{n} çalışıyor | {n} çalışıyor",
     "quickLaunch": "Hızlı başlat",
     "openNamed": "Aç: {name}",
     "newInstance": "Yeni kurulum",
-    "searchShortcut": "Ara (Ctrl+K)",
-    "searchTip": "Ara · Ctrl K",
     "settings": "Ayarlar",
     "accountNamed": "Hesap: {name}",
     "signIn": "Giriş yap",
@@ -3061,7 +3170,12 @@
     "achievements": "Başarımlar",
     "localServers": "Sunucularım",
     "controls": "Kontroller",
-    "pc": "PC"
+    "pc": "PC",
+    "groups": {
+      "together": "Birlikte",
+      "collection": "Koleksiyon",
+      "tools": "Araçlar"
+    }
   },
   "accountMenu": {
     "menuLabel": "Hesaplar",
@@ -3107,6 +3221,7 @@
       "servers": "sunucu listesi server list",
       "accounts": "hesap giriş oturum microsoft account sign in login",
       "screenshots": "görseller resimler galeri ekran görüntüsü images gallery",
+      "stats": "istatistik oynama süresi saat seri takvim grafik",
       "skins": "pelerin skin cape",
       "settings": "ayarlar seçenekler tercihler settings options",
       "newInstance": "ekle oluştur yeni add create new",
@@ -3335,6 +3450,9 @@
       "add": "Sunucu ekle",
       "addHint": "Canlı durum ve tek tıkla katılma",
       "addHintEmpty": "Sunucuların canlı durumuyla – tek tıkla katıl"
+    },
+    "stage": {
+      "pick": "{name} seç"
     }
   },
   "news": {
@@ -3364,6 +3482,26 @@
     "preparing": "Minecraft hazırlanıyor",
     "crashed": "Oyun beklenmedik şekilde kapandı – nedeni genellikle günlüklerde görünür."
   },
+  "launchGame": {
+    "title": "Cubi Hop",
+    "intro": "Minecraft başlarken blokların üzerinden zıpla.",
+    "start": "Oyna",
+    "controls": "Zıplamak için Boşluk, ↑ veya tıkla – çift zıplama için havada bir kez daha bas.",
+    "areaLabel": "Cubi Hop. Zıplamak için Boşluk'a ya da yukarı oka bas veya tıkla.",
+    "score": "Puan {score}",
+    "best": "Rekor {score}",
+    "newBest": "Yeni rekor!",
+    "over": "Ah! Tekrar denemek için tıkla veya Boşluk'a bas.",
+    "paused": "Duraklatıldı – devam etmek için tıkla veya Boşluk'a bas.",
+    "result": "Oyun bitti. Puan: {score}.",
+    "resultBest": "Oyun bitti. Puan: {score} – yeni rekor!",
+    "windowSoon": "Minecraft penceresini açıyor…",
+    "ready": "Minecraft hazır!",
+    "closesIn": "{seconds} sn içinde kapanır",
+    "keepPlaying": "Oynamaya devam et",
+    "closeNow": "Kapat",
+    "close": "Mini oyunu kapat"
+  },
   "settingsSections": {
     "groups": {
       "interface": "Arayüz",
@@ -3382,6 +3520,7 @@
       "storage": "Depolama",
       "network": "Ağ",
       "clips": "Klipler ve kayıt",
+      "backups": "Dünya yedekleri",
       "notifications": "Bildirimler",
       "remote": "Uzaktan kumanda"
     },
@@ -3444,7 +3583,7 @@
       "button": "Daha fazla bilgi ve aç",
       "shares": "Ekran görüntülerini bağlantı olarak paylaşmak için başlatıcı Cubiq sunucusuna giriş yapar. Bu yalnızca onay verdiğinde olur.",
       "achievements": "Başarımlarını göstermek için launcher Cubiq sunucusuna giriş yapar. Bu yalnızca onay verdiğinde olur.",
-      "cosmetics": "Cubiq kafa kozmetiklerini göstermek için launcher Cubiq sunucusuna giriş yapar. Bu yalnızca sen onay verdikten sonra olur.",
+      "cosmetics": "Cubiq kozmetiklerini göstermek için launcher Cubiq sunucusuna giriş yapar. Bu yalnızca sen onay verdikten sonra olur.",
       "remote": "Bilgisayarını bu telefondan kontrol etmek için başlatıcı Cubiq sunucusunda oturum açar. Bu yalnızca sen onay verdikten sonra olur."
     },
     "account": {
@@ -3862,7 +4001,6 @@
     "glows": "Parlar",
     "tryOn": "Dene: {name}",
     "tryOnLocked": "Dene: {name} (kilitli)",
-    "empty": "Henüz kafa kozmetiği yok.",
     "offline": "Cubiq sunucusuna şu anda ulaşılamıyor.",
     "previewFailed": "Bu eşyanın 3D önizlemesi yüklenemedi.",
     "how": {
@@ -3894,8 +4032,7 @@
     },
     "companion": {
       "title": "Yoldaşlar",
-      "intro": "Şapkanın yanında başının etrafında uçar. Önizleme şapkayı, yoldaşı ve pelerini birlikte gösterir.",
-      "empty": "Henüz yoldaş yok.",
+      "intro": "Başının etrafında uçar. Önizleme yoldaşı ve pelerini birlikte gösterir.",
       "wearing": "Yoldaş: {name}",
       "selectedWorn": "Seninle uçuyor – Cubiq Client kullanan herkes görür.",
       "toasts": {
@@ -3907,7 +4044,6 @@
       "title": "Yerdeki yoldaşlar",
       "intro": "Yanında yürür – Cubiq Client kullanan herkes onu görür. Önizleme onu karakterinin yanında gösterir.",
       "creatorHint": "Creator evcil hayvanı: hayranlar onu creator'ın kodlarıyla alır, creator'ın kendisi hayran sayısına göre daha fazlasıyla dolaşır (10'dan itibaren iki, 100'den üç, 1000'den dört).",
-      "empty": "Henüz yerde yoldaş yok.",
       "wearing": "Yanında: {name}",
       "selectedWorn": "Yanında yürür – Cubiq Client kullanan herkes onu görür.",
       "toasts": {
@@ -4665,8 +4801,11 @@
     "imageOf": "Görsel {n} / {total}",
     "versions": "Sürümler",
     "more": "{n} görsel daha",
-    "thanks": "Bu güncellemeye katkıları için teşekkürler: {names}.",
     "openRelease": "Sürümü GitHub'da görüntüle"
+  },
+  "updateModel": {
+    "label": "Güncelleme görselinin 3B modeli. Döndürmek için sürükle veya ok tuşlarını kullan.",
+    "hint": "Döndürmek için sürükle"
   },
   "clips": {
     "title": "Klipler",
@@ -4885,6 +5024,53 @@
     "allHint": "Yeniden her şeyi göster",
     "nothingSelected": "Seviye seçilmedi – yukarıdaki düğmelerden birine tıkla."
   },
+  "perfLive": {
+    "title": "Canlı performans",
+    "client": "Cubiq Client",
+    "expand": "Grafikleri göster",
+    "collapse": "Grafikleri gizle",
+    "fps": "FPS",
+    "ram": "RAM",
+    "cpu": "CPU",
+    "fpsValue": "{fps} FPS",
+    "fpsNoClient": "FPS yalnızca Cubiq Client ile",
+    "fpsLimited": "Arka planda sınırlı",
+    "fpsWaiting": "İlk kareler bekleniyor…",
+    "fpsStats": "Ort. {avg} · en düşük {min}",
+    "heap": "Java: {used} / {max}",
+    "systemFree": "PC: {free} boş",
+    "cpuNote": "tüm bilgisayarın ({cores} iş parçacığı)",
+    "noData": "henüz değer yok",
+    "chartSummary": "Son bir dakikada {label}: şu an {now}, ortalama {avg}, en düşük {min}, en yüksek {max}",
+    "now": "şu an",
+    "secondsAgo": "{seconds} sn önce",
+    "dismissTip": "İpucunu gizle",
+    "tips": {
+      "performanceAction": "Performans ayarları",
+      "memory": {
+        "title": "Minecraft'ın belleği bitiyor",
+        "text": "Java belleği bir süredir neredeyse dolu. Bu takılmalara yol açar ve oyunu çökertebilir – bu örneğe daha fazla bellek ver.",
+        "action": "Bellek ayarları"
+      },
+      "systemMemory": {
+        "title": "Bilgisayarının belleği neredeyse bitti",
+        "text": "Yalnızca {free} boş. Şu an ihtiyacın olmayan programları kapat – Minecraft'a daha da fazla bellek vermek durumu kötüleştirir."
+      },
+      "stutter": {
+        "title": "Kısa takılmalar",
+        "text": "Kare hızı tekrar tekrar bir anlığına düşüyor. Görüş mesafesini azalt veya Cubiq optimizasyonunu kullan – Java belleği neredeyse doluysa örneğe daha fazla bellek ver."
+      },
+      "lowFps": {
+        "title": "Düşük kare hızı",
+        "text": "Görüntü ayarlarında görüş mesafesini azalt veya oyunda FPS artışını kullan: Cubiq menüsü (Sağ Shift) → Performans.",
+        "boostOff": "Bu örnek için Cubiq optimizasyonu kapalı. Aç – Sodium ve diğer performans modları genellikle çok daha fazla FPS sağlar."
+      },
+      "cpu": {
+        "title": "İşlemci sınırda",
+        "text": "Minecraft işlemcinin neredeyse tamamını kullanıyor. Görüş ve simülasyon mesafesini azalt veya arka planda çalışan programları kapat."
+      }
+    }
+  },
   "logShare": {
     "qrLabel": "Bağlantının QR kodu",
     "qrFailed": "QR kodu yok",
@@ -5034,13 +5220,13 @@
     "cheats": "Hileler",
     "backingUp": "Dünya yedekleniyor …",
     "backupDone": "“{name}” yedeklendi",
-    "backup": "Yedekle (ZIP)",
+    "backup": "Şimdi yedekle",
     "backupOf": "{name} yedekle",
     "openFolderOf": "{name} klasörünü aç",
     "deleteOf": "{name} sil",
     "stopFirst": "Önce oyunu kapat",
     "deleted": "“{name}” çöp kutusunda",
-    "backupHint": "Yedekler örneğin “backups” klasörüne ZIP olarak kaydedilir (Dosyalar sekmesine bak).",
+    "backupHint": "Dünyalar oyunu başlatırken ve oynadıktan sonra otomatik olarak yedeklenir – yalnızca değişenler. Yedekleri görmek, geri yüklemek veya silmek için saatli satıra tıkla.",
     "deleteTitle": "Dünya silinsin mi?",
     "deleteText": "“{name}” Windows Geri Dönüşüm Kutusu’na taşınır.",
     "deleteTextLinux": "“{name}” çöp kutusuna taşınır.",
@@ -5067,6 +5253,88 @@
       "joinNote": "Katıl oyunu başlatır ve hemen bağlanır. Çok eski sürümler yalnızca ana menüyü açar.",
       "pingCooldown": "Bir sonraki ping testinden önce birkaç saniye bekleyin.",
       "sortNote": "Yalnızca görünüm pinge göre sıralandı – oyundaki sunucu listesi sırasını korur."
+    }
+  },
+  "worldBackups": {
+    "auto": {
+      "label": "Otomatik yedek",
+      "defaultOn": "Varsayılan (açık)",
+      "defaultOff": "Varsayılan (kapalı)",
+      "on": "Açık",
+      "off": "Kapalı",
+      "onText": "Otomatik yedekler açık: değişen dünyalar başlatırken ve oynadıktan sonra kaydedilir, her dünyanın son {n} yedeği saklanır.",
+      "offText": "Otomatik yedekler bu örnek için kapalı – “Şimdi yedekle”yi kullan.",
+      "sharedText": "Bu örnek dünya klasörünü paylaşıyor, bu yüzden yedekler onu paylaşan tüm örneklere aittir."
+    },
+    "panel": {
+      "open": "{name} yedekleri",
+      "running": "Yedekleniyor … %{percent}",
+      "status": "{n} yedek · son {time} | {n} yedek · son {time}",
+      "none": "Henüz yedek yok",
+      "deletedTitle": "Yedeği olan silinmiş dünyalar",
+      "restoreDeleted": "Geri yükle"
+    },
+    "dialog": {
+      "title": "{name} yedekleri",
+      "backupNow": "Şimdi yedekle",
+      "backingUp": "Yedekleniyor … %{percent}",
+      "empty": "Bu dünyanın henüz yedeği yok.",
+      "restore": "Geri yükle",
+      "deleteConfirm": "Bu yedek silinsin mi?",
+      "deleteOf": "{date} tarihli yedeği sil"
+    },
+    "kinds": {
+      "auto": "Otomatik",
+      "manual": "Elle",
+      "safety": "Geri yüklemeden önce",
+      "legacy": "Eski yedek"
+    },
+    "restore": {
+      "title": "{date} tarihli yedeği geri yükle",
+      "modeLabel": "Nasıl geri yüklensin",
+      "copy": "Kopya olarak",
+      "copyText": "Dünyayı “{name}” olarak ekler – mevcut dünyan olduğu gibi kalır.",
+      "replace": "Mevcut dünyayı değiştir",
+      "replaceText": "Mevcut durum önce yedeklenir, böylece ona geri dönebilirsin.",
+      "bringBack": "Dünyayı geri getir",
+      "bringBackText": "Dünya tekrar dünya listende görünür.",
+      "confirm": "Geri yükle",
+      "stopFirst": "Önce oyunu kapat – bir dünya yalnızca oyun çalışmıyorken geri yüklenebilir.",
+      "copySuffix": "geri yüklendi",
+      "taskTitle": "{name} geri yükleniyor",
+      "stage": "Dünya geri yükleniyor …",
+      "doneCopy": "“{name}” olarak geri yüklendi.",
+      "doneReplace": "“{name}” geri yüklendi – önceki durum yedek olarak duruyor.",
+      "doneDeleted": "“{name}” geri döndü."
+    },
+    "task": {
+      "title": "Dünya yedeği · {name}",
+      "stage": "{world} ({n}/{count})",
+      "preparing": "Dünyalar kontrol ediliyor …"
+    },
+    "toast": {
+      "opened": "“{world}” yedeği bitmeden açıldı. Önceki yedek duruyor – oynadıktan sonra yenisi yapılır.",
+      "failed": "“{world}” yedeklenemedi: {error}"
+    },
+    "settings": {
+      "title": "Dünya yedekleri",
+      "intro": "Bir örneği başlattığında başlatıcı, son yedeğinden beri değişen her tek oyunculu dünyayı kaydeder – arka planda, oyun hemen başlar. Oynadıktan sonra oynadığın dünyaları kaydeder. Değişmeyen dünyalar atlanır.",
+      "enabledTitle": "Otomatik yedekler",
+      "enabledDescription": "Değişen dünyaları başlatırken ve oynadıktan sonra yedekle. Her örnek bunu Dünyalar sekmesinde açıp kapatabilir.",
+      "keepTitle": "Dünya başına sakla",
+      "keepDescription": "Daha eski otomatik yedekler silinir. Elle alınan yedekler ve geri yüklemeden önce alınanlar her zaman kalır.",
+      "keepOption": "{n} yedek | {n} yedek",
+      "limitTitle": "Boyut sınırı",
+      "limitDescription": "Tüm yedekler birlikte sınırı aşarsa önce en eski otomatik yedekler silinir – her dünyanın en yeni yedeği her zaman kalır.",
+      "noLimit": "Sınır yok",
+      "storageTitle": "Depolama",
+      "usage": "Kullanılan: {size} · Yedekler: {count} · Dünyalar: {worlds}",
+      "usageNone": "Henüz yedek yok.",
+      "where": "Yedekler, başlatıcının veri klasöründeki “world-backups” klasöründe ZIP dosyaları olarak saklanır.",
+      "orphaned": "{size} silinmiş örneklere ait.",
+      "prune": "Bunları sil",
+      "pruneConfirm": "Kalıcı olarak sil",
+      "pruned": "{size} boşaltıldı."
     }
   },
   "share": {
@@ -7083,7 +7351,7 @@
       "grid": "Izgara",
       "notch": "Çentik",
       "discard": "Değişiklikler atılsın mı?",
-      "selectHint": "Değiştirmek için bir düğmeye dokun. Taşımak için sürükle, kırmızı köşe boyutu değiştirir. Ok tuşları ince ayar yapar.",
+      "selectHint": "Değiştirmek için bir düğmeye dokun. Taşımak için sürükle, yeşil köşe boyutu değiştirir. Ok tuşları ince ayar yapar.",
       "actionType": "Eylem",
       "key": "Tuş",
       "chord": "Önce basılı tut",

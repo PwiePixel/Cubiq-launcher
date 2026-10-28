@@ -2,6 +2,9 @@
 // Banner eines Updates – feste Vorlage: dunkler Grund, weicher Schein in der Farbe des Updates,
 // feines Würfel-Raster wie im Logo, Schrift mit Version links und das Motiv rechts.
 // Je Update ändern sich nur Akzentfarbe und Motiv (Angabe im CHANGELOG.md); ohne eigenes Motiv das Cubiq-Logo.
+// Gibt es eine bewegte Fassung des Motivs, läuft sie – außer bei „Weniger Animationen“, dann das ruhige Bild.
+// Mit `model3d` wird das Motiv zum drehbaren 3D-Modell (UpdateModel3d); bis es steht – und ohne WebGL, am Handy
+// oder wenn sich das Bild nicht zerlegen lässt – bleibt das flache Bild.
 const props = withDefaults(
   defineProps<{
     /** z. B. „v0.4.3 · 24. September 2026“ */
@@ -10,13 +13,36 @@ const props = withDefaults(
     accent?: string | null
     /** Bildadresse des Motivs, sonst das Cubiq-Logo. */
     motif?: string | null
+    /** Bewegte Fassung des Motivs (animiertes PNG), sonst `null`. */
+    anim?: string | null
     size?: 'sm' | 'md' | 'lg'
     tag?: 'h1' | 'h2' | 'h3' | 'p'
     /** Ohne Schrift (wenn der Titel schon daneben steht). */
     bare?: boolean
+    /** Motiv als drehbares 3D-Modell zeigen (große Banner; kleine Karten bleiben beim Bild). */
+    model3d?: boolean
   }>(),
-  { accent: null, motif: null, size: 'md', tag: 'h3', bare: false },
+  { accent: null, motif: null, anim: null, size: 'md', tag: 'h3', bare: false, model3d: false },
 )
+const emit = defineEmits<{ activate: [] }>()
+
+const { reduced } = useMotion()
+const src = computed(() => (!reduced.value && props.motif && props.anim) || props.motif || '/logo.png')
+
+const modelReady = ref(false)
+const modelFailed = ref(false)
+const showModel = computed(() => props.model3d && !!props.motif && !modelFailed.value && !mobileUi.value)
+watch(
+  () => props.motif,
+  () => {
+    modelReady.value = false
+    modelFailed.value = false
+  },
+)
+function onModelFallback() {
+  modelFailed.value = true
+  modelReady.value = false
+}
 
 const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : '#71a330' }))
 </script>
@@ -25,7 +51,16 @@ const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.te
   <div class="update-banner" :class="`ub-${size}`" :style="style">
     <div class="ub-glow" aria-hidden="true" />
     <div class="ub-grid" aria-hidden="true" />
-    <img :src="motif || '/logo.png'" alt="" class="ub-motif" loading="lazy" decoding="async" />
+    <img v-show="!(showModel && modelReady)" :src="src" alt="" class="ub-motif" loading="lazy" decoding="async" />
+    <UpdateModel3d
+      v-if="showModel && motif"
+      :key="motif"
+      :src="motif"
+      class="ub-motif ub-model"
+      @ready="modelReady = true"
+      @fallback="onModelFallback"
+      @activate="emit('activate')"
+    />
     <div v-if="!bare" class="ub-text">
       <p class="ub-kicker">{{ kicker }}</p>
       <component :is="tag" class="ub-title">{{ title }}</component>
@@ -51,7 +86,7 @@ const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.te
   z-index: -1;
   background:
     radial-gradient(60% 95% at 78% 50%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%),
-    linear-gradient(90deg, rgb(10 13 11 / 0.9) 0%, rgb(10 13 11 / 0.5) 45%, rgb(10 13 11 / 0.05) 75%);
+    linear-gradient(90deg, rgb(12 16 14 / 0.9) 0%, rgb(12 16 14 / 0.5) 45%, rgb(12 16 14 / 0.05) 75%);
 }
 /* Feines isometrisches Raster, nach links ausgeblendet. */
 .ub-grid {
@@ -83,6 +118,14 @@ const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.te
   }
 }
 :root[data-reduced-motion] .ub-motif {
+  animation: none;
+}
+/* 3D-Modell: etwas größer als das Bild (es hat eigenen Rand für die Drehung), über dem Bild, greifbar. */
+.ub-model {
+  z-index: 1;
+  height: 100%;
+  right: 2%;
+  aspect-ratio: 1.15;
   animation: none;
 }
 .ub-text {

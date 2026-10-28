@@ -183,7 +183,7 @@ function openFolder() {
 <template>
   <div class="flex h-full mobile:h-auto mobile:min-h-full">
     <div class="flex min-w-0 flex-1 flex-col p-6 mobile:p-4">
-      <NuxtLink to="/instances" class="mb-3 inline-flex w-fit items-center gap-1 text-xs text-base-400 hover:text-base-50 mobile:hidden">
+      <NuxtLink to="/instances" class="crumb mb-3 mobile:hidden">
         <svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 5l-7 7 7 7" /></svg>
         {{ t('library.title') }}
       </NuxtLink>
@@ -191,72 +191,96 @@ function openFolder() {
       <p v-if="loadError" role="alert" class="card border-danger-600/50 px-4 py-3 text-sm text-danger-300">{{ loadError }}</p>
 
       <div v-else-if="!instance" class="mb-5 flex items-center gap-5 mobile:gap-4">
-        <div class="skeleton size-[88px] rounded-xl mobile:size-16" />
+        <div class="skeleton size-[88px] rounded-2xl mobile:size-16" />
         <div class="flex-1 space-y-2.5"><div class="skeleton h-8 w-64 mobile:w-full" /><div class="skeleton h-4 w-80 mobile:w-2/3" /></div>
-        <div class="skeleton h-10 w-72 mobile:hidden" />
+        <div class="skeleton h-12 w-72 rounded-full mobile:hidden" />
       </div>
 
       <template v-else>
-        <!-- Banner als Kopf: Bild der Instanz, darüber Icon, Name und Spielen. -->
-        <InstanceBanner :instance="instance" class="mb-4 shrink-0 rounded-2xl border border-base-800">
-          <header class="flex flex-wrap items-center gap-5 p-5 mobile:gap-x-3 mobile:gap-y-4 mobile:p-4">
-            <button class="shrink-0 rounded-xl outline-none transition-transform duration-150 hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-primary-500" :aria-label="t('instance.settingsGeneral')" @click="settingsOpen = 'general'">
-              <InstanceIcon :instance="instance" :size="mobile ? 60 : 88" class="shadow-xl shadow-black/50" />
-            </button>
+        <!-- Kopf als Karte: Titelbild rechts, Icon, Name und Spielen; unten die Reiter als Leiste. -->
+        <section class="head mb-4 shrink-0 overflow-hidden">
+          <div class="relative isolate">
+            <div class="head-art" aria-hidden="true"><InstanceBanner :instance="instance" shade="none" class="size-full" /></div>
+            <div class="head-scrim" aria-hidden="true" />
+            <header class="relative flex flex-wrap items-center gap-5 p-5 mobile:gap-x-3 mobile:gap-y-4 mobile:p-4">
+              <button class="head-icon squircle shrink-0 outline-none transition-transform duration-150 hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-primary-500" :aria-label="t('instance.settingsGeneral')" @click="settingsOpen = 'general'">
+                <InstanceIcon :instance="instance" :size="mobile ? 60 : 84" />
+              </button>
 
-            <div class="min-w-56 flex-1 mobile:min-w-0">
-              <h1 class="display truncate text-3xl leading-tight text-white drop-shadow mobile:text-2xl">{{ instance.name }}</h1>
-              <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/75">
-                <button
-                  class="chip gap-1.5 ring-1 ring-base-700 transition-colors hover:bg-base-700 hover:text-base-50 disabled:opacity-60"
-                  :title="t('instance.changeVersion')"
-                  :disabled="game.phase !== 'idle'"
-                  @click="changingVersion = true"
-                >
-                  <span class="size-2 rounded-full" :style="{ background: loaderColors[instance.loader.kind] }" />
-                  <span class="font-mono text-base-50">{{ instance.gameVersion }}</span> {{ loader }}
-                  <svg viewBox="0 0 24 24" class="size-3 text-base-400" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m7 10 5 5 5-5" /></svg>
-                </button>
-                <span v-if="instance.group" class="chip">{{ instance.group }}</span>
-                <span v-if="instance.totalPlaySeconds > 0 && ui?.showPlayTime !== false" class="flex items-center gap-1.5" :title="t('instance.playTime')">
-                  <svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></svg>
-                  {{ formatPlayTime(instance.totalPlaySeconds) }}
-                </span>
-                <span class="flex items-center gap-1.5" :title="t('instance.lastPlayed')">
-                  <svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v15H4zM4 9h16M8 3v4M16 3v4" /></svg>
-                  {{ formatRelative(instance.lastPlayed) }}
-                </span>
-                <span v-if="game.phase === 'running'" class="flex items-center gap-1.5 text-primary-300">
-                  <span class="size-2 animate-live rounded-full bg-primary-500 shadow-[0_0_8px_var(--color-primary-500)]" />
-                  {{ t('instance.running') }}
-                </span>
+              <div class="min-w-56 flex-1 mobile:min-w-0">
+                <h1 class="display truncate text-[2rem] leading-tight text-base-50 mobile:text-2xl">{{ instance.name }}</h1>
+                <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs text-base-300">
+                  <button
+                    class="head-chip transition-colors hover:border-line-strong hover:text-base-50 disabled:opacity-60"
+                    :title="t('instance.changeVersion')"
+                    :disabled="game.phase !== 'idle'"
+                    @click="changingVersion = true"
+                  >
+                    <span class="size-2 rounded-full" :style="{ background: loaderColors[instance.loader.kind] }" />
+                    <span class="font-mono text-base-50">{{ instance.gameVersion }}</span> {{ loader }}
+                    <svg viewBox="0 0 24 24" class="size-3 text-base-400" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m7 10 5 5 5-5" /></svg>
+                  </button>
+                  <span v-if="instance.group" class="head-chip">{{ instance.group }}</span>
+                  <span v-if="instance.totalPlaySeconds > 0 && ui?.showPlayTime !== false" class="head-chip" :title="t('instance.playTime')">
+                    <svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></svg>
+                    {{ formatPlayTime(instance.totalPlaySeconds) }}
+                  </span>
+                  <span class="head-chip" :title="t('instance.lastPlayed')">
+                    <svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v15H4zM4 9h16M8 3v4M16 3v4" /></svg>
+                    {{ formatRelative(instance.lastPlayed) }}
+                  </span>
+                  <span v-if="game.phase === 'running'" class="head-chip text-live-300">
+                    <span class="size-2 animate-live rounded-full bg-live-400 shadow-[0_0_8px_var(--color-live-400)]" />
+                    {{ t('instance.running') }}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div class="flex w-80 shrink-0 items-center gap-2" :class="canLaunch ? 'mobile:w-full' : 'mobile:w-auto'">
-              <PlayButton :instance-id="instance.id" large />
-              <button
-                v-if="canLaunchAgain && game.phase === 'running'"
-                class="btn-icon size-12 bg-base-900/80 backdrop-blur"
-                :title="t('play.again.menu')"
-                :aria-label="t('play.again.menu')"
-                :disabled="games.extraBusy.has(instance.id)"
-                data-testid="play-again"
-                @click="games.extraPrompt = instance.id"
-              >
-                <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="12" height="12" rx="1.5" /><path d="M9 21h10a2 2 0 0 0 2-2V9M7.5 9.5v4l3.5-2z" /></svg>
-              </button>
-              <button class="btn-icon size-12 bg-base-900/80 backdrop-blur" :title="t('instance.settings')" :aria-label="t('instance.settings')" @click="settingsOpen = 'general'">
-                <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path :d="icons.gear" /></svg>
-              </button>
-              <button v-if="!mobile" class="btn-icon size-12 bg-base-900/80 backdrop-blur" :title="t('common.actions.openFolder')" :aria-label="t('common.actions.openFolder')" @click="openFolder">
-                <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
-                </svg>
-              </button>
-            </div>
-          </header>
-        </InstanceBanner>
+              <div class="flex w-80 shrink-0 items-center gap-2" :class="canLaunch ? 'mobile:w-full' : 'mobile:w-auto'">
+                <PlayButton :instance-id="instance.id" large />
+                <button
+                  v-if="canLaunchAgain && game.phase === 'running'"
+                  class="head-btn"
+                  :title="t('play.again.menu')"
+                  :aria-label="t('play.again.menu')"
+                  :disabled="games.extraBusy.has(instance.id)"
+                  data-testid="play-again"
+                  @click="games.extraPrompt = instance.id"
+                >
+                  <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="12" height="12" rx="1.5" /><path d="M9 21h10a2 2 0 0 0 2-2V9M7.5 9.5v4l3.5-2z" /></svg>
+                </button>
+                <button class="head-btn" :title="t('instance.settings')" :aria-label="t('instance.settings')" @click="settingsOpen = 'general'">
+                  <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path :d="icons.gear" /></svg>
+                </button>
+                <button v-if="!mobile" class="head-btn" :title="t('common.actions.openFolder')" :aria-label="t('common.actions.openFolder')" @click="openFolder">
+                  <svg viewBox="0 0 24 24" class="size-[1.1rem]" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+          </div>
+
+          <!-- Reiter: eine Leiste im Fuß der Karte; der aktive trägt die grüne Auswahl-Kante. -->
+          <div class="tabbar mobile-scroll-x" role="tablist" :aria-label="t('instance.tabsLabel')" @keydown="onTabKey">
+            <button
+              v-for="key in tabs"
+              :id="`instance-tab-${key}`"
+              :key="key"
+              role="tab"
+              class="itab mobile:min-h-11 mobile:shrink-0 mobile:whitespace-nowrap"
+              :class="{ 'itab-on': tab === key }"
+              :aria-selected="tab === key"
+              :aria-controls="`instance-panel-${key}`"
+              :tabindex="tab === key ? 0 : -1"
+              @click="selectTab(key)"
+            >
+              <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path :d="TAB_ICONS[key]" /></svg>
+              <span>{{ t(`instance.tabs.${key}`) }}</span>
+              <span v-if="key === 'logs' && game.phase === 'running'" class="size-1.5 animate-live rounded-full bg-live-400 shadow-[0_0_6px_var(--color-live-400)]" :title="t('instance.running')" />
+            </button>
+          </div>
+        </section>
 
         <div v-if="game.error" role="alert" class="card mb-4 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-danger-600/50 px-4 py-2.5 text-sm text-danger-300">
           <p class="min-w-0 flex-1">{{ game.error }}</p>
@@ -272,26 +296,10 @@ function openFolder() {
         </div>
         <CrashPanel v-else-if="game.lastExit?.crashed" :instance-id="instance.id" :exit-code="game.lastExit.exitCode" :diagnosis="game.lastExit.diagnosis" :crash-id="game.lastExit.crashId" class="mb-4 shrink-0" />
         <FpsBoostHint :instance="instance" />
-
-        <!-- Tab-Leiste: der aktive Tab bekommt einen Strich in der Akzentfarbe. -->
-        <div class="tabbar mb-4 shrink-0 mobile-scroll-x mobile:-mx-4 mobile:px-4" role="tablist" :aria-label="t('instance.tabsLabel')" @keydown="onTabKey">
-          <button
-            v-for="key in tabs"
-            :id="`instance-tab-${key}`"
-            :key="key"
-            role="tab"
-            class="itab mobile:min-h-11 mobile:shrink-0 mobile:whitespace-nowrap"
-            :class="{ 'itab-on': tab === key }"
-            :aria-selected="tab === key"
-            :aria-controls="`instance-panel-${key}`"
-            :tabindex="tab === key ? 0 : -1"
-            @click="selectTab(key)"
-          >
-            <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path :d="TAB_ICONS[key]" /></svg>
-            <span>{{ t(`instance.tabs.${key}`) }}</span>
-            <span v-if="key === 'logs' && game.phase === 'running'" class="size-1.5 animate-live rounded-full bg-primary-500 shadow-[0_0_6px_var(--color-primary-500)]" :title="t('instance.running')" />
-          </button>
-        </div>
+        <!-- Während Minecraft startet: „Cubi Hop“ zum Zeitvertreib. -->
+        <LaunchMiniGame :instance-id="instance.id" class="mb-4 shrink-0" />
+        <!-- Läuft das Spiel: FPS, RAM und CPU live, mit Tipps, wenn es ruckelt. -->
+        <PerfLivePanel :instance="instance" class="mb-4 shrink-0" @open-settings="settingsOpen = $event" />
 
         <PackUpdateNotice :instance-id="instance.id" @share="sharingPack = true" />
         <SharePackDialog v-if="sharingPack" :instance="instance" @close="sharingPack = false" />
@@ -332,34 +340,71 @@ function openFolder() {
 <style scoped>
 @reference "~/assets/css/main.css";
 
+.crumb {
+  @apply inline-flex w-fit items-center gap-1 rounded-lg py-0.5 pr-1.5 text-xs font-medium text-base-400 transition-colors hover:text-base-50;
+}
+/* Kopf: Karte wie die Bühne der Startseite – Titelbild rechts, dunkel links für die Schrift. */
+.head {
+  @apply rounded-3xl border border-line bg-base-900;
+  box-shadow: var(--edge-light), var(--elev-2);
+}
+@supports (corner-shape: squircle) {
+  .head {
+    corner-shape: squircle;
+    border-radius: 2.25rem;
+  }
+}
+.head-art {
+  position: absolute;
+  inset: 0 0 0 35%;
+  z-index: -1;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
+  mask-image: linear-gradient(90deg, transparent, #000 45%);
+}
+.head-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-base-900) 90%, transparent) 0%, color-mix(in srgb, var(--color-base-900) 45%, transparent) 55%, transparent 85%);
+}
+.head-icon {
+  @apply rounded-[1.6rem] p-1.5;
+  background: color-mix(in srgb, var(--color-base-950) 70%, transparent);
+  box-shadow:
+    inset 0 0 0 1px var(--color-line-strong),
+    0 16px 36px -14px rgb(var(--shadow-rgb) / 0.8);
+}
+.head-chip {
+  @apply inline-flex items-center gap-1.5 rounded-lg border border-line bg-base-950/70 px-2.5 py-1 backdrop-blur;
+}
+.head-btn {
+  @apply grid size-12 shrink-0 place-items-center rounded-full bg-base-950/70 text-base-200 backdrop-blur transition-colors hover:bg-base-800 hover:text-base-50 disabled:cursor-not-allowed disabled:opacity-50;
+  box-shadow: inset 0 0 0 1px var(--color-line-strong);
+}
+/* Reiter-Leiste im Fuß der Karte. */
 .tabbar {
-  @apply relative flex flex-wrap gap-0.5 border-b border-base-800;
+  @apply relative flex flex-wrap gap-1 border-t border-line px-3 py-2.5;
+  background: color-mix(in srgb, var(--color-base-950) 55%, var(--color-base-900));
 }
 /* Handy: eine wischbare Zeile statt Umbruch. */
 :root.is-mobile .tabbar {
   flex-wrap: nowrap;
 }
 .itab {
-  @apply relative -mb-px inline-flex items-center gap-2 rounded-t-lg px-3.5 py-2 text-sm font-medium text-base-400 transition-colors outline-none hover:bg-base-900 hover:text-base-50 focus-visible:bg-base-900 focus-visible:text-base-50;
+  @apply relative inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium text-base-400 transition-colors outline-none hover:bg-base-850 hover:text-base-50 focus-visible:bg-base-850 focus-visible:text-base-50;
 }
 .itab:focus-visible {
   outline: 2px solid var(--color-primary-400);
   outline-offset: -2px;
 }
-/* Aktiver Tab: schlichter Strich in der Akzentfarbe. */
-.itab-on {
+/* Aktiver Reiter: Fläche mit einem Hauch Grün und grüner Kante – wie jede Auswahl im Launcher. */
+.itab-on,
+.itab-on:hover {
   @apply text-base-50;
-}
-.itab-on::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0.5rem;
-  bottom: 0;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--color-primary-400);
+  background: var(--pick-bg);
+  box-shadow: inset 0 0 0 1px var(--pick-edge);
 }
 .itab-on svg {
-  @apply text-primary-400;
+  @apply text-primary-300;
 }
 </style>

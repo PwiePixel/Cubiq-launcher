@@ -4,7 +4,8 @@ package dev.pwiepixel.cubiqclient.core.ui;
  * Zeichenhilfen im Cubiq-Stil (wie der Launcher): ruhige, flache Flächen mit abgerundeten Ecken und einer feinen
  * Kante, die Akzentfarbe für Aktionen und Auswahl, ein weicher Schein statt harter Kanten. Alles aus Rechtecken im
  * GUI-Raster (1 Bildpunkt = 1 GUI-Pixel) – es skaliert mit der GUI-Größe und sieht in jeder Minecraft-Version gleich
- * aus. Keine Texturen. Winternacht, Fuchsbau und das Halloween-Event tauschen einzelne Teile aus (Laternen, Linien).
+ * aus. Keine Texturen. Polarlicht, Fuchsbau und das Halloween-Event tauschen einzelne Teile aus (Schneesaum,
+ * Laternen, Linien).
  */
 public final class Paint {
 	/** Größte Rundung von Knöpfen, Feldern und Kacheln (GUI-Pixel). */
@@ -127,12 +128,7 @@ public final class Paint {
 		roundRect(c, x, y, w, h, r, edge);
 		if (w < 3 || h < 3) return;
 		roundRect(c, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill);
-		if (t.winter && w >= 10 && h >= 8) {
-			// Winternacht: Reif in der Ecke oben links.
-			int rime = ColorMath.withAlpha(0xFFFFFFFF, t.light ? 0xB0 : 0x38);
-			c.fill(x + 2, y + 1, x + 5, y + 2, rime);
-			c.fill(x + 1, y + 2, x + 2, y + 4, rime);
-		} else if (t.fox && w >= 10 && h >= 8) {
+		if (t.fox && w >= 10 && h >= 8) {
 			// Fuchsbau: die tiefe Sonne legt einen warmen Saum in die Ecke oben links.
 			int sun = ColorMath.withAlpha(0xFFFFB878, t.light ? 0x90 : 0x30);
 			c.fill(x + 2, y + 1, x + 5, y + 2, sun);
@@ -149,7 +145,7 @@ public final class Paint {
 		roundRect(c, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), t.deep);
 	}
 
-	/** Fenster: weicher Schatten, feine Kante, Fensterfläche. */
+	/** Fenster: weicher Schatten, feine Kante, Fensterfläche (im Polarlicht mit dem Schneesaum oben, wie im Launcher). */
 	public static void window(Canvas c, int x, int y, int w, int h) {
 		Theme t = Theme.get();
 		for (int i = 4; i >= 1; i--) {
@@ -157,6 +153,12 @@ public final class Paint {
 		}
 		roundRect(c, x, y, w, h, WINDOW_RADIUS, t.border);
 		roundRect(c, x + 1, y + 1, w - 2, h - 2, WINDOW_RADIUS - 1, t.background);
+		if (t.winter && !t.halloween) snowLip(c, x, y, w, 1f);
+	}
+
+	/** Schneesaum auf der geraden Oberkante eines Fensters (Kopfbänder malen darüber und holen ihn mit {@link #windowHeader}). */
+	private static void snowLip(Canvas c, int x, int y, int w, float alpha) {
+		dev.pwiepixel.cubiqclient.core.ui.winter.Frost.lip(c, x + WINDOW_RADIUS, y + 1, w - 2 * WINDOW_RADIUS, alpha);
 	}
 
 	/** Kopfband oben in einem {@link #window} (Höhe {@code h}): Fläche {@code fill} in der Rundung des Fensters, Linie darunter. */
@@ -165,6 +167,8 @@ public final class Paint {
 		roundRect(c, x + 1, y + 1, w - 2, h - 1, WINDOW_RADIUS - 1, fill);
 		c.fill(x + 1, y + Math.max(1, h - WINDOW_RADIUS), x + w - 1, y + h - 1, fill);
 		c.fill(x + 1, y + h - 1, x + w - 1, y + h, line);
+		Theme t = Theme.get();
+		if (t.winter && !t.halloween && h >= 12) snowLip(c, x, y, w, 1f);
 	}
 
 	/** Symbol in einer kleinen Mulde (Kachel, Kopfzeile); {@code px} = Pixel je Symbolpunkt, {@code glow} = Auswahl. */
@@ -220,16 +224,12 @@ public final class Paint {
 
 	/**
 	 * Fläche, die mit der Auswahl aufleuchtet: {@code level} 0 = ruhige Fläche, 1 = Akzentfarbe mit Lichtkante und
-	 * weichem Schein; {@code flash} hellt kurz auf (Drücken). In Winternacht und Fuchsbau eine Laterne.
+	 * weichem Schein; {@code flash} hellt kurz auf (Drücken). Im Fuchsbau eine Laterne.
 	 */
 	public static void accentFace(Canvas c, int x, int y, int w, int h, float level, float flash) {
 		Theme t = Theme.get();
 		if (t.halloween) {
 			dev.pwiepixel.cubiqclient.core.ui.halloween.HalloweenLook.lamp(c, x, y, w, h, level, flash);
-			return;
-		}
-		if (t.winter) {
-			dev.pwiepixel.cubiqclient.core.ui.winter.Frost.lantern(c, x, y, w, h, level, flash);
 			return;
 		}
 		if (t.fox) {
@@ -285,10 +285,6 @@ public final class Paint {
 			dev.pwiepixel.cubiqclient.core.ui.halloween.HalloweenLook.lineH(c, x1, x2, y, argb, glow);
 			return;
 		}
-		if (t.winter) {
-			dev.pwiepixel.cubiqclient.core.ui.winter.Frost.lineH(c, x1, x2, y, argb, glow);
-			return;
-		}
 		if (t.fox) {
 			dev.pwiepixel.cubiqclient.core.ui.fox.Ember.lineH(c, x1, x2, y, argb, glow);
 			return;
@@ -310,10 +306,6 @@ public final class Paint {
 		Theme t = Theme.get();
 		if (t.halloween) {
 			dev.pwiepixel.cubiqclient.core.ui.halloween.HalloweenLook.lineV(c, x, y1, y2, argb, glow);
-			return;
-		}
-		if (t.winter) {
-			dev.pwiepixel.cubiqclient.core.ui.winter.Frost.lineV(c, x, y1, y2, argb, glow);
 			return;
 		}
 		if (t.fox) {
@@ -494,11 +486,11 @@ public final class Paint {
 
 	/**
 	 * Knopf mit Beschriftung: {@code primary} = Akzentfarbe mit dunkler Schrift (wie „Spielen“ im Launcher), sonst eine
-	 * ruhige Fläche, die beim Überfahren heller wird. In Winternacht/Fuchsbau ist der Hauptknopf eine Laterne.
+	 * ruhige Fläche, die beim Überfahren heller wird. Im Fuchsbau ist der Hauptknopf eine Laterne.
 	 */
 	public static void button(Canvas c, int x, int y, int w, int h, String label, boolean primary, boolean hover) {
 		Theme t = Theme.get();
-		boolean seasonal = t.halloween || t.winter || t.fox;
+		boolean seasonal = t.halloween || t.fox;
 		int ty = y + (h - 8) / 2 + (h >= 16 ? 0 : 1);
 		String s = c.clip(label, w - 6);
 		if (primary) {
@@ -519,13 +511,14 @@ public final class Paint {
 
 	/**
 	 * Fläche eines Hauptknopfs (wie {@code .btn-primary} im Launcher): Akzentfarbe mit heller Kante oben; {@code hover}
-	 * 0..1 hellt auf und lässt einen weichen Schein wachsen.
+	 * 0..1 hellt auf und lässt einen weichen Schein wachsen. Im Polarlicht liegt Schnee darauf wie auf „Spielen“.
 	 */
 	public static void primaryFace(Canvas c, int x, int y, int w, int h, float hover) {
 		Theme t = Theme.get();
 		float v = ColorMath.clamp01(hover);
 		if (v > 0.02f) glow(c, x, y, w, h, t.glow, 0.55f * v);
 		accentFill(c, x, y, w, h, ColorMath.lerp(t.accent, t.accentHover, v), ColorMath.lerp(t.faceOnEdge, t.accent, v), 1f);
+		if (t.winter && !t.halloween) dev.pwiepixel.cubiqclient.core.ui.winter.Frost.lipOn(c, x, y, w, h, 1f);
 	}
 
 	/** Fläche eines Nebenknopfs (wie {@code .btn-ghost} im Launcher); {@code hover} 0..1 hellt Fläche und Kante auf. */
@@ -549,13 +542,13 @@ public final class Paint {
 
 	/** Kante einer Fläche unter der Maus. */
 	public static int hoverEdge(Theme t) {
-		return t.halloween || t.winter || t.fox ? ColorMath.lerp(t.border, t.textDim, 0.5f) : t.bevelLight;
+		return t.halloween || t.fox ? ColorMath.lerp(t.border, t.textDim, 0.5f) : t.bevelLight;
 	}
 
 	/** Quadratischer Symbol-Knopf. */
 	public static void iconButton(Canvas c, int x, int y, int size, String icon, boolean hover, boolean primary) {
 		Theme t = Theme.get();
-		boolean seasonal = t.halloween || t.winter || t.fox;
+		boolean seasonal = t.halloween || t.fox;
 		int px = Math.max(1, (size - 4) / 8);
 		int iconSize = px * 8;
 		int ix = x + (size - iconSize) / 2;
@@ -604,7 +597,7 @@ public final class Paint {
 	public static void pip(Canvas c, int x, int y, int size, float lit) {
 		Theme t = Theme.get();
 		float l = ColorMath.clamp01(lit);
-		if (l > 0.05f && (t.halloween || t.winter || t.fox)) glow(c, x, y, size, size, t.faceGlow, l * 0.45f);
+		if (l > 0.05f && (t.halloween || t.fox)) glow(c, x, y, size, size, t.faceGlow, l * 0.45f);
 		int off = ColorMath.lerp(t.border, t.textDim, 0.35f);
 		roundRect(c, x, y, size, size, size / 2, ColorMath.lerp(off, t.halloween ? t.faceHot : t.faceOn, l));
 	}

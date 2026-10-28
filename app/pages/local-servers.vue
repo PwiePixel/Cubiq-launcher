@@ -213,7 +213,7 @@ async function allowFirewall() {
               <button class="btn btn-ghost px-3 py-1.5 text-xs" :disabled="selected.status.state === 'stopping'" @click="servers.restart(selected.id)">
                 {{ t('localServers.restart') }}
               </button>
-              <button class="btn btn-ghost px-3 py-1.5 text-xs text-primary-300" :title="t('localServers.killHint')" @click="servers.kill(selected.id)">
+              <button class="btn btn-ghost px-3 py-1.5 text-xs text-danger-300" :title="t('localServers.killHint')" @click="servers.kill(selected.id)">
                 {{ t('localServers.kill') }}
               </button>
             </template>

@@ -16,3 +16,10 @@ pub async fn update_settings(
 ) -> CommandResult<Settings> {
     Ok(launcher.update_settings(settings).await?)
 }
+
+/// „Bewegung reduzieren“ des Systems, wie die Oberfläche es sieht – damit löst der Kern
+/// „Wie System“ der Animationen für den Cubiq Client auf.
+#[tauri::command]
+pub fn set_system_reduced_motion(launcher: State<'_, LauncherState>, reduced: bool) {
+    launcher.set_system_reduced_motion(reduced);
+}

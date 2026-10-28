@@ -9,8 +9,8 @@ const tones: Record<SanctionKind, string> = {
   chat_mute: 'bg-sky-500/15 text-sky-300',
   social_ban: 'bg-violet-500/15 text-violet-300',
   upload_ban: 'bg-teal-500/15 text-teal-300',
-  hosting_ban: 'bg-emerald-500/15 text-emerald-300',
-  account_ban: 'bg-primary-600/30 text-primary-300',
+  hosting_ban: 'bg-orange-500/15 text-orange-300',
+  account_ban: 'bg-danger-900 text-danger-300',
 }
 const tone = computed(() => (props.muted ? 'bg-base-800 text-base-400' : tones[props.kind]))
 </script>
