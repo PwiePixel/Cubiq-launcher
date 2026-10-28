@@ -965,8 +965,8 @@ public final class AutoTest {
 	 * Ist der erwartete Bildschirm nicht offen, wird er (höchstens 5-mal) neu geöffnet und kurz gewartet.
 	 */
 	/**
-	 * Startbildschirm: Ruhe-Screenshot, eine Lampe per Tastatur-Auswahl an (wie Hover), dann die
-	 * Kosten der Hintergrund-Animation messen (mit und ohne Schaltung). true = noch nicht fertig.
+	 * Startbildschirm: Ruhe-Screenshot, einen Knopf per Tastatur-Auswahl hervorheben (wie Hover), dann die
+	 * Kosten der Hintergrund-Animation messen (mit und ohne Szene). true = noch nicht fertig.
 	 */
 	private boolean titleStep(Minecraft mc, CubiqTitleScreen screen) {
 		dev.pwiepixel.cubiqclient.core.ui.title.TitleUi title = screen.title();

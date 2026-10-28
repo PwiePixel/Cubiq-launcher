@@ -36,7 +36,7 @@ class TextFitTest {
 	private static final int EDITOR_CONTROL_W = 174 - 16 - 90;
 	/** Einstellungsseite im schmalen Fenster (Inhalt 295 - 10 px, Regler/Farbe/Auswahl w - 90). */
 	private static final int SETTING_LABEL_W = 295 - 10 - 90;
-	/** Lampen-Knöpfe des Startbildschirms: halbe Breite (BTN_W 200) minus Rand. */
+	/** Knöpfe des Startbildschirms: halbe Breite (BTN_W 200) minus Rand. */
 	private static final int LAMP_HALF_W = (200 - 6) / 2 - 10;
 	private static final int LAMP_FULL_W = 200 - 10;
 	/** Konto-Knopf im Standardfenster: 63 px breit, 18 px für Symbol und Rand. */

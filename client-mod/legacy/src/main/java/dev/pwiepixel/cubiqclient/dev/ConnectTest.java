@@ -16,7 +16,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 /**
  * Selbsttest Verbinden-Bildschirm ({@code -PcubiqAutotestOnly=connect}) unter 1.8.9–1.12.2: Logo, Titel und
- * Lampen stehen über „Abbrechen“ – bei GUI-Skala 2 (240 hoch) und 1 (480 hoch, früher überdeckt). Adresse ohne
+ * Fortschritt stehen über „Abbrechen“ – bei GUI-Skala 2 (240 hoch) und 1 (480 hoch, früher überdeckt). Adresse ohne
  * Antwort, damit der Bildschirm stehen bleibt. Bilder: cubiqclient-&lt;mc&gt;-connect-gui&lt;n&gt;.png.
  */
 public final class ConnectTest {

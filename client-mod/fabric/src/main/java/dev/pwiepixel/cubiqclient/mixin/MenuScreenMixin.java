@@ -26,7 +26,7 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 //?}
 
 /**
- * Redstone-Stil für Vanilla-Menüs: ersetzt den Hintergrund gestylter Menüs, meldet das Ende von init()
+ * Cubiq-Stil für Vanilla-Menüs: ersetzt den Hintergrund gestylter Menüs, meldet das Ende von init()
  * (Cubiq-Knöpfe, Listen) und zeichnet Ladebildschirme nach dem ganzen Bild neu. Das Menü selbst – mit allen
  * Knöpfen, auch denen anderer Mods – bleibt unverändert. Logik in {@link VanillaMenus}.
  */
