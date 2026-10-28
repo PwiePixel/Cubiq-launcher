@@ -123,7 +123,7 @@ public final class NetHooks implements NetPlatform {
 		}
 	}
 
-	/** „Verbinde …“ ohne Redstone-Stil: Zeile von „Schnell verbinden“ unter Vanillas Text, wenn es länger dauert. */
+	/** „Verbinde …“ ohne Cubiq-Stil: Zeile von „Schnell verbinden“ unter Vanillas Text, wenn es länger dauert. */
 	@SubscribeEvent
 	public void onScreenDrawn(net.minecraftforge.client.event.GuiScreenEvent.DrawScreenEvent.Post event) {
 		net.minecraft.client.gui.GuiScreen s = Mc.eventGui(event);

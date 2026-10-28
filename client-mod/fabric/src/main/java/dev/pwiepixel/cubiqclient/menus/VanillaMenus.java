@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Redstone-Stil für Vanilla-Menüs – die Minecraft-Seite: welches Menü welche Art ist, Hintergrund und Knöpfe
+ * Cubiq-Stil für Vanilla-Menüs – die Minecraft-Seite: welches Menü welche Art ist, Hintergrund und Knöpfe
  * zeichnen (aus den Mixins), Cubiq-Knöpfe im Pausenmenü, Anheften in der Serverliste, Ladebildschirme,
  * Formulare (Direkt verbinden, Server hinzufügen) mit Fläche und Textfeldern im Stil, Dialoge im Stil ihres
  * Menüs. Die
@@ -212,7 +212,7 @@ public final class VanillaMenus {
 		/*return s instanceof GenericDirtMessageScreen;*/
 	}
 
-	/** Wird dieses Menü im Redstone-Stil gezeichnet? */
+	/** Wird dieses Menü im Cubiq-Stil gezeichnet? */
 	public static boolean styled(Screen s) {
 		MenuStyle.Kind k = kind(s);
 		return k != null && MenuStyle.enabled(k);
@@ -323,7 +323,7 @@ public final class VanillaMenus {
 	// --- Nach dem Zeichnen: Ladebildschirme ---
 
 	/**
-	 * Nach dem ganzen Bildschirm (inkl. Tooltips): Ladebildschirme komplett im Redstone-Stil, darüber die
+	 * Nach dem ganzen Bildschirm (inkl. Tooltips): Ladebildschirme komplett im Cubiq-Stil, darüber die
 	 * Sozial-Benachrichtigungen (Toasts) auf jedem Bildschirm.
 	 */
 	public static void afterRender(Screen s, Gfx g, int mouseX, int mouseY) {
@@ -404,7 +404,7 @@ public final class VanillaMenus {
 		host.cubiqclient$addWidget(b);
 	}
 
-	/** Verbinden-Bildschirm ohne Redstone-Stil: Zeile von „Schnell verbinden“ unter Vanillas Status. */
+	/** Verbinden-Bildschirm ohne Cubiq-Stil: Zeile von „Schnell verbinden“ unter Vanillas Status. */
 	private static void connectStatus(Screen s, Gfx g) {
 		if (!(s instanceof ConnectScreen) || (MenuStyle.enabled(MenuStyle.Kind.LOADING) && loading(s))) return;
 		try {
@@ -449,7 +449,7 @@ public final class VanillaMenus {
 			final int h = s.height;
 			final boolean world = inWorld() && !(s instanceof LevelLoadingScreen);
 			final Canvas fc = c;
-			// Bereich der Knöpfe (z. B. „Abbrechen“ bei h/4+132): Logo, Titel und Lampen darüber, nie darunter.
+			// Bereich der Knöpfe (z. B. „Abbrechen“ bei h/4+132): Logo, Titel und Fortschritt darüber, nie darunter.
 			int top = Integer.MAX_VALUE;
 			int bottom = -1;
 			for (GuiEventListener child : s.children()) {
@@ -487,7 +487,7 @@ public final class VanillaMenus {
 	// --- Knöpfe ---
 
 	/**
-	 * Aus dem Knopf-Mixin: Fläche im Redstone-Stil zeichnen, wenn der offene Bildschirm gestylt ist.
+	 * Aus dem Knopf-Mixin: Fläche im Cubiq-Stil zeichnen, wenn der offene Bildschirm gestylt ist.
 	 * Rückgabe true = Vanilla-Fläche nicht zeichnen.
 	 */
 	public static boolean drawButton(Object widget, Gfx g, int x, int y, int w, int h, boolean hover, boolean active) {
@@ -515,7 +515,7 @@ public final class VanillaMenus {
 	}
 
 	/**
-	 * Aus dem Textfeld-Mixin, bevor Vanilla den Rahmen zeichnet: Fläche im Redstone-Stil, wenn der offene
+	 * Aus dem Textfeld-Mixin, bevor Vanilla den Rahmen zeichnet: Fläche im Cubiq-Stil, wenn der offene
 	 * Bildschirm gestylt ist. Rückgabe true = Vanilla-Rahmen weglassen (Text und Schreibmarke bleiben Vanilla).
 	 */
 	public static boolean drawTextField(Gfx g, int x, int y, int w, int h, boolean focused, boolean hover, boolean active) {
@@ -917,7 +917,7 @@ public final class VanillaMenus {
 		}
 	}
 
-	/** Nach dem Vanilla-Eintrag: Ping als Staub-Balken, Anheft-Fackel, Freunde auf dem Server. */
+	/** Nach dem Vanilla-Eintrag: Ping-Balken in der Akzentfarbe, Stecknadel (angeheftet), Freunde auf dem Server. */
 	public static void serverEntryAfter(Gfx g, Object entry, ServerData data, int x, int y, int w, int h, boolean hovered) {
 		Screen s = Mc.screen();
 		if (!(s instanceof JoinMultiplayerScreen) || !MenuStyle.enabled(MenuStyle.Kind.MULTIPLAYER) || data == null) return;
@@ -1014,7 +1014,7 @@ public final class VanillaMenus {
 		return drawn;
 	}
 
-	/** Ressourcen-Überblendung im Redstone-Stil (Menü-Stil → Ladebildschirme an)? */
+	/** Ressourcen-Überblendung im Cubiq-Stil (Menü-Stil → Ladebildschirme an)? */
 	public static boolean resourceOverlayStyled() {
 		return MenuStyle.enabled(MenuStyle.Kind.LOADING);
 	}

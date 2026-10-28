@@ -16,7 +16,7 @@ import net.minecraft.client.gui.screens.options.OptionsScreen;
 
 /**
  * Cubiq-Startbildschirm (ersetzt den Vanilla-Titelbildschirm, abschaltbar im Modul "Startbildschirm").
- * Aussehen und Bedienung – Redstone-Schaltung, Lampen-Knöpfe, Tastatur – stehen versionsunabhängig in
+ * Aussehen und Bedienung – Würfel-Szene, flache Knöpfe, Tastatur – stehen versionsunabhängig in
  * {@link TitleUi}; hier nur die Ziele der Knöpfe für diese Minecraft-Version.
  */
 public final class CubiqTitleScreen extends CubiqUiScreen {
@@ -51,7 +51,7 @@ public final class CubiqTitleScreen extends CubiqUiScreen {
 
 	@Override
 	protected void drawBackground(Gfx g, float partialTick) {
-		// Den Hintergrund zeichnet TitleUi (Redstone-Schaltung).
+		// Den Hintergrund zeichnet TitleUi (Würfel-Szene bzw. die Szene des Designs).
 	}
 
 	@Override

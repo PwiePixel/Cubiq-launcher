@@ -59,10 +59,10 @@ All features can be toggled in the Cubiq menu. Settings are stored in `config/cu
 | Text-Hotkeys | Four bindable keys send a fixed text or command. Off by default, at most one message per second (3 per 10 s) |
 | Wegpunkte | Own markers per world/server (`config/cubiqclient-waypoints.json`): name, colour, in-world label with distance and light column, show/hide, automatic death waypoint |
 | Minimap | Top-down map of the loaded chunks (map colours, height shading), rotating or north-up, zoom, waypoints, coordinates. Player dots are off by default and only ever show players the game already knows (normal render range) – no radar, no cave mode |
-| Cubiq-Online-Funktionen | Cubiq badge (a pixel redstone block) in front of the names of Cubiq users in the tab list and on name tags, Cubiq capes (own and other players', HD and animated), in-game presence for friends. Talks to the Cubiq API (see below); switchable as a whole, per badge place and for capes |
+| Cubiq-Online-Funktionen | Cubiq badge (a small green pixel cube) in front of the names of Cubiq users in the tab list and on name tags, Cubiq capes (own and other players', HD and animated), in-game presence for friends. Talks to the Cubiq API (see below); switchable as a whole, per badge place and for capes |
 | Umhang-Physik | Every rendered cape (Mojang, OptiFine, Cubiq, own and other players') moves like cloth instead of a rigid plank: swings when walking, turning, jumping and falling, rests on the back and bends at the hips when sneaking. Settings like WaveyCapes: *Stil* (glatt / blockig = vanilla-like steps), *Wind* (aus / Wellen / Böen) + *Windstärke*, *Bewegung* (Vanilla / schwingend / Dungeons = calm and floaty), *Schwerkraft*, *Anhebung beim Laufen*, *Steifheit*, *Detailstufe* (grid size, range and number of simulated capes), *Für* (nur eigener / alle Spieler). The settings page shows a live preview of your own player (turns by itself, drag to turn; alternates standing/walking) and a *Zurücksetzen* button; the settings are part of the HUD profiles. Defaults = the original behaviour. Elytras stay vanilla |
 | Farben | Colour grading of the game image: *Sättigung* (0–200 %), *Kontrast*, *Helligkeit*, *Dynamik* (vibrance) and *Farbtemperatur*, applied right after the world and hand are drawn – HUD and menus keep their colours. Off by default, part of the HUD profiles |
-| Emotes | Hold **G** (rebindable in the vanilla controls) for the emote wheel in the redstone style, point at an emote with the mouse, release to play it – other Cubiq players see it too. All 11 emotes of the Cubiq API (Winken, Klatschen, Jubeln, Verbeugen, Facepalm, Schulterzucken, Daumen hoch, Tanzen, Salutieren, Luftgitarre, Redstone-Tanz) are animated; locked ones are shown dark with a lock. Settings: *Kamera beim eigenen Emote* (unverändert / 3. Person von hinten / von vorn), *Emotes anderer Spieler zeigen* |
+| Emotes | Hold **G** (rebindable in the vanilla controls) for the emote wheel in the Cubiq style, point at an emote with the mouse, release to play it – other Cubiq players see it too. All 11 emotes of the Cubiq API (Winken, Klatschen, Jubeln, Verbeugen, Facepalm, Schulterzucken, Daumen hoch, Tanzen, Salutieren, Luftgitarre, Redstone-Tanz) are animated; locked ones are shown dark with a lock. Settings: *Kamera beim eigenen Emote* (unverändert / 3. Person von hinten / von vorn), *Emotes anderer Spieler zeigen* |
 | Signalstärke *(Redstone)* | Look at dust, a repeater, comparator, piston, lamp, observer, lever, button, plate, daylight detector, target, door, dispenser, hopper … → HUD panel with the block name, signal strength 0–15 as a 15-segment bar + number, repeater delay (and "locked"), comparator mode and **output** (recomputed from its inputs – the client never receives it), piston extended/retracted, the input strength of consumers, and the comparator output of containers you have opened (the client only knows a chest's content while it is open; otherwise it is left out) |
 | Signal-Overlay *(Redstone)* | Signal strength as a number above every piece of redstone dust within 4–16 blocks, grey (0) → bright red (15), smaller further away. Toggle key **F6** (F8 on Forge 1.7.10/1.8.9, where F6/F7 are the stream keys). Only loaded chunks, by default only dust in sight (line-of-sight check), cached: a budget of 4 096 block reads per tick searches the cube, known dust is re-read every tick |
 | Takt-Messer *(Redstone)* | For the component you look at (keeps measuring after you look away, up to 32 blocks): frequency in Hz, period in redstone ticks (and game ticks), pulse length, and a 5-second oscilloscope. Shown only while the component switches |
@@ -72,7 +72,7 @@ All features can be toggled in the Cubiq menu. Settings are stored in `config/cu
 | Partikel | Upper limit of particles at once, share of all particles (*Menge*), explosion particles, rain splashes and smoke off |
 | Welt-Details | Sky, stars, distance fog, rain/snow and texture animations (water, lava, fire …) off – each only where the version has a clean hook |
 | Clips & Aufnahme | **F9** saves the last seconds as a clip, **F10** starts/stops a recording (both changeable in the vanilla controls). The Cubiq Launcher records the game window – the mod only reports the key presses over a local link (see below). HUD element (movable): a subtle ring while the clip buffer runs (*Show buffer indicator*), "Clip saved (30 s)" for a few seconds – with a current Cubiq Launcher both (and the REC timer) appear in the launcher's overlay instead, so they never end up in a clip. Without the Cubiq Launcher (or with clips off there) the keys only show a hint |
-| Startbildschirm | Cubiq title screen: animated redstone circuit on deepslate, glowing pixel wordmark, buttons as redstone lamps (Einzelspieler/Mehrspieler/Einstellungen/Cubiq-Menü/Mods*/Beenden; keyboard: Tab/arrows + Enter, narrated where the version has a narrator); link "Klassischer Titelbildschirm"; setting *Animierter Hintergrund* switches to a still image (so does *Reduce animations* in the launcher, which leaves the setting itself alone – then the intro also opens without its start animation and loading screens stay still); disable the module to always get the vanilla one. Servers are only reached through Mehrspieler |
+| Startbildschirm | Cubiq title screen like the launcher's: calm cube scene (slowly floating cube outlines, fine isometric grid, soft accent glow), Cubiq mark with pixel wordmark, flat buttons with *Einzelspieler* in the accent colour (Einzelspieler/Mehrspieler/Einstellungen/Cubiq-Menü/Mods*/Beenden; keyboard: Tab/arrows + Enter, narrated where the version has a narrator), the own player figure on a turning cube pedestal (drag to turn) with *Garderobe*, a side bar for Konten/Sozial/Clips & Bilder/Cubiq-Einstellungen; link "Klassischer Titelbildschirm"; setting *Animierter Hintergrund* switches to a still image (so does *Reduce animations* in the launcher, which leaves the setting itself alone – then the intro also opens without its start animation and loading screens stay still); disable the module to always get the vanilla one. Servers are only reached through Mehrspieler |
 
 *Mods only if ModMenu is installed. The Cubiq menu also has a **Resourcepacks** screen (search, filter all/enabled/available,
 toggle, priority ▲/▼, open folder; applied with one reload).
@@ -131,8 +131,9 @@ The logic is version independent in `common/core/emote` (definitions, playback, 
 
 - **Wheel:** holding the key opens `EmoteWheelScreen`; the physical key is polled every frame (a screen stops the key
   bindings) and releasing it plays the emote the mouse points at (direction from the centre, dead zone in the
-  middle). A short tap keeps the wheel open (then click or press again), Esc closes. Unlocked emotes are lamps,
-  locked ones dark stones with a lock; without consent, account or connection the wheel only shows a hint.
+  middle). A short tap keeps the wheel open (then click or press again), Esc closes. Unlocked emotes are tiles
+  that light up in the accent colour when pointed at, locked ones calm tiles with a lock; without consent, account
+  or connection the wheel only shows a hint.
 - **API** (contract `api/API.md` §12/§13, same login as the badges): `GET /v1/me/cosmetics` → unlocked emotes
   (after login, every 10 min, when the wheel opens and the list is older than 60 s), `POST /v1/emotes/play`
   (the animation starts locally right away; at most one emote every 2 s, `429`/`Retry-After` extends the wait,
@@ -430,13 +431,34 @@ and a click on a tile (or its gear) opens that module's settings page. Settings 
 everywhere: switch, slider, colour picker (hue/saturation field, opacity and **Chroma**, plus the brand palette),
 dropdown and key binding.
 
-Everything is drawn in the **redstone style** (`core/ui/Redstone`): deepslate surfaces with pixel edges, redstone
-dust lines whose signal strength fades, lamps that light up (hover, focus, primary buttons), enabled tiles glow like
-powered blocks; the launcher accent tints dust and glow. The title screen lives in `core/ui/title` (`TitleUi` +
-`CircuitScene`, per version only a small `TitleHost`); its background is a procedural circuit (torches, dust,
-repeaters with their delay, lamps, pistons) that is rebuilt only when the window size changes and switches itself to
-a sparser version if drawing it gets expensive (always sparse on Forge 1.8.9–1.12.2). On 1.20–1.21.1 the Cubiq screens
-draw inside `GuiGraphics#drawManaged`, otherwise every rectangle would be a draw call of its own.
+The menu, the HUD editor and the other screens in `core/ui` are drawn in the **Cubiq style**, the calm, flat look of the
+launcher. The drawing helpers are in `core/ui/Paint`: flat surfaces with rounded corners and a fine edge, the accent
+colour for actions and selection and a soft glow instead of hard edges. Primary buttons are filled with the accent
+colour, the others are calm surfaces that brighten on hover, and enabled tiles get an accent edge and a soft glow. The
+helpers draw only rectangles on the GUI grid (no textures), so everything scales with the GUI size and looks the same
+in every Minecraft version. The colours come from `core/ui/Theme` (see below); the designs *Polarlicht* and *Fuchsbau*
+and the Halloween event swap single parts (snow lip, lanterns, lines). A few older screens of the loader projects still
+draw with the earlier colours of `ui/Brand` (redstone red, lamp amber): resource packs (`screen/PackScreen`), the
+waypoint list and editor and the crosshair editor.
+
+The title screen lives in `core/ui/title` (`TitleUi` + `CubeScene`, `Turntable` for the pedestal under the player
+figure, per version only a small `TitleHost`). Its background is a calm cube scene like the launcher's: a gradient in
+the surface colours, a soft accent glow behind the buttons and at the top right, a fine isometric grid and a few cube
+outlines that slowly float up and down. The scene is laid out only when the window size or the layout changes and
+switches itself to a sparser version without grid and motion if drawing it gets expensive (always sparse on Forge
+1.8.9–1.12.2); *Polarlicht*, *Fuchsbau* and Halloween draw their own scenes (`WinterScene`, `FoxScene`,
+`NightScene`). On 1.20–1.21.1 the Cubiq screens draw inside `GuiGraphics#drawManaged`, otherwise every rectangle would
+be a draw call of its own.
+
+The module **Menü-Stil** gives vanilla menus the same look: pause menu, server list, loading screens, options, world
+list and error screens, each switchable. `core/menus/MenuStyle` decides which menus are styled, `core/ui/menus/MenuSkin`
+draws them, and per loader `menus/VanillaMenus` and its mixins hook them in (`menus/LegacyMenus` with Forge events on
+1.8.9–1.12.2). Only surfaces are repainted – background, header and footer bar, button and text field faces, list
+wells, server and world cards, ping bars – while the labels and the menus themselves stay vanilla, so buttons of other
+mods keep working; loading screens and the resource reload (instead of the Mojang logo) are drawn completely. Without
+a world the background is the title screen's scene, in a world a dark veil; the surfaces stay dark even in the light
+theme because vanilla writes white text. The module also adds Cubiq buttons to the pause menu and pinning to the
+server list.
 
 **HUD bearbeiten** drags the modules around: they snap to the screen edges, the screen centre and to the edges and
 centres of the other modules, and the guide line that is being used lights up. Holding Shift moves freely, the mouse
@@ -458,8 +480,9 @@ look of every HUD module, while the other modules stay shared. Profiles are crea
 under **Profile** in the menu or in the editor's top bar; the key *HUD-Profil wechseln* (unbound by default) cycles
 through them in game.
 
-The colours come from the launcher: before a start it writes `config/cubiqclient/launcher-theme.json` (theme and accent)
-into the instance, and the menu and the editor use that accent. Without the file the dark theme with Redstone red applies.
+The colours come from the launcher: before a start it writes `config/cubiqclient/launcher-theme.json` (theme, accent and
+design) into the instance, and `core/ui/Theme` builds the colours of the Cubiq screens from it. Without the file the
+dark Cubiq design with Cubiq green applies.
 The same file carries `"motion"` (`"full"` or `"reduced"`, the launcher's *Animations* setting with *Follow
 Windows/system* already resolved): `"reduced"` calms scenes, the intro and indeterminate progress like *Animierter
 Hintergrund* off, without changing that setting (`MenuStyle.animated()`); missing or unknown counts as `"full"`.
@@ -564,7 +587,7 @@ vanilla toggle sprint/sneak only exists from 1.15.
 | 1.7-Animationen: Hand bleibt oben | Forge 1.8.9–1.12.2 | `ItemRenderer.equippedProgress` is private and there is no hook |
 | Wegpunkte je Dimension | 1.14.4, 1.15.2 | no `Level#dimension()`; waypoints are then valid in every dimension of that world |
 | Treffer-Farbe, niedriges Feuer, Reichweite/Combo, Chat-Tools, Auto-GG, Kein Schadens-Wackeln, Block-Umrandung | Forge 1.14.4 | that build has no Mixin at all – the modules are hidden in the menu |
-| Cubiq-Startbildschirm | Forge 1.13.2 and 1.7.10 | not ported – the vanilla title screen stays; the menu has the redstone style there too |
+| Cubiq-Startbildschirm | Forge 1.13.2 and 1.7.10 | not ported – the vanilla title screen stays; the Cubiq menu has the Cubiq style there too |
 | Alle neuen Module | Forge 1.13.2 and 1.7.10 | not ported yet (see "Open") |
 | Freelook | Forge 1.7.10, 1.13.2, 1.14.4 | no camera hook (no Mixin there) – hidden in the menu; zoom and toggle sprint/sneak incl. fly boost work |
 | Cubiq-Online-Funktionen, Umhang-Physik | Forge 1.13.2 and 1.7.10 | not ported – hidden in the menu |
@@ -573,7 +596,7 @@ vanilla toggle sprint/sneak only exists from 1.15.
 | Emotes | Forge 1.14.4, 1.13.2 and 1.7.10 | no model hook there (no Mixin / not ported) – hidden in the menu |
 | Farben | Forge 1.14.4, 1.13.2 and 1.7.10 | no hook after the world pass (no Mixin / not ported) – hidden in the menu |
 | Farben | 26.2+ with the Vulkan backend | the pass is OpenGL; with Vulkan there is no GL texture – hidden in the menu (OpenGL is the default) |
-| Abzeichen als Pixel-Redstone-Block | 1.14.4, 1.15.2, Forge 1.8.9–1.12.2 | no per-text font – a dark red `■` instead |
+| Abzeichen als Pixel-Würfel | 1.14.4, 1.15.2, Forge 1.8.9–1.12.2 | no per-text font – a dark red `■` instead |
 | Cubiq-Umhang über OptiFine | Forge 1.8.9–1.12.2 with OptiFine | OptiFine's own cape getter wins there |
 | Signalstärke: Türen, Falltüren, Zauntore, Notenblöcke | Forge 1.7.10 | no "powered" bit in their metadata – not recognised as components |
 | Signal-Overlay: FOV of sprint/speed | Forge 1.7.10 | the FOV modifier is private there – numbers sit slightly off while sprinting |

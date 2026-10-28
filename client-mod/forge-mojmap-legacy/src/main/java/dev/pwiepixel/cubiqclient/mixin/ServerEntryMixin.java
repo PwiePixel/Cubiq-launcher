@@ -18,9 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 /**
- * Serverkarten im Redstone-Stil: Karte hinter dem Vanilla-Eintrag (Symbol, Name, MOTD, Spielerzahl bleiben von
- * Minecraft), danach Ping als Staub-Balken, Fackel für angeheftete Server und Gesichter von Cubiq-Freunden, die
- * dort gerade spielen.
+ * Serverkarten im Cubiq-Stil: Karte hinter dem Vanilla-Eintrag (Symbol, Name, MOTD, Spielerzahl bleiben von
+ * Minecraft), danach Ping als Balken in der Akzentfarbe, Stecknadel für angeheftete Server und Gesichter von
+ * Cubiq-Freunden, die dort gerade spielen.
  */
 @Mixin(ServerSelectionList.OnlineServerEntry.class)
 public abstract class ServerEntryMixin {

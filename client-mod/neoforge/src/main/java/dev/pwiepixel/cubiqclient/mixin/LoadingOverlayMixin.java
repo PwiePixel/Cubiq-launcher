@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 //?}
 
 /**
- * Ressourcen laden (sonst Mojang-Logo): die ganze Überblendung im Redstone-Stil – Einblenden über dem
+ * Ressourcen laden (sonst Mojang-Logo): die ganze Überblendung im Cubiq-Stil – Einblenden über dem
  * offenen Bildschirm, Laden, Ausblenden über dem nächsten Bildschirm. Vanilla zeichnet dabei gar nichts:
  * würde unsere Fläche nur darübergelegt, schiene das Rot/Logo beim halbdurchsichtigen Ein- und Ausblenden
  * durch. Der Ablauf (Zeiten, Fortschritt, Abschluss, Overlay entfernen) ist der von Minecraft – je Version
