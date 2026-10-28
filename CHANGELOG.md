@@ -65,12 +65,14 @@ How this file is written:
   list with online status, chat with your friends, achievements and the sync of your own skins, presets, theme, accent
   colour and language between your PCs. You can turn the services off again at any time under Settings → Privacy; the
   launcher then sends nothing to the Cubiq server.
-- **Ready for the Cubiq Client.** When you start Minecraft, the launcher now tells the Cubiq Client which server to
-  use. With the Cubiq Client in your game, the capes and cosmetics of other Cubiq players, the Cubiq badge next to
-  their names, emotes, the Social menu with chat, friends list and your friends' worlds, the sync of your modules and
-  HUD profiles and bug reports from the Cubiq menu all run over the same server as the launcher.
-- **Links to the website that work.** "Sign in on the website" under Settings → Privacy and the links to the team page
-  and the open positions in "My applications" now open the Cubiq website.
+- **Ready for the Cubiq Client.** When you start Minecraft with the Cubiq services switched on, the launcher now tells
+  the Cubiq Client which server to use. With the Cubiq Client in your game, the capes and cosmetics of other Cubiq
+  players, the Cubiq badge next to their names, emotes, the Social menu with chat, friends list and your friends'
+  worlds, the sync of your modules and HUD profiles and bug reports from the Cubiq menu all run over the same server as
+  the launcher.
+- **Links to the website that work.** "Open website" under Settings → Privacy, the link in the "Sign in on the
+  website" window and the "Open positions" and "On the website" buttons in "My applications" now open the Cubiq
+  website.
 - **Your play time at a glance.** A new Statistics page in the sidebar (under Collection, also in the search with
   Ctrl+K) shows how much you play: in total, this week and this month, how many sessions you had and how long they
   last on average, your longest session and your current and best streak of days in a row. Below that, a bar chart
@@ -134,12 +136,14 @@ How this file is written:
   andere Cubiq-Spieler sehen, eine Freundesliste mit Online-Status, Chat mit deinen Freunden, Erfolge und den Abgleich
   deiner eigenen Skins, Presets, Theme, Akzentfarbe und Sprache zwischen deinen PCs. Unter Einstellungen → Datenschutz
   lassen sich die Dienste jederzeit wieder ausschalten; dann sendet der Launcher nichts an den Cubiq-Server.
-- **Bereit für den Cubiq Client.** Startest du Minecraft, sagt der Launcher dem Cubiq Client jetzt, welchen Server er
-  nutzen soll. Mit dem Cubiq Client im Spiel laufen Umhänge und Kosmetik anderer Cubiq-Spieler, das Cubiq-Abzeichen
-  neben ihren Namen, Emotes, das Sozial-Menü mit Chat, Freundesliste und den Welten deiner Freunde, der Abgleich deiner
-  Module und HUD-Profile und Bug-Meldungen aus dem Cubiq-Menü über denselben Server wie der Launcher.
-- **Links zur Website, die funktionieren.** „Auf der Website anmelden“ unter Einstellungen → Datenschutz und die Links
-  zur Team-Seite und zu den offenen Stellen in „Meine Bewerbungen“ öffnen jetzt die Cubiq-Website.
+- **Bereit für den Cubiq Client.** Startest du Minecraft mit eingeschalteten Cubiq-Diensten, sagt der Launcher dem Cubiq
+  Client jetzt, welchen Server er nutzen soll. Mit dem Cubiq Client im Spiel laufen Umhänge und Kosmetik anderer
+  Cubiq-Spieler, das Cubiq-Abzeichen neben ihren Namen, Emotes, das Sozial-Menü mit Chat, Freundesliste und den Welten
+  deiner Freunde, der Abgleich deiner Module und HUD-Profile und Bug-Meldungen aus dem Cubiq-Menü über denselben Server
+  wie der Launcher.
+- **Links zur Website, die funktionieren.** „Website öffnen“ unter Einstellungen → Datenschutz, der Link im Fenster
+  „Auf der Website anmelden“ und die Knöpfe „Offene Stellen“ und „Auf der Website“ in „Meine Bewerbungen“ öffnen
+  jetzt die Cubiq-Website.
 - **Deine Spielzeit auf einen Blick.** Eine neue Seite „Statistik“ in der Seitenleiste (unter „Sammlung“, auch in der
   Suche mit Strg+K) zeigt, wie viel du spielst: insgesamt, in dieser Woche und in diesem Monat, wie viele Sitzungen du
   hattest und wie lange sie im Schnitt dauern, deine längste Sitzung und deine aktuelle und beste Serie an Tagen
