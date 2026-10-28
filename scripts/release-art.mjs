@@ -219,6 +219,13 @@ export const SPECIAL_TOPICS = [
   // Füchschen (Herzchen steigen auf) und hält dem Pinguin mit dem anderen einen Fisch hin (Bissen, Krümel, zufriedenes
   // Kauen); darüber schwebt das Axolotl auf einer eigenen kleinen Insel, statt der Würfel. Schleife wie bei 0.3.0.
   { id: 'petting', subject: 'petting', hero: 'middle', wide: 6, cubes: 0, sparkles: 3, float: 1, frames: 32, frameMs: 80 },
+  // 0.3.3: Die klassische Minikarte – über der Insel schwebt eine große quadratische Minikarte mit dünnem grauem
+  // Rahmen, rotem „N“ auf dunkler Platte, rotem Spielerpfeil und bunten Wegpunkt-Kästchen mit Anfangsbuchstaben. Ein
+  // Freund auf seinem Inselchen teilt im Chat einen Wegpunkt; ein Klick auf „+“, und eine Kopie fliegt im Bogen in die
+  // Karte und landet mit Funkeln und einem grünen „+“ – Cubi schaut ihr nach und hüpft vor Freude. Funkeln an festen
+  // Stellen statt der Würfel; die Insel ist etwas breiter, so bleibt ihre Unterseite beim Schweben ganz im Bild.
+  // Schleife wie bei 0.3.0.
+  { id: 'waypoints', subject: 'waypoints', wide: 2, cubes: 0, sparkles: 0, float: 1, frames: 32, frameMs: 80 },
 ]
 
 function count(haystack, needle) {
@@ -1130,6 +1137,218 @@ function risingHeart(c, age, x, y, { life = 16, rise = 14, drift = 0, big = 2 } 
   c.draw(s, hx - (s.w >> 1), hy - (s.h >> 1))
 }
 
+// ---------------------------------------------------------------- Wegpunkte aus dem Chat (Sonderthema „waypoints“)
+//
+// Die klassische Minikarte wie in den beliebten Minikarten-Mods: quadratisch, dünner grauer Rahmen, oben das rote „N“
+// auf einer dunklen Platte, roter Spielerpfeil in der Mitte, Wegpunkte als bunte Kästchen mit weißem Anfangsbuchstaben.
+// Ein Freund auf seinem Inselchen teilt im Chat einen Wegpunkt: Die Sprechblase geht auf, er tippt, die Nachricht zeigt
+// den Wegpunkt und den Knopf „+“; der Mauszeiger klickt, eine Kopie springt heraus, fliegt im Bogen in Cubis Minikarte
+// und landet mit Funkeln und einem „+“. Eigene Schleife wie bei „petting“; alles hängt am Bild der Schleife, damit sie
+// nahtlos bleibt.
+
+/** Minikarte: linke obere Ecke und Kantenlänge mit Rahmen (2 Punkte breit) – innen 24 × 24 Punkte Gelände. */
+const MINIMAP = { x: 32, y: 11, size: 28 }
+
+/**
+ * Ablauf des Teilens (Bild der Schleife): Sprechblase geht auf (`open`), Tipp-Punkte (`type`), der Wegpunkt erscheint in
+ * der Blase (`show`), ein Klick – eine Kopie springt heraus (`pop`) und landet in der Karte (`land`); danach geht die
+ * Blase zu (`close`). Der neue Wegpunkt schrumpft erst wieder weg (`fade`), während der Freund schon die nächste
+ * Nachricht tippt. Im ruhigen Bild (dem ersten) ist die Kopie gerade oben im Bogen.
+ */
+const SHARE = { open: 17, type: 19, show: 22, pop: 27, land: 5, close: 2, fade: 18 }
+
+/** Gelände der Minikarte von oben (24 × 24): „.“ Wiese (gesprenkelt), Bäume, ein See mit Sandufer. */
+const MINIMAP_LAND = sprite(
+  [
+    '................Tt......',
+    '...............Tttt.....',
+    '................tt......',
+    '........................',
+    '........................',
+    '........................',
+    '........................',
+    '........................',
+    '........................',
+    'Tt....................Tt',
+    'ttt..................Ttt',
+    '.t....................tt',
+    '........................',
+    '........................',
+    'sss.....................',
+    'wwss....................',
+    'hwwss...................',
+    'wwwws...................',
+    'wWwwss..................',
+    'wWWwws..................',
+    'wWWwws.......Tt.........',
+    'wwWwss......Tttt........',
+    'wwwws........tt.........',
+    'swwss...................',
+  ],
+  { T: C.grassDark, t: C.cubiBottom, w: C.water, W: C.waterDeep, h: C.waterHi, s: C.sand },
+)
+
+/** Weiße Anfangsbuchstaben der Wegpunkte (3 × 3). */
+const WAYPOINT_LETTERS = { H: ['W.W', 'WWW', 'W.W'], T: ['WWW', '.W.', '.W.'], V: ['W.W', 'W.W', '.W.'] }
+
+/** Wegpunkt-Kästchen (5 × 5) in `color` mit weißem Buchstaben, unten und rechts eine Spur dunkler. */
+function waypointTile(color, letter) {
+  const c = new Canvas(5, 5)
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) c.set(x, y, x === 4 || y === 4 ? mix(color, C.outline, 0.25) : color)
+  return c.draw(sprite(WAYPOINT_LETTERS[letter], { W: C.white }), 1, 1)
+}
+
+const WAYPOINT = {
+  // Schon auf der Karte: Zuhause (blau) und ein Turm (orange); neu aus dem Chat: ein Dorf (violett)
+  home: waypointTile(C.blue, 'H'),
+  tower: waypointTile(C.orange, 'T'),
+  shared: waypointTile(C.violet, 'V'),
+  // Roter Spielerpfeil, zeigt nach Norden
+  arrow: sprite(['..a..', '.aAr.', '.aAr.', 'aAAAr', 'aA.Ar'], { a: mix(C.red, C.white, 0.35), A: C.red, r: C.redDark }),
+  // Norden: rotes „N“ auf einer kleinen dunklen Platte, mitten auf dem oberen Rand (wie im Spiel)
+  north: sprite(['N..N', 'NN.N', 'N.NN', 'N..N'], { N: mix(C.red, C.white, 0.15) }),
+  // Knopf „+ Wegpunkt“ in der Chat-Nachricht
+  add: sprite(['.g.', 'ggg', '.g.'], { g: C.cubi }),
+  // „+“ beim Landen: ein runder grüner Knopf mit weißem Plus (anders als die Funken) – erscheint als Punkt, wächst und
+  // schrumpft beim Verblassen wieder
+  plus: [
+    sprite(['g'], { g: C.grassHi }),
+    sprite(['.g.', 'gWg', '.g.'], { g: C.cubi, W: C.white }),
+    sprite(['.hgg.', 'hgWgg', 'gWWWd', 'ggWgd', '.gdd.'], { h: C.grassHi, g: C.cubi, d: C.cubiSide, W: C.white }),
+  ],
+  // Der Freund: ein kleiner blauer Würfel mit Cubis Gesicht (schaut nach rechts zur Blase), oben das Pflänzchen
+  friend: sprite(['.TTTTTTTt.', 'TTTTTTTTtt', 'HGWWGGWWSS', 'HGWKGGWKSS', 'HGPGGGGPSS', 'HGGGMMGGSS', '.BBBBBBBB.'], {
+    T: C.friendTop, t: C.friendTopShade, H: C.friendHi, G: C.friend, S: C.friendSide, B: C.friendBottom, W: C.eye, K: C.pupil, P: C.cheek, M: C.mouth,
+  }),
+  friendBlink: sprite(['.TTTTTTTt.', 'TTTTTTTTtt', 'HGGGGGGGSS', 'HGKKGGKKSS', 'HGPGGGGPSS', 'HGGGMMGGSS', '.BBBBBBBB.'], {
+    T: C.friendTop, t: C.friendTopShade, H: C.friendHi, G: C.friend, S: C.friendSide, B: C.friendBottom, K: C.pupil, P: C.cheek, M: C.mouth,
+  }),
+  friendFeet: sprite(['.FF....FF.'], { F: C.friendBottom }),
+}
+
+/** Kleines Zufallsmuster ohne Zufall: für (u, v) immer derselbe Wert 0 … 1 (Sprenkel der Wiese). */
+function grain(u, v) {
+  let h = (Math.imul(u + 17, 374761393) + Math.imul(v + 5, 668265263)) >>> 0
+  h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296
+}
+
+/**
+ * Die klassische Minikarte mit linker oberer Ecke (x, y): grauer Rahmen mit Licht oben links, dunkle Innenkante,
+ * Gelände, oben mittig das rote „N“ auf seiner dunklen Platte, in der Mitte der rote Pfeil, dazu die festen Wegpunkte.
+ * `f` lässt das Wasser glitzern.
+ */
+function classicMinimap(f, x, y) {
+  const { size } = MINIMAP
+  const c = layer()
+  c.rect(x, y, size, size, C.metal)
+  c.bevel(0.45, 0.28)
+  c.rect(x + 1, y + 1, size - 2, size - 2, C.slateDark)
+  const inner = size - 4
+  for (let v = 0; v < inner; v++) {
+    for (let u = 0; u < inner; u++) {
+      let land = MINIMAP_LAND.get(u, v)
+      // Auf dem See wandern schräge Lichtstreifen (alle 4 Bilder einen Punkt, nach 32 wieder am Anfang).
+      if (land?.[0] === C.water[0] && (u + v + Math.floor(f / 4)) % 8 === 0) land = mix(C.water, C.waterHi, 0.6)
+      const g = grain(u, v)
+      c.set(x + 2 + u, y + 2 + v, land ?? (g < 0.16 ? mix(C.grass, C.grassHi, 0.55) : g > 0.86 ? mix(C.grass, C.grassDark, 0.6) : C.grass))
+    }
+  }
+  // Platte 6 × 6, halb über dem Rand
+  const plate = x + size / 2 - 3
+  c.rect(plate, y - 3, 6, 6, C.slateDark)
+  c.draw(WAYPOINT.north, plate + 1, y - 2)
+  c.outline(C.outline)
+  // Pfeil und Wegpunkte mit eigenem dunklem Umriss, damit sie sich vom Gelände abheben.
+  const marks = layer()
+  marks.draw(WAYPOINT.arrow, x + 2 + 10, y + 2 + 9)
+  marks.draw(WAYPOINT.tower, x + 2 + 17, y + 2 + 4)
+  marks.draw(WAYPOINT.home, x + 2 + 16, y + 2 + 16)
+  return c.draw(marks.outline(C.outline))
+}
+
+/** Kachel `tile` auf (x, y) in der Größe `size` (5, 3 oder 1 Punkt – zum Erscheinen und Verschwinden), mit Umriss. */
+function poppedTile(tile, x, y, size, flash = false) {
+  const c = layer()
+  if (size >= 5) c.draw(flash ? tile.clone().map(() => C.white) : tile, x, y)
+  else if (size === 3) c.rect(x + 1, y + 1, 3, 3, flash ? C.white : tile.get(0, 0))
+  else if (size === 1) c.set(x + 2, y + 2, C.white)
+  return c.outline(C.outline)
+}
+
+/**
+ * Sprechblase des Freunds (linke obere Ecke x, y; 13 × 9), Zipfel links unten zu ihm hin. `size`: 0 zu, 1 halb offen,
+ * 2 offen; darin Tipp-Punkte (`dots`) oder – neben dem Wegpunkt – der grüne Knopf „+ Wegpunkt“ (`button`, beim Klick
+ * leuchtet er hell auf: `pressed`).
+ */
+function chatBubble(x, y, { size, dots = 0, button = false, pressed = false }) {
+  const c = layer()
+  if (!size) return c
+  const w = size === 2 ? 13 : 7
+  const h = size === 2 ? 9 : 5
+  const bx = x + (13 - w) / 2
+  const by = y + (9 - h) / 2
+  c.rect(bx + 1, by, w - 2, h, C.paper)
+  c.rect(bx, by + 1, w, h - 2, C.paper)
+  c.rect(bx + 1, by + h - 1, w - 2, 1, C.paperShade)
+  c.rect(bx + w - 1, by + 1, 1, h - 2, C.paperShade)
+  // Zipfel zum Freund (links unten)
+  c.set(bx + 1, by + h, C.paper)
+  c.set(bx + 2, by + h, C.paperShade)
+  c.set(bx, by + h + 1, C.paper)
+  if (size === 2) {
+    for (let i = 0; i < dots; i++) c.rect(x + 3 + i * 3, y + 4, 2, 2, i === 1 ? C.cubi : C.slate)
+    if (button) c.draw(pressed ? WAYPOINT.add.clone().map(() => C.cubiTop) : WAYPOINT.add, x + 8, y + 3)
+  }
+  return c.outline(C.outline)
+}
+
+/**
+ * Funkeln einer Landung um das Kästchen mit Mitte (cx, cy), `age` Bilder danach: im ersten Bild kurze Strahlen nach
+ * oben, unten und zur Seite, dann fliegen vier Funken schräg nach außen und verglimmen.
+ */
+function landingBurst(c, age, cx, cy) {
+  if (age === 0) {
+    for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+      c.set(cx + dx * 5, cy + dy * 5, C.white)
+      c.set(cx + dx * 6, cy + dy * 6, C.sparkleMid)
+    }
+  }
+  const size = [0, 2, 2, 1, 1][age] ?? 0
+  if (!size) return
+  const s = SPARKLES[size - 1]
+  for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) c.draw(s, cx + dx * (3 + age) - (s.w >> 1), cy + dy * (3 + age) - (s.h >> 1))
+}
+
+/** Mauszeiger (zeigt nach links oben): klickt den Wegpunkt in der Blase an. */
+const POINTER = sprite(['W...', 'WW..', 'WWW.', 'WWWW', 'WW..', '..W.'], { W: C.white })
+
+/** Cubi schaut hoch: zur Sprechblase (`look` < 0) oder zur Karte, freut sich mit geschlossenen Augen (`happy`). */
+function watchingCubi(f, n, x, { look, happy, lift }) {
+  const c = layer()
+  const top = GROUND - 13 - lift
+  const blink = happy || f === 11
+  c.draw(blink ? CUBI.blink : CUBI.body, x, top)
+  if (!blink) {
+    for (const ex of [x + 3, x + 11]) {
+      c.rect(ex, top + 4, 2, 3, C.eye)
+      c.rect(look < 0 ? ex : ex + 1, top + 4, 1, 2, C.pupil)
+    }
+  }
+  if (happy) {
+    // Glückliche Augen: kleine Bögen statt Strichen
+    for (const ex of [x + 3, x + 11]) {
+      c.rect(ex, top + 4, 2, 3, C.cubi)
+      c.rect(ex, top + 5, 2, 1, C.pupil)
+      c.set(ex - 1, top + 6, C.pupil)
+      c.set(ex + 2, top + 6, C.pupil)
+    }
+  }
+  c.draw(CUBI.feet, x, GROUND - 1)
+  c.draw(CUBI.sprout[Math.floor(f / 8) % 2], x + 6, top - 3)
+  return c.outline(C.outline)
+}
+
 /**
  * Jeder Gegenstand: f → Ebenen. `layer` bekommt einen Umriss, `front` (Licht, Flammen, Funken) und `ground`
  * (Rauch, Schatten auf der Insel) nicht bzw. eigene. `x` = linker Rand des freien Platzes rechts von Cubi.
@@ -1688,6 +1907,98 @@ const PROPS = {
     risingHeart(love, (f - 18 + n) % n, hero + 7, iy - 9, { life: 14, rise: 4 })
     sky.draw(love.outline(C.outline)).draw(fireflyFlight(f, n, left + 5, 6))
     return { layer: c, hero: caring, front, sky }
+  },
+
+  /**
+   * Wegpunkte aus dem Chat: Über der Insel schwebt die klassische Minikarte, links oben steht der Freund auf seinem
+   * Inselchen und teilt im Chat einen Wegpunkt – ein Klick auf „+“, und eine Kopie springt aus der Sprechblase, fliegt im
+   * Bogen in die Karte und landet mit Funkeln und „+“. Cubi schaut ihr nach und hüpft vor Freude, wenn sie ankommt.
+   */
+  waypoints(f, { left, right, hero, frames: n }) {
+    const age = (f - SHARE.pop + n) % n
+    const since = (f - SHARE.land + n) % n
+    // Karte und Inselchen schweben jedes für sich (nicht mit der großen Insel); die Landung drückt die Karte kurz nach unten.
+    const my = MINIMAP.y + Math.round(swing(f, n, 0.6)) + (since < 2 ? 1 : 0)
+    const iy = 21 + Math.round(swing(f, n, 0.15))
+    const sky = layer().draw(classicMinimap(f, MINIMAP.x, my))
+
+    // Der Freund auf seinem Inselchen: beim Schreiben wippt er, bei der Landung hüpft er mit.
+    const ix = 2
+    sky.draw(islet(ix, iy, 12))
+    const writing = f >= SHARE.open && f < SHARE.pop
+    const bob = (writing && f % 4 < 2) || since < 2 ? 1 : 0
+    const friend = layer()
+    friend.draw(f === 9 ? WAYPOINT.friendBlink : WAYPOINT.friend, ix + 1, iy - 8 - bob)
+    friend.draw(WAYPOINT.friendFeet, ix + 1, iy - 1)
+    friend.draw(CUBI.sprout[Math.floor((f + 4) / 8) % 2], ix + 3, iy - 11 - bob)
+    sky.draw(friend.outline(C.outline))
+
+    // Sprechblase rechts neben ihm: geht auf, Tipp-Punkte, dann die Nachricht – der Wegpunkt und daneben der Knopf
+    // „+ Wegpunkt“. Der Wegpunkt bleibt in der Nachricht stehen (in die eigene Karte fliegt eine Kopie), bis die Blase
+    // wieder zugeht.
+    const bx = 15
+    const by = iy - 10
+    const open = f >= SHARE.open || f <= SHARE.close
+    const size = !open ? 0 : f === SHARE.open || f === SHARE.close ? 1 : 2
+    const dots = f >= SHARE.type && f < SHARE.show ? 1 + ((f - SHARE.type) % 3) : 0
+    const message = f >= SHARE.show || f < SHARE.close
+    sky.draw(chatBubble(bx, by, { size, dots, button: message, pressed: age === 0 }))
+    if (message) sky.draw(poppedTile(WAYPOINT.shared, bx + 2, by + 2, f === SHARE.show ? 3 : 5, age === 0))
+
+    // Flug: vom Absprung über der Blase in einem hohen Bogen (Scheitel über der Lücke zwischen Blase und Karte) zum Platz
+    // oben links in der Karte. Dahinter eine Spur aus Punkten, genau dort, wo das Kästchen in den Bildern davor war – so
+    // zeigt auch das ruhige Bild den Bogen; auf Blase und Karte bleibt sie weg.
+    const land = [MINIMAP.x + 2 + 2, my + 2 + 4]
+    const from = [bx + 2, by - 3]
+    const ctrl = [land[0] - 8, from[1] - 13]
+    const at = (t) => [0, 1].map((i) => Math.round((1 - t) ** 2 * from[i] + 2 * t * (1 - t) * ctrl[i] + t * t * land[i]))
+    const fly = layer()
+    if (age >= 1 && age < 10) {
+      ;[C.sparkle, C.sparkleMid, C.sparkleEdge, C.goldDark].forEach((col, k) => {
+        const t = (age - 2.5 - k * 0.5) / 9
+        if (t < 0) return
+        const [tx, ty] = at(t)
+        if (!sky.get(tx + 2, ty + 2)) fly.set(tx + 2, ty + 2, col)
+      })
+      const [x, y] = at((age - 1) / 9)
+      fly.draw(poppedTile(WAYPOINT.shared, x, y, 5))
+    }
+    // Gelandet: Blitz, Funkeln und ein „+“, das über den Rahmen aufsteigt; vor der nächsten Runde schrumpft der Wegpunkt
+    // wieder weg.
+    const stay = SHARE.fade - SHARE.land - since
+    if (stay >= -1) sky.draw(poppedTile(WAYPOINT.shared, land[0], land[1], stay > 0 ? 5 : stay === 0 ? 3 : 1, since === 0))
+    landingBurst(fly, since, land[0] + 2, land[1] + 2)
+    // „+“ je Bild nach der Landung: [Größe, Höhe über der Mitte des Kästchens]; es steigt schräg nach links oben – weg
+    // vom „N“.
+    const rise = [null, [1, 3], [3, 7], [5, 10], [5, 12], [5, 13], [5, 14], [3, 15], [1, 16]][since]
+    if (rise) {
+      const plus = WAYPOINT.plus[rise[0] >> 1]
+      const px = land[0] + 2 - Math.min(2, since >> 1)
+      fly.draw(layer().draw(plus, px - (plus.w >> 1), land[1] + 2 - rise[1] - (plus.h >> 1)).outline(C.outline))
+    }
+    sky.draw(fly)
+
+    // Mauszeiger: gleitet von unten heran und klickt „+ Wegpunkt“ – ein Klick, und der Wegpunkt fliegt in die eigene Karte.
+    // Spitze je Bild, beginnend 5 Bilder vor dem Absprung; der Klick (eingedrückt) fällt genau auf den Absprung.
+    const point = [[bx + 11, by + 14], [bx + 11, by + 10], [bx + 10, by + 7], [bx + 10, by + 6], [bx + 10, by + 6], [bx + 9, by + 5], [bx + 11, by + 8]][
+      (age + 5) % n
+    ]
+    if (point) sky.draw(layer().draw(POINTER, point[0], point[1]).outline(C.outline))
+    // Funkeln an festen Stellen: Der Himmel ist so voll, dass die gewohnten Funken keinen freien Platz finden (oben in den
+    // Ecken, links unter dem Inselchen und rechts unter der großen Insel – dort ist bei jeder Inselbreite frei).
+    for (const [x, y, phase] of [[6, 4, 12], [58, 5, 3], [4, 34, 5], [59, 54, 9]]) sparkle(sky, f, { x, y, phase })
+
+    // Cubi schaut zum Freund, sobald die Blase aufgeht, dann dem Wegpunkt nach zur Karte; bei der Landung hüpft er. Auf
+    // schmaleren Inseln rückt er nicht näher an die Karte.
+    const happy = since < 3
+    const lift = since < 2 ? 2 : since === 2 ? 1 : 0
+    const watching = watchingCubi(f, n, Math.min(hero, MINIMAP.x - 21), { look: writing ? -1 : 1, happy, lift })
+    // Schatten der Karte auf der Wiese (nur, wo Insel ist)
+    const ground = layer()
+    for (const [y, inset, col] of [[GROUND, 3, mix(C.grassHi, C.grassDark, 0.7)], [GROUND + 1, 6, mix(C.grass, C.grassDark, 0.6)]]) {
+      for (let x = Math.max(left + 1, MINIMAP.x + inset); x < Math.min(right, MINIMAP.x + MINIMAP.size - inset); x++) ground.set(x, y, col)
+    }
+    return { layer: layer(), hero: watching, ground, sky }
   },
 
   snowman(f) {
