@@ -277,6 +277,8 @@ public final class CubiqModules {
 	/** Fair Play der Karten (Minimap + Weltkarte): keine Höhlenansicht, kein Radar durch Wände. */
 	public final BoolSetting minimapFairPlay;
 	public final ChoiceSetting<MapShape> minimapShape;
+	/** Aussehen von Minimap und Weltkarte (klassisch oder Cubiq). */
+	public final ChoiceSetting<MapLook> minimapStyle;
 	public final NumberSetting minimapOpacity;
 	public final ChoiceSetting<CaveMode> minimapCaveMode;
 	/** Minimap/Weltkarte: unter einem Dach nur bis knapp darunter zeigen (Innenansicht). */
@@ -432,6 +434,29 @@ public final class CubiqModules {
 		private final String label;
 
 		MapShape(String label) {
+			this.label = label;
+		}
+
+		@Override
+		public String label() {
+			return label;
+		}
+	}
+
+	/** Aussehen von Minimap und Weltkarte. */
+	public enum MapLook implements ChoiceSetting.Option {
+		/**
+		 * Wie die bekannten Minimap-Mods: schmaler grauer Rahmen, Himmelsrichtungen als Buchstaben auf dem Rand,
+		 * Wegpunkte als farbige Kästchen mit Anfangsbuchstaben, roter Pfeil, Koordinaten „x, y, z“; die Weltkarte ohne
+		 * Leisten mit Knöpfen und Angaben direkt auf der Karte.
+		 */
+		CLASSIC("Classic (thin frame, compass letters, waypoint squares)"),
+		/** Cubiq-Stil (0.3.1): abgerundeter Rahmen mit Schatten, Plaketten für die Himmelsrichtungen, Rauten. */
+		CUBIQ("Cubiq (rounded frame, compass badges)");
+
+		private final String label;
+
+		MapLook(String label) {
 			this.label = label;
 		}
 
@@ -829,7 +854,7 @@ public final class CubiqModules {
 		chatTimestampSeconds = chat.add(new BoolSetting("timestampSeconds", "Timestamps with seconds", false));
 		chatStack = chat.add(new BoolSetting("stack", "Stack identical messages (x2, x3)", true));
 		chatCopy = chat.add(new BoolSetting("copy", "Ctrl+click copies a line", true));
-		chatCoordLinks = chat.add(new BoolSetting("coordLinks", "Clickable coordinates (save as waypoint)", true));
+		chatCoordLinks = chat.add(new BoolSetting("coordLinks", "Clickable coordinates and shared waypoints (save as waypoint)", true));
 		autoGgText = autoGg.add(new TextSetting("text", "Message", "gg", 100, "gg"));
 		autoGgDelay = autoGg.add(new NumberSetting("delay", "Delay (s)", 1.0, 0.5, 2.0, 0.25, ""));
 		autoGgTriggers = autoGg.add(new TextSetting("triggers", "Custom triggers (separated by ;)", "", 200,
@@ -851,7 +876,8 @@ public final class CubiqModules {
 		waypointDeath = waypoints.add(new BoolSetting("death", "Set death point automatically", true));
 		waypointRange = waypoints.add(new NumberSetting("range", "Only up to (blocks, 0 = always)", 0, 0, 2000, 100, ""));
 		minimapFairPlay = minimap.add(new BoolSetting("fairPlay", "Fair Play (maps show only what you could see)", false));
-		minimapShape = minimap.add(new ChoiceSetting<>("shape", "Shape", MapShape.class, MapShape.ROUND));
+		minimapShape = minimap.add(new ChoiceSetting<>("shape", "Shape", MapShape.class, MapShape.SQUARE));
+		minimapStyle = minimap.add(new ChoiceSetting<>("style", "Look", MapLook.class, MapLook.CLASSIC));
 		minimapSize = minimap.add(new NumberSetting("size", "Size (pixels)", 112, 64, 256, 8, ""));
 		minimapZoom = minimap.add(new ChoiceSetting<>("zoom", "Zoom", MinimapZoom.class, MinimapZoom.NORMAL));
 		minimapRotate = minimap.add(new BoolSetting("rotate", "Rotate with view", true));

@@ -49,4 +49,21 @@ final class MapStyle {
 	static int badgeText(Theme t, boolean north) {
 		return north ? t.faceTextOn : t.text;
 	}
+
+	// --- Klassisches Aussehen (wie die bekannten Minimap-Mods; in jedem Thema gleich) ---
+
+	/** Rahmen: dunkle Außenlinie, grauer Rand mit Licht von links oben, dunkle Linie zur Karte. */
+	static final int CLASSIC_OUTLINE = 0xFF0E0E0E;
+	static final int CLASSIC_RIM_LIGHT = 0xFFB9B9B9;
+	static final int CLASSIC_RIM_DARK = 0xFF555555;
+	static final int CLASSIC_INNER = 0xFF1E1E1E;
+	/** Eigener Pfeil: kräftiges Rot. */
+	static final int CLASSIC_ARROW = 0xFFE3342B;
+	/** Norden in Rot, die anderen Richtungen weiß – auf einer dunklen, halb durchsichtigen Platte. */
+	static final int CLASSIC_NORTH = 0xFFFF5B4F;
+	static final int CLASSIC_PLATE = 0xA8000000;
+	/** Blickkegel: weiß, halb durchsichtig (der Verlauf steckt im Symbol). */
+	static final int CLASSIC_CONE = 0x66FFFFFF;
+	/** Schatten/Umriss der Wegpunkt-Kästchen. */
+	static final int CLASSIC_BOX_EDGE = 0xC0000000;
 }

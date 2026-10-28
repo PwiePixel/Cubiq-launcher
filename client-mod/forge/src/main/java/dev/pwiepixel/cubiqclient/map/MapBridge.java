@@ -246,6 +246,16 @@ public final class MapBridge implements MapPlatform {
 		return true;
 	}
 
+	/** „Im Chat teilen“: Chatzeile mit dem Text öffnen – abschicken muss der Spieler selbst. */
+	@Override
+	public boolean openChat(String text) {
+		//? if >=1.21.9 {
+		/*Mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen(text, false));
+		*///?} else
+		Mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen(text));
+		return true;
+	}
+
 	@Override
 	public int movement() {
 		Player p = mc().player;

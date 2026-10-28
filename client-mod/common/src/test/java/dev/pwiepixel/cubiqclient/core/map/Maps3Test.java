@@ -220,7 +220,8 @@ class Maps3Test {
 
 	@Test
 	void whileMeasuringTheHintWinsOverLongCoordinates(@TempDir Path dir) {
-		WorldMapUi ui = worldMap(dir, new int[1]);
+		// Cubiq-Aussehen: Koordinaten und Hinweis teilen sich die untere Leiste (klassisch: Maps4Test).
+		WorldMapUi ui = worldMap(dir, new int[1], CubiqModules.MapLook.CUBIQ);
 		ui.testSidebar(false, "");
 		int w = 700;
 		ui.render(new Texts(), w, H, -1, -1);
@@ -289,8 +290,13 @@ class Maps3Test {
 
 	/** Weltkarte mit Spieler bei 8 / 8 in der Oberwelt; {@code closed[0]} zählt das Schließen. */
 	private static WorldMapUi worldMap(Path dir, final int[] closed) {
+		return worldMap(dir, closed, CubiqModules.MapLook.CLASSIC);
+	}
+
+	private static WorldMapUi worldMap(Path dir, final int[] closed, CubiqModules.MapLook look) {
 		CubiqModules modules = new CubiqModules();
 		modules.worldMap.setEnabled(true);
+		modules.minimapStyle.set(look);
 		MapEngine e = new MapEngine(modules, dir, true);
 		MapTest.FakePlatform p = new MapTest.FakePlatform(dir);
 		e.tick(p);

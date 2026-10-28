@@ -172,7 +172,7 @@ class ServerRulesTest {
 		String json = "{\"v\":2,\"future\":{\"x\":1},\"modules\":{"
 				+ "\"doesNotExist\":{\"enabled\":false},"
 				+ "\"zoom\":{\"enabled\":\"no\",\"settings\":{\"nope\":{\"value\":1},\"factor\":{\"value\":true}}},"
-				+ "\"minimap\":{\"settings\":{\"shape\":{\"value\":\"square\"},\"size\":{\"value\":999},\"rotate\":{\"value\":\"x\"}}},"
+				+ "\"minimap\":{\"settings\":{\"shape\":{\"value\":\"ROUND\"},\"size\":{\"value\":999},\"rotate\":{\"value\":\"x\"}}},"
 				+ "\"freelook\":{\"settings\":{\"x\":{\"min\":5,\"max\":1}}},"
 				+ "\"bad id!\":{\"enabled\":false}"
 				+ "},\"message\":42}";
@@ -184,15 +184,15 @@ class ServerRulesTest {
 		assertFalse(set.modules.containsKey("freelook"), "min > max ist keine Regel");
 		assertTrue(rules.onRules(bytes(json)));
 		assertFalse(m.zoom.serverRestricted(), "falsche Typen: nichts gesperrt");
-		assertEquals(CubiqModules.MapShape.SQUARE, m.minimapShape.get(), "Auswahl per Enum-Name, ohne Groß/klein");
+		assertEquals(CubiqModules.MapShape.ROUND, m.minimapShape.get(), "Auswahl per Enum-Name, ohne Groß/klein");
 		assertTrue(m.minimapShape.serverLocked());
 		assertEquals(256.0, m.minimapSize.get(), 1e-9, "fester Wert auf den eigenen Bereich geklemmt");
 		assertTrue(m.minimapSize.serverFixed());
 		assertFalse(m.minimapRotate.serverLocked(), "String für Schalter wird übergangen");
 		// Erzwungene Auswahl: Durchschalten wirkungslos.
 		m.minimapShape.cycle();
-		assertEquals(CubiqModules.MapShape.SQUARE, m.minimapShape.get());
-		assertEquals(CubiqModules.MapShape.ROUND, m.minimapShape.own());
+		assertEquals(CubiqModules.MapShape.ROUND, m.minimapShape.get());
+		assertEquals(CubiqModules.MapShape.SQUARE, m.minimapShape.own());
 	}
 
 	@Test

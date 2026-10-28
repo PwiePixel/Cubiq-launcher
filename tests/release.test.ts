@@ -189,6 +189,21 @@ describe('Release-Automatik', () => {
     expect(both.en).toBe('- **Old note.** From a branch.\n- **Faster start.** The launcher opens quicker.')
   })
 
+  it('übernimmt den Namen des Updates aus einem Spieler-Text in die Überschrift (erster gewinnt)', () => {
+    const a = parseChangeNote('<!-- title: Classic maps | Klassische Karten -->\n<!-- shots:\n/news/0.2.0/a.png | A\n-->\n\n### English\n- **Maps.** New look.\n\n### Deutsch\n- **Karten.** Neuer Look.\n')!
+    const b = parseChangeNote('<!-- title: Second -->\n### English\n- **Faster start.** Opens quicker.\n')!
+    const next = prepareChangelog(`${intro}\n${released}`, '0.2.0', '2026-11-02', [], [a, b])!
+    expect(next).toContain('## 0.2.0 – 2026-11-02 – Classic maps | Klassische Karten\n')
+    expect(next).not.toContain('title:')
+    const entry = changelogFor(parseChangelog(next), '0.2.0')!
+    expect(entry.title).toEqual({ en: 'Classic maps', de: 'Klassische Karten' })
+    expect(releaseTitle(entry, '0.2.0')).toBe('Cubiq Launcher 0.2.0 – Classic maps')
+    expect(entry.shots.map((s) => s.src)).toEqual(['/news/0.2.0/a.png'])
+    // Ohne Namen bleibt die Überschrift schlicht.
+    const plain = prepareChangelog(`${intro}\n${released}`, '0.2.0', '2026-11-02', [], [parseChangeNote('### English\n- **X.** Y.\n')!])!
+    expect(plain).toMatch(/^## 0\.2\.0 – 2026-11-02$/m)
+  })
+
   it('trägt das Motiv in die Banner-Zeile der Version ein', () => {
     const text = `${intro}\n${released}`
     const withMotif = setBannerMotif(text, '0.1.0', '/news/0.1.0/banner.png')

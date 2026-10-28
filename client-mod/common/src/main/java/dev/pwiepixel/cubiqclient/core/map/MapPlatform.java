@@ -108,6 +108,14 @@ public interface MapPlatform {
 		return null;
 	}
 
+	/**
+	 * Chatzeile mit vorgegebenem Text öffnen (ersetzt den offenen Bildschirm) – für „Im Chat teilen“ an Wegpunkten;
+	 * abschicken muss der Spieler selbst. false = geht in dieser Version nicht. Nur Spiel-Thread.
+	 */
+	default boolean openChat(String text) {
+		return false;
+	}
+
 	/** Kurze Meldung im Chat (nur für den Spieler, z. B. „Karte gespeichert als …“). Nur Spiel-Thread. */
 	default void message(String text) {
 	}

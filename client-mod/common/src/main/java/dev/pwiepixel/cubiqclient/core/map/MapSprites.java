@@ -234,14 +234,22 @@ public final class MapSprites {
 	 * Stil des Designs ({@link #themedRingColor}). Textur deckt [−R−RING_OUT, R+RING_OUT]².
 	 */
 	public boolean drawRing(Canvas c, float cx, float cy, float radius, double scale, int alpha) {
+		return drawRing(c, cx, cy, radius, scale, alpha, false);
+	}
+
+	/**
+	 * Wie {@link #drawRing(Canvas, float, float, float, double, int)}; {@code classic} = schmaler grauer Ring wie bei
+	 * den bekannten Minimap-Mods ({@link #classicRingColor}), in jedem Thema gleich.
+	 */
+	public boolean drawRing(Canvas c, float cx, float cy, float radius, double scale, int alpha, boolean classic) {
 		if (!c.images() || Textures.store() == null) return false;
 		Theme t = Theme.get();
 		float outer = radius + RING_OUT;
 		int px = density(scale, outer * 2f, 1024);
-		String key = "ring_" + px + "_" + Math.round(radius * 4) + "_" + (themed(t)
+		String key = "ring_" + px + "_" + Math.round(radius * 4) + "_" + (classic ? "k" : themed(t)
 				? "t" + t.accentText + "_" + t.bevelLight + "_" + t.bevelDark : "c" + t.surface + "_" + t.border);
 		if (!key.equals(ringKey) || ring == null) {
-			Entry made = makeRing(px, radius, outer, t);
+			Entry made = makeRing(px, radius, outer, t, classic);
 			if (made == null) return false;
 			ring = made;
 			ringKey = key;
@@ -290,7 +298,7 @@ public final class MapSprites {
 		return true;
 	}
 
-	private Entry makeRing(int px, float radius, float outer, Theme t) {
+	private Entry makeRing(int px, float radius, float outer, Theme t, boolean classic) {
 		int[] img = new int[px * px];
 		float k = px / (outer * 2f); // Texturpixel je GUI-Pixel
 		float center = px / 2f;
@@ -306,7 +314,8 @@ public final class MapSprites {
 					float dx = (x + 0.25f + (s & 1) * 0.5f - center) / k;
 					float dy = (y + 0.25f + (s >> 1) * 0.5f - center) / k;
 					float d = (float) Math.sqrt(dx * dx + dy * dy);
-					int col = themed ? themedRingColor(d, dx, dy, radius, rimLight, rimDark, line, lineDark)
+					int col = classic ? classicRingColor(d, dx, dy, radius)
+							: themed ? themedRingColor(d, dx, dy, radius, rimLight, rimDark, line, lineDark)
 							: ringColor(d, radius, t.surface, t.border);
 					float ca = (col >>> 24) / 255f;
 					a += ca * 0.25f;
@@ -358,6 +367,20 @@ public final class MapSprites {
 		float nx = dx / Math.max(0.001f, d), ny = dy / Math.max(0.001f, d);
 		float light = 0.5f - 0.5f * (nx * 0.7071f + ny * 0.7071f);
 		return 0xFF000000 | (ColorMath.lerp(rimDark, rimLight, light) & 0xFFFFFF);
+	}
+
+	/**
+	 * Klassischer Ring: dunkle Linie zur Karte, darauf der deckende graue Rand mit Licht von links oben (er verdeckt die
+	 * Streifenkanten) und außen eine dunkle Linie – schmal, ohne Schatten.
+	 */
+	static int classicRingColor(float d, float dx, float dy, float radius) {
+		float inner = radius - ringIn(radius);
+		if (d >= radius + 1f || d < inner - 1f) return 0;
+		if (d >= radius) return MapStyle.CLASSIC_OUTLINE;
+		if (d < inner) return MapStyle.CLASSIC_INNER;
+		float nx = dx / Math.max(0.001f, d), ny = dy / Math.max(0.001f, d);
+		float light = 0.5f - 0.5f * (nx * 0.7071f + ny * 0.7071f);
+		return 0xFF000000 | (ColorMath.lerp(MapStyle.CLASSIC_RIM_DARK, MapStyle.CLASSIC_RIM_LIGHT, light) & 0xFFFFFF);
 	}
 
 	/** Alle Texturen freigeben (Weltwechsel/Größenwechsel unnötig – nur beim Beenden). */

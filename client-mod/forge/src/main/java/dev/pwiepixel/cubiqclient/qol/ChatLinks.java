@@ -5,11 +5,14 @@ import dev.pwiepixel.cubiqclient.compat.ChatLines;
 import dev.pwiepixel.cubiqclient.compat.Mc;
 import dev.pwiepixel.cubiqclient.core.chat.ChatCoords;
 import dev.pwiepixel.cubiqclient.core.chat.ChatText;
+import dev.pwiepixel.cubiqclient.core.chat.ChatWaypoints;
 import dev.pwiepixel.cubiqclient.core.clips.ScreenshotShare;
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
+import dev.pwiepixel.cubiqclient.core.map.WorldMapUi;
 import dev.pwiepixel.cubiqclient.core.module.CubiqModules;
 import dev.pwiepixel.cubiqclient.core.screenshot.Screenshots;
 import dev.pwiepixel.cubiqclient.core.ui.WaypointSaveUi;
+import dev.pwiepixel.cubiqclient.core.waypoint.WaypointShare;
 import dev.pwiepixel.cubiqclient.screen.CubiqUiScreen;
 import net.minecraft.network.chat.Component;
 //? if >=1.16 {
@@ -19,6 +22,7 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 //?}
 
 import java.nio.file.Path;
@@ -28,12 +32,16 @@ import java.util.Optional;
 
 /**
  * Anklickbares im Minecraft-Chat (nur lokal, sendet nichts): Koordinaten werden unterstrichen und öffnen per Klick
- * „Als Wegpunkt speichern“; die Vanilla-Zeile „Bildschirmfoto gespeichert …“ bekommt „[Als Link teilen]“. Erkannt
- * wird der Klick am Einfüge-Text des Stils ({@code "x y z"} bzw. {@code cubiq-share:<datei>}) – Umschalt-Klick fügt
- * wie in Vanilla nur diesen Text ins Eingabefeld ein. Ab 1.16; davor bleibt der Chat unverändert.
+ * „Als Wegpunkt speichern“; geteilte Wegpunkte im Format der Minimap-Mods ({@link ChatWaypoints}) werden zu
+ * „[Name] x y z · Dimension [+ Wegpunkt] [Karte]“ (übernehmen bzw. auf der Weltkarte zeigen); die Vanilla-Zeile
+ * „Bildschirmfoto gespeichert …“ bekommt „[Als Link teilen]“. Erkannt wird der Klick am Einfüge-Text des Stils
+ * ({@code "x y z"}, der geteilte Text, {@code cubiq-wpmap:<text>} bzw. {@code cubiq-share:<datei>}) – Umschalt-Klick
+ * fügt wie in Vanilla nur diesen Text ins Eingabefeld ein. Ab 1.16; davor bleibt der Chat unverändert.
  * Dieselbe Datei in allen Mojmap-Bäumen.
  */
 public final class ChatLinks {
+	/** Einfüge-Text von „[Karte]“ an geteilten Wegpunkten: davor der Merker, dahinter der geteilte Text. */
+	static final String SHOW_WAYPOINT = "cubiq-wpmap:";
 	private static boolean uploading;
 
 	/** Hängt diese Version Aktionen an die Vanilla-Chatzeile „Bildschirmfoto gespeichert …“? */
@@ -60,10 +68,14 @@ public final class ChatLinks {
 		if (message == null) return null;
 		try {
 			CubiqModules m = modules();
-			boolean coords = coordsOn(m) && !ChatCoords.find(message.getString()).isEmpty();
+			String plain = message.getString();
+			// Ein geteilter Wegpunkt geht vor – sein Text enthält selbst Koordinaten.
+			ChatWaypoints.Shared shared = coordsOn(m) ? ChatWaypoints.find(plain) : null;
+			boolean coords = shared == null && coordsOn(m) && !ChatCoords.find(plain).isEmpty();
 			String shot = screenshotName(message);
-			if (!coords && shot == null) return message;
-			MutableComponent out = coords ? withCoords(message) : message.copy();
+			if (shared == null && !coords && shot == null) return message;
+			MutableComponent out = shared != null ? withWaypoint(message, shared)
+					: coords ? withCoords(message) : message.copy();
 			if (shot != null) {
 				Screenshots svc = Screenshots.get();
 				if (svc != null && svc.onVanillaLine(shot)) {
@@ -110,6 +122,51 @@ public final class ChatLinks {
 		return out;
 	}
 
+	// Geteilter Wegpunkt: sein Text wird zu „[Name] x y z · Dimension [+ Wegpunkt] [Karte]“, alles davor und danach
+	// behält seinen Stil (Name des Absenders, Rang …).
+	private static MutableComponent withWaypoint(Component message, final ChatWaypoints.Shared wp) {
+		final MutableComponent out = QolText.literal("");
+		final int[] pos = {0};
+		final boolean[] placed = {false};
+		message.visit((FormattedText.StyledContentConsumer<Object>) (style, text) -> {
+			int from = pos[0], to = from + text.length();
+			pos[0] = to;
+			if (from < wp.start) {
+				out.append(QolText.literal(text.substring(0, Math.min(to, wp.start) - from)).setStyle(style));
+			}
+			if (!placed[0] && to > wp.start) {
+				out.append(waypointParts(wp));
+				placed[0] = true;
+			}
+			if (to > wp.end) {
+				int begin = Math.max(from, wp.end) - from;
+				out.append(QolText.literal(ChatText.activeCodes(text.substring(0, begin)) + text.substring(begin)).setStyle(style));
+			}
+			return Optional.empty();
+		}, Style.EMPTY);
+		if (!placed[0]) out.append(waypointParts(wp));
+		return out;
+	}
+
+	// „[Name] x y z · Dimension [+ Wegpunkt] [Karte]“: Name in der Farbe des Wegpunkts, Aktionen gold bzw. hellblau.
+	private static MutableComponent waypointParts(ChatWaypoints.Shared wp) {
+		MutableComponent part = QolText.literal("");
+		int color = wp.color == 0 ? 0x555555 : wp.color;
+		Style name = Style.EMPTY.withColor(TextColor.fromRgb(color)).withInsertion(wp.raw)
+				.withHoverEvent(hover(I18n.tr("chat.waypoint.copyHover")));
+		part.append(QolText.literal("[" + wp.name + "]").setStyle(name));
+		String where = " " + wp.coords();
+		if (wp.dimension != null) where += " · " + WorldMapUi.dimensionName(wp.dimension);
+		part.append(QolText.literal(where).setStyle(Style.EMPTY.applyFormat(ChatFormatting.GRAY)));
+		Style add = Style.EMPTY.applyFormat(ChatFormatting.GOLD).withUnderlined(true).withInsertion(wp.raw)
+				.withHoverEvent(hover(I18n.tr("chat.waypoint.addHover")));
+		part.append(QolText.literal(" ")).append(QolText.literal(I18n.tr("chat.waypoint.add")).setStyle(add));
+		Style map = Style.EMPTY.applyFormat(ChatFormatting.AQUA).withUnderlined(true).withInsertion(SHOW_WAYPOINT + wp.raw)
+				.withHoverEvent(hover(I18n.tr("chat.waypoint.mapHover")));
+		part.append(QolText.literal(" ")).append(QolText.literal(I18n.tr("chat.waypoint.map")).setStyle(map));
+		return part;
+	}
+
 	// Bildschirmfoto-Zeile: Stil mit „Datei öffnen“ auf eine Datei unter screenshots/ → relativer Name, sonst null.
 	private static String screenshotName(Component message) {
 		final String[] found = {null};
@@ -133,9 +190,21 @@ public final class ChatLinks {
 		String ins = style.getInsertion();
 		if (ins == null) return false;
 		try {
-			int[] c = coordsOn(modules()) ? ChatCoords.parseInsertion(ins) : null;
+			boolean links = coordsOn(modules());
+			int[] c = links ? ChatCoords.parseInsertion(ins) : null;
 			if (c != null) {
 				openSave(c[0], c[1], c[2]);
+				return true;
+			}
+			ChatWaypoints.Shared wp = links ? ChatWaypoints.parse(ins) : null;
+			if (wp != null) {
+				openSaveShared(wp);
+				return true;
+			}
+			ChatWaypoints.Shared show = links && ins.startsWith(SHOW_WAYPOINT)
+					? ChatWaypoints.parse(ins.substring(SHOW_WAYPOINT.length())) : null;
+			if (show != null) {
+				showShared(show);
 				return true;
 			}
 			String shot = ScreenshotShare.parseMarker(ins);
@@ -213,7 +282,27 @@ public final class ChatLinks {
 
 	/** Fenster „Als Wegpunkt speichern“ (ersetzt den Chat). */
 	public static void openSave(int x, int y, int z) {
-		WaypointSaveUi.Host host = new WaypointSaveUi.Host() {
+		Mc.setScreen(new CubiqUiScreen(I18n.tr("waypoint.save.title"),
+				new WaypointSaveUi(saveHost(), x, y, z, I18n.tr("waypoint.save.defaultName"))));
+	}
+
+	/** Fenster „Geteilten Wegpunkt übernehmen“ mit Name, Farbe und Dimension aus dem Chat (ohne Höhe: die eigene). */
+	public static void openSaveShared(ChatWaypoints.Shared wp) {
+		int y = wp.hasY() ? wp.y : WaypointShare.currentY();
+		Mc.setScreen(new CubiqUiScreen(I18n.tr("waypoint.save.sharedTitle"),
+				new WaypointSaveUi(saveHost(), wp.x, y, wp.z, wp.name, wp.color, wp.dimension)));
+	}
+
+	/** „[Karte]“: Weltkarte auf den geteilten Wegpunkt (dort per Rechtsklick „Als Wegpunkt speichern“). */
+	private static void showShared(ChatWaypoints.Shared wp) {
+		int y = wp.hasY() ? wp.y : Integer.MIN_VALUE;
+		WaypointShare.Result r = WaypointShare.showShared(wp.name, wp.x, y, wp.z, wp.dimension, wp.color);
+		if (r == WaypointShare.Result.OTHER_DIMENSION) notice(I18n.tr(r.key(), WorldMapUi.dimensionName(wp.dimension)));
+		else if (r != WaypointShare.Result.OK) notice(I18n.tr(r.key()));
+	}
+
+	private static WaypointSaveUi.Host saveHost() {
+		return new WaypointSaveUi.Host() {
 			@Override
 			public void closeScreen() {
 				Mc.setScreen(null);
@@ -234,8 +323,6 @@ public final class ChatLinks {
 				return null;
 			}
 		};
-		Mc.setScreen(new CubiqUiScreen(I18n.tr("waypoint.save.title"),
-				new WaypointSaveUi(host, x, y, z, I18n.tr("waypoint.save.defaultName"))));
 	}
 
 	/** „[Als Link teilen]“: hochladen, Link in die Zwischenablage, Hinweis + Chatzeile mit dem Link. */

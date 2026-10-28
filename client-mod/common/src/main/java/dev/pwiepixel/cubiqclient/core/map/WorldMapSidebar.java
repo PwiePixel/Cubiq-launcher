@@ -217,6 +217,7 @@ final class WorldMapSidebar {
 		double gs = host.engine().platform() == null ? 2.0 : host.engine().platform().guiScale();
 		boolean shown = wp.visible || wp.death;
 		if (wp.death) sprites.draw(c, MapSprites.GRAVE, x + 10, y + ROW_H / 2f, 10f, 0f, 0xFFFFFFFF, gs);
+		else if (shown && MinimapRenderer.classic(host.engine().modules())) MinimapRenderer.classicBox(c, x + 10, y + ROW_H / 2f, wp);
 		else sprites.draw(c, MapSprites.DIAMOND, x + 10, y + ROW_H / 2f, 9f, 0f, (shown ? 0xFF000000 : 0x70000000) | wp.color, gs);
 		// Zeile 1: Name, Entfernung.
 		String dist = WaypointFilter.distanceText(r.distance);
