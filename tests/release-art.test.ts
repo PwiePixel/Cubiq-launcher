@@ -285,6 +285,85 @@ describe('Bild je Release', () => {
     expect(Buffer.from(decode(apng).rgba).equals(Buffer.from(decode(png).rgba))).toBe(true)
   })
 
+  it('Sonderthema „waypoints“ (0.3.3): klassische Minikarte, ein Wegpunkt fliegt aus dem Chat hinein – fest, im Bild, nahtlos', () => {
+    // Nur auf Wunsch (`--topic`): ein Text über die klassische Minikarte und geteilte Wegpunkte bekommt das allgemeine
+    // Welt-Motiv, nie diese Szene.
+    const notes = [
+      '- **The classic minimap look.** A thin grey frame, the compass letters N, E, S and W, every waypoint as a small coloured square with its first letter and a red arrow for you.',
+      '- **Add shared waypoints with one click.** When someone shares a waypoint in the chat, click "[+ Waypoint]" and it is on your own map.',
+    ].join('\n')
+    expect(pickTopic(notes).id).toBe('worlds')
+    expect(TOPICS.map((t) => t.id)).not.toContain('waypoints')
+    expect(SPECIAL_TOPICS.map((t) => t.id)).toContain('waypoints')
+
+    // Schleife wie bei 0.3.0: 32 Bilder à 80 ms (2,56 s), endlos; das erste ist das ruhige Bild.
+    const art = releaseArt({ version: '0.3.3', text: notes, topic: 'waypoints' })
+    expect(art.topic).toBe('waypoints')
+    const list = chunks(art.apng)
+    const actl = list.find((c) => c.type === 'acTL')!.data
+    expect([actl.readUInt32BE(0), actl.readUInt32BE(4)]).toEqual([32, 0])
+    const delays = list.filter((c) => c.type === 'fcTL').map((c) => c.data.readUInt16BE(20) / c.data.readUInt16BE(22))
+    expect(delays).toEqual(Array.from({ length: 32 }, () => 0.08))
+    expect(Buffer.from(decode(art.apng).rgba).equals(Buffer.from(decode(art.png).rgba))).toBe(true)
+    expect(art.png.length).toBeLessThan(20_000)
+    expect(art.apng.length).toBeLessThan(150_000)
+
+    const { frames, topic } = releaseFrames('0.3.3', 'waypoints')
+    expect(topic.id).toBe('waypoints')
+    expect(frames).toHaveLength(32)
+    // Fest: noch einmal gezeichnet, Punkt für Punkt dieselben Bilder.
+    const again = releaseFrames('0.3.3', 'waypoints').frames
+    frames.forEach((frame: Canvas, i: number) => expect(Buffer.from(frame.data).equals(Buffer.from(again[i]!.data))).toBe(true))
+    // Scharfe Pixel, und nichts reicht bis an den Rand – auch der Wegpunkt oben im Bogen nicht, also wird nichts
+    // abgeschnitten. Bei anderen Versionen darf nur die Insel (ihre Wurzeln) die untere Zeile erreichen.
+    expect(frames.every((frame) => frame.data.every((v, i) => i % 4 !== 3 || v === 0 || v === 255))).toBe(true)
+    const atEdge = (frame: Canvas) => {
+      const hits: string[] = []
+      for (let i = 0; i < frame.w; i++) {
+        for (const [x, y] of [[i, 0], [i, frame.h - 1], [0, i], [frame.w - 1, i]]) if (frame.get(x!, y!)) hits.push(`${x},${y}`)
+      }
+      return hits
+    }
+    for (const frame of frames) expect(atEdge(frame)).toEqual([])
+    for (const version of ['0.1.0', '0.9.3', '1.0.0', '2.7.11']) {
+      for (const frame of releaseFrames(version, 'waypoints').frames) expect(atEdge(frame).filter((p) => !p.endsWith(',63'))).toEqual([])
+    }
+    // Bewegt: alle 32 Bilder sind verschieden.
+    expect(new Set(frames.map((frame: Canvas) => Buffer.from(frame.data).toString('base64'))).size).toBe(32)
+
+    // Im ruhigen Bild ist alles zu sehen – je eine kennzeichnende Farbe: Cubi, der blaue Freund, die Sprechblase, der neue
+    // Wegpunkt (violett), die Wegpunkte auf der Karte (orange, blau), der rote Pfeil, das Wasser und die dunkle Platte
+    // des „N“.
+    const still = colorsOf(frames[0]!)
+    for (const color of ['#71a330', '#b4def7', '#f2f5f1', '#a77be0', '#ef8a32', '#5aa9e6', '#e0533d', '#72b8e8', '#353f4f']) expect(still).toContain(color)
+
+    // Die Geschichte: Der neue Wegpunkt fliegt oben über Blase und Karte (über Zeile 11 ist sonst nichts Violettes) und
+    // zieht Bild für Bild nach rechts zur Karte – auch über die Naht der Schleife hinweg, ohne Sprung. Nach der Landung
+    // sitzt er in der Karte, und bevor die nächste Nachricht kommt, ist er wieder weg.
+    const violet = (frame: Canvas, where: (x: number, y: number) => boolean) => {
+      const xs: number[] = []
+      for (let y = 0; y < frame.h; y++) {
+        for (let x = 0; x < frame.w; x++) {
+          const c = frame.get(x, y)
+          if (c && c[0] === 0xa7 && c[1] === 0x7b && c[2] === 0xe0 && where(x, y)) xs.push(x)
+        }
+      }
+      return xs
+    }
+    const flight = [29, 30, 31, 0, 1, 2].map((f) => violet(frames[f]!, (_, y) => y < 11))
+    for (const xs of flight) expect(xs.length).toBeGreaterThan(0)
+    const mid = flight.map((xs) => xs.reduce((sum, x) => sum + x, 0) / xs.length)
+    mid.slice(1).forEach((x, i) => {
+      expect(x).toBeGreaterThan(mid[i]!)
+      expect(x - mid[i]!).toBeLessThan(4)
+    })
+    const inMap = (f: number) => violet(frames[f]!, (x, y) => x >= 33 && y >= 12)
+    for (const f of [6, 10, 16]) expect(inMap(f).length).toBeGreaterThan(0)
+    for (const f of [21, 24]) expect(inMap(f)).toEqual([])
+    // Nach der Landung steigt ein grünes „+“ über die Karte.
+    expect(colorsOf(frames[10]!, 0, 10)).toContain('#71a330')
+  })
+
   it('nutzt denselben Startwert wie die Szenen im Launcher', () => {
     for (const v of ['0.1.0', '0.2.0', '1.10.3']) expect(seedFor(v)).toBe(versionSeed(v))
   })

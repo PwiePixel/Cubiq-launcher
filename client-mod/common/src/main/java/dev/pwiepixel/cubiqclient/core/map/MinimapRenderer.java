@@ -21,6 +21,10 @@ import java.util.List;
  * Anfangsbuchstaben am Rand, siehe {@link EdgeLayout}), Todespunkt, Spieler (Gesichter, Freunde hervorgehoben),
  * Kreaturen (Köpfe aus ihrer Textur oder Symbole) und die eigene Position. Der Zoom folgt auf Wunsch dem Tempo und
  * der Umgebung ({@link AutoZoom}).
+ *
+ * <p>Zwei Aussehen ({@link CubiqModules.MapLook}): klassisch wie die bekannten Minimap-Mods (schmaler grauer Rahmen,
+ * Buchstaben auf dem Rand mit rotem Norden, alle Wegpunkte als Kästchen mit Anfangsbuchstaben, roter Pfeil,
+ * Koordinaten „x, y, z“) oder im Cubiq-Stil (abgerundeter Rahmen mit Schatten, Plaketten, Rauten).
  */
 public final class MinimapRenderer {
 	/** Scissor im lokalen Koordinatensystem des HUD-Elements (false = nicht möglich → Streifen). */
@@ -71,6 +75,11 @@ public final class MinimapRenderer {
 		return m.minimapShape.get() == CubiqModules.MapShape.ROUND;
 	}
 
+	/** Klassisches Aussehen (wie die bekannten Minimap-Mods) statt Cubiq-Stil? */
+	static boolean classic(CubiqModules m) {
+		return m.minimapStyle.get() == CubiqModules.MapLook.CLASSIC;
+	}
+
 	/** Rand um die Karte (Rahmen) in GUI-Pixeln. */
 	static int pad(CubiqModules m) {
 		return round(m) ? (int) Math.ceil(MapSprites.RING_OUT) : 3;
@@ -102,6 +111,7 @@ public final class MinimapRenderer {
 		int size = m.minimapSize.getInt();
 		int pad = pad(m);
 		boolean round = round(m);
+		boolean classic = classic(m);
 		float radius = size / 2f;
 		float cx = pad + radius, cy = pad + radius;
 		int opacity = Math.round(m.minimapOpacity.getFloat() * 2.55f);
@@ -142,24 +152,32 @@ public final class MinimapRenderer {
 		}
 		// Blickkegel unter Rahmen, Markierungen und Pfeil.
 		if (m.minimapViewCone.get()) {
-			e.sprites().draw(c, MapSprites.CONE, cx, cy, coneLength(radius) * 2f, arrowRot, coneTint(theme), scale);
+			e.sprites().draw(c, MapSprites.CONE, cx, cy, coneLength(radius) * 2f, arrowRot, classic ? MapStyle.CLASSIC_CONE : coneTint(theme), scale);
 		}
 
 		// Rahmen.
 		if (round) {
-			if (!e.sprites().drawRing(c, cx, cy, radius, scale, 255)) squareFrame(c, pad, size, theme);
+			if (!e.sprites().drawRing(c, cx, cy, radius, scale, 255, classic)) {
+				if (classic) classicFrame(c, pad, size);
+				else squareFrame(c, pad, size, theme);
+			}
+		} else if (classic) {
+			classicFrame(c, pad, size);
 		} else {
 			squareFrame(c, pad, size, theme);
 		}
 
 		if (live) {
 			drawEntities(c, e, cx, cy, radius, round, theta, px, pz, scale);
-			if (m.minimapWaypoints.get() || m.minimapDeath.get()) drawWaypoints(c, e, cx, cy, radius, round, theta, px, pz, scale);
+			if (m.minimapWaypoints.get() || m.minimapDeath.get()) drawWaypoints(c, e, cx, cy, radius, round, theta, px, pz, scale, classic);
 		}
 		// Himmelsrichtungen zuletzt: immer lesbar, die Rand-Kästchen weichen ihnen aus.
-		if (m.minimapCompass.get()) drawCompass(c, e, cx, cy, radius, round, theta, scale, theme);
+		if (m.minimapCompass.get()) {
+			if (classic) drawClassicCompass(c, cx, cy, radius, round, theta);
+			else drawCompass(c, e, cx, cy, radius, round, theta, scale, theme);
+		}
 		// Eigene Position: Pfeil in Blickrichtung.
-		int marker = 0xFF000000 | (MapStyle.marker(theme) & 0xFFFFFF);
+		int marker = classic ? MapStyle.CLASSIC_ARROW : 0xFF000000 | (MapStyle.marker(theme) & 0xFFFFFF);
 		if (!e.sprites().draw(c, MapSprites.ARROW, cx, cy, 10f, arrowRot, marker, scale)) {
 			c.fill((int) cx - 2, (int) cy - 2, (int) cx + 2, (int) cy + 2, marker);
 		}
@@ -435,7 +453,7 @@ public final class MinimapRenderer {
 	}
 
 	private void drawWaypoints(Canvas c, MapEngine e, float cx, float cy, float radius, boolean round, float theta,
-			double px, double pz, double scale) {
+			double px, double pz, double scale, boolean classic) {
 		CubiqModules m = e.modules();
 		boolean edgeBoxes = m.minimapEdgeWaypoints.get();
 		List<Waypoint> list = e.waypoints();
@@ -456,6 +474,8 @@ public final class MinimapRenderer {
 			float x = cx + (float) point[0], y = cy + (float) point[1];
 			if (w.death) {
 				e.sprites().draw(c, MapSprites.GRAVE, x, y, 9f, 0f, edge ? 0xC0FFFFFF : 0xFFFFFFFF, scale);
+			} else if (classic) {
+				classicBox(c, x, y, w);
 			} else {
 				e.sprites().draw(c, MapSprites.DIAMOND, x, y, edge ? 6f : 8f, 0f, 0xFF000000 | w.color, scale);
 			}
@@ -473,7 +493,8 @@ public final class MinimapRenderer {
 		EdgeLayout.spread(edgeS, edges, EDGE_GAP, EdgeLayout.perimeter(half, round), compassS, fixed);
 		for (int i = 0; i < edges; i++) {
 			EdgeLayout.point(edgeS[i], half, round, point);
-			edgeBox(c, cx + (float) point[0], cy + (float) point[1], edgeW[i]);
+			if (classic) classicBox(c, cx + (float) point[0], cy + (float) point[1], edgeW[i]);
+			else edgeBox(c, cx + (float) point[0], cy + (float) point[1], edgeW[i]);
 			edgeW[i] = null;
 		}
 	}
@@ -490,9 +511,35 @@ public final class MinimapRenderer {
 		int color = 0xFF000000 | (w.color & 0xFFFFFF);
 		Paint.roundRect(c, x0 - 1, y0 - 1, s + 2, s + 2, 3, edgeOf(color));
 		Paint.roundRect(c, x0, y0, s, s, 2, color);
-		String letter = initial(w.name);
-		int tw = c.textWidth(letter);
-		c.text(letter, x0 + (s - tw) / 2 + 1, y0 + 1, textOn(w.color), false);
+		centeredText(c, initial(w.name), x0 + s / 2f, y0 + s / 2f, textOn(w.color), false);
+	}
+
+	/**
+	 * Klassisches Wegpunkt-Kästchen: eckig in der Farbe des Wegpunkts mit dunklem Umriss, darin der Anfangsbuchstabe
+	 * weiß mit Schatten – auf jeder Farbe lesbar. Auch auf der Weltkarte.
+	 */
+	static void classicBox(Canvas c, float x, float y, Waypoint w) {
+		int s = EDGE_BOX;
+		int x0 = Math.round(x - s / 2f), y0 = Math.round(y - s / 2f);
+		c.fill(x0 - 1, y0 - 1, x0 + s + 1, y0 + s + 1, MapStyle.CLASSIC_BOX_EDGE);
+		c.fill(x0, y0, x0 + s, y0 + s, 0xFF000000 | (w.color & 0xFFFFFF));
+		centeredText(c, initial(w.name), x0 + s / 2f, y0 + s / 2f, 0xFFFFFFFF, true);
+	}
+
+	/** Höhe der Großbuchstaben und Ziffern der Minecraft-Schrift (GUI-Pixel). */
+	static final int CAP = 7;
+
+	/**
+	 * Text genau mittig auf (cx, cy): Minecraft zählt hinter jedem Zeichen 1 px Abstand zur Breite, Großbuchstaben sind
+	 * {@link #CAP} px hoch – ohne diese Rechnung säße der Buchstabe einen halben Pixel zu weit rechts bzw. oben. Der
+	 * Schatten zählt nicht mit (wie überall in Minecraft).
+	 */
+	static void centeredText(Canvas c, String s, float cx, float cy, int color, boolean shadow) {
+		float glyph = Math.max(1, c.textWidth(s) - 1);
+		c.push();
+		c.translate(cx - glyph / 2f, cy - CAP / 2f);
+		c.text(s, 0, 0, color, shadow);
+		c.pop();
 	}
 
 	/** Anfangsbuchstabe (groß) eines Namens, "?" wenn es keinen gibt. */
@@ -618,14 +665,56 @@ public final class MinimapRenderer {
 			boolean north = i == 0;
 			e.sprites().draw(c, MapSprites.BADGE, lx, ly, 9f, 0f, MapStyle.badgeEdge(theme, north), scale);
 			e.sprites().draw(c, MapSprites.BADGE, lx, ly, 7f, 0f, MapStyle.badgeFill(theme, north), scale);
-			String s = letters[i];
-			int color = MapStyle.badgeText(theme, north);
 			c.push();
 			c.translate(lx, ly);
 			c.scale(0.75f);
-			c.text(s, -c.textWidth(s) / 2 + 1, -4, color, false);
+			centeredText(c, letters[i], 0f, 0f, MapStyle.badgeText(theme, north), false);
 			c.pop();
 		}
+	}
+
+	/**
+	 * Klassische Himmelsrichtungen: Buchstaben auf dem Kartenrand, weiß mit Schatten auf einer kleinen dunklen Platte,
+	 * Norden rot. Drehen sich mit der Karte um den Rand.
+	 */
+	private static void drawClassicCompass(Canvas c, float cx, float cy, float radius, boolean round, float theta) {
+		String[] letters = {I18n.tr("map.north"), I18n.tr("map.east"), I18n.tr("map.south"), I18n.tr("map.west")};
+		for (int i = 0; i < 4; i++) {
+			double a = theta + i * Math.PI / 2;
+			double dx = Math.sin(a), dy = -Math.cos(a);
+			double k = round ? radius - 2f : (radius - 2f) / Math.max(Math.abs(dx), Math.abs(dy));
+			float lx = cx + (float) (dx * k), ly = cy + (float) (dy * k);
+			String s = letters[i];
+			// Platte 2 px rund um den Buchstaben (bei 5 px breiten Buchstaben 9 × 9 – dann genau mittig auf ganzen Pixeln).
+			int pw = Math.max(1, c.textWidth(s) - 1) + 4, ph = CAP + 2;
+			int x0 = Math.round(lx - pw / 2f), y0 = Math.round(ly - ph / 2f);
+			c.fill(x0, y0, x0 + pw, y0 + ph, MapStyle.CLASSIC_PLATE);
+			centeredText(c, s, x0 + pw / 2f, y0 + ph / 2f, i == 0 ? MapStyle.CLASSIC_NORTH : 0xFFFFFFFF, true);
+		}
+	}
+
+	/**
+	 * Klassischer eckiger Rahmen im Rand {@code pad} (3) um die Karte: dunkle Außenlinie, grauer Rand mit Licht von links
+	 * oben und eine dunkle Linie zur Karte – schmal und ohne Schatten, in jedem Thema gleich.
+	 */
+	static void classicFrame(Canvas c, int pad, int size) {
+		int w = size + 2 * pad;
+		outline(c, 0, 0, w, w, MapStyle.CLASSIC_OUTLINE);
+		for (int i = 1; i < pad - 1; i++) {
+			int end = w - i;
+			c.fill(i, i, end, i + 1, MapStyle.CLASSIC_RIM_LIGHT);
+			c.fill(i, i + 1, i + 1, end, MapStyle.CLASSIC_RIM_LIGHT);
+			c.fill(i + 1, end - 1, end, end, MapStyle.CLASSIC_RIM_DARK);
+			c.fill(end - 1, i + 1, end, end - 1, MapStyle.CLASSIC_RIM_DARK);
+		}
+		outline(c, pad - 1, pad - 1, size + 2, size + 2, MapStyle.CLASSIC_INNER);
+	}
+
+	private static void outline(Canvas c, int x, int y, int w, int h, int argb) {
+		c.fill(x, y, x + w, y + 1, argb);
+		c.fill(x, y + h - 1, x + w, y + h, argb);
+		c.fill(x, y + 1, x + 1, y + h - 1, argb);
+		c.fill(x + w - 1, y + 1, x + w, y + h - 1, argb);
 	}
 
 	/**
@@ -667,16 +756,17 @@ public final class MinimapRenderer {
 		boolean shadow = m.minimap.shadow();
 		if (m.minimapCoords.get()) {
 			String s = coordsText;
+			boolean classic = classic(m);
 			if (live) {
 				long bx = (long) Math.floor(e.playerX()), by = (long) Math.floor(e.playerY()), bz = (long) Math.floor(e.playerZ());
-				long key = (bx * 31 + by) * 31 + bz;
+				long key = ((bx * 31 + by) * 31 + bz) * 2 + (classic ? 1 : 0);
 				if (key != coordsKey || coordsText.isEmpty()) {
 					coordsKey = key;
-					coordsText = HudFormat.coords(bx, by, bz);
+					coordsText = coords(bx, by, bz, classic);
 				}
 				s = coordsText;
 			} else if (preview) {
-				s = HudFormat.coords(128, 64, -256);
+				s = coords(128, 64, -256, classic);
 			}
 			centered(c, s, width, y, color, shadow);
 			y += LINE_H;
@@ -696,6 +786,11 @@ public final class MinimapRenderer {
 			}
 			centered(c, timeText, width, y, color, shadow);
 		}
+	}
+
+	/** Koordinaten unter der Karte: klassisch „128, 64, -256“, sonst „X 128  Y 64  Z -256“. */
+	static String coords(long x, long y, long z, boolean classic) {
+		return classic ? x + ", " + y + ", " + z : HudFormat.coords(x, y, z);
 	}
 
 	private static void centered(Canvas c, String s, int width, int y, int color, boolean shadow) {

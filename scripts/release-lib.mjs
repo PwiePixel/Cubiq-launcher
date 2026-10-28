@@ -230,11 +230,16 @@ export function unreleasedReady(text) {
   return parts.en.length > 0 || parts.de.length > 0
 }
 
+/** Name des Updates in einem Spieler-Text: „<!-- title: The Map Update | Das Karten-Update -->“ (eine Zeile). */
+const NOTE_TITLE = /^<!--\s*title:\s*(.+?)\s*-->$/i
+
 /**
  * CHANGELOG.md für eine neue Version vorbereiten. Spieler-Texte – Dateien aus changes/ (`notes`, siehe
  * parseChangeNote) und Punkte unter „## Unreleased“ – haben Vorrang und werden zur Version (fehlt eine Sprache,
  * gilt die andere); sonst entsteht der Abschnitt aus den Commits. `extra` = Punkte aus Commits, deren Änderung
  * keinen Spieler-Text mitgebracht hat – sie kommen hinter die Spieler-Texte, damit nichts verloren geht.
+ * Bringt ein Spieler-Text einen Namen mit („<!-- title: … -->“), kommt der erste in die Überschrift – er wird zum
+ * Titel des Release („Cubiq Launcher 0.2.0 – The Clip Update“).
  * `null` = es gibt nichts zu veröffentlichen.
  * @param {string} text
  * @param {string} version
@@ -252,12 +257,20 @@ export function prepareChangelog(text, version, date, items, notes = [], extra =
     .filter((p) => p && (p.en.length || p.de.length))
     .map((p) => ({ preamble: p.preamble, en: p.en.length ? p.en : p.de, de: p.de.length ? p.de : p.en }))
   if (parts.length) {
-    const preamble = parts.flatMap((p) => p.preamble)
+    let title = ''
+    const preamble = parts
+      .flatMap((p) => p.preamble)
+      .filter((line) => {
+        const name = NOTE_TITLE.exec(line.trim())?.[1]
+        if (name && !title) title = name
+        return !name
+      })
     const banner = preamble.some((line) => /^<!--\s*banner:/i.test(line.trim())) ? [] : [BANNER]
     const more = extra.filter(Boolean)
     const en = [...parts.flatMap((p) => p.en), ...bullets(more, 'en')]
     const de = [...parts.flatMap((p) => p.de), ...bullets(more, 'de')]
-    section = [`## ${version} – ${date}`, ...banner, ...preamble, '', '### English', ...en, '', '### Deutsch', ...de, '']
+    const heading = `## ${version} – ${date}${title ? ` – ${title}` : ''}`
+    section = [heading, ...banner, ...preamble, '', '### English', ...en, '', '### Deutsch', ...de, '']
   }
   if (!section) {
     const real = items.filter(Boolean)

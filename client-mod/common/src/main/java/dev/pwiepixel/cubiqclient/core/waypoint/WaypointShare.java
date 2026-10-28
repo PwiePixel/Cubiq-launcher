@@ -1,5 +1,6 @@
 package dev.pwiepixel.cubiqclient.core.waypoint;
 
+import dev.pwiepixel.cubiqclient.core.chat.ChatWaypoints;
 import dev.pwiepixel.cubiqclient.core.map.MapEngine;
 import dev.pwiepixel.cubiqclient.core.map.MapPlatform;
 import dev.pwiepixel.cubiqclient.core.map.WorldMapUi;
@@ -233,18 +234,56 @@ public final class WaypointShare {
 
 	/** Koordinaten aus dem Chat als Wegpunkt der aktuellen Welt und Dimension speichern (nur lokal). */
 	public static Result saveHere(String name, int x, int y, int z, int color) {
+		return saveIn(name, x, y, z, null, color);
+	}
+
+	/**
+	 * Wegpunkt aus dem Chat in der aktuellen Welt speichern (nur lokal) – in der Dimension {@code canonicalDim}
+	 * (Namensraum-Kennung, z. B. ein im Chat geteilter Nether-Wegpunkt) oder, wenn null, in der aktuellen.
+	 */
+	public static Result saveIn(String name, int x, int y, int z, String canonicalDim, int color) {
 		MapPlatform p = platform();
 		if (p == null || !p.inWorld()) return Result.NO_WORLD;
-		WaypointStore store = p.waypoints();
-		String key = p.waypointWorldKey();
-		if (store == null || key == null || key.isEmpty()) return Result.NO_WORLD;
-		Waypoint w = new Waypoint(name, x, y, z, p.dimension(), color);
-		for (Waypoint e : store.all(key)) {
-			if (e.x == x && e.y == y && e.z == z && e.name.equals(w.name)) return Result.ALREADY;
+		Result r = save(p.waypoints(), p.waypointWorldKey(), p.dimension(), name, x, y, z, canonicalDim, color);
+		if (r == Result.ADDED) p.waypointsChanged();
+		return r;
+	}
+
+	/**
+	 * Speichern ohne Spiel: in {@code store} unter {@code worldKey}, Dimension {@code canonicalDim} in der Schreibweise
+	 * des Spiels ({@code currentDim} = Dimension des Spielers, auch für null). ADDED, ALREADY oder NO_WORLD.
+	 */
+	public static Result save(WaypointStore store, String worldKey, String currentDim, String name, int x, int y, int z,
+			String canonicalDim, int color) {
+		if (store == null || worldKey == null || worldKey.isEmpty()) return Result.NO_WORLD;
+		String dim = canonicalDim == null ? currentDim : localDimension(canonicalDim, currentDim);
+		Waypoint w = new Waypoint(name, x, y, z, dim, color);
+		for (Waypoint e : store.all(worldKey)) {
+			if (e.x == x && e.y == y && e.z == z && e.name.equals(w.name) && e.inDimension(dim)) return Result.ALREADY;
 		}
-		store.add(key, w);
-		p.waypointsChanged();
+		store.add(worldKey, w);
 		return Result.ADDED;
+	}
+
+	/** Höhe des Spielers (Block) – für geteilte Wegpunkte ohne Höhe; 64 ohne Welt. */
+	public static int currentY() {
+		MapPlatform p = platform();
+		return p == null || !p.inWorld() ? 64 : floor(p.y());
+	}
+
+	/**
+	 * Geteilten Wegpunkt aus dem Chat auf der Weltkarte zeigen (ohne ihn zu speichern): Karte öffnen, auf den Punkt
+	 * zentrieren und ihn markieren – dort lässt er sich per Rechtsklick übernehmen. Nur in der aktuellen Dimension
+	 * ({@code canonicalDim} null = die aktuelle).
+	 */
+	public static Result showShared(String name, int x, int y, int z, String canonicalDim, int color) {
+		MapPlatform p = platform();
+		if (p == null || !p.inWorld()) return Result.NO_WORLD;
+		if (canonicalDim != null && !canonicalDim.equals(canonicalDimension(p.dimension()))) return Result.OTHER_DIMENSION;
+		MapEngine e = MapEngine.get();
+		if (e == null || !e.modules().worldMap.isEnabled()) return Result.MAP_OFF;
+		WorldMapUi.requestFocus(name, x, y, z, color);
+		return p.openWorldMap() ? Result.OK : Result.UNSUPPORTED;
 	}
 
 	/** „Anzeigen“: Weltkarte auf den Punkt zentrieren (Welt und Dimension müssen passen). */
@@ -253,7 +292,7 @@ public final class WaypointShare {
 		if (r != Result.OK) return r;
 		MapEngine e = MapEngine.get();
 		if (e == null || !e.modules().worldMap.isEnabled()) return Result.MAP_OFF;
-		WorldMapUi.requestFocus(w.name, w.x, w.z, w.color >= 0 ? w.color : DEFAULT_COLOR);
+		WorldMapUi.requestFocus(w.name, w.x, w.y, w.z, w.color >= 0 ? w.color : DEFAULT_COLOR);
 		MapPlatform p = platform();
 		return p != null && p.openWorldMap() ? Result.OK : Result.UNSUPPORTED;
 	}
@@ -284,6 +323,27 @@ public final class WaypointShare {
 		MapPlatform p = platform();
 		if (p == null || !p.inWorld()) return Result.NO_WORLD;
 		return request(card(name, x, y, z, p.dimension(), p.waypointWorldKey(), DEFAULT_COLOR));
+	}
+
+	/**
+	 * Wegpunkt im Minecraft-Chat teilen: öffnet die Chatzeile mit dem Text im verbreiteten Format der Minimaps
+	 * ({@link ChatWaypoints}) – abschicken muss der Spieler selbst. {@code localDim} in der Schreibweise des Spiels
+	 * (null/leer = die aktuelle Dimension).
+	 */
+	public static Result shareInChat(String name, int x, int y, int z, int color, String localDim) {
+		return shareInChat(platform(), name, x, y, z, color, localDim);
+	}
+
+	/** Wie {@link #shareInChat(String, int, int, int, int, String)} über die Plattform {@code p} (z. B. der Weltkarte). */
+	public static Result shareInChat(MapPlatform p, String name, int x, int y, int z, int color, String localDim) {
+		if (p == null || !p.inWorld()) return Result.NO_WORLD;
+		String dim = localDim == null || localDim.isEmpty() ? p.dimension() : localDim;
+		return p.openChat(ChatWaypoints.format(name, x, y, z, color & 0xFFFFFF, dim)) ? Result.OK : Result.UNSUPPORTED;
+	}
+
+	/** Eigenen Wegpunkt im Minecraft-Chat teilen (Wegpunkt-Liste). */
+	public static Result shareInChat(Waypoint w) {
+		return w == null ? Result.INVALID : shareInChat(w.name, w.x, w.y, w.z, w.color, w.dimension);
 	}
 
 	/** Vorgemerkte Karte abholen (Sozial-Bildschirm) – danach leer. */

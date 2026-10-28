@@ -795,6 +795,15 @@ class MapTest {
 		public String serverMotd() {
 			return null;
 		}
+
+		/** Zuletzt mit Text geöffnete Chatzeile („Im Chat teilen“), null = keine. */
+		String chat;
+
+		@Override
+		public boolean openChat(String text) {
+			chat = text;
+			return true;
+		}
 	}
 
 	@Test

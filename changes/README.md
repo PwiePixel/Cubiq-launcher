@@ -34,6 +34,9 @@ So schreiben:
 - **Fotos vom Update:** Bei allem, was man sieht, 1–3 Screenshots als PNG/WebP neben den Text in `changes/` legen
   und oben im Kommentar „shots:“ mit Dateinamen und Bildunterschrift (English | Deutsch) eintragen. Das Release
   verschiebt sie nach `public/news/<version>/`; Größen und Regeln in `docs/release-screenshots.md`.
+- **Name des Updates (optional):** Eine Zeile `<!-- title: The Map Update | Das Karten-Update -->` über
+  „### English“ gibt dem Release einen Namen („Cubiq Launcher 0.3.3 – The Map Update“). Bringen mehrere Texte einen
+  mit, gilt der erste (nach Dateinamen).
 
 Keine Datei nötig für Änderungen, die Spieler nicht bemerken (Tests, CI, Doku, Umbauten) – dann den Commit mit
 `refactor:`, `test:`, `ci:`, `docs:` oder `chore:` beginnen.

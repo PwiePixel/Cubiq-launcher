@@ -6,7 +6,8 @@ import dev.pwiepixel.cubiqclient.core.waypoint.WaypointShare;
 
 /**
  * Kleines Fenster „Als Wegpunkt speichern“ nach einem Klick auf Koordinaten im Minecraft-Chat: Name (vorbelegt),
- * Farbe, Speichern. Legt den Wegpunkt in der aktuellen Welt/Dimension an – nur lokal, es wird nichts gesendet.
+ * Farbe, Speichern. Legt den Wegpunkt in der aktuellen Welt/Dimension an – nur lokal, es wird nichts gesendet. Für
+ * einen im Chat geteilten Wegpunkt („[+ Wegpunkt]“) mit dessen Name, Farbe und Dimension vorbelegt.
  */
 public final class WaypointSaveUi extends UiScreen {
 	/** Anbindung an den Loader. */
@@ -32,16 +33,43 @@ public final class WaypointSaveUi extends UiScreen {
 	private final int z;
 	private final TextInput name = new TextInput(SafeText.MAX_NAME);
 	private int color = COLORS[5];
+	/** Farben zur Auswahl: die festen, bei einem geteilten Wegpunkt vorn dessen eigene. */
+	private final int[] colors;
+	/** Dimension als Namensraum-Kennung (geteilter Wegpunkt) oder null = die aktuelle. */
+	private final String dimension;
+	private final boolean shared;
 	private final int[] rect = new int[4];
 
 	public WaypointSaveUi(Host host, int x, int y, int z, String defaultName) {
+		this(host, x, y, z, defaultName, -1, null);
+	}
+
+	/**
+	 * Geteilter Wegpunkt aus dem Chat: {@code color} 0xRRGGBB (-1 = Standard), {@code dimension} als
+	 * Namensraum-Kennung (null = die aktuelle).
+	 */
+	public WaypointSaveUi(Host host, int x, int y, int z, String defaultName, int color, String dimension) {
 		this.host = host;
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		this.dimension = dimension;
+		this.shared = color >= 0;
 		I18n.refresh();
 		name.setText(defaultName == null ? "" : SafeText.line(defaultName, SafeText.MAX_NAME));
 		name.setFocused(true);
+		int[] list = COLORS;
+		if (color >= 0) {
+			this.color = color & 0xFFFFFF;
+			boolean known = false;
+			for (int c : COLORS) known |= c == this.color;
+			if (!known) {
+				list = new int[COLORS.length + 1];
+				list[0] = this.color;
+				System.arraycopy(COLORS, 0, list, 1, COLORS.length);
+			}
+		}
+		colors = list;
 	}
 
 	@Override
@@ -61,18 +89,18 @@ public final class WaypointSaveUi extends UiScreen {
 		Paint.shadow(c, px, py, w, h, 2, 0.6f);
 		Paint.window(c, px, py, w, h);
 		Icons.draw(c, "pin", px + 7, py + 7, 1, 0xFF000000 | color);
-		Paint.textClipped(c, I18n.tr("waypoint.save.title"), px + 19, py + 7, w - 40, t.text, false);
+		Paint.textClipped(c, I18n.tr(shared ? "waypoint.save.sharedTitle" : "waypoint.save.title"), px + 19, py + 7, w - 40, t.text, false);
 		iconButton(c, px + w - 18, py + 4, "close", mx, my, this::requestClose);
 		int cy = py + 22;
 		String where = x + " " + y + " " + z;
-		String dim = WaypointShare.currentDimension();
+		String dim = dimension != null ? dimension : WaypointShare.currentDimension();
 		if (!dim.isEmpty()) where += " · " + dev.pwiepixel.cubiqclient.core.map.WorldMapUi.dimensionName(dim);
 		Paint.textClipped(c, where, px + 8, cy, w - 16, t.textDim, false);
 		cy += 12;
 		input(c, px + 8, cy, w - 16, 16, t);
 		cy += 22;
 		int sx = px + 8;
-		for (final int col : COLORS) {
+		for (final int col : colors) {
 			boolean sel = col == color;
 			c.fill(sx, cy, sx + 14, cy + 14, sel ? t.text : t.border);
 			c.fill(sx + 1, cy + 1, sx + 13, cy + 13, 0xFF000000 | col);
@@ -80,7 +108,7 @@ public final class WaypointSaveUi extends UiScreen {
 				host.playClick();
 				color = col;
 			});
-			sx += 17;
+			sx += colors.length > 9 ? 16 : 17;
 		}
 		cy += 22;
 		int bw = Math.min(90, (w - 22) / 2);
@@ -122,7 +150,7 @@ public final class WaypointSaveUi extends UiScreen {
 	private void save() {
 		String n = SafeText.line(name.text(), SafeText.MAX_NAME);
 		if (n == null || n.isEmpty()) n = I18n.tr("waypoint.save.defaultName");
-		WaypointShare.Result r = WaypointShare.saveHere(n, x, y, z, color);
+		WaypointShare.Result r = WaypointShare.saveIn(n, x, y, z, dimension, color);
 		String text = r == WaypointShare.Result.ADDED || r == WaypointShare.Result.ALREADY ? I18n.tr(r.key(), n) : I18n.tr(r.key());
 		requestClose();
 		host.notice(text);
