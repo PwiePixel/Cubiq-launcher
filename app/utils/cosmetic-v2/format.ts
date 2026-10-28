@@ -474,24 +474,19 @@ export function sampleAction(model: unknown, driver: ActionDriver, localMs: numb
 
 const REST: BonePose = { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] }
 
-/** Kürzester Drehweg von `from` nach `to` in Grad (−180…180) – je Euler-Winkel, wie in Website und Cubiq Client. */
-export function shortestTurn(from: number, to: number): number {
-  return ((((to - from) % 360) + 540) % 360) - 180
-}
-
 /**
- * Zwei Posen mischen (w = 0 → a, 1 → b); fehlende Knochen zählen als Ruhe. Für die Überblendungen: Drehungen
- * nehmen je Euler-Winkel den kürzesten Weg (ein Rumpf bei 350° dreht über 360° auf 10°, nicht 340° zurück) –
- * gleiche Drehung am Ende, nur der Weg dorthin ändert sich. Position und Skalierung laufen geradlinig.
+ * Zwei Posen mischen (w = 0 → a, 1 → b); fehlende Knochen zählen als Ruhe. Alles geradlinig, auch Drehungen je
+ * Euler-Winkel: a + (b − a) · w – wie bisher und wie im Cubiq Client. Bewusst kein kürzester Drehweg: gegen ein Ziel,
+ * das sich bewegt (Rollen 0…720°), spränge er von Bild zu Bild um, und Flügel falteten andersherum als im Spiel.
+ * Nach einer Bewegung über mehrere Runden dreht ein Knochen beim Überblenden daher kurz schnell zurück (wie bisher).
  */
 export function blendPoses(a: Map<string, BonePose>, b: Map<string, BonePose>, w: number): Map<string, BonePose> {
   const out = new Map<string, BonePose>()
   const mix = (x: Vec3, y: Vec3) => x.map((v, j) => v + (y[j]! - v) * w) as Vec3
-  const turn = (x: Vec3, y: Vec3) => x.map((v, j) => v + shortestTurn(v, y[j]!) * w) as Vec3
   for (const id of new Set([...a.keys(), ...b.keys()])) {
     const pa = a.get(id) ?? REST
     const pb = b.get(id) ?? REST
-    out.set(id, { position: mix(pa.position, pb.position), rotation: turn(pa.rotation, pb.rotation), scale: mix(pa.scale, pb.scale) })
+    out.set(id, { position: mix(pa.position, pb.position), rotation: mix(pa.rotation, pb.rotation), scale: mix(pa.scale, pb.scale) })
   }
   return out
 }
@@ -539,7 +534,8 @@ export interface StateMixer {
  * beginnt sie mit einer neuen Überblendung von vorn. Die Ausgangsseite behält damit ihre eigene Zeit
  * (sie steht still), die Zielseite läuft auf ihrer: Zustände zur Wanduhr `timeMs` (oder `poseMs`), die Aktion
  * zu `localMs`. Hat das Modell die Aktion nicht, läuft der Zustand ungestört weiter.
- * Beim Überblenden drehen Knochen auf dem kürzesten Weg (`blendPoses`), fx-Knochen springen sofort auf die Zielpose.
+ * Überblendet wird geradlinig (`blendPoses`); nur fx-Knochen springen sofort auf die Zielpose. Modelle ohne fx-Knochen
+ * (Flügel, Hüte) blenden damit genau wie bisher.
  */
 export function createStateMixer(fadeMs = STATE_FADE_MS): StateMixer {
   let cur: AnimState | null = null

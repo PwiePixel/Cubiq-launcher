@@ -22,7 +22,6 @@ import {
   petPoseTime,
   sampleAction,
   samplePoses,
-  shortestTurn,
   stateAnimations,
   transformPoint,
   validateModel,
@@ -41,6 +40,8 @@ type Model = CosmeticModel & Json
 const IMAGES = { texture: { width: 128, height: 320 } }
 
 const fox = (): Model => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'cosmetic-v2', 'fox_kit_actions.json'), 'utf8'))
+/** Die veröffentlichten Aurora-Flügel der Website (unverändert kopiert): beim Schleichen klappen die Hände über 180°. */
+const aurora = (): CosmeticModel => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'cosmetic-v2', 'aurora_wings.json'), 'utf8'))
 const withoutActions = (m: Model): Model => {
   const { actions: _, ...rest } = m
   return rest as Model
@@ -288,9 +289,25 @@ describe('Aktionen – Länge, Knöpfe, Pose', () => {
   })
 })
 
-/** Erwartung laut Vertrag: Überblenden mit kürzestem Drehweg; fx-Knochen sofort in der Zielpose (fehlt sie dort: Ruhe). */
+/** Gewicht der Überblendung zum Anteil u (0…1): smoothstep. */
+const smooth = (u: number) => u * u * (3 - 2 * u)
+/**
+ * Geradlinig mischen wie der veröffentlichte Launcher und der Cubiq Client: a + (b − a) · w je Wert, auch Drehungen
+ * je Euler-Winkel (kein kürzester Weg); fehlende Knochen zählen als Ruhe. Bewusst ohne `blendPoses` gerechnet.
+ */
+function lerpPoses(a: Map<string, BonePose>, b: Map<string, BonePose>, w: number): Map<string, BonePose> {
+  const lerp = (x: Vec3, y: Vec3) => x.map((v, j) => v + (y[j]! - v) * w) as Vec3
+  const out = new Map<string, BonePose>()
+  for (const id of new Set([...a.keys(), ...b.keys()])) {
+    const pa = a.get(id) ?? REST
+    const pb = b.get(id) ?? REST
+    out.set(id, { position: lerp(pa.position, pb.position), rotation: lerp(pa.rotation, pb.rotation), scale: lerp(pa.scale, pb.scale) })
+  }
+  return out
+}
+/** Erwartung laut Vertrag: geradlinig überblenden; fx-Knochen sofort in der Zielpose (fehlt sie dort: Ruhe). */
 function fade(snap: Map<string, BonePose>, target: Map<string, BonePose>, w: number): Map<string, BonePose> {
-  const out = blendPoses(snap, target, w)
+  const out = lerpPoses(snap, target, w)
   for (const id of [...out.keys()]) {
     if (!id.startsWith('fx_')) continue
     const p = target.get(id)
@@ -450,27 +467,52 @@ describe('Aktionen – Mischer (250 ms, eigene Zeitbasis)', () => {
   })
 })
 
-describe('Überblenden auf dem kürzesten Drehweg', () => {
-  it('je Euler-Winkel höchstens 180° – Position und Größe weiter geradlinig', () => {
+/**
+ * Mischer des veröffentlichten Launchers (vor den Aktionen) als Referenz: nur Zustände, Schnappschuss beim Wechsel,
+ * 250 ms smoothstep, alles geradlinig. Modelle ohne fx-Knochen müssen Bild für Bild genau so laufen.
+ */
+function releasedMixer() {
+  let cur: AnimState | null = null
+  let since = 0
+  let snap: Map<string, BonePose> | null = null
+  let last = new Map<string, BonePose>()
+  return (model: CosmeticModel, timeMs: number, state: AnimState): Map<string, BonePose> => {
+    if (cur === null) cur = state
+    if (state !== cur) {
+      snap = last
+      since = timeMs
+      cur = state
+    }
+    const target = stateAnimations(model, timeMs, state)
+    let out = target
+    if (snap) {
+      const u = Math.max(0, Math.min(1, (timeMs - since) / 250))
+      if (u >= 1) snap = null
+      else out = lerpPoses(snap, target, smooth(u))
+    }
+    last = out
+    return out
+  }
+}
+
+describe('Überblenden geradlinig wie bisher (kein kürzester Drehweg)', () => {
+  it('je Euler-Winkel a + (b − a) · w, auch über 180° – Position und Größe ebenso', () => {
     const pose = (rotation: Vec3, position: Vec3 = [0, 0, 0], scale: Vec3 = [1, 1, 1]) => new Map([['x', { position, rotation, scale }]])
     const rot = (a: Vec3, b: Vec3, w: number) => blendPoses(pose(a), pose(b), w).get('x')!.rotation
-    expect(rot([170, -170, 350], [-170, 170, 10], 0.5)).toEqual([180, -180, 360])
-    expect(rot([10, 0, -90], [350, 270, 90], 0.5)).toEqual([0, -45, -180])
-    expect(rot([600, 0, 0], [0, 0, 0], 0.5)).toEqual([660, 0, 0])
+    expect(rot([170, -170, 350], [-170, 170, 10], 0.5)).toEqual([0, 0, 180])
+    expect(rot([10, 0, -90], [350, 270, 90], 0.5)).toEqual([180, 135, 0])
+    expect(rot([600, 0, 0], [0, 0, 0], 0.5)).toEqual([300, 0, 0])
     expect(rot([30, 0, 0], [80, 0, 0], 0.25)).toEqual([42.5, 0, 0])
-    // Ende: dieselbe Drehung (bis auf volle Umdrehungen), Position und Größe wie bisher geradlinig.
-    for (const [a, b] of [[350, 10], [-170, 170], [600, 0], [0, 720]] as const) {
-      const end = rot([a, 0, 0], [b, 0, 0], 1)[0]
-      expect(Math.abs(((end - b) % 360) + 360) % 360).toBeCloseTo(0, 9)
+    // Anfang und Ende genau a und b – keine Umrechnung auf volle Umdrehungen.
+    for (const [a, b] of [[350, 10], [-170, 170], [600, 0], [0, 720], [0, 197]] as const) {
+      expect(rot([a, 0, 0], [b, 0, 0], 0)[0]).toBe(a)
+      expect(rot([a, 0, 0], [b, 0, 0], 1)[0]).toBe(b)
     }
     const b = blendPoses(pose([0, 0, 0], [0, 0, 0], [1, 1, 1]), pose([0, 0, 0], [4, -2, 0], [3, 1, 1]), 0.5).get('x')!
     expect([b.position, b.scale]).toEqual([[2, -1, 0], [2, 1, 1]])
-    expect(shortestTurn(0, 180)).toBe(-180)
-    expect(shortestTurn(0, 181)).toBe(-179)
-    expect(shortestTurn(-720, 10)).toBe(10)
   })
 
-  it('Rollen → Streicheln dreht weiter vorwärts statt 600° zurück; am Ende genau die Aktion', () => {
+  it('Rollen → Streicheln: geradlinig zurück auf die Aktion (kurz schnell rückwärts, wie bisher), am Ende genau die Aktion', () => {
     const m = roller()
     expect(validateModel(m, { texture: { width: 16, height: 16 } })).toEqual({ ok: true, errors: [], warnings: [] })
     const mix = createStateMixer()
@@ -482,11 +524,14 @@ describe('Überblenden auf dem kürzesten Drehweg', () => {
     expect(from).toBeGreaterThan(590)
     let prev = from
     for (let dt = 16; dt <= 240; dt += 16) {
-      const x = mix.pose(m, t0 + dt, 'slide', { driver: 'pet', localMs: dt - 16 }).get('roll')!.rotation[0]
-      // vorwärts bis 720° (≙ 0°), in kleinen Schritten – linear wären es bis zu 57° je Bild rückwärts
-      expect(x).toBeGreaterThanOrEqual(prev - 1e-9)
-      expect(x).toBeLessThanOrEqual(720 + 1e-9)
-      expect(x - prev).toBeLessThan(15)
+      const pose = mix.pose(m, t0 + dt, 'slide', { driver: 'pet', localMs: dt - 16 })
+      // Genau die Formel: eingefrorenes Rollen-Bild → Aktion zu ihrer Zeit, Gewicht smoothstep ab dem ersten Bild.
+      expect(maxDiff(pose, fade(snap, sampleAction(m, 'pet', dt - 16)!, smooth((dt - 16) / 250)))).toBeLessThan(1e-9)
+      // Rückwärts bis 0°, nie darüber hinaus; höchstens 1,5 · 16/250 · 600° ≈ 58° je Bild (wie im veröffentlichten Launcher).
+      const x = pose.get('roll')!.rotation[0]
+      expect(x).toBeLessThanOrEqual(prev + 1e-9)
+      expect(x).toBeGreaterThanOrEqual(-1e-9)
+      expect(prev - x).toBeLessThan(60)
       prev = x
     }
     const end = mix.pose(m, t0 + 300, 'slide', { driver: 'pet', localMs: 284 })
@@ -494,6 +539,75 @@ describe('Überblenden auf dem kürzesten Drehweg', () => {
     // Standardweg ohne Überblenden: unverändert die Zustands-Animation.
     const plain = createStateMixer()
     for (let t = t0; t < t0 + 1000; t += 37) expect(plain.pose(m, t, 'slide')).toEqual(stateAnimations(m, t, 'slide'))
+  })
+
+  it('Streicheln → Rollen: das Ziel dreht weiter, die Überblendung folgt ihm stetig (kein Umspringen hinter 180°)', () => {
+    const m = roller()
+    const mix = createStateMixer()
+    const b0 = 1_700_000_000_000
+    mix.pose(m, b0, 'slide')
+    let held = new Map<string, BonePose>()
+    for (let t = b0 + 16; t <= b0 + 1084; t += 16) held = mix.pose(m, t, 'slide', { driver: 'pet', localMs: t - b0 - 16 })
+    expect(held).toEqual(sampleAction(m, 'pet', 600))
+    // Aktion vorbei: vom gehaltenen Endbild (0°) ins Rollen, dessen Ziel in den 250 ms von 72° auf 252° weiterdreht.
+    const t1 = b0 + 1100
+    let prev = 0
+    for (let dt = 0; dt <= 272; dt += 16) {
+      const target = stateAnimations(m, t1 + dt, 'slide')
+      const pose = mix.pose(m, t1 + dt, 'slide')
+      expect(maxDiff(pose, fade(held, target, smooth(Math.min(1, dt / 250))))).toBeLessThan(1e-9)
+      // Stetig vorwärts hinter dem Ziel her; ein kürzester Weg spränge hinter 180° um über 200° zurück.
+      const x = pose.get('roll')!.rotation[0]
+      expect(x).toBeGreaterThanOrEqual(prev - 1e-9)
+      expect(x).toBeLessThanOrEqual(target.get('roll')!.rotation[0] + 1e-9)
+      expect(x - prev).toBeLessThan(30)
+      prev = x
+    }
+  })
+
+  it('Aurora-Flügel idle → sneak: die Hände klappen auf dem geraden Weg ein, wie im veröffentlichten Launcher', () => {
+    const m = aurora()
+    expect(validateModel(m, { texture: { width: 192, height: 512 }, glow: { width: 192, height: 3072 } })).toEqual({ ok: true, errors: [], warnings: [] })
+    expect(m.bones.filter((b) => b.id.startsWith('fx_'))).toEqual([])
+    const z = (p: Map<string, BonePose>, id: string) => p.get(id)!.rotation[2]
+    // Schleichen: die Hände klappen über 180° ein, links auf +197°, rechts auf −197° (kürzester Weg: −163° / +163°).
+    const sneak = stateAnimations(m, 0, 'sneak')
+    expect([z(sneak, 'hand_l'), z(sneak, 'hand_r')]).toEqual([197, -197])
+    const mix = createStateMixer()
+    const ref = releasedMixer()
+    const t0 = 1_761_650_000_000
+    let idle = new Map<string, BonePose>()
+    for (let t = t0 - 320; t <= t0; t += 16) {
+      idle = mix.pose(m, t, 'idle')
+      expect(idle).toEqual(ref(m, t, 'idle'))
+    }
+    for (const id of ['hand_l', 'hand_r']) expect(Math.abs(z(idle, id))).toBeLessThan(10)
+    // Ab dem Wechsel je 25 ms ein Zehntel der Überblendung: jedes Bild genau wie der veröffentlichte Mischer.
+    for (let k = 0; k <= 10; k++) {
+      const t = t0 + 16 + k * 25
+      const pose = mix.pose(m, t, 'sneak')
+      for (const id of ['hand_l', 'hand_r']) expect(z(pose, id), `${id} @${k}`).toBeCloseTo(z(idle, id) + (z(sneak, id) - z(idle, id)) * smooth(k / 10), 9)
+      expect(pose, `@${k}`).toEqual(ref(m, t, 'sneak'))
+      if (k === 5) {
+        // Mitte (Gewicht ½): genau zwischen idle und sneak – links ≈ +97°, nicht ≈ −83° wie auf dem kürzesten Weg.
+        expect(z(pose, 'hand_l')).toBeCloseTo((z(idle, 'hand_l') + 197) / 2, 9)
+        expect(z(pose, 'hand_r')).toBeCloseTo((z(idle, 'hand_r') - 197) / 2, 9)
+        expect(z(pose, 'hand_l')).toBeGreaterThan(90)
+        expect(z(pose, 'hand_r')).toBeLessThan(-90)
+      }
+    }
+  })
+
+  it('Modelle ohne fx-Knochen blenden Bild für Bild genau wie der veröffentlichte Launcher', () => {
+    // Wechsel auch mitten in einer Überblendung (je 100 ms nach dem vorigen), Rollen über 180° beim Würfel-Begleiter.
+    const plan = (k: number): AnimState =>
+      k < 1000 ? 'idle' : k < 1600 ? 'sneak' : k < 1700 ? 'air' : k < 2600 ? 'slide' : k < 2700 ? 'sneak' : k < 3500 ? 'air' : k < 4200 ? 'slide' : 'idle'
+    for (const m of [aurora(), roller()]) {
+      const mix = createStateMixer()
+      const ref = releasedMixer()
+      const t0 = 1_761_650_000_000
+      for (let k = 0; k < 6000; k += 16) expect(mix.pose(m, t0 + k, plan(k)), `${m.id} @${k}`).toEqual(ref(m, t0 + k, plan(k)))
+    }
   })
 })
 
