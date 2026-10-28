@@ -417,6 +417,16 @@ export function stateAnimations(model: Pick<CosmeticModel, 'animations'> & { slo
   return samplePoses(model, timeMs, [resolveDriver(model, state)])
 }
 
+/**
+ * Pose-Zeit eines Begleiters am Boden (Anhang E): Die einmalige Animation `grab` läuft ab ihrem Beginn `stateSince` –
+ * aber nur, wenn das Modell sie wirklich hat (wirksamer Treiber nach dem Rückfall). Sonst läuft der Rückfall (idle)
+ * wie jeder andere Zustand auf Wanduhr + Versatz weiter, ohne Sprung in der Phase. Leucht-Bilder und Höfe bleiben
+ * immer auf Wanduhr + Versatz – diese Zeit geht nur in die Pose.
+ */
+export function petPoseTime(model: Pick<CosmeticModel, 'animations'> & { slot?: string }, state: AnimState, nowMs: number, offsetMs: number, stateSince: number): number {
+  return resolveDriver(model, state) === 'grab' ? nowMs - stateSince : nowMs + offsetMs
+}
+
 // --- Aktionen (Streicheln/Füttern) ----------------------------------------------------------------
 
 /** Gültige Aktionen je Modell-Objekt (Modelle ändern sich nicht; neue Liste, Knochen oder slot → neu geprüft). */
@@ -510,7 +520,12 @@ export interface ActionPlay {
 }
 
 export interface StateMixer {
-  pose(model: Pick<CosmeticModel, 'animations'> & { slot?: string }, timeMs: number, state?: AnimState, action?: ActionPlay | null): Map<string, BonePose>
+  /**
+   * Pose zur Wanduhr `timeMs` (sie taktet auch die Überblendung). `poseMs` = eigene Pose-Zeit des Zustands, wenn sie
+   * nicht die Wanduhr ist (z. B. `grab` ab dem Klick, siehe `petPoseTime`); springt sie bei gleichem Zustand zurück
+   * (erneuter Klick), beginnt der Zustand mit einer Überblendung von vorn – wie eine Aktion.
+   */
+  pose(model: Pick<CosmeticModel, 'animations'> & { slot?: string }, timeMs: number, state?: AnimState, action?: ActionPlay | null, poseMs?: number): Map<string, BonePose>
   readonly state: AnimState | null
   /** Gezeigte Aktion (`null` = keine oder das Modell hat sie nicht). */
   readonly action: ActionDriver | null
@@ -522,8 +537,8 @@ export interface StateMixer {
  * Eine Aktion (Streicheln/Füttern) ersetzt die Zustands-Pose ganz, solange sie läuft: Ein- und Ausblenden
  * gehen wie ein Zustandswechsel vom eingefrorenen Bild aus; springt ihre eigene Zeit zurück (erneuter Klick),
  * beginnt sie mit einer neuen Überblendung von vorn. Die Ausgangsseite behält damit ihre eigene Zeit
- * (sie steht still), die Zielseite läuft auf ihrer: Zustände zur Wanduhr `timeMs`, die Aktion zu `localMs`.
- * Hat das Modell die Aktion nicht, läuft der Zustand ungestört weiter.
+ * (sie steht still), die Zielseite läuft auf ihrer: Zustände zur Wanduhr `timeMs` (oder `poseMs`), die Aktion
+ * zu `localMs`. Hat das Modell die Aktion nicht, läuft der Zustand ungestört weiter.
  * Beim Überblenden drehen Knochen auf dem kürzesten Weg (`blendPoses`), fx-Knochen springen sofort auf die Zielpose.
  */
 export function createStateMixer(fadeMs = STATE_FADE_MS): StateMixer {
@@ -531,17 +546,19 @@ export function createStateMixer(fadeMs = STATE_FADE_MS): StateMixer {
   let curAction: ActionDriver | null = null
   /** `s:<Zustand>` oder `a:<Aktion>` – ein Wechsel startet die Überblendung. */
   let key: string | null = null
-  let lastLocal = 0
+  /** Eigene Zeit der Zielseite im letzten Bild (Aktion: `localMs`, Zustand: nur mit `poseMs`). */
+  let lastLocal: number | null = null
   let since = 0
   let snap: Map<string, BonePose> | null = null
   let last = new Map<string, BonePose>()
   const smoothstep = (u: number) => u * u * (3 - 2 * u)
   return {
-    pose(model, timeMs, state = 'idle', action = null) {
+    pose(model, timeMs, state = 'idle', action = null, poseMs) {
       const acted = action ? sampleAction(model, action.driver, action.localMs) : null
       const play = acted ? action : null
       const next = play ? `a:${play.driver}` : `s:${state}`
-      const again = !!play && next === key && play.localMs < lastLocal
+      const local = play ? play.localMs : (poseMs ?? null)
+      const again = next === key && local !== null && lastLocal !== null && local < lastLocal
       if (key === null) key = next
       else if (next !== key || again) {
         snap = last
@@ -550,8 +567,8 @@ export function createStateMixer(fadeMs = STATE_FADE_MS): StateMixer {
       }
       cur = state
       curAction = play?.driver ?? null
-      if (play) lastLocal = play.localMs
-      const target = acted ?? stateAnimations(model, timeMs, state)
+      lastLocal = local
+      const target = acted ?? stateAnimations(model, poseMs ?? timeMs, state)
       let out = target
       if (snap) {
         const u = Math.max(0, Math.min(1, (timeMs - since) / fadeMs))

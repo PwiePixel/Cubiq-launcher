@@ -5,6 +5,7 @@ import {
   modelTop,
   petGroup,
   petGroupSlots,
+  petPoseTime,
   petTimeOffset,
   validateModel,
   type ActionDriver,
@@ -312,7 +313,14 @@ const companionSlot: CosmeticSlot = { id: 'companion', inst: null, top: 0, token
 const wingsSlot: CosmeticSlot = { id: 'wings', inst: null, top: 0, token: 0, emptyTop: 0 }
 
 /** Begleiter am Boden: bis zu 4 Exemplare desselben Modells, je mit eigenem Zeitversatz. */
-const petSlot = { list: [] as { inst: CosmeticInstance; offset: number; scale: number }[], token: 0 }
+interface PetEntry {
+  inst: CosmeticInstance
+  /** Modell des Begleiters (Gefolge: eigenes) – entscheidet, ob `grab` ab dem Klick läuft. */
+  model: CosmeticModel
+  offset: number
+  scale: number
+}
+const petSlot = { list: [] as PetEntry[], token: 0 }
 
 /** Oberkante für die Kamera: Hut und Begleiter zusammen, mindestens der Nacken. */
 function cameraTop(): number {
@@ -368,14 +376,21 @@ async function applySlot(slot: CosmeticSlot, data: ViewerCosmetic | null | undef
 
 /** Beginn des aktuellen Begleiter-Zustands (für `grab`: läuft einmalig ab hier statt zur Wanduhr, Anhang E). */
 let petStateSince = Date.now()
-function petTime(now: number, offset: number): number {
-  return props.petState === 'grab' ? now - petStateSince : now + offset
-}
 
 /** Beginn der laufenden Aktion (Streicheln/Füttern): ihre eigene Zeit, ohne Zeitversatz je Begleiter. */
 let petActionSince = Date.now()
 function petActionPlay(now: number): ActionPlay | null {
   return props.petAction ? { driver: props.petAction, localMs: now - petActionSince } : null
+}
+
+/**
+ * Einen Begleiter zur Wanduhr `now` zeichnen. Leucht-Bilder und Höfe laufen immer auf Wanduhr + Versatz; nur die Pose
+ * hat eigene Zeiten: `grab` ab dem Klick (nur mit eigener grab-Animation, sonst bleibt idle in seiner Phase), eine
+ * Aktion ab ihrem Auslösen.
+ */
+function updatePet(p: PetEntry, now: number, action: ActionPlay | null) {
+  const poseMs = petPoseTime(p.model, props.petState, now, p.offset, petStateSince)
+  p.inst.update(now + p.offset, { camera: viewer?.camera ?? null, state: props.petState, poseMs, action })
 }
 
 function clearPets() {
@@ -409,7 +424,7 @@ async function applyPets() {
     if (!check.ok) throw new Error(`Kosmetik-Modell ungültig: ${check.errors.slice(0, 3).join('; ')}`)
     const model = data.model as unknown as CosmeticModel
     if (model.attach !== 'ground') throw new Error('Begleiter am Boden braucht attach ground')
-    return { create: () => createCosmetic(model, { texture, glow: hasGlow ? glow : null }), id: model.id }
+    return { create: () => createCosmetic(model, { texture, glow: hasGlow ? glow : null }), id: model.id, model }
   }
   try {
     const extras = props.petExtras ?? []
@@ -439,12 +454,12 @@ async function applyPets() {
       inst.root.scale.setScalar(g.scale)
       inst.setOptions(g.kind === 'main' ? props.cosmeticOptions?.pet : undefined)
       viewer!.playerObject.add(inst.root)
-      return { inst, offset: petTimeOffset(props.petSeed || mainLoaded.id, i), scale: g.scale }
+      return { inst, model: src.model, offset: petTimeOffset(props.petSeed || mainLoaded.id, i), scale: g.scale }
     })
     applyLight()
     const now = Date.now()
     const action = petActionPlay(now)
-    for (const p of petSlot.list) p.inst.update(petTime(now, p.offset), { camera: viewer.camera, state: props.petState, action })
+    for (const p of petSlot.list) updatePet(p, now, action)
     applyFocus()
   } catch (e) {
     if (token !== petSlot.token) return
@@ -607,9 +622,9 @@ function beforeRender() {
     hatSlot.inst?.update(now, { camera: viewer.camera })
     companionSlot.inst?.update(now, { camera: viewer.camera })
     wingsSlot.inst?.update(now, { camera: viewer.camera, state: props.wingState })
-    // Pose der Aktion zu ihrer eigenen Zeit; Leuchten und Höfe bleiben auf der Zeit des Begleiters.
+    // Pose von grab/Aktion zu ihrer eigenen Zeit; Leuchten und Höfe bleiben auf der Zeit des Begleiters.
     const action = petActionPlay(now)
-    for (const p of petSlot.list) p.inst.update(petTime(now, p.offset), { camera: viewer.camera, state: props.petState, action })
+    for (const p of petSlot.list) updatePet(p, now, action)
     leanForSneak()
   }
 }

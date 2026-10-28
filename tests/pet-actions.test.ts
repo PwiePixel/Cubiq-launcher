@@ -19,6 +19,7 @@ import {
   boneMatrices,
   createStateMixer,
   petActionAvailable,
+  petPoseTime,
   sampleAction,
   samplePoses,
   shortestTurn,
@@ -30,6 +31,7 @@ import {
   type AnimState,
   type BonePose,
   type CosmeticModel,
+  type PetState,
   type Vec3,
 } from '../app/utils/cosmetic-v2/format'
 import { createCosmetic, type CosmeticInstance } from '../app/utils/cosmetic-v2/view'
@@ -495,6 +497,56 @@ describe('Überblenden auf dem kürzesten Drehweg', () => {
   })
 })
 
+describe('grab: eigene Pose-Zeit nur mit grab-Animation', () => {
+  const noGrab = (): Model => {
+    const m = fox()
+    m.animations = m.animations!.filter((a) => a.driver !== 'grab')
+    return m
+  }
+
+  it('Pose-Zeit ab dem Klick nur, wenn das Modell grab wirklich hat', () => {
+    const now = T0 + 5000
+    const since = T0 + 4000
+    expect(petPoseTime(fox(), 'grab', now, 4242, since)).toBe(1000)
+    expect(petPoseTime(noGrab(), 'grab', now, 4242, since)).toBe(now + 4242)
+    for (const state of ['idle', 'walk', 'handsup', 'flee'] as const) expect(petPoseTime(fox(), state, now, 4242, since)).toBe(now + 4242)
+  })
+
+  it('ein Begleiter ohne grab behält seine idle-Phase; der Fuchs spielt grab ab dem Klick', () => {
+    const off = 4242
+    const click = T0 + 3000
+    for (const m of [fox(), noGrab()]) {
+      const mix = createStateMixer()
+      const frame = (now: number, state: PetState) => mix.pose(m, now + off, state, null, petPoseTime(m, state, now, off, click))
+      for (let now = T0; now < click; now += 16) frame(now, 'idle')
+      let pose = new Map<string, BonePose>()
+      for (let now = click; now <= click + 400; now += 16) pose = frame(now, 'grab')
+      const now = click + 400
+      if (m.animations!.some((a) => a.driver === 'grab')) expect(maxDiff(pose, stateAnimations(m, 400, 'grab'))).toBeLessThan(1e-9)
+      else {
+        // Rückfall idle auf Wanduhr + Versatz – nicht neu ab Phase 0 (der Fuchs säße dort ganz anders).
+        expect(maxDiff(pose, stateAnimations(m, now + off, 'idle'))).toBeLessThan(1e-9)
+        expect(maxDiff(stateAnimations(m, now + off, 'idle'), stateAnimations(m, 400, 'idle'))).toBeGreaterThan(5)
+      }
+    }
+  })
+
+  it('erneuter Klick auf grab beginnt weich von vorn statt zu springen', () => {
+    const m = fox()
+    const off = 4242
+    const mix = createStateMixer()
+    let since = T0
+    const frame = (now: number) => mix.pose(m, now + off, 'grab', null, petPoseTime(m, 'grab', now, off, since))
+    mix.pose(m, T0 - 16 + off, 'idle', null, T0 - 16 + off)
+    let last = new Map<string, BonePose>()
+    for (let now = T0; now <= T0 + 1200; now += 16) last = frame(now)
+    since = T0 + 1216
+    expect(maxDiff(frame(T0 + 1216), last)).toBeLessThan(1e-9)
+    expect(maxDiff(frame(T0 + 1216 + 125), fade(last, stateAnimations(m, 125, 'grab'), 0.5))).toBeLessThan(1e-9)
+    expect(maxDiff(frame(T0 + 1216 + 250), stateAnimations(m, 250, 'grab'))).toBeLessThan(1e-9)
+  })
+})
+
 describe('Aktionen – Renderer (three.js in node)', () => {
   const canvas = (width: number, height: number) => ({ width, height }) as unknown as HTMLCanvasElement
   const matrices = (inst: CosmeticInstance, m: CosmeticModel) => new Map(m.bones.map((b) => [b.id, inst.root.getObjectByName(b.id)!.matrix.toArray()]))
@@ -528,55 +580,93 @@ describe('Aktionen – Renderer (three.js in node)', () => {
     }
   })
 
-  it('Leucht-Bilder und Höfe bleiben auf der Wanduhr', () => {
-    const glowPet: CosmeticModel = {
-      format: 2,
-      id: 'glow_pet',
-      name: 'Leuchttier',
-      slot: 'pet',
-      attach: 'ground',
-      texture: { file: 'texture.png', width: 16, height: 8, scale: 1, frames: 4, frameTimeMs: 100 },
-      bones: [
-        { id: 'root', pivot: [0, 0, 0] },
-        { id: 'body', parent: 'root', pivot: [0, 4, 0] },
-      ],
-      cubes: [{ bone: 'body', from: [-3, 0, -3], to: [3, 8, 3], faces: { south: { uv: [0, 0, 6, 8] } } }],
-      animations: [{ id: 'idle', driver: 'idle', lengthMs: 1000, tracks: [{ bone: 'body', channel: 'rotation', keys: [{ t: 0, v: [0, 0, 0] }, { t: 500, v: [0, 20, 0] }, { t: 1000, v: [0, 0, 0] }] }] }],
-      actions: [{ id: 'pet', driver: 'pet', lengthMs: 600, loop: false, tracks: [{ bone: 'body', channel: 'rotation', keys: [{ t: 0, v: [0, 0, 0] }, { t: 300, v: [30, 0, 0] }, { t: 600, v: [0, 0, 0] }] }] }],
-      halos: [{ bone: 'body', pos: [0, 9, 0], size: 4, color: '#ffcc66', pulse: { periodMs: 1000, min: 0.2, max: 1 } }],
-    }
-    expect(validateModel(glowPet, { texture: { width: 16, height: 32 } })).toEqual({ ok: true, errors: [], warnings: [] })
+  /** Leuchtendes Tier mit Bild-Streifen (4 Bilder à 100 ms) und pulsierendem Hof; Streicheln und grab neigen den Rumpf. */
+  const glowPet = (): CosmeticModel => ({
+    format: 2,
+    id: 'glow_pet',
+    name: 'Leuchttier',
+    slot: 'pet',
+    attach: 'ground',
+    texture: { file: 'texture.png', width: 16, height: 8, scale: 1, frames: 4, frameTimeMs: 100 },
+    bones: [
+      { id: 'root', pivot: [0, 0, 0] },
+      { id: 'body', parent: 'root', pivot: [0, 4, 0] },
+    ],
+    cubes: [{ bone: 'body', from: [-3, 0, -3], to: [3, 8, 3], faces: { south: { uv: [0, 0, 6, 8] } } }],
+    animations: [
+      { id: 'idle', driver: 'idle', lengthMs: 1000, tracks: [{ bone: 'body', channel: 'rotation', keys: [{ t: 0, v: [0, 0, 0] }, { t: 500, v: [0, 20, 0] }, { t: 1000, v: [0, 0, 0] }] }] },
+      { id: 'grab', driver: 'grab', lengthMs: 2400, loop: false, tracks: [{ bone: 'body', channel: 'rotation', keys: [{ t: 0, v: [0, 0, 0] }, { t: 1200, v: [0, 0, 40] }, { t: 2400, v: [0, 0, 0] }] }] },
+    ],
+    actions: [{ id: 'pet', driver: 'pet', lengthMs: 600, loop: false, tracks: [{ bone: 'body', channel: 'rotation', keys: [{ t: 0, v: [0, 0, 0] }, { t: 300, v: [30, 0, 0] }, { t: 600, v: [0, 0, 0] }] }] }],
+    halos: [{ bone: 'body', pos: [0, 9, 0], size: 4, color: '#ffcc66', pulse: { periodMs: 1000, min: 0.2, max: 1 } }],
+  })
+  const sprite = (i: CosmeticInstance) => {
+    let s: THREE.Sprite | null = null
+    i.root.traverse((o) => (s ??= (o as THREE.Sprite).isSprite ? (o as THREE.Sprite) : null))
+    return s!
+  }
+  const frameOffset = (i: CosmeticInstance) => {
+    const mesh = i.root.getObjectByName('body')!.children.find((o) => (o as THREE.Mesh).isMesh) as THREE.Mesh
+    return (mesh.material as THREE.MeshBasicMaterial[])[0]!.map!.offset.y
+  }
+  /** Höfe brauchen eine kleine Leinwand für ihre Verlaufs-Textur – hier eine Attrappe. */
+  function withDocument(run: () => void) {
     const origDoc = globalThis.document
-    // Höfe brauchen eine kleine Leinwand für ihre Verlaufs-Textur – hier eine Attrappe.
     globalThis.document = {
       createElement: () => ({ width: 0, height: 0, getContext: () => ({ createImageData: (w: number, h: number) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {} }) }),
     } as unknown as Document
     try {
-      const a = createCosmetic(glowPet, { texture: canvas(16, 32) })
-      const b = createCosmetic(glowPet, { texture: canvas(16, 32) })
-      const sprite = (i: CosmeticInstance) => {
-        let s: THREE.Sprite | null = null
-        i.root.traverse((o) => (s ??= (o as THREE.Sprite).isSprite ? (o as THREE.Sprite) : null))
-        return s!
-      }
-      const frameOffset = (i: CosmeticInstance) => {
-        const mesh = i.root.getObjectByName('body')!.children.find((o) => (o as THREE.Mesh).isMesh) as THREE.Mesh
-        return (mesh.material as THREE.MeshBasicMaterial[])[0]!.map!.offset.y
-      }
+      run()
+    } finally {
+      globalThis.document = origDoc
+    }
+  }
+
+  it('Leucht-Bilder und Höfe bleiben auf der Wanduhr', () => {
+    const m = glowPet()
+    expect(validateModel(m, { texture: { width: 16, height: 32 } })).toEqual({ ok: true, errors: [], warnings: [] })
+    withDocument(() => {
+      const a = createCosmetic(m, { texture: canvas(16, 32) })
+      const b = createCosmetic(m, { texture: canvas(16, 32) })
       let posesDiffer = false
       for (let t = T0; t < T0 + 900; t += 37) {
         a.update(t, { state: 'idle', action: { driver: 'pet', localMs: t - T0 } })
         b.update(t, { state: 'idle' })
         expect(sprite(a).material.opacity).toBe(sprite(b).material.opacity)
         expect(frameOffset(a)).toBe(frameOffset(b))
-        posesDiffer ||= matDiff(matrices(a, glowPet), matrices(b, glowPet)) > 1e-3
+        posesDiffer ||= matDiff(matrices(a, m), matrices(b, m)) > 1e-3
       }
       expect(posesDiffer).toBe(true)
       a.dispose()
       b.dispose()
-    } finally {
-      globalThis.document = origDoc
-    }
+    })
+  })
+
+  it('grab: Pose ab dem Klick, Leucht-Bilder und Höfe weiter auf Wanduhr + Versatz', () => {
+    const m = glowPet()
+    const off = 4321
+    const click = T0 + 1000
+    withDocument(() => {
+      const grabbing = createCosmetic(m, { texture: canvas(16, 32) })
+      const idle = createCosmetic(m, { texture: canvas(16, 32) })
+      let firstGrab = Infinity
+      for (let now = T0; now <= click + 1500; now += 37) {
+        const state: PetState = now < click ? 'idle' : 'grab'
+        if (state === 'grab') firstGrab = Math.min(firstGrab, now)
+        grabbing.update(now + off, { state, poseMs: petPoseTime(m, state, now, off, click) })
+        idle.update(now + off, { state: 'idle' })
+        // Leuchten/Hof wie beim Begleiter, der einfach weiter steht – kein Sprung beim Klick.
+        expect(sprite(grabbing).material.opacity).toBe(sprite(idle).material.opacity)
+        expect(frameOffset(grabbing)).toBe(frameOffset(idle))
+        // Nach dem Überblenden (250 ms ab dem ersten grab-Bild) genau grab zur Zeit seit dem Klick.
+        if (now >= firstGrab + 250) {
+          const want = boneLocal(m.bones[1]!, stateAnimations(m, now - click, 'grab').get('body'))
+          grabbing.root.getObjectByName('body')!.matrix.toArray().forEach((v, i) => expect(v).toBeCloseTo(want[i]!, 9))
+        }
+      }
+      grabbing.dispose()
+      idle.dispose()
+    })
   })
 })
 
