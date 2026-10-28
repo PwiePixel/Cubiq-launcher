@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { IconName } from './icons'
 import { hasKey, t, tKey, type MessageKey } from './i18n'
 import { sanctionKinds, type SanctionKind } from './sanctions'
+import { CUBIQ_SITE } from './site'
 
 // Team-Rechte (API §24.2): die eigene Team-Ansicht aus `GET /v1/me` (`team`),
 // was der Team-Bereich danach zeigt und wann eine Strafe änderbar ist.
@@ -128,7 +129,7 @@ export function mainRole(team: MyTeam | null | undefined): TeamRoleRef | null {
 // --- Seitenleiste und Seiten ---------------------------------------------------------------
 
 /** Die Website – dort liegen Rollen, Bewerbungen und Stellen mit voller Oberfläche. */
-export const TEAM_WEBSITE = 'https://cubiq-launcher.invalid'
+export const TEAM_WEBSITE = CUBIQ_SITE
 export const WEBSITE_LOGIN_URL = `${TEAM_WEBSITE}/login`
 /** Website-Admin: Creator-Haustiere (Anträge + Zuordnung Creator ↔ Haustier). */
 export const CREATOR_PETS_ADMIN_URL = `${TEAM_WEBSITE}/admin/creators?tab=pets`

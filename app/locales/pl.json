@@ -4803,10 +4803,6 @@
     "more": "Więcej obrazów: {n}",
     "openRelease": "Zobacz wydanie na GitHubie"
   },
-  "updateModel": {
-    "label": "Model 3D obrazka aktualizacji. Przeciągnij go lub użyj strzałek, aby go obrócić.",
-    "hint": "Przeciągnij, aby obrócić"
-  },
   "clips": {
     "title": "Klipy",
     "subtitle": "{n} klip lub nagranie | {n} klipy i nagrania | {n} klipów i nagrań",

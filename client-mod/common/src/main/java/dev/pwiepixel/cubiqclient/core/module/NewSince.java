@@ -171,6 +171,11 @@ public final class NewSince {
 	/** Garderobe → Kosmetik → Abschnitt „Begleiter (Boden)“ samt Schaltern für abschaltbare Teile. */
 	public static final String WARDROBE_PET = "wardrobe:pet";
 	/**
+	 * Karten-Update (nächste Version nach Cubiq Client 0.23.0): ruhiger Rahmen und Kompass im Cubiq-Stil, Blickkegel,
+	 * Chunk-Raster auf der Minimap; Weltkarte mit Maßstab, Entfernung messen und „Gehe zu Koordinaten“.
+	 */
+	public static final String MAPS_3 = "0.24.0";
+	/**
 	 * Begleiter streicheln und füttern (nächste Version nach Cubiq Client 0.23.0): Rechtsklick auf den eigenen
 	 * Begleiter am Boden.
 	 */
@@ -261,6 +266,8 @@ public final class NewSince {
 		add(GAMMA_REFILL, "autorefill", "fullbright.level", KEY_GAMMA_CYCLE, KEY_AUTO_REFILL);
 		// Winter-Kosmetik: Begleiter am Boden + Optionen in der Garderobe.
 		add(WINTER_COSMETICS, WARDROBE_PET);
+		// Karten-Update: Blickkegel und Chunk-Raster auf der Minimap.
+		add(MAPS_3, "minimap.viewCone", "minimap.grid");
 		// Begleiter per Rechtsklick streicheln/füttern (Schalter in Cubiq Online).
 		add(PET_INTERACT, "cubiqOnline.petInteract");
 	}

@@ -378,7 +378,7 @@ public final class BugReportPage {
 			yy = button(c, hits, I18n.tr("bugreport.done.open"), x, yy, cw, true, true, mx, my, new Runnable() {
 				@Override
 				public void run() {
-					openFailed = BugReportBody.siteLink(created.url) && Links.open(created.url) ? null : created.url;
+					openFailed = br.siteLink(created.url) && Links.open(created.url) ? null : created.url;
 				}
 			});
 			if (openFailed != null) yy = Paint.paragraph(c, I18n.tr("bugreport.done.openFailed", openFailed), x, yy, cw, LH, WARN);

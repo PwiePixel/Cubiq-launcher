@@ -286,6 +286,10 @@ public final class CubiqModules {
 	public final BoolSetting minimapHostile;
 	public final BoolSetting minimapPassive;
 	public final BoolSetting minimapCompass;
+	/** Blickkegel vor dem eigenen Pfeil (Minimap und Weltkarte). */
+	public final BoolSetting minimapViewCone;
+	/** Chunk-Raster auf der Minimap. */
+	public final BoolSetting minimapGrid;
 	public final BoolSetting minimapBiome;
 	public final BoolSetting minimapTime;
 	public final BoolSetting minimapEdgeWaypoints;
@@ -866,6 +870,8 @@ public final class CubiqModules {
 		minimapPassive = minimap.add(new BoolSetting("showPassive", "Show animals", false));
 		minimapMobIcons = minimap.add(new ChoiceSetting<>("mobIcons", "Creatures as", MobIcons.class, MobIcons.HEADS));
 		minimapCompass = minimap.add(new BoolSetting("compass", "Compass directions", true));
+		minimapViewCone = minimap.add(new BoolSetting("viewCone", "View direction (cone in front of your arrow)", true));
+		minimapGrid = minimap.add(new BoolSetting("grid", "Chunk grid", false));
 		minimapCoords = minimap.add(new BoolSetting("coords", "Coordinates below the map", true));
 		minimapBiome = minimap.add(new BoolSetting("biome", "Biome below the map", true));
 		minimapTime = minimap.add(new BoolSetting("time", "Time of day below the map", false));

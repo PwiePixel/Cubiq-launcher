@@ -1107,7 +1107,11 @@ impl Launcher {
         let client_build = client_mod::build_for(catalog.builds(), instance.loader.kind, &instance.game_version)
             .filter(|_| instance.overrides.cubiq_client != Some(false));
         if let Some(build) = client_build {
-            let extra = client_mod::bundled_jvm_args(&self.paths, build, instance).await;
+            let mut extra = client_mod::bundled_jvm_args(&self.paths, build, instance).await;
+            // Der Cubiq Client spricht mit demselben Server wie der Launcher – nur mit Zustimmung (wie cubiq-api.json).
+            if cubiq_enabled {
+                extra.extend(cubiq_api::client_mod_jvm_arg());
+            }
             launch::insert_jvm_args(&mut command, &prepared, extra);
         }
         // Vorab aufgelöste Server für den Cubiq Client (wie cubiq-api.json: nur mit Cubiq Client).

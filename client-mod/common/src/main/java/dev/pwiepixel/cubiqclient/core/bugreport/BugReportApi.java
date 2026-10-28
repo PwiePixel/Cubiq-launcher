@@ -49,7 +49,7 @@ public final class BugReportApi {
 		req.body = body.toString().getBytes(StandardCharsets.UTF_8);
 		Http.Response res = http.send(req);
 		if (res.status != 201 && res.status != 200) throw error(res);
-		BugReportBody.Created created = BugReportBody.created(res.text());
+		BugReportBody.Created created = BugReportBody.created(res.text(), base);
 		if (created == null) throw new ApiException(res.status, "invalid_response", 0);
 		return created;
 	}

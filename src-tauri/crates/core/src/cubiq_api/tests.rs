@@ -627,6 +627,55 @@ async fn removed_website_login_answers_with_a_hint_to_sign_in_with_microsoft() {
 }
 
 #[test]
+fn without_a_server_the_cubiq_client_gets_no_address() {
+    // Die CI baut ohne CUBIQ_API_BASE – zur Laufzeit gesetzt (lokale API im Debug-Build) gilt sie dagegen.
+    if std::env::var_os("CUBIQ_API_BASE").is_some() {
+        return;
+    }
+    assert_eq!(configured_base(), "https://cubiq-launcher.invalid");
+    assert_eq!(client_mod_jvm_arg(), None, "kein Server – der Mod bekommt keine Adresse");
+    assert_eq!(website_login_url(), "https://cubiq-launcher.invalid/login");
+}
+
+/// Die Regel aus build.rs (`CUBIQ_API_BASE`) – dieselben Fälle prüft tests/cubiq-site.test.ts für die Oberfläche.
+mod site_rule {
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/site_rule.rs"));
+
+    #[test]
+    fn only_plain_site_addresses_pass() {
+        for ok in [
+            "https://launcher.cubiq.studio",
+            "https://Cubiq.Studio:8443",
+            "https://xn--bcher-kva.de",
+            "http://127.0.0.1:8787",
+            "http://localhost:3000",
+        ] {
+            assert!(is_site(ok), "{ok}");
+        }
+        for bad in [
+            "launcher.cubiq.studio",
+            "http://launcher.cubiq.studio",
+            "http://127.0.0.1",
+            "https://launcher.cubiq.studio/api",
+            "https://cubiq.studio:443:",
+            "https://cubiq.studio:8o80",
+            "https://cubiq.studio:99999",
+            "https://cubiq.studio:0",
+            "https://:8080",
+            "https://",
+            "https://cubiq..studio",
+            "https://cubiq.studio.",
+            "https://user@cubiq.studio",
+            "https://cubiq studio",
+            "https://203.0.113.5",
+            "https://1.2.3.999",
+        ] {
+            assert!(!is_site(bad), "{bad}");
+        }
+    }
+}
+
+#[test]
 fn both_api_addresses_are_trusted_for_textures() {
     assert_eq!(DEFAULT_BASE, "https://cubiq-launcher.invalid");
     assert!(KNOWN_BASES.contains(&"https://api.cubiq-launcher.invalid"), "alte Adresse bleibt erlaubt");

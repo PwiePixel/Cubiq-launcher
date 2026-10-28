@@ -1,6 +1,7 @@
 import { z } from 'zod'
 // Relativ importiert, damit Tests die Datei ohne Nuxt laden können.
 import { currentLocale, t } from './i18n'
+import { CUBIQ_SITE } from './site'
 
 // Eigene Team-Bewerbungen (API §24.3): Status und Antwort des Teams. Stellen,
 // Formulare und das Prüfen im Team liegen auf der Website; der Launcher zeigt
@@ -37,8 +38,8 @@ export const myApplicationsSchema = z
   }))
 
 /** Stellen-Seite und „Meine Bewerbungen“ auf der Website. */
-export const APPLICATIONS_URL = 'https://cubiq-launcher.invalid/applications'
-export const TEAM_PAGE_URL = 'https://cubiq-launcher.invalid/team'
+export const APPLICATIONS_URL = `${CUBIQ_SITE}/applications`
+export const TEAM_PAGE_URL = `${CUBIQ_SITE}/team`
 
 export function isOpenApplication(a: Pick<MyApplication, 'status'>): boolean {
   return a.status === 'new' || a.status === 'review' || a.status === 'interview'

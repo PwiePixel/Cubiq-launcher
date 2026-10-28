@@ -19,11 +19,12 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Vollbild-Weltkarte: alles Erkundete dieser Welt (auch von der Platte), flüssig ziehen (mit Schwung) und stufenlos
- * zum Mauszeiger zoomen, Koordinaten unter dem Zeiger (im Nether/in der Oberwelt auch umgerechnet), auf den Spieler
- * zentrieren, Wegpunkte per Rechtsklick anlegen/bearbeiten/löschen, Wegpunkt-Liste mit Suche, andere Dimensionen
- * ansehen, als PNG exportieren; Spieler und Kreaturen wie auf der Minimap. Nah: ein Texel je Block, weiter weg
- * Übersichts- bzw. Weitkacheln ({@link WorldMapTiles}).
+ * Vollbild-Weltkarte: alles Erkundete dieser Welt (auch von der Platte), flüssig ziehen (mit Schwung, auch mit den
+ * Pfeiltasten) und stufenlos zum Mauszeiger zoomen (auch mit +/−), Koordinaten unter dem Zeiger (im Nether/in der
+ * Oberwelt auch umgerechnet), Maßstab, auf den Spieler zentrieren, Wegpunkte per Rechtsklick anlegen/bearbeiten/löschen,
+ * Entfernungen messen, Wegpunkt-Liste mit Suche und „Gehe zu“-Koordinaten, andere Dimensionen ansehen, als PNG
+ * exportieren; Spieler (mit Blickkegel) und Kreaturen wie auf der Minimap. Leisten und Kästen im Cubiq-Stil aus dem
+ * Thema. Nah: ein Texel je Block, weiter weg Übersichts- bzw. Weitkacheln ({@link WorldMapTiles}).
  */
 public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 	/** Verbindung zum Loader. */
@@ -45,6 +46,10 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 	 */
 	static final float[] LADDER = {1f / 32f, 1f / 16f, 0.125f, 0.25f, 0.5f, 1f, 2f, 3f, 4f, 6f, 8f, 12f, 16f};
 	static final int BAR_H = 22;
+	/** Größte Länge des Maßstabs (GUI-Pixel). */
+	static final int SCALE_MAX = 80;
+	/** Länge des Blickkegels am eigenen Pfeil (GUI-Pixel). */
+	static final float CONE = 34f;
 	static final int[] COLORS = {0xE0281E, 0xFF7A1F, 0xFFB84D, 0xF2E14C, 0x3DDC84, 0x2FA85A, 0x4DD8E0, 0x3D7BFF,
 			0xB07CFF, 0xFF6FB5, 0xFFFFFF, 0xB8B8C8};
 
@@ -120,6 +125,12 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 	}
 
 	private Focus focus;
+
+	// Entfernung messen (Rechtsklick → „Entfernung messen“): {x0, z0, x1, z1} in Weltkoordinaten der angezeigten
+	// Dimension; solange gemessen wird, folgt das Ende dem Zeiger, ein Klick legt es fest.
+	private double[] measure;
+	private boolean measuring;
+	private double menuWorldX, menuWorldZ;
 
 	/** Die nächste geöffnete Weltkarte zentriert auf (x, z) und markiert den Punkt. */
 	public static void requestFocus(String name, int x, int z, int color) {
@@ -218,6 +229,9 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 				cam.center(cam.centerX() * f, cam.centerZ() * f);
 			}
 			menuOpen = false;
+			// Gemessen wurde in der anderen Dimension.
+			measure = null;
+			measuring = false;
 		}
 		return true;
 	}
@@ -318,7 +332,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 			if (!Double.isNaN(f)) cam.follow(e.playerX() * f, e.playerZ() * f);
 		}
 
-		c.fill(0, 0, w, h, 0xFF0B0A0E);
+		c.fill(0, 0, w, h, MapStyle.VOID);
 		MapLayer layer = layer();
 		hover.clear();
 		if (layer == null || !e.inWorld()) {
@@ -333,6 +347,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		drawMap(c, layer, w, h, now);
 		if (e.modules().worldMapGrid.get() && cam.scale() * gs >= 6f) grid(c, w, h);
 		markers(c, w, h, mx, my, gs);
+		if (measure != null) ruler(c, mx, my, gs, t);
 		chrome(c, w, h, mx, my, t, layer, dt);
 		overlays(c, w, h, mx, my, t);
 	}
@@ -455,9 +470,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 				else sprites.draw(c, MapSprites.DIAMOND, x, y, 10f, 0f, (wp.visible ? 0xFF000000 : 0x90000000) | wp.color, s);
 				String label = wp.name;
 				if (hl || scale * s >= 0.7f || Math.abs(mx - x) < 8 && Math.abs(my - y) < 8) {
-					int lw = c.textWidth(label);
-					c.fill(Math.round(x - lw / 2f - 2), Math.round(y + 7), Math.round(x + lw / 2f + 2), Math.round(y + 17), 0xA0000000);
-					c.text(label, Math.round(x - lw / 2f), Math.round(y + 8), 0xFF000000 | wp.color, false);
+					namePlate(c, label, x, y, 0xFF000000 | wp.color);
 				}
 				double d = (mx - x) * (mx - x) + (my - y) * (my - y);
 				if (mapHover && d <= hoveredD) {
@@ -482,7 +495,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 				toScreen(px * f, pz * f);
 				float yawRad = (float) Math.toRadians(e.yaw());
 				sprites.draw(c, MapSprites.ARROW, (float) point[0], (float) point[1], 13f, yawRad + (float) Math.PI,
-						0x90000000 | (Theme.get().accentText & 0xFFFFFF), s);
+						0x90000000 | (MapStyle.marker(Theme.get()) & 0xFFFFFF), s);
 			}
 			return;
 		}
@@ -519,16 +532,62 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 				float p = 12f + 3f * (float) Math.sin(now / 180.0);
 				sprites.draw(c, MapSprites.HALO, x, y, p, 0f, 0xFF000000 | focus.color, s);
 				sprites.draw(c, MapSprites.DIAMOND, x, y, 10f, 0f, 0xFF000000 | focus.color, s);
-				int lw = c.textWidth(focus.name);
-				c.fill(Math.round(x - lw / 2f - 2), Math.round(y + 7), Math.round(x + lw / 2f + 2), Math.round(y + 17), 0xA0000000);
-				c.text(focus.name, Math.round(x - lw / 2f), Math.round(y + 8), 0xFF000000 | focus.color, false);
+				namePlate(c, focus.name, x, y, 0xFF000000 | focus.color);
 			}
 		}
-		// Eigene Position.
+		// Eigene Position mit Blickkegel.
 		toScreen(px, pz);
 		float yawRad = (float) Math.toRadians(e.yaw());
-		sprites.draw(c, MapSprites.ARROW, (float) point[0], (float) point[1], 13f, yawRad + (float) Math.PI,
-				0xFF000000 | (Theme.get().accentText & 0xFFFFFF), s);
+		float ax = (float) point[0], ay = (float) point[1];
+		Theme t = Theme.get();
+		if (m.minimapViewCone.get()) sprites.draw(c, MapSprites.CONE, ax, ay, 2f * CONE, yawRad + (float) Math.PI, MinimapRenderer.coneTint(t), s);
+		sprites.draw(c, MapSprites.ARROW, ax, ay, 13f, yawRad + (float) Math.PI, 0xFF000000 | (MapStyle.marker(t) & 0xFFFFFF), s);
+	}
+
+	/** Name unter einer Markierung: dunkle, abgerundete Platte (die Wegpunkt-Farben bleiben auf jedem Grund lesbar). */
+	private static void namePlate(Canvas c, String name, float x, float y, int color) {
+		int lw = c.textWidth(name);
+		int x0 = Math.round(x - lw / 2f - 3), y0 = Math.round(y + 7);
+		Paint.block(c, x0, y0, lw + 6, 11, 0xB0000000);
+		c.text(name, Math.round(x - lw / 2f), y0 + 2, color, false);
+	}
+
+	/**
+	 * Gemessene Strecke: gestrichelte Linie mit dunklem Rand zwischen den Enden, Punkte an den Enden, darüber die
+	 * Entfernung. Solange gemessen wird, folgt das Ende dem Zeiger (über der Karte).
+	 */
+	private void ruler(Canvas c, int mx, int my, double s, Theme t) {
+		if (measuring && my > BAR_H && my < height - BAR_H && !overSidebar(mx, my)) {
+			measure[2] = worldX(mx);
+			measure[3] = worldZ(my);
+		}
+		toScreen(measure[0], measure[1]);
+		float x0 = (float) point[0], y0 = (float) point[1];
+		toScreen(measure[2], measure[3]);
+		float x1 = (float) point[0], y1 = (float) point[1];
+		if (c.images()) {
+			int ink = 0xFF000000 | (MapStyle.marker(t) & 0xFFFFFF);
+			float len = (float) Math.hypot(x1 - x0, y1 - y0);
+			if (len >= 1f) {
+				c.push();
+				c.translate(x0, y0);
+				c.rotate((float) Math.atan2(y1 - y0, x1 - x0));
+				c.translate(0f, -0.5f);
+				for (int d = 0; d < len; d += 7) {
+					int end = (int) Math.min(len, d + 4);
+					c.fill(d - 1, -1, end + 1, 2, 0x80000000);
+					c.fill(d, 0, end, 1, ink);
+				}
+				c.pop();
+			}
+			e.sprites().draw(c, MapSprites.DOT, x0, y0, 7f, 0f, ink, s);
+			e.sprites().draw(c, MapSprites.DOT, x1, y1, 7f, 0f, ink, s);
+		}
+		String label = WorldMapTools.distanceLabel(WorldMapTools.distance(measure[0], measure[1], measure[2], measure[3]));
+		int lw = c.textWidth(label);
+		int lx = Math.round((x0 + x1) / 2f - lw / 2f), ly = Math.round((y0 + y1) / 2f) - 17;
+		Paint.panel(c, lx - 5, ly - 3, lw + 10, 14, MapStyle.panel(t), t.border);
+		c.text(label, lx, ly, t.text, false);
 	}
 
 	// --- Leisten ---
@@ -553,9 +612,9 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 			sidebar.draw(c, hits, w - WorldMapSidebar.WIDTH, BAR_H, WorldMapSidebar.WIDTH, h - 2 * BAR_H, mx, my, dt, hover);
 		}
 
-		// Oben: Titel, Dimension (Knopf), Knöpfe.
-		c.fill(0, 0, w, BAR_H, 0xE0141217);
-		c.fill(0, BAR_H - 1, w, BAR_H, ColorMath.withAlpha(t.accentText, 0xB0));
+		// Oben: Titel, Dimension (Knopf), Knöpfe – Leiste wie die Fenster des Menüs, feine Kante zur Karte.
+		c.fill(0, 0, w, BAR_H, MapStyle.bar(t));
+		c.fill(0, BAR_H - 1, w, BAR_H, t.border);
 		Icons.draw(c, "map", 8, 7, 1, 0xFF000000 | (t.accentText & 0xFFFFFF));
 		String title = I18n.tr("map.title");
 		c.text(title, 20, 7, t.text, false);
@@ -610,7 +669,9 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		}
 
 		// Unten: Koordinaten unter dem Zeiger (+ umgerechnet), Maßstab, Hinweise/Export, Fair Play.
-		c.fill(0, h - BAR_H, w, h, 0xE0141217);
+		c.fill(0, h - BAR_H, w, h, MapStyle.bar(t));
+		c.fill(0, h - BAR_H, w, h - BAR_H + 1, t.border);
+		if (layer != null) scaleBar(c, h, t);
 		// Rechts: Maßstab (+ Fair Play). Die Koordinaten haben Vorrang – wird es eng, fällt erst Fair Play weg.
 		String zoom = zoomText();
 		FairPlay fp = e.fairPlay();
@@ -620,9 +681,14 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 			int bxw = (int) Math.floor(worldX(mx)), bzw = (int) Math.floor(worldZ(my));
 			coords = coordinateTexts(bxw, e.heightAt(layer, bxw, bzw), bzw);
 		}
+		// Mitte: nur die Bedienhilfe, wenn Platz ist – Meldungen erscheinen als eigener Hinweis darüber (toast).
+		String hint = I18n.tr(measuring ? "map.measure.hint" : "map.hint");
+		int hw = c.textWidth(hint);
 		int leftEnd = 150;
 		if (coords != null) {
-			String pos = fitting(c, coords, w - 16 - c.textWidth(right) - 12);
+			// Beim Messen hat der Hinweis Vorrang (er sagt, wie man fertig wird) – dann notfalls kürzere Koordinaten.
+			String pos = measuring ? fitting(c, coords, w / 2 - hw / 2 - 21) : null;
+			if (pos == null) pos = fitting(c, coords, w - 16 - c.textWidth(right) - 12);
 			if (pos == null) {
 				right = zoom;
 				pos = fitting(c, coords, w - 16 - c.textWidth(right) - 12);
@@ -633,13 +699,29 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		}
 		int rw = c.textWidth(right);
 		c.text(right, w - 8 - rw, h - BAR_H + 7, fp.active() && right != zoom ? (0xFF000000 | (t.accentText & 0xFFFFFF)) : t.textDim, false);
-		// Mitte: nur die Bedienhilfe, wenn Platz ist – Meldungen erscheinen als eigener Hinweis darüber (toast).
-		String hint = I18n.tr("map.hint");
-		int hw = c.textWidth(hint);
 		if (w / 2 + hw / 2 < w - 16 - rw && w / 2 - hw / 2 > leftEnd) {
 			c.text(hint, w / 2 - hw / 2, h - BAR_H + 7, t.textDim, false);
 		}
 		toast(c, w, h, t);
+	}
+
+	/**
+	 * Maßstab unten links über der Leiste: eine runde Strecke (1, 2, 5, 10 … Blöcke, höchstens {@link #SCALE_MAX} Pixel)
+	 * als Strich mit Enden, daneben ihre Länge – in einem kleinen Kasten, auf jedem Kartengrund lesbar.
+	 */
+	private void scaleBar(Canvas c, int h, Theme t) {
+		float pxPerBlock = cam.scale();
+		int blocks = WorldMapTools.scaleBlocks(pxPerBlock, SCALE_MAX);
+		if (blocks <= 0) return;
+		int len = Math.max(2, Math.round(blocks * pxPerBlock));
+		String label = WorldMapTools.distanceLabel(blocks);
+		int x = 6, y = h - BAR_H - 20;
+		Paint.panel(c, x, y, len + c.textWidth(label) + 18, 15, MapStyle.panel(t), t.border);
+		int lx = x + 6, ly = y + 10;
+		c.fill(lx, ly, lx + len, ly + 1, t.text);
+		c.fill(lx, ly - 4, lx + 1, ly + 1, t.text);
+		c.fill(lx + len - 1, ly - 4, lx + len, ly + 1, t.text);
+		c.text(label, lx + len + 6, y + 4, t.text, false);
 	}
 
 	/**
@@ -712,14 +794,13 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		int x = free / 2 - bw / 2, y = h - BAR_H - bh - 6;
 		c.push();
 		c.raise(250);
-		Paint.block(c, x, y, bw, bh, 0xF0141217);
-		Paint.frame(c, x, y, bw, bh, ColorMath.withAlpha(accent, 0xC0));
-		c.fill(x + 1, y + 1, x + 3, y + bh - 1, accent);
+		Paint.panel(c, x, y, bw, bh, MapStyle.panel(t), ColorMath.lerp(t.border, accent, 0.6f));
+		c.fill(x + 1, y + 2, x + 3, y + bh - 2, accent);
 		c.text(line1, x + 8, y + 5, accent, false);
 		if (line2 != null) c.text(line2, x + 8, y + 15, t.text, false);
 		if (progress >= 0) {
 			int px = x + 8, pw = bw - 16, py = y + bh - 6;
-			c.fill(px, py, px + pw, py + 2, 0x60FFFFFF);
+			c.fill(px, py, px + pw, py + 2, t.track);
 			c.fill(px, py, px + Math.round(pw * Math.max(0f, Math.min(1f, progress))), py + 2, accent);
 		}
 		c.pop();
@@ -790,8 +871,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		for (String s : hover) w = Math.max(w, c.textWidth(s));
 		int h = hover.size() * 10 + 4;
 		int x = Math.min(mx + 10, width - w - 10), y = Math.min(my + 10, height - h - 4);
-		Paint.block(c, x - 3, y - 2, w + 6, h, 0xF0141217);
-		Paint.frame(c, x - 3, y - 2, w + 6, h, ColorMath.withAlpha(t.accentText, 0xA0));
+		Paint.panel(c, x - 3, y - 2, w + 6, h, MapStyle.panel(t), t.border);
 		for (int i = 0; i < hover.size(); i++) c.text(hover.get(i), x, y + 1 + i * 10, i == 0 ? t.text : t.textDim, false);
 	}
 
@@ -917,13 +997,13 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 					if (job.state() == MapExport.State.DONE) {
 						// Im Chat der volle Name, auf der Karte ein eigener Hinweis (Name ggf. in der Mitte gekürzt).
 						if (platform != null) platform.message(I18n.tr("map.export.done", file));
-						showToast(I18n.tr("map.export.saved"), file, 0xFF4BE38A, 7000);
+						showToast(I18n.tr("map.export.saved"), file, Theme.get().accentText, 7000);
 					} else if (job.state() == MapExport.State.CANCELLED) {
-						showToast(I18n.tr("map.export.cancelled"), null, 0xFFFFB02E, 4000);
+						showToast(I18n.tr("map.export.cancelled"), null, Theme.get().caution, 4000);
 					} else {
 						String msg = I18n.tr("map.export.failed", job.error() == null ? "?" : job.error());
 						if (platform != null) platform.message(msg);
-						showToast(msg, null, 0xFFFF6B5E, 7000);
+						showToast(msg, null, Theme.get().danger, 7000);
 					}
 				});
 		if (r == MapExport.StartResult.RUNNING) flash(I18n.tr("map.export.busy"));
@@ -944,6 +1024,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 			items.add("create");
 		}
 		if (!viewingOther()) items.add("share");
+		items.add(measure == null ? "measure" : "measureClear");
 		items.add("centerHere");
 		items.add("centerPlayer");
 		return items;
@@ -968,7 +1049,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 			int iy = y + 14 + i * 14;
 			boolean hov = mx >= x && mx < x + w && my >= iy && my < iy + 14;
 			if (hov) c.fill(x + 1, iy, x + w - 1, iy + 14, ColorMath.withAlpha(t.accentText, 0x50));
-			c.text(I18n.tr("map.menu." + id), x + 8, iy + 3, id.equals("delete") ? 0xFFFF6B5E : t.text, false);
+			c.text(I18n.tr("map.menu." + id), x + 8, iy + 3, id.equals("delete") ? t.danger : t.text, false);
 			hits.add(x, iy, w, 14, () -> {
 				host.playClick();
 				menuOpen = false;
@@ -989,6 +1070,12 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 			e.removeWaypoint(menuWaypoint);
 		} else if ("share".equals(id)) {
 			share();
+		} else if ("measure".equals(id)) {
+			measure = new double[]{menuWorldX, menuWorldZ, menuWorldX, menuWorldZ};
+			measuring = true;
+		} else if ("measureClear".equals(id)) {
+			measure = null;
+			measuring = false;
 		} else if ("centerHere".equals(id)) {
 			centerOn(menuBlockX + 0.5, menuBlockZ + 0.5);
 		} else if ("centerPlayer".equals(id)) {
@@ -1019,7 +1106,7 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 	private long toastUntil;
 
 	private void flash(String text) {
-		showToast(text, null, 0xFFFFB02E, 4000);
+		showToast(text, null, Theme.get().caution, 4000);
 	}
 
 	private void showToast(String title, String detail, int color, long ms) {
@@ -1085,6 +1172,15 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 	@Override
 	public void editWaypoint(Waypoint w) {
 		openDialog(w);
+	}
+
+	@Override
+	public void goTo(int x, int z) {
+		follow = false;
+		// Mitte der freien Fläche links neben der Liste; der Punkt bleibt markiert.
+		double shift = sidebarOpen ? WorldMapSidebar.WIDTH / 2.0 / cam.targetScale() : 0;
+		cam.center(x + 0.5 + shift, z + 0.5);
+		focus = new Focus(x + " / " + z, x, z, MapStyle.marker(Theme.get()) & 0xFFFFFF);
 	}
 
 	@Override
@@ -1304,9 +1400,19 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 			menuOpen = true;
 			menuX = (int) mx;
 			menuY = (int) my;
-			menuBlockX = (int) Math.floor(worldX(mx));
-			menuBlockZ = (int) Math.floor(worldZ(my));
+			menuWorldX = worldX(mx);
+			menuWorldZ = worldZ(my);
+			menuBlockX = (int) Math.floor(menuWorldX);
+			menuBlockZ = (int) Math.floor(menuWorldZ);
 			menuWaypoint = waypointAt(mx, my);
+			return true;
+		}
+		if (button == 0 && measuring) {
+			// Ende der Messung festlegen (die Karte zieht dabei nicht mit).
+			measure[2] = worldX(mx);
+			measure[3] = worldZ(my);
+			measuring = false;
+			host.playClick();
 			return true;
 		}
 		if (button == 0) {
@@ -1378,7 +1484,20 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 				menuOpen = dimMenuOpen = exportMenuOpen = false;
 				return true;
 			}
+			if (measure != null) {
+				measure = null;
+				measuring = false;
+				return true;
+			}
 			requestClose();
+			return true;
+		}
+		if (key == UiKey.LEFT || key == UiKey.RIGHT || key == UiKey.UP || key == UiKey.DOWN) {
+			pan(key == UiKey.LEFT ? -1 : (key == UiKey.RIGHT ? 1 : 0), key == UiKey.UP ? -1 : (key == UiKey.DOWN ? 1 : 0));
+			return true;
+		}
+		if (key == UiKey.HOME) {
+			centerOnPlayer();
 			return true;
 		}
 		if (host.isMapKey(rawKey)) {
@@ -1388,10 +1507,25 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 		return false;
 	}
 
+	/** Pfeiltasten: die Karte um ein Fünftel des Bildschirms schieben (folgt dem Spieler danach nicht mehr). */
+	private void pan(int dx, int dz) {
+		menuOpen = dimMenuOpen = exportMenuOpen = false;
+		follow = false;
+		cam.stop();
+		double step = Math.max(32, Math.min(width, height) / 5.0) / cam.targetScale();
+		cam.center(cam.centerX() + dx * step, cam.centerZ() + dz * step);
+	}
+
 	@Override
 	public boolean charTyped(char ch) {
 		if (!dialogOpen) {
 			if (sidebarOpen && sidebar.search.focused()) return sidebar.type(ch);
+			// + und − zoomen wie die Knöpfe oben (Menüs schließen wie beim Mausrad).
+			if (ch == '+' || ch == '=' || ch == '-') {
+				menuOpen = dimMenuOpen = exportMenuOpen = false;
+				zoomButton(ch == '-' ? -1 : 1);
+				return true;
+			}
 			return false;
 		}
 		TextInput f = focused();
@@ -1474,5 +1608,21 @@ public final class WorldMapUi extends UiScreen implements WorldMapSidebar.Host {
 	/** Welche Kachelstufe zuletzt gezeichnet wurde (0 = Bereiche, 1 = Übersicht, 2 = Weitkacheln). */
 	public int testTileLevel() {
 		return tiles.lastLevel;
+	}
+
+	/** Messung setzen (Selbsttest): Start und Ende in Weltkoordinaten; {@code following} = das Ende folgt dem Zeiger. */
+	public void testMeasure(double x0, double z0, double x1, double z1, boolean following) {
+		measure = new double[]{x0, z0, x1, z1};
+		measuring = following;
+	}
+
+	/** Gemessene Entfernung in Blöcken, NaN ohne Messung (Selbsttest). */
+	public double testMeasuredDistance() {
+		return measure == null ? Double.NaN : WorldMapTools.distance(measure[0], measure[1], measure[2], measure[3]);
+	}
+
+	/** Misst gerade (Ende folgt dem Zeiger)? */
+	public boolean testMeasuring() {
+		return measuring;
 	}
 }
