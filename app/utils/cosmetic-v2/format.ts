@@ -464,14 +464,41 @@ export function sampleAction(model: unknown, driver: ActionDriver, localMs: numb
 
 const REST: BonePose = { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] }
 
-/** Zwei Posen mischen (w = 0 → a, 1 → b); fehlende Knochen zählen als Ruhe. */
+/** Kürzester Drehweg von `from` nach `to` in Grad (−180…180) – je Euler-Winkel, wie in Website und Cubiq Client. */
+export function shortestTurn(from: number, to: number): number {
+  return ((((to - from) % 360) + 540) % 360) - 180
+}
+
+/**
+ * Zwei Posen mischen (w = 0 → a, 1 → b); fehlende Knochen zählen als Ruhe. Für die Überblendungen: Drehungen
+ * nehmen je Euler-Winkel den kürzesten Weg (ein Rumpf bei 350° dreht über 360° auf 10°, nicht 340° zurück) –
+ * gleiche Drehung am Ende, nur der Weg dorthin ändert sich. Position und Skalierung laufen geradlinig.
+ */
 export function blendPoses(a: Map<string, BonePose>, b: Map<string, BonePose>, w: number): Map<string, BonePose> {
   const out = new Map<string, BonePose>()
   const mix = (x: Vec3, y: Vec3) => x.map((v, j) => v + (y[j]! - v) * w) as Vec3
+  const turn = (x: Vec3, y: Vec3) => x.map((v, j) => v + shortestTurn(v, y[j]!) * w) as Vec3
   for (const id of new Set([...a.keys(), ...b.keys()])) {
     const pa = a.get(id) ?? REST
     const pb = b.get(id) ?? REST
-    out.set(id, { position: mix(pa.position, pb.position), rotation: mix(pa.rotation, pb.rotation), scale: mix(pa.scale, pb.scale) })
+    out.set(id, { position: mix(pa.position, pb.position), rotation: turn(pa.rotation, pb.rotation), scale: mix(pa.scale, pb.scale) })
+  }
+  return out
+}
+
+/** Knochen für Effekte (Herzen, Krümel): `fx_*`, in Ruhe im Modell versteckt. */
+const isFxBone = (id: string) => id.startsWith('fx_')
+
+/**
+ * fx-Knochen werden nie überblendet: Während jeder Überblendung zeigen sie sofort die Zielpose (fehlt sie dort: Ruhe,
+ * also versteckt). Unterbrochene Herzen oder Krümel verschwinden so, statt in voller Größe zurückzugleiten.
+ */
+function fxFromTarget(out: Map<string, BonePose>, target: Map<string, BonePose>): Map<string, BonePose> {
+  for (const id of [...out.keys()]) {
+    if (!isFxBone(id)) continue
+    const p = target.get(id)
+    if (p) out.set(id, p)
+    else out.delete(id)
   }
   return out
 }
@@ -497,6 +524,7 @@ export interface StateMixer {
  * beginnt sie mit einer neuen Überblendung von vorn. Die Ausgangsseite behält damit ihre eigene Zeit
  * (sie steht still), die Zielseite läuft auf ihrer: Zustände zur Wanduhr `timeMs`, die Aktion zu `localMs`.
  * Hat das Modell die Aktion nicht, läuft der Zustand ungestört weiter.
+ * Beim Überblenden drehen Knochen auf dem kürzesten Weg (`blendPoses`), fx-Knochen springen sofort auf die Zielpose.
  */
 export function createStateMixer(fadeMs = STATE_FADE_MS): StateMixer {
   let cur: AnimState | null = null
@@ -528,7 +556,7 @@ export function createStateMixer(fadeMs = STATE_FADE_MS): StateMixer {
       if (snap) {
         const u = Math.max(0, Math.min(1, (timeMs - since) / fadeMs))
         if (u >= 1) snap = null
-        else out = blendPoses(snap, target, smoothstep(u))
+        else out = fxFromTarget(blendPoses(snap, target, smoothstep(u)), target)
       }
       last = out
       return out

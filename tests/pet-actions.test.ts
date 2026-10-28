@@ -21,10 +21,13 @@ import {
   petActionAvailable,
   sampleAction,
   samplePoses,
+  shortestTurn,
   stateAnimations,
   transformPoint,
   validateModel,
   type ActionDriver,
+  type ActionPlay,
+  type AnimState,
   type BonePose,
   type CosmeticModel,
   type Vec3,
@@ -57,6 +60,28 @@ function maxDiff(a: Map<string, BonePose>, b: Map<string, BonePose>): number {
 
 /** Wanduhr + Versatz mitten im Sitzen des Fuchses (idle 16 s, sitzt etwa von 3,5 bis 13 s). */
 const T0 = 16_000 * 100_000 + 8000
+
+/** Kleiner Würfel-Begleiter: rollt beim Rutschen zwei volle Runden je Sekunde (0…720°), Streicheln neigt ihn kurz. */
+const roller = (): CosmeticModel => ({
+  format: 2,
+  id: 'roller',
+  name: 'Roller',
+  slot: 'pet',
+  attach: 'ground',
+  texture: { file: 'texture.png', width: 16, height: 16, scale: 1 },
+  bones: [
+    { id: 'root', pivot: [0, 0, 0] },
+    { id: 'roll', parent: 'root', pivot: [0, 4, 0] },
+  ],
+  cubes: [{ bone: 'roll', from: [-4, 0, -4], to: [4, 8, 4], faces: { north: { uv: [0, 0, 8, 8] } } }],
+  animations: [
+    { id: 'idle', driver: 'idle', lengthMs: 1000, tracks: [{ bone: 'root', channel: 'position', keys: [{ t: 0, v: [0, 0, 0] }] }] },
+    { id: 'slide', driver: 'slide', lengthMs: 1000, tracks: [{ bone: 'roll', channel: 'rotation', keys: [{ t: 0, v: [0, 0, 0] }, { t: 1000, v: [720, 0, 0] }] }] },
+  ],
+  actions: [
+    { id: 'pet', driver: 'pet', lengthMs: 600, loop: false, tracks: [{ bone: 'roll', channel: 'rotation', keys: [{ t: 0, v: [0, 0, 0] }, { t: 300, v: [0, 0, 10] }, { t: 600, v: [0, 0, 0] }] }] },
+  ],
+})
 
 describe('Aktionen – Prüfung', () => {
   it('gültige Aktionen ändern das Ergebnis nicht: keine Warnung, kein Fehler', () => {
@@ -261,6 +286,45 @@ describe('Aktionen – Länge, Knöpfe, Pose', () => {
   })
 })
 
+/** Erwartung laut Vertrag: Überblenden mit kürzestem Drehweg; fx-Knochen sofort in der Zielpose (fehlt sie dort: Ruhe). */
+function fade(snap: Map<string, BonePose>, target: Map<string, BonePose>, w: number): Map<string, BonePose> {
+  const out = blendPoses(snap, target, w)
+  for (const id of [...out.keys()]) {
+    if (!id.startsWith('fx_')) continue
+    const p = target.get(id)
+    if (p) out.set(id, p)
+    else out.delete(id)
+  }
+  return out
+}
+/** Pose ohne bzw. nur mit den fx-Knochen (die springen beim Überblenden absichtlich auf die Zielpose). */
+const withoutFx = (p: Map<string, BonePose>) => new Map([...p].filter(([id]) => !id.startsWith('fx_')))
+const onlyFx = (p: Map<string, BonePose>) => new Map([...p].filter(([id]) => id.startsWith('fx_')))
+
+/**
+ * Wie weit ragt ein fx-Würfel aus seinem Versteck (dem Würfel des Eltern-Knochens, der ihn in Ruhe umschließt)?
+ * > 0 = sichtbar. fx-Knochen hängen direkt am Versteck-Knochen, ihre Ecken also im Raum des Eltern-Knochens.
+ */
+function fxOutside(m: CosmeticModel, poses: Map<string, BonePose>): number {
+  const corners = (c: { from: Vec3; to: Vec3 }): Vec3[] =>
+    [0, 1, 2, 3, 4, 5, 6, 7].map((i) => [(i & 1 ? c.to : c.from)[0], (i & 2 ? c.to : c.from)[1], (i & 4 ? c.to : c.from)[2]])
+  const inside = (p: Vec3, c: { from: Vec3; to: Vec3 }) => [0, 1, 2].every((k) => p[k]! >= c.from[k]! && p[k]! <= c.to[k]!)
+  let worst = -Infinity
+  for (const b of m.bones.filter((x) => x.id.startsWith('fx_'))) {
+    const mine = m.cubes.filter((c) => c.bone === b.id)
+    const hide = m.cubes.find((c) => c.bone === b.parent && mine.every((f) => corners(f).every((p) => inside(p, c))))!
+    expect(hide, `${b.id} braucht ein Versteck`).toBeDefined()
+    const local = boneLocal(b, poses.get(b.id))
+    for (const c of mine) {
+      for (const p of corners(c)) {
+        const q = transformPoint(local, p)
+        for (let k = 0; k < 3; k++) worst = Math.max(worst, hide.from[k]! - q[k]!, q[k]! - hide.to[k]!)
+      }
+    }
+  }
+  return worst
+}
+
 describe('Aktionen – Mischer (250 ms, eigene Zeitbasis)', () => {
   const play = (driver: ActionDriver, localMs: number) => ({ driver, localMs })
 
@@ -276,7 +340,7 @@ describe('Aktionen – Mischer (250 ms, eigene Zeitbasis)', () => {
     expect(maxDiff(first, before)).toBeLessThan(1e-9)
     // Die Ausgangsseite steht still (eigene Zeit eingefroren), die Zielseite läuft auf der Zeit der Aktion.
     const mid = mix.pose(m, T0 + 16 + 125, 'idle', play('pet', 125))
-    expect(maxDiff(mid, blendPoses(before, sampleAction(m, 'pet', 125)!, 0.5))).toBeLessThan(1e-9)
+    expect(maxDiff(mid, fade(before, sampleAction(m, 'pet', 125)!, 0.5))).toBeLessThan(1e-9)
     const done = mix.pose(m, T0 + 16 + 250, 'idle', play('pet', 250))
     expect(maxDiff(done, sampleAction(m, 'pet', 250)!)).toBeLessThan(1e-9)
   })
@@ -295,16 +359,22 @@ describe('Aktionen – Mischer (250 ms, eigene Zeitbasis)', () => {
     expect(worst).toBeLessThan(10)
   })
 
-  it('erneuter Klick: dieselbe Aktion beginnt weich von vorn', () => {
+  it('erneuter Klick: dieselbe Aktion beginnt weich von vorn, fliegende Herzen verschwinden sofort', () => {
     const m = fox()
     const mix = createStateMixer()
     mix.pose(m, T0, 'idle')
     let last = new Map<string, BonePose>()
     for (let local = 0; local <= 1000; local += 20) last = mix.pose(m, T0 + 20 + local, 'idle', play('pet', local))
+    // Nach 1 s sind die Herzen mitten im Flug, weit über dem Kopf.
+    expect(fxOutside(m, last)).toBeGreaterThan(2)
     const t = T0 + 20 + 1000 + 16
-    expect(maxDiff(mix.pose(m, t, 'idle', play('pet', 0)), last)).toBeLessThan(1e-9)
+    const first = mix.pose(m, t, 'idle', play('pet', 0))
+    expect(maxDiff(withoutFx(first), withoutFx(last))).toBeLessThan(1e-9)
+    // fx-Knochen nehmen sofort die Zielpose der neu gestarteten Aktion (Ruhe, im Kopf versteckt) statt zurückzugleiten.
+    expect(maxDiff(onlyFx(first), onlyFx(sampleAction(m, 'pet', 0)!))).toBeLessThan(1e-9)
+    expect(fxOutside(m, first)).toBeLessThan(0)
     const half = mix.pose(m, t + 125, 'idle', play('pet', 125))
-    expect(maxDiff(half, blendPoses(last, sampleAction(m, 'pet', 125)!, 0.5))).toBeLessThan(1e-9)
+    expect(maxDiff(half, fade(last, sampleAction(m, 'pet', 125)!, 0.5))).toBeLessThan(1e-9)
     expect(maxDiff(mix.pose(m, t + 250, 'idle', play('pet', 250)), sampleAction(m, 'pet', 250)!)).toBeLessThan(1e-9)
   })
 
@@ -319,7 +389,7 @@ describe('Aktionen – Mischer (250 ms, eigene Zeitbasis)', () => {
     const t = T0 + 20 + 2800 + 16
     expect(maxDiff(mix.pose(m, t, 'walk', null), end)).toBeLessThan(1e-9)
     expect(mix.action).toBeNull()
-    expect(maxDiff(mix.pose(m, t + 125, 'walk'), blendPoses(end, stateAnimations(m, t + 125, 'walk'), 0.5))).toBeLessThan(1e-9)
+    expect(maxDiff(mix.pose(m, t + 125, 'walk'), fade(end, stateAnimations(m, t + 125, 'walk'), 0.5))).toBeLessThan(1e-9)
     expect(maxDiff(mix.pose(m, t + 250, 'walk'), stateAnimations(m, t + 250, 'walk'))).toBeLessThan(1e-9)
   })
 
@@ -332,9 +402,41 @@ describe('Aktionen – Mischer (250 ms, eigene Zeitbasis)', () => {
     expect(maxDiff(mix.pose(m, T0 + 1016, 'idle', play('pet', 1000)), sampleAction(m, 'pet', 1000)!)).toBeLessThan(1e-9)
     expect(mix.state).toBe('idle')
     const before = sampleAction(m, 'pet', 1000)!
-    expect(maxDiff(mix.pose(m, T0 + 1032, 'idle', play('eat', 0)), before)).toBeLessThan(1e-9)
+    const first = mix.pose(m, T0 + 1032, 'idle', play('eat', 0))
+    expect(maxDiff(withoutFx(first), withoutFx(before))).toBeLessThan(1e-9)
+    // Füttern bewegt die Herzen nicht: sie stehen sofort in Ruhe (versteckt), die Krümel wie beim Füttern zur Zeit 0.
+    expect(first.has('fx_hearts')).toBe(false)
+    expect(first.get('fx_crumbs')).toEqual(sampleAction(m, 'eat', 0)!.get('fx_crumbs'))
     expect(mix.action).toBe('eat')
     expect(maxDiff(mix.pose(m, T0 + 1032 + 250, 'idle', play('eat', 250)), sampleAction(m, 'eat', 250)!)).toBeLessThan(1e-9)
+  })
+
+  it('fx-Knochen werden nie überblendet: unterbrochene Herzen verschwinden ab dem ersten Bild im Kopf', () => {
+    const m = fox()
+    // Herzen mitten im Flug, dann: andere Aktion, dieselbe Aktion von vorn, ein Zustand (Aktion endet) – je 250 ms Überblenden.
+    const cut: [string, (local: number) => [AnimState, ActionPlay | null]][] = [
+      ['Füttern', (local) => ['idle', play('eat', local)]],
+      ['Streicheln von vorn', (local) => ['idle', play('pet', local)]],
+      ['Zustand läuft', () => ['walk', null]],
+      ['Zustand steht', () => ['idle', null]],
+    ]
+    for (const [name, next] of cut) {
+      const mix = createStateMixer()
+      mix.pose(m, T0, 'idle')
+      let last = new Map<string, BonePose>()
+      for (let local = 0; local <= 1300; local += 20) last = mix.pose(m, T0 + 20 + local, 'idle', play('pet', local))
+      expect(fxOutside(m, last), name).toBeGreaterThan(2)
+      const t0 = T0 + 20 + 1300 + 16
+      for (let dt = 0; dt <= 300; dt += 10) {
+        const [state, action] = next(dt)
+        const pose = mix.pose(m, t0 + dt, state, action)
+        const target = action ? sampleAction(m, action.driver, action.localMs)! : stateAnimations(m, t0 + dt, state)
+        // fx-Knochen in jedem Bild genau wie das Ziel; die übrigen Knochen blenden weich über.
+        expect(maxDiff(onlyFx(pose), onlyFx(target)), `${name} @${dt}`).toBeLessThan(1e-9)
+        if (dt <= 120) expect(fxOutside(m, pose), `${name} @${dt}`).toBeLessThan(0.5)
+        if (name !== 'Streicheln von vorn') expect(fxOutside(m, pose), `${name} @${dt}`).toBeLessThanOrEqual(-0.125)
+      }
+    }
   })
 
   it('ohne die Aktion im Modell läuft der Zustand ungestört weiter', () => {
@@ -343,6 +445,53 @@ describe('Aktionen – Mischer (250 ms, eigene Zeitbasis)', () => {
     const b = createStateMixer()
     for (let t = T0; t < T0 + 1000; t += 16) expect(a.pose(plain, t, 'idle', play('pet', t - T0))).toEqual(b.pose(plain, t, 'idle'))
     expect(a.action).toBeNull()
+  })
+})
+
+describe('Überblenden auf dem kürzesten Drehweg', () => {
+  it('je Euler-Winkel höchstens 180° – Position und Größe weiter geradlinig', () => {
+    const pose = (rotation: Vec3, position: Vec3 = [0, 0, 0], scale: Vec3 = [1, 1, 1]) => new Map([['x', { position, rotation, scale }]])
+    const rot = (a: Vec3, b: Vec3, w: number) => blendPoses(pose(a), pose(b), w).get('x')!.rotation
+    expect(rot([170, -170, 350], [-170, 170, 10], 0.5)).toEqual([180, -180, 360])
+    expect(rot([10, 0, -90], [350, 270, 90], 0.5)).toEqual([0, -45, -180])
+    expect(rot([600, 0, 0], [0, 0, 0], 0.5)).toEqual([660, 0, 0])
+    expect(rot([30, 0, 0], [80, 0, 0], 0.25)).toEqual([42.5, 0, 0])
+    // Ende: dieselbe Drehung (bis auf volle Umdrehungen), Position und Größe wie bisher geradlinig.
+    for (const [a, b] of [[350, 10], [-170, 170], [600, 0], [0, 720]] as const) {
+      const end = rot([a, 0, 0], [b, 0, 0], 1)[0]
+      expect(Math.abs(((end - b) % 360) + 360) % 360).toBeCloseTo(0, 9)
+    }
+    const b = blendPoses(pose([0, 0, 0], [0, 0, 0], [1, 1, 1]), pose([0, 0, 0], [4, -2, 0], [3, 1, 1]), 0.5).get('x')!
+    expect([b.position, b.scale]).toEqual([[2, -1, 0], [2, 1, 1]])
+    expect(shortestTurn(0, 180)).toBe(-180)
+    expect(shortestTurn(0, 181)).toBe(-179)
+    expect(shortestTurn(-720, 10)).toBe(10)
+  })
+
+  it('Rollen → Streicheln dreht weiter vorwärts statt 600° zurück; am Ende genau die Aktion', () => {
+    const m = roller()
+    expect(validateModel(m, { texture: { width: 16, height: 16 } })).toEqual({ ok: true, errors: [], warnings: [] })
+    const mix = createStateMixer()
+    // Wanduhr bei 5/6 der Rolle: Drehung ≈ 600°.
+    const t0 = 1_700_000_000_000 + 833
+    let snap = new Map<string, BonePose>()
+    for (let t = t0 - 160; t <= t0; t += 16) snap = mix.pose(m, t, 'slide')
+    const from = snap.get('roll')!.rotation[0]
+    expect(from).toBeGreaterThan(590)
+    let prev = from
+    for (let dt = 16; dt <= 240; dt += 16) {
+      const x = mix.pose(m, t0 + dt, 'slide', { driver: 'pet', localMs: dt - 16 }).get('roll')!.rotation[0]
+      // vorwärts bis 720° (≙ 0°), in kleinen Schritten – linear wären es bis zu 57° je Bild rückwärts
+      expect(x).toBeGreaterThanOrEqual(prev - 1e-9)
+      expect(x).toBeLessThanOrEqual(720 + 1e-9)
+      expect(x - prev).toBeLessThan(15)
+      prev = x
+    }
+    const end = mix.pose(m, t0 + 300, 'slide', { driver: 'pet', localMs: 284 })
+    expect(end).toEqual(sampleAction(m, 'pet', 284))
+    // Standardweg ohne Überblenden: unverändert die Zustands-Animation.
+    const plain = createStateMixer()
+    for (let t = t0; t < t0 + 1000; t += 37) expect(plain.pose(m, t, 'slide')).toEqual(stateAnimations(m, t, 'slide'))
   })
 })
 
@@ -439,4 +588,5 @@ describe('Aktionen – Namen im Launcher', () => {
     expect(load('es').action).toEqual({ pet: 'Acariciar', eat: 'Dar de comer' })
     for (const l of ['fr', 'nl', 'pl', 'pt-BR', 'tr']) expect(Object.keys(load(l).action)).toEqual([...ACTION_DRIVERS])
   })
+
 })
