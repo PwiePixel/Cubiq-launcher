@@ -241,6 +241,40 @@ class PetActionsFormatTest {
 		assertEquals("pet_two", n.action(CosmeticV2.DRIVER_PET).id);
 	}
 
+	/** Spur mit einer Skalierung {@code s} (roh, so wie im JSON) auf dem Kopf. */
+	static String scaleTrack(String s) {
+		return "[{\"bone\":\"head\",\"channel\":\"scale\",\"keys\":[{\"t\":0,\"v\":[1,1,1]},{\"t\":500,\"v\":[" + s + ",1,1]}]}]";
+	}
+
+	@Test
+	void scaleLimitsAreCheckedOnTheJsonNumberNotOnTheFloat() {
+		// 4,0000001 ist zu groß (als float wäre es genau 4), 1e-46 ist größer als 0 (als float wäre es 0) – wie Website und
+		// Launcher. In actions: eine Warnung, nur der Eintrag fällt weg.
+		for (String bad : new String[] { "4.0000001", "0", "-1e-46", "-1", "1e300" }) {
+			CosmeticV2 m = oneWarning(model("pet", "[" + action("pet", "pet", 1000, "", scaleTrack(bad)) + "," + eat() + "]"), bad);
+			assertNull(m.action(CosmeticV2.DRIVER_PET), bad);
+			assertNotNull(m.action(CosmeticV2.DRIVER_EAT), bad);
+		}
+		for (String ok : new String[] { "1e-46", "4", "4.0", "0.05" }) {
+			CosmeticV2.Check c = check(model("pet", "[" + action("pet", "pet", 1000, "", scaleTrack(ok)) + "]"));
+			assertTrue(c.ok(), ok + ": " + c.errors);
+			assertEquals(Collections.<String>emptyList(), c.warnings, ok);
+			assertNotNull(c.model.action(CosmeticV2.DRIVER_PET), ok);
+		}
+		// animations: dieselbe Grenze, dort bleibt es ein Fehler
+		String plain = model("pet", null);
+		String rotation = "[0,10,0]}]}]";
+		assertTrue(plain.contains(rotation));
+		for (String bad : new String[] { "4.0000001", "0" }) {
+			CosmeticV2.Check c = check(plain.replace(rotation, "[0,10,0]}]}," + scaleTrack(bad).substring(1)));
+			assertFalse(c.ok(), bad);
+			assertTrue(c.errors.toString().contains("scale 0…4"), c.errors.toString());
+		}
+		CosmeticV2.Check tiny = check(plain.replace(rotation, "[0,10,0]}]}," + scaleTrack("1e-46").substring(1)));
+		assertTrue(tiny.ok(), tiny.errors.toString());
+		assertEquals(2, tiny.model.animations.get(0).tracks.length);
+	}
+
 	@Test
 	void explicitLoopFalseAndMinimalValuesAreValid() {
 		String block = "[" + pet(",\"loop\":false") + "," + action("eat", "eat", CosmeticV2.MIN_ACTION_MS, "",

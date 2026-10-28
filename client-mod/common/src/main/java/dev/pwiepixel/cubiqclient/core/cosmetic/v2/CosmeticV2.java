@@ -955,14 +955,7 @@ public final class CosmeticV2 {
 					ki = index(INTERPOLATIONS, str(kiEl));
 					if (ki < 0) out.err(kp, "unbekannte interpolation");
 				}
-				if (channel == SCALE && v != null) {
-					for (float s : v) {
-						if (s <= 0 || s > 4) {
-							out.err(kp, "scale 0…4");
-							break;
-						}
-					}
-				}
+				if (channel == SCALE && v != null && !scaleOk(key.get("v"))) out.err(kp, "scale 0…4");
 				ts[k] = t;
 				vs[k] = v == null ? new float[3] : v;
 				kis[k] = ki;
@@ -1087,6 +1080,20 @@ public final class CosmeticV2 {
 			out[i] = f;
 		}
 		return out;
+	}
+
+	/**
+	 * Skalierung 0 &lt; s ≤ 4 je Achse, geprüft auf der JSON-Zahl (double) – nicht erst nach dem Runden auf float: 4.0000001
+	 * ist zu groß (als float wäre es 4), 1e-46 ist größer als 0 (als float wäre es 0). So wie Website und Launcher.
+	 * {@code e} ist schon als Vektor aus drei endlichen Zahlen geprüft ({@link #vec}).
+	 */
+	private static boolean scaleOk(JsonElement e) {
+		JsonArray a = e.getAsJsonArray();
+		for (int i = 0; i < a.size(); i++) {
+			double s = a.get(i).getAsDouble();
+			if (!(s > 0) || s > 4) return false;
+		}
+		return true;
 	}
 
 	private static float abs3(float[] v) {
