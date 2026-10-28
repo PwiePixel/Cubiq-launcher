@@ -1,7 +1,21 @@
 <script setup lang="ts">
 import type { BuiltinSkins, Cape, LibrarySkin, SelectableSkin, SkinPack, SkinProfile, SkinSyncStatus, SkinVariant } from '~/types'
 import type { CubiqCape, CubiqHeadCosmetic } from '~/utils/cubiq'
-import { PET_GRAB_MS, PET_STATES, petCount, petScale, petStateAvailable, type OptionChoices, type PetState, type ViewerCosmetic, type WingState } from '~/utils/cosmetic-v2/format'
+import {
+  ACTION_DRIVERS,
+  PET_GRAB_MS,
+  PET_STATES,
+  actionLength,
+  petActionAvailable,
+  petCount,
+  petScale,
+  petStateAvailable,
+  type ActionDriver,
+  type OptionChoices,
+  type PetState,
+  type ViewerCosmetic,
+  type WingState,
+} from '~/utils/cosmetic-v2/format'
 import type { CubiqCosmeticSlot } from '~/utils/cubiq'
 import { optionToggles, toggleOption, type OptionToggle } from '~/utils/cubiqCosmetics'
 import type { ThumbRequest } from '~/utils/skinThumbs'
@@ -240,15 +254,42 @@ const petState = ref<PetState>('idle')
 const shownPetCount = computed(() => (shownPet.value?.equipped ? petCount(shownPet.value.count ?? 1) : 1))
 const petStateTick = ref(0)
 let grabTimer: ReturnType<typeof setTimeout> | null = null
-/** Zustand vorführen; `grab` läuft einmal (2,4 s) ab Klick und fällt dann auf „steht“ zurück. */
+/** Zustand vorführen; `grab` läuft einmal (2,4 s) ab Klick und fällt dann auf „steht“ zurück. Beendet eine laufende Aktion. */
 function choosePetState(key: PetState) {
+  stopPetAction()
   if (grabTimer) clearTimeout(grabTimer)
   grabTimer = null
   petState.value = key
   petStateTick.value++
   if (key === 'grab') grabTimer = setTimeout(() => (petState.value = 'idle'), PET_GRAB_MS)
 }
-onBeforeUnmount(() => grabTimer && clearTimeout(grabTimer))
+/** Streicheln/Füttern vorführen: läuft einmal ab Klick (so lang wie im Modell), danach wieder der Zustand. */
+const petAction = ref<ActionDriver | null>(null)
+const petActionTick = ref(0)
+let actionTimer: ReturnType<typeof setTimeout> | null = null
+function stopPetAction() {
+  if (actionTimer) clearTimeout(actionTimer)
+  actionTimer = null
+  petAction.value = null
+}
+function playPetAction(key: ActionDriver) {
+  const model = viewerPet.value?.model
+  if (!model) return
+  // Wie im Spiel bricht die Aktion „grab“ ab; danach steht der Begleiter wieder.
+  if (petState.value === 'grab') {
+    if (grabTimer) clearTimeout(grabTimer)
+    grabTimer = null
+    petState.value = 'idle'
+  }
+  if (actionTimer) clearTimeout(actionTimer)
+  petAction.value = key
+  petActionTick.value++
+  actionTimer = setTimeout(stopPetAction, actionLength(model, key))
+}
+onBeforeUnmount(() => {
+  if (grabTimer) clearTimeout(grabTimer)
+  if (actionTimer) clearTimeout(actionTimer)
+})
 /** Größe des gezeigten Haupt-Pets (Standard 1; z. B. Kaiserpinguin 1,25). */
 const shownPetScale = computed(() => petScale(shownPet.value?.petScale))
 /** Gefolge (Creator): zusätzliche Begleiter am getragenen Pet, je mit eigenem Modell und eigener Größe. */
@@ -310,6 +351,10 @@ const petStateKeys = computed(() =>
 watch(petStateKeys, (keys) => {
   if (!keys.includes(petState.value)) petState.value = 'idle'
 })
+/** Knöpfe der Aktionen (Streicheln, Füttern): nur, wenn das Modell sie mitbringt. */
+const petActionKeys = computed(() => ACTION_DRIVERS.filter((k) => viewerPet.value && petActionAvailable(viewerPet.value.model, k)))
+// Anderes Tier → laufende Aktion beenden.
+watch(viewerPet, () => stopPetAction())
 
 /** Modelle des Gefolges (gleicher Cache wie oben); ein Extra ohne ladbares Modell fällt einzeln weg. */
 const viewerPetExtras = shallowRef<{ cosmetic: ViewerCosmetic; scale: number }[]>([])
@@ -855,6 +900,8 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
                   :pet-extras="viewerPetExtras"
                   :pet-state="petState"
                   :pet-state-tick="petStateTick"
+                  :pet-action="petAction"
+                  :pet-action-tick="petActionTick"
                   :pet-seed="accounts.active?.id ?? ''"
                   :cosmetic-options="viewerOptions"
                   :night="night"
@@ -949,6 +996,21 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
                   @click="choosePetState(key)"
                 >
                   {{ t(`headCosmetics.pet.state.${key}`) }}
+                </button>
+              </div>
+              <!-- Begleiter am Boden: Aktionen vorführen (streicheln, füttern) – nur, wenn das Modell sie hat. -->
+              <div v-if="viewerPet && petActionKeys.length" class="flex flex-wrap items-center gap-1 border-t border-base-800/80 bg-base-950/60 p-1 text-[11px] backdrop-blur-sm" data-testid="pet-actions">
+                <span class="px-1 text-base-400">{{ t('headCosmetics.pet.actions') }}</span>
+                <button
+                  v-for="key in petActionKeys"
+                  :key="key"
+                  class="seg flex-1 rounded px-2 py-1 mobile:min-h-10"
+                  :class="{ 'seg-on': petAction === key }"
+                  :aria-pressed="petAction === key"
+                  :data-action="key"
+                  @click="playPetAction(key)"
+                >
+                  {{ t(`headCosmetics.pet.action.${key}`) }}
                 </button>
               </div>
               <!-- Flügel: Zustände vorführen (am Boden, in der Luft, Schleichen). -->

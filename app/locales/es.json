@@ -4129,6 +4129,11 @@
         "flee": "Huye",
         "handsup": "Manos arriba"
       },
+      "actions": "Interactuar:",
+      "action": {
+        "pet": "Acariciar",
+        "eat": "Dar de comer"
+      },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {
         "penguin": "{n} pingüino | {n} pingüinos"

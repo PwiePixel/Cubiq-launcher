@@ -4062,6 +4062,11 @@
         "flee": "S’enfuit",
         "handsup": "Les mains en l’air"
       },
+      "actions": "Interagir :",
+      "action": {
+        "pet": "Caresser",
+        "eat": "Nourrir"
+      },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {
         "penguin": "{n} pingouin | {n} pingouins"

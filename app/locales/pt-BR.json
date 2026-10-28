@@ -4062,6 +4062,11 @@
         "flee": "Foge",
         "handsup": "Mãos ao alto"
       },
+      "actions": "Interagir:",
+      "action": {
+        "pet": "Fazer carinho",
+        "eat": "Alimentar"
+      },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {
         "penguin": "{n} pinguim | {n} pinguins"

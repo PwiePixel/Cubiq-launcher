@@ -4129,6 +4129,11 @@
         "flee": "Flees",
         "handsup": "Hands up"
       },
+      "actions": "Interact:",
+      "action": {
+        "pet": "Pet",
+        "eat": "Feed"
+      },
       "count": "{n} × {name} | {n} × {name}",
       "counts": {
         "penguin": "{n} penguin | {n} penguins"

@@ -7,6 +7,8 @@ import {
   petGroupSlots,
   petTimeOffset,
   validateModel,
+  type ActionDriver,
+  type ActionPlay,
   type CosmeticModel,
   type CosmeticSlot as CosmeticSlotId,
   type OptionChoices,
@@ -65,6 +67,13 @@ const props = withDefaults(
     petState?: PetState
     /** Hochzählen startet den aktuellen Zustand neu (ein erneuter Klick auf „grab“ spielt es noch einmal). */
     petStateTick?: number
+    /**
+     * Einmalige Aktion der Begleiter am Boden (`pet` = streicheln, `eat` = füttern), läuft ab dem Setzen
+     * und ersetzt so lange den Zustand; `null` = keine. Begleiter ohne diese Aktion bleiben beim Zustand.
+     */
+    petAction?: ActionDriver | null
+    /** Hochzählen spielt die Aktion von vorn (erneuter Klick auf denselben Knopf). */
+    petActionTick?: number
     /** Spieler-UUID für den Zeitversatz je Begleiter (sonst laufen alle im Gleichschritt). */
     petSeed?: string
     /** Wahl der abschaltbaren Teile je Fach (Anhang D), z. B. `{ hat: { beard: false } }`. */
@@ -96,6 +105,8 @@ const props = withDefaults(
     petExtras: () => [],
     petState: 'idle',
     petStateTick: 0,
+    petAction: null,
+    petActionTick: 0,
     petSeed: '',
     cosmeticOptions: null,
     night: false,
@@ -361,6 +372,12 @@ function petTime(now: number, offset: number): number {
   return props.petState === 'grab' ? now - petStateSince : now + offset
 }
 
+/** Beginn der laufenden Aktion (Streicheln/Füttern): ihre eigene Zeit, ohne Zeitversatz je Begleiter. */
+let petActionSince = Date.now()
+function petActionPlay(now: number): ActionPlay | null {
+  return props.petAction ? { driver: props.petAction, localMs: now - petActionSince } : null
+}
+
 function clearPets() {
   for (const p of petSlot.list) p.inst.dispose()
   petSlot.list = []
@@ -426,7 +443,8 @@ async function applyPets() {
     })
     applyLight()
     const now = Date.now()
-    for (const p of petSlot.list) p.inst.update(petTime(now, p.offset), { camera: viewer.camera, state: props.petState })
+    const action = petActionPlay(now)
+    for (const p of petSlot.list) p.inst.update(petTime(now, p.offset), { camera: viewer.camera, state: props.petState, action })
     applyFocus()
   } catch (e) {
     if (token !== petSlot.token) return
@@ -589,7 +607,9 @@ function beforeRender() {
     hatSlot.inst?.update(now, { camera: viewer.camera })
     companionSlot.inst?.update(now, { camera: viewer.camera })
     wingsSlot.inst?.update(now, { camera: viewer.camera, state: props.wingState })
-    for (const p of petSlot.list) p.inst.update(petTime(now, p.offset), { camera: viewer.camera, state: props.petState })
+    // Pose der Aktion zu ihrer eigenen Zeit; Leuchten und Höfe bleiben auf der Zeit des Begleiters.
+    const action = petActionPlay(now)
+    for (const p of petSlot.list) p.inst.update(petTime(now, p.offset), { camera: viewer.camera, state: props.petState, action })
     leanForSneak()
   }
 }
@@ -648,6 +668,7 @@ watch(() => props.companion, () => void applySlot(companionSlot, props.companion
 watch(() => props.wings, () => void applySlot(wingsSlot, props.wings))
 watch(() => [props.pet, props.petCount, props.petScale, props.petExtras, props.petSeed], () => void applyPets())
 watch(() => [props.petState, props.petStateTick], () => (petStateSince = Date.now()))
+watch(() => [props.petAction, props.petActionTick], () => (petActionSince = Date.now()))
 watch(() => props.cosmeticOptions, applyOptions, { deep: true })
 watch(() => props.night, applyLight)
 watch(() => props.focus, () => applyFocus())
