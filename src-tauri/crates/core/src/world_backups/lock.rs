@@ -72,7 +72,8 @@ fn locked(file: &std::fs::File) -> bool {
     probe.l_whence = libc::SEEK_SET as _;
     // SAFETY: gültiger Dateideskriptor (lebt so lange wie `file`) und ein initialisiertes Struct.
     let rc = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GETLK, &mut probe) };
-    rc == 0 && i32::from(probe.l_type) != libc::F_UNLCK
+    // F_UNLCK ist unter macOS/iOS ein c_short, unter Linux/Android ein c_int – zum Vergleich beide nach i64.
+    rc == 0 && i64::from(probe.l_type) != i64::from(libc::F_UNLCK)
 }
 
 #[cfg(not(any(unix, windows)))]
