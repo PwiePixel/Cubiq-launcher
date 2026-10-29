@@ -6905,7 +6905,7 @@
       "emote": "Recompensa: emote «{name}»",
       "wearNow": "Usar ahora",
       "whereEmote": "¿Dónde está?",
-      "emoteHint": "«{name}» está en tu rueda de emotes del Cubiq Client (tecla G por defecto)."
+      "emoteHint": "«{name}» está en tu rueda de emotes del Cubiq Client (tecla R por defecto)."
     },
     "toast": {
       "title": "¡Logro desbloqueado!",

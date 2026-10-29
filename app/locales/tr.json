@@ -6755,7 +6755,7 @@
       "emote": "Ödül: “{name}” ifadesi",
       "wearNow": "Şimdi giy",
       "whereEmote": "Nerede?",
-      "emoteHint": "“{name}”, Cubiq Client içindeki ifade çarkında (varsayılan tuş G)."
+      "emoteHint": "“{name}”, Cubiq Client içindeki ifade çarkında (varsayılan tuş R)."
     },
     "toast": {
       "title": "Başarım açıldı!",

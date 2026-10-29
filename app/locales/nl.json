@@ -6755,7 +6755,7 @@
       "emote": "Beloning: emote ‘{name}’",
       "wearNow": "Nu dragen",
       "whereEmote": "Waar vind ik het?",
-      "emoteHint": "‘{name}’ staat in je emote-wiel in de Cubiq Client (standaardtoets G)."
+      "emoteHint": "‘{name}’ staat in je emote-wiel in de Cubiq Client (standaardtoets R)."
     },
     "toast": {
       "title": "Prestatie ontgrendeld!",

@@ -6755,7 +6755,7 @@
       "emote": "Récompense : emote « {name} »",
       "wearNow": "Porter maintenant",
       "whereEmote": "Où le trouver ?",
-      "emoteHint": "« {name} » se trouve dans ta roue d'emotes du Cubiq Client (touche G par défaut)."
+      "emoteHint": "« {name} » se trouve dans ta roue d'emotes du Cubiq Client (touche R par défaut)."
     },
     "toast": {
       "title": "Succès débloqué !",
