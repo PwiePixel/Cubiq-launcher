@@ -1054,7 +1054,7 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
                 <button
                   v-for="key in wearStateKeys"
                   :key="key"
-                  class="seg flex-1 rounded px-2 py-1 mobile:min-h-10"
+                  class="seg flex-1 rounded px-2 py-1 whitespace-nowrap mobile:min-h-10"
                   :class="{ 'seg-on': wearState === key }"
                   :aria-pressed="wearState === key"
                   :data-state="key"
