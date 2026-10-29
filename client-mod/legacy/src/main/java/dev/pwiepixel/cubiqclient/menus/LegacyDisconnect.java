@@ -1,10 +1,8 @@
 package dev.pwiepixel.cubiqclient.menus;
 
 import dev.pwiepixel.cubiqclient.compat.Mc;
-import dev.pwiepixel.cubiqclient.core.account.AccountManager;
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.net.StatusPing;
-import dev.pwiepixel.cubiqclient.screen.AccountsScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiDisconnected;
@@ -21,20 +19,17 @@ import java.util.List;
 
 /**
  * Fehlerbildschirm (Verbindung getrennt/gekickt/Anmeldung fehlgeschlagen) für Forge 1.8.9–1.12.2: zwei Knopfreihen
- * unter „Zurück“ – Neu anmelden (frische Sitzung vom Cubiq Launcher, dann sofort neu verbinden), Erneut verbinden,
- * Konto wechseln, Fehler kopieren, Server-Status. Stil über {@link LegacyMenus} (Menü-Art „Fehler“).
+ * unter „Zurück“ – Erneut verbinden, darunter Fehler kopieren und Server-Status. Stil über {@link LegacyMenus}
+ * (Menü-Art „Fehler“).
  */
 public final class LegacyDisconnect {
 	private static final int FIRST_ID = 73210;
 
 	private ServerData target;
 	private GuiScreen screen;
-	private GuiButton reauth;
 	private GuiButton reconnect;
-	private GuiButton accounts;
 	private GuiButton copy;
 	private GuiButton status;
-	private boolean busy;
 
 	@SubscribeEvent
 	public void onInit(GuiScreenEvent.InitGuiEvent.Post event) {
@@ -48,7 +43,6 @@ public final class LegacyDisconnect {
 		}
 		if (!(s instanceof GuiDisconnected)) return;
 		screen = s;
-		busy = false;
 		List<GuiButton> list = buttonList(event);
 		int top = s.height / 2 + 40;
 		for (GuiButton b : list) {
@@ -62,15 +56,10 @@ public final class LegacyDisconnect {
 		int full = Math.min(s.width - 20, 310);
 		int left = s.width / 2 - full / 2;
 		int half = (full - gap) / 2;
-		int third = (full - 2 * gap) / 3;
-		reauth = new GuiButton(FIRST_ID, left, top, half, 20, I18n.tr("disconnect.reauth"));
-		reconnect = new GuiButton(FIRST_ID + 1, left + half + gap, top, full - half - gap, 20, I18n.tr("disconnect.reconnect"));
-		accounts = new GuiButton(FIRST_ID + 2, left, top + 24, third, 20, I18n.tr("disconnect.accounts"));
-		copy = new GuiButton(FIRST_ID + 3, left + third + gap, top + 24, third, 20, I18n.tr("disconnect.copy"));
-		status = new GuiButton(FIRST_ID + 4, left + 2 * (third + gap), top + 24, full - 2 * (third + gap), 20, I18n.tr("disconnect.status"));
-		list.add(reauth);
+		reconnect = new GuiButton(FIRST_ID + 1, left, top, full, 20, I18n.tr("disconnect.reconnect"));
+		copy = new GuiButton(FIRST_ID + 3, left, top + 24, half, 20, I18n.tr("disconnect.copy"));
+		status = new GuiButton(FIRST_ID + 4, left + half + gap, top + 24, full - half - gap, 20, I18n.tr("disconnect.status"));
 		list.add(reconnect);
-		list.add(accounts);
 		list.add(copy);
 		list.add(status);
 	}
@@ -79,9 +68,7 @@ public final class LegacyDisconnect {
 	public void onAction(GuiScreenEvent.ActionPerformedEvent.Pre event) {
 		GuiButton b = button(event);
 		if (b == null || Mc.eventGui(event) != screen) return;
-		if (b == reauth) reauth();
-		else if (b == reconnect) reconnect();
-		else if (b == accounts) Mc.mc().displayGuiScreen(AccountsScreen.create(screen));
+		if (b == reconnect) reconnect();
 		else if (b == copy) copyError();
 		else if (b == status) checkStatus();
 		else return;
@@ -90,33 +77,6 @@ public final class LegacyDisconnect {
 
 	private boolean current(GuiScreen s) {
 		return s != null && Mc.mc().currentScreen == s;
-	}
-
-	private void reauth() {
-		if (busy || reauth == null) return;
-		final GuiScreen s = screen;
-		final GuiButton b = reauth;
-		AccountManager am = AccountManager.get();
-		if (am == null) {
-			b.displayString = I18n.tr("disconnect.reauthNoLauncher");
-			return;
-		}
-		busy = true;
-		b.enabled = false;
-		b.displayString = I18n.tr("disconnect.reauthBusy");
-		am.reauth(code -> Mc.mc().addScheduledTask(() -> {
-			busy = false;
-			if (!current(s)) return;
-			b.enabled = true;
-			if (code == null) {
-				b.displayString = I18n.tr("disconnect.reauth");
-				reconnect();
-			} else if ("noLauncher".equals(code)) {
-				b.displayString = I18n.tr("disconnect.reauthNoLauncher");
-			} else {
-				b.displayString = I18n.tr("disconnect.reauthFailed", code);
-			}
-		}));
 	}
 
 	private void reconnect() {
@@ -218,17 +178,17 @@ public final class LegacyDisconnect {
 
 	public String testLabels() {
 		StringBuilder sb = new StringBuilder();
-		for (GuiButton b : new GuiButton[]{reauth, reconnect, accounts, copy, status}) {
+		for (GuiButton b : new GuiButton[]{reconnect, copy, status}) {
 			if (b != null) sb.append('[').append(b.displayString).append("] ");
 		}
 		return sb.toString();
 	}
 
+	/** 0 = Erneut verbinden (hier nicht ausgelöst), 1 = Fehler kopieren, 2 = Server-Status. */
 	public void testPress(int index) {
-		GuiButton[] all = {reauth, reconnect, accounts, copy, status};
+		GuiButton[] all = {reconnect, copy, status};
 		GuiButton b = all[index];
-		if (b == reauth) reauth();
-		else if (b == copy) copyError();
+		if (b == copy) copyError();
 		else if (b == status) checkStatus();
 	}
 }

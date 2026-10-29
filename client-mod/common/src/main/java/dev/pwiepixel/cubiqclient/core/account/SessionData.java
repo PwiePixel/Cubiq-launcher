@@ -2,28 +2,20 @@ package dev.pwiepixel.cubiqclient.core.account;
 
 import dev.pwiepixel.cubiqclient.core.online.Uuids;
 
-/** Eine Spielsitzung zum Einsetzen – das Zugangs-Token lebt nur im Speicher und wird nie ausgegeben. */
+/**
+ * Die Sitzung des laufenden Spiels ({@link CurrentSession}) – das Zugangs-Token lebt nur im Speicher und wird nie
+ * ausgegeben.
+ */
 public final class SessionData {
 	/** 32 Hex-Zeichen ohne Bindestriche. */
 	public final String uuid;
 	public final String name;
 	public final String accessToken;
-	/** Xbox-Benutzer-ID oder null. */
-	public final String xuid;
 
-	public SessionData(String uuid, String name, String accessToken, String xuid) {
+	public SessionData(String uuid, String name, String accessToken) {
 		this.uuid = Uuids.normalize(uuid);
 		this.name = name;
 		this.accessToken = accessToken;
-		this.xuid = xuid;
-	}
-
-	/** Mit Bindestrichen (für {@code UUID.fromString}). */
-	public String dashedUuid() {
-		String u = uuid;
-		if (u == null || u.length() != 32) return u;
-		return u.substring(0, 8) + "-" + u.substring(8, 12) + "-" + u.substring(12, 16) + "-" + u.substring(16, 20) + "-"
-				+ u.substring(20);
 	}
 
 	public boolean valid() {

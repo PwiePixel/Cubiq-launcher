@@ -71,10 +71,6 @@ public final class AutoTest {
 		// -PcubiqAutotestOnly=realbench: nur der realistische Benchmark (eigener Ablauf, ohne Menü-Tests)
 		if (RealBenchRunner.installIfRequested()) return;
 		CubiqClient.LOGGER.info("[Autotest] aktiv");
-		if ("accounts".equals(System.getProperty("cubiqclient.autotest.only"))) {
-			AccountsTest.install();
-			return;
-		}
 		if ("intro".equals(System.getProperty("cubiqclient.autotest.only"))) {
 			IntroTest.install();
 			return;
@@ -98,7 +94,7 @@ public final class AutoTest {
 			CircuitTest.install();
 			return;
 		}
-		// -PcubiqAutotestOnly=disconnect: Fehlerbildschirm (Neu anmelden, kopieren, Server-Status)
+		// -PcubiqAutotestOnly=disconnect: Fehlerbildschirm (Fehler kopieren, Server-Status)
 		if ("disconnect".equals(System.getProperty("cubiqclient.autotest.only"))) {
 			DisconnectTest.install();
 			return;

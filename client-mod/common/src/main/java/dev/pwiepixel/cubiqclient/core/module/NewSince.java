@@ -36,7 +36,6 @@ public final class NewSince {
 
 	/** Menü-Bereiche (Leiste im Cubiq-Menü, Seitenleiste des Startbildschirms). */
 	public static final String MENU_WARDROBE = "menu:wardrobe";
-	public static final String MENU_ACCOUNTS = "menu:accounts";
 	public static final String MENU_FRIENDS = "menu:friends";
 	public static final String MENU_CLIPS = "menu:clips";
 	/** Modul-Pakete + „Einführung erneut starten“. */
@@ -89,7 +88,7 @@ public final class NewSince {
 	public static final String CIRCUITS = "0.11.0";
 	/** Suche in der Minecraft-Tastenbelegung (Cubiq Client 0.12.0). */
 	public static final String KEY_SEARCH = "0.12.0";
-	/** Fehlerbildschirme im Cubiq-Stil mit „Neu anmelden“, „Erneut verbinden“ … (Cubiq Client 0.12.0). */
+	/** Fehlerbildschirme im Cubiq-Stil mit „Erneut verbinden“, „Fehler kopieren“ … (Cubiq Client 0.12.0). */
 	public static final String ERROR_SCREENS = "0.12.0";
 	/**
 	 * Minimap nach Art von Xaero (Cubiq Client 0.13.0): Wegpunkte am Rand, Köpfe/Symbole für Kreaturen, Farben aus
@@ -199,14 +198,14 @@ public final class NewSince {
 		add("0.4.0", "colors", "emotes", "redstoneSignal", "redstoneOverlay", "redstoneClock", "clips", "fpsBoost",
 				"dynamicFps", "entityCulling", "particles", "worldDetails");
 		// Kommende Version: Client-Sync, Einführung + Modul-Pakete, Garderobe, Menü-Stil, Freunde, Clips & Bilder,
-		// Konten im Spiel, eingebaute Optimierungen, Grafik-Modus.
+		// eingebaute Optimierungen, Grafik-Modus.
 		add(NEXT, "cubiqOnline.sync");
 		add(NEXT, "menuStyle", "menuStyle.pause", "menuStyle.pauseButtons", "menuStyle.multiplayer", "menuStyle.loading",
 				"menuStyle.options", "menuStyle.worlds");
 		add(NEXT, "builtinOptimizations");
 		add(NEXT, FPS_MODE);
 		extra("fpsBoost", FPS_MODE);
-		add(NEXT, MENU_WARDROBE, MENU_ACCOUNTS, MENU_FRIENDS, MENU_CLIPS, MENU_PACKS, KEY_WARDROBE);
+		add(NEXT, MENU_WARDROBE, MENU_FRIENDS, MENU_CLIPS, MENU_PACKS, KEY_WARDROBE);
 		add(MAPS, "worldMap", "minimap.fairPlay", "minimap.shape", "minimap.opacity", "minimap.caveMode", "minimap.showDeath",
 				"minimap.showFriends", "minimap.showHostile", "minimap.showPassive", "minimap.compass", "minimap.biome",
 				"minimap.time", KEY_WORLD_MAP);

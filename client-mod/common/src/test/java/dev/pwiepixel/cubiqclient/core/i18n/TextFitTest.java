@@ -65,7 +65,7 @@ class TextFitTest {
 				for (String line : lines) fits &= c.textWidth(line) <= TILE_NAME_W;
 				if (!fits) problems.add(lang + " Kachel: " + m.name() + " " + lines);
 			}
-			for (String key : new String[]{"menu.all", "menu.hudEditor", "menu.profiles", "menu.packs", "menu.accounts", "menu.wardrobe", "menu.bugReport", "menu.docs", "menu.notes", "packs.mod.rail",
+			for (String key : new String[]{"menu.all", "menu.hudEditor", "menu.profiles", "menu.packs", "menu.wardrobe", "menu.bugReport", "menu.docs", "menu.notes", "packs.mod.rail",
 					"category.hud", "category.pvp", "category.chat", "category.world", "category.redstone", "category.performance", "category.misc"}) {
 				String s = I18n.tr(key);
 				if (c.textWidth(s) > RAIL_TEXT_W) problems.add(lang + " Leiste: " + s + " (" + c.textWidth(s) + " px)");
@@ -95,7 +95,7 @@ class TextFitTest {
 			String account = I18n.tr("title.wardrobe");
 			if (c.textWidth(account) > ACCOUNT_W) problems.add(lang + " Garderobe-Knopf: " + account + " (" + c.textWidth(account) + " px)");
 			// Volle Seitenleiste (ab 1280×720 mit GUI 2): höchstens so breit, dass sie neben die Mitte passt.
-			for (String key : new String[]{"title.wardrobe", "title.accounts", "title.friends", "title.clips", "title.cubiqSettings"}) {
+			for (String key : new String[]{"title.wardrobe", "title.friends", "title.clips", "title.cubiqSettings"}) {
 				String s = I18n.tr(key);
 				if (c.textWidth(s) > SIDE_LABEL_W) problems.add(lang + " Seitenleiste: " + s + " (" + c.textWidth(s) + " px)");
 			}

@@ -7,7 +7,6 @@ import dev.pwiepixel.cubiqclient.core.online.Friends;
 import dev.pwiepixel.cubiqclient.core.online.CubiqOnline;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.menus.MenuSkin;
-import dev.pwiepixel.cubiqclient.screen.AccountsScreen;
 import dev.pwiepixel.cubiqclient.screen.MenuScreens;
 import dev.pwiepixel.cubiqclient.ui.Gfx;
 import dev.pwiepixel.cubiqclient.ui.GfxCanvas;
@@ -58,8 +57,8 @@ import java.util.WeakHashMap;
 public final class LegacyMenus {
 	/** Knopf-IDs der Cubiq-Knöpfe im Pausenmenü (weit weg von Vanilla- und üblichen Mod-IDs). */
 	static final int FIRST_ID = 73_101;
-	static final String[] IDS = {"wardrobe", "accounts", "clips", "friends", "serverInfo"};
-	static final String[] ICONS = {"shirt", "profile", "image", "friends", "info"};
+	static final String[] IDS = {"wardrobe", "clips", "friends", "serverInfo"};
+	static final String[] ICONS = {"shirt", "image", "friends", "info"};
 	/** Welt-Hosting: „Welt hosten“ (Pause), „Öffentlichen Link deaktivieren“ (Pause), „Mit Code beitreten“ (Mehrspieler). */
 	static final int HOST_ID = 73_120;
 	static final int LINK_ID = 73_121;
@@ -593,7 +592,6 @@ public final class LegacyMenus {
 
 	static boolean available(String id, GuiScreen parent) {
 		if ("wardrobe".equals(id)) return MenuScreens.wardrobe(parent) != null;
-		if ("accounts".equals(id)) return AccountsScreen.available();
 		if ("friends".equals(id)) return MenuScreens.friendsAvailable();
 		if ("serverInfo".equals(id)) return MenuScreens.serverInfoAvailable();
 		return true;
@@ -601,7 +599,6 @@ public final class LegacyMenus {
 
 	static GuiScreen open(GuiScreen parent, String id) {
 		if ("wardrobe".equals(id)) return MenuScreens.wardrobe(parent);
-		if ("accounts".equals(id)) return AccountsScreen.available() ? AccountsScreen.create(parent) : null;
 		if ("clips".equals(id)) return MenuScreens.clips(parent);
 		if ("friends".equals(id)) return MenuScreens.friendsAvailable() ? MenuScreens.friends(parent) : null;
 		return MenuScreens.serverInfo(parent);

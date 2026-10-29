@@ -104,7 +104,7 @@ class IntroLogicTest {
 		assertTrue(news.hasNew(m.fpsBoost));
 		assertTrue(news.badge(NewSince.FPS_MODE));
 		// … Menü-Bereiche und die neue Taste.
-		for (String id : new String[]{NewSince.MENU_WARDROBE, NewSince.MENU_ACCOUNTS, NewSince.MENU_FRIENDS,
+		for (String id : new String[]{NewSince.MENU_WARDROBE, NewSince.MENU_FRIENDS,
 				NewSince.MENU_CLIPS, NewSince.MENU_PACKS, NewSince.KEY_WARDROBE}) {
 			assertTrue(news.isNew(id), id);
 		}
