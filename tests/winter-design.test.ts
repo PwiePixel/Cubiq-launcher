@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { accentAfterSwitch, designAccent, DESIGN_HINT, designs, normalizeDesign, writeDesign } from '../app/utils/design'
 import { uiSettingsSchema } from '../app/utils/schemas'
@@ -214,8 +216,44 @@ describe('Szene „Polarlicht“', () => {
       for (const shift of [16, 8, 0]) expect((lit[i]! >>> shift) & 255).toBeGreaterThanOrEqual((calm[i]! >>> shift) & 255)
     }
     expect(changed).toBeGreaterThan(1500)
-    // Das Polarlicht trägt das Cubiq-Grün aus dem Logo.
-    expect(AURORA_COLORS[1]).toBe('#71a330')
+    // Die untere Kante des Vorhangs trägt das helle Cubiq-Grün aus dem Logo.
+    expect(AURORA_COLORS[1]).toBe('#a9d46b')
+  })
+
+  it('Polarlicht als Vorhang mit Strahlen – quer zu den Spalten wechselt das Licht fast so stark wie von unten nach oben', () => {
+    // Licht des Polarlichts je Rasterkachel (4 × 4 Texel, das Raster hebt sich darin auf); gemessen wird, wie stark eine
+    // Kachel von ihren Nachbarn links und rechts bzw. oben und unten abweicht. Die waagrechten Bänder bis 0.3.3 kamen quer
+    // nur auf gut die Hälfte, der Vorhang mit seinen senkrechten Strahlen liegt etwa gleichauf.
+    let sideways = 0
+    let upDown = 0
+    for (const [cols, rows] of [[343, 247], [427, 240]] as const) {
+      const L = buildWinterLayout({ cols, rows, seed: WINTER_SEED, sky: true })
+      const painter = new WinterPainter(L, buildWinterPalette('dark'))
+      const calm = new Uint32Array(L.w * L.h)
+      const lit = new Uint32Array(L.w * L.h)
+      const bw = Math.floor(L.w / 4)
+      const bh = Math.floor(L.h / 4)
+      for (const seconds of [5, 21.5, 77]) {
+        painter.compose(calm, { tick: 0, seconds, level: 0, moving: false, snow: null })
+        painter.compose(lit, { tick: 0, seconds, level: 1, moving: false, snow: null })
+        const cell = new Float64Array(bw * bh)
+        for (let y = 0; y < bh * 4; y++) {
+          for (let x = 0; x < bw * 4; x++) {
+            const i = y * L.w + x
+            for (const shift of [16, 8, 0]) cell[(y >> 2) * bw + (x >> 2)]! += ((lit[i]! >>> shift) & 255) - ((calm[i]! >>> shift) & 255)
+          }
+        }
+        for (let by = 1; by + 1 < bh; by++) {
+          for (let bx = 1; bx + 1 < bw; bx++) {
+            const a = cell[by * bw + bx]!
+            if (a === 0) continue
+            sideways += Math.abs(2 * a - cell[by * bw + bx - 1]! - cell[by * bw + bx + 1]!)
+            upDown += Math.abs(2 * a - cell[(by - 1) * bw + bx]! - cell[(by + 1) * bw + bx]!)
+          }
+        }
+      }
+    }
+    expect(sideways / upDown).toBeGreaterThan(0.85)
   })
 
   it('Standbild: Inseln und Wolken stehen still, egal welche Sekunde', () => {
@@ -283,6 +321,23 @@ describe('Gleich wie im Spiel (WinterTest.java prüft dieselben Zahlen)', () => 
       }
     }
   })
+
+  it('WinterTest.java im Mod prüft genau dieselben Zahlen (eine Änderung nur auf einer Seite fällt hier auf)', () => {
+    const file = path.resolve(__dirname, '../client-mod/common/src/test/java/dev/pwiepixel/cubiqclient/core/ui/winter/WinterTest.java')
+    const text = fs.readFileSync(file, 'utf8')
+    const start = text.indexOf('GOLDEN = {')
+    expect(start).toBeGreaterThan(0)
+    const block = text.slice(start, text.indexOf('}};', start) + 3)
+    const numbers = (list: string) => list.split(',').map((v) => Number(v.trim().replace(/L$/, '')))
+    const java = Object.fromEntries(
+      [...block.matchAll(/\{(\d+), (\d+), (\d+), (\d+), (\d+), (\d+), new int\[\]\{([\d, ]+)\},\s*new long\[\]\{([\dL, ]+)\}\}/g)].map((m) => {
+        const f = numbers(m[8]!)
+        const entry = { stars: Number(m[3]), voxels: Number(m[4]), cloudNear: Number(m[5]), cloudFar: Number(m[6]), flakes: numbers(m[7]!), frames: { dark: [f[0], f[1]], oled: [f[2], f[3]], light: [f[4], f[5]] } }
+        return [`${m[1]}x${m[2]}`, entry]
+      }),
+    )
+    expect(java).toEqual(GOLDEN)
+  })
 })
 
 /** Prüfsummen (FNV-1a über die ARGB-Pixel) – dieselben Werte stehen in WinterTest.java. */
@@ -293,7 +348,7 @@ const GOLDEN: Record<string, { stars: number; voxels: number; cloudNear: number;
     cloudNear: 27497,
     cloudFar: 25259,
     flakes: [77, 100, 116, 1],
-    frames: { dark: [2172306274, 947558308], oled: [2523732370, 3691853699], light: [716548140, 4218033526] },
+    frames: { dark: [805101431, 956374262], oled: [156003340, 3825408737], light: [3877606103, 2023336360] },
   },
   '427x240': {
     stars: 394,
@@ -301,6 +356,6 @@ const GOLDEN: Record<string, { stars: number; voxels: number; cloudNear: number;
     cloudNear: 87152,
     cloudFar: 80666,
     flakes: [244, 176, 185, 1],
-    frames: { dark: [594324932, 1511407891], oled: [1687684407, 3493181329], light: [3951712061, 1430334280] },
+    frames: { dark: [3375006343, 482898869], oled: [1795113884, 221358817], light: [2697468366, 2480922070] },
   },
 }

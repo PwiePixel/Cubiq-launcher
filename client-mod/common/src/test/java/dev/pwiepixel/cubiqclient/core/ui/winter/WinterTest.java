@@ -77,7 +77,7 @@ class WinterTest {
 		assertEquals(WinterPalette.LIGHT, WinterPalette.variantOf("light"));
 		assertEquals(WinterPalette.OLED, WinterPalette.variantOf("oled"));
 		assertEquals(WinterPalette.DARK, WinterPalette.variantOf("system"));
-		assertEquals(WinterMath.rgb("#71a330"), WinterPalette.AURORA[1], "Polarlicht in Cubiq-Grün");
+		assertEquals(WinterMath.rgb("#a9d46b"), WinterPalette.AURORA[1], "untere Kante des Polarlichts in hellem Cubiq-Grün");
 	}
 
 	@Test
@@ -164,9 +164,9 @@ class WinterTest {
 			// Größe, Sterne, Würfel, Summe nahe Wolken, Summe ferne Wolken, {Flocken, x, y, Tiefe von Flocke 0 bei Takt 100},
 			// {bewegt, still} je dunkel, OLED, hell
 			{240, 135, 125, 39, 27497, 25259, new int[]{77, 100, 116, 1},
-					new long[]{2172306274L, 947558308L, 2523732370L, 3691853699L, 716548140L, 4218033526L}},
+					new long[]{805101431L, 956374262L, 156003340L, 3825408737L, 3877606103L, 2023336360L}},
 			{427, 240, 394, 42, 87152, 80666, new int[]{244, 176, 185, 1},
-					new long[]{594324932L, 1511407891L, 1687684407L, 3493181329L, 3951712061L, 1430334280L}}};
+					new long[]{3375006343L, 482898869L, 1795113884L, 221358817L, 2697468366L, 2480922070L}}};
 
 	@Test
 	void sceneMatchesTheLauncherPixelForPixel() {

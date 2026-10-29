@@ -4,16 +4,17 @@ import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.rgb;
 
 /**
  * Farben der Szene „Polarlicht“ je Farbschema – dieselben Werte wie {@code app/utils/winter/palette.ts}: Nacht (Dunkel),
- * tiefe Nacht (OLED) und heller Morgen (Hell). Das Polarlicht trägt immer das Cubiq-Grün aus dem Logo und läuft über
- * Türkis in Eis-Cyan aus, unabhängig von der Akzentfarbe. Alle Farben deckend ARGB.
+ * tiefe Nacht (OLED) und heller Morgen (Hell). Das Polarlicht ist ein Vorhang aus Licht: unten eine helle Kante im hellen
+ * Cubiq-Grün aus dem Logo, darüber Smaragd, Türkis, Eisblau und ganz oben ein zartes Violett – unabhängig von der
+ * Akzentfarbe. Alle Farben deckend ARGB.
  */
 public final class WinterPalette {
 	public static final int DARK = 0;
 	public static final int OLED = 1;
 	public static final int LIGHT = 2;
 
-	/** Polarlicht: heller Saum, Cubiq-Grün (#71a330), Türkis, Eis-Cyan. */
-	public static final int[] AURORA = {rgb("#d6f5a3"), rgb("#71a330"), rgb("#2aa894"), rgb("#78d6f2")};
+	/** Vorhang von unten nach oben: heller Saum, Kante in hellem Cubiq-Grün (#a9d46b), Smaragd, Türkis, Eisblau, Violett. */
+	public static final int[] AURORA = {rgb("#e9fff0"), rgb("#a9d46b"), rgb("#4dffa0"), rgb("#26e3c6"), rgb("#5fb8ff"), rgb("#8a78ff")};
 
 	public final int variant;
 	/** Himmel von oben nach unten (Stufen, dazwischen gerastert). */
@@ -54,7 +55,7 @@ public final class WinterPalette {
 		if (variant == LIGHT) {
 			sky = colors("#8ebde2", "#a2c9e8", "#b7d6ee", "#cbe2f3", "#deedf8", "#eef6fc");
 			stars = null;
-			auroraAlpha = 96;
+			auroraAlpha = 110;
 			t = new String[]{"#ffffff", "#f7fbff", "#dce8f4", "#c0d3e8", "#7489a8", "#5a7092", "#465b7e", "#3f8a68", "#2b684f", "#6e5246",
 					"#e3f6ff", "#a3cbe9", "#ffffff", "#e4eef8", "#ffffff", "#f1f6fb", "#ffffff", "#e1ecf6", "#d5e7f5"};
 		} else if (variant == OLED) {

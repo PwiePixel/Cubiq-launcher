@@ -1,8 +1,9 @@
 import { rgb, type Argb } from './math'
 
 // Farben der Szene „Polarlicht“ je Farbschema: Nacht (Dunkel), tiefe Nacht (OLED) und heller Morgen (Hell).
-// Das Polarlicht trägt immer das Cubiq-Grün aus dem Logo und läuft über Türkis in Eis-Cyan aus – unabhängig von
-// der Akzentfarbe. Der Cubiq Client hat dieselben Werte (`WinterPalette.java`).
+// Das Polarlicht ist ein Vorhang aus Licht: unten eine helle Kante im hellen Cubiq-Grün aus dem Logo, darüber
+// Smaragd, Türkis, Eisblau und ganz oben ein zartes Violett – unabhängig von der Akzentfarbe. Der Cubiq Client hat
+// dieselben Werte (`WinterPalette.java`).
 
 export type WinterVariant = 'dark' | 'oled' | 'light'
 
@@ -12,8 +13,8 @@ export interface WinterPalette {
   sky: Argb[]
   /** Sterne: schwach, mittel, hell (am Morgen keine). */
   stars: [Argb, Argb, Argb] | null
-  /** Polarlicht: heller Saum, Cubiq-Grün, Türkis, Eis-Cyan. */
-  aurora: [Argb, Argb, Argb, Argb]
+  /** Polarlicht von unten nach oben: Saum, Kante (Cubiq-Grün hell), Smaragd, Türkis, Eisblau, Violett. */
+  aurora: Argb[]
   /** Höchste Deckkraft des Polarlichts (0…255). */
   auroraAlpha: number
   /** Nachts leuchtet das Polarlicht (hellt auf), am Morgen färbt es den Himmel nur zart. */
@@ -40,8 +41,8 @@ export interface WinterPalette {
   haze: Argb
 }
 
-/** Cubiq-Grün (#71a330) mit hellem Saum, dann Türkis und Eis-Cyan. */
-export const AURORA_COLORS = ['#d6f5a3', '#71a330', '#2aa894', '#78d6f2'] as const
+/** Vorhang von unten nach oben: heller Saum, Kante in hellem Cubiq-Grün (#a9d46b), Smaragd, Türkis, Eisblau, Violett. */
+export const AURORA_COLORS = ['#e9fff0', '#a9d46b', '#4dffa0', '#26e3c6', '#5fb8ff', '#8a78ff'] as const
 
 /** Einzelne Töne (Inseln, Wolken, Schnee) – alles außer Himmel, Sternen und Polarlicht. */
 type Tones = Omit<WinterPalette, 'variant' | 'sky' | 'stars' | 'aurora' | 'auroraAlpha' | 'auroraGlows'>
@@ -52,7 +53,7 @@ function palette(variant: WinterVariant, tones: Record<keyof Tones, string>, sky
     variant,
     sky: sky.map(rgb),
     stars: stars ? [rgb(stars[0]), rgb(stars[1]), rgb(stars[2])] : null,
-    aurora: [rgb(AURORA_COLORS[0]), rgb(AURORA_COLORS[1]), rgb(AURORA_COLORS[2]), rgb(AURORA_COLORS[3])],
+    aurora: AURORA_COLORS.map(rgb),
     auroraAlpha,
     auroraGlows: variant !== 'light',
     ...parsed,
@@ -86,7 +87,7 @@ export function buildWinterPalette(variant: WinterVariant): WinterPalette {
       },
       ['#8ebde2', '#a2c9e8', '#b7d6ee', '#cbe2f3', '#deedf8', '#eef6fc'],
       null,
-      96,
+      110,
     )
   }
   if (variant === 'oled') {

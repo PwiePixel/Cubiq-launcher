@@ -1,5 +1,5 @@
 import { pineTiers, pineTops, pineTrunk, voxelX, voxelY, type CloudBank, type Island, type Voxel, type WinterLayout } from './layout'
-import { between, ease, hash, over, round, threshold, wave, type Argb } from './math'
+import { between, ease, glide, hash, over, round, threshold, wave, type Argb } from './math'
 import type { WinterPalette } from './palette'
 import type { WinterSnow } from './snow'
 
@@ -7,7 +7,8 @@ import type { WinterSnow } from './snow'
 // Client. Was sich nicht bewegt (Himmel mit Sternen und der fernen Wolkenbank, die Inseln), entsteht einmal je
 // Aufbau und Farbschema; je Bild kommen das Polarlicht, funkelnde Sterne, die treibende nahe Wolkenbank,
 // schwebende Inseln und der Schnee dazu. Übergänge sind mit einem festen Raster gestuft, damit alles Pixel-Art
-// bleibt.
+// bleibt. Was je Texel oft gebraucht wird (Farbe und Leuchtkraft je Höhe des Vorhangs, Licht je Stufe), ist beim
+// Aufbau vorgerechnet.
 
 /** Zustand eines Bildes. */
 export interface WinterFrame {
@@ -40,8 +41,10 @@ interface Bank {
   top: number
 }
 
-/** Stufen der Polarlicht-Deckkraft. */
-const STEPS = 6
+/** Helligkeitsstufen des Polarlichts. */
+const STEPS = 10
+/** Höhenstufen des Vorhangs von der unteren Kante (0) bis ganz oben – je Stufe eine Farbe und Leuchtkraft. */
+const BANDS = 20
 
 export class WinterPainter {
   /** Himmel mit Sternen und der fernen Wolkenbank. */
@@ -51,8 +54,12 @@ export class WinterPainter {
   private readonly sprites: Sprite[]
   private readonly near: Bank
   private readonly alphaOf: number[] = []
-  /** Polarlicht-Farben, mit jeder Deckkraft-Stufe schon vorgerechnet: [Ton][Stufe][Kanal]. */
-  private readonly lit = new Int32Array(4 * (STEPS + 1) * 3)
+  /** Farbe des Vorhangs je Höhenstufe. */
+  private readonly tone = new Uint32Array(BANDS)
+  /** Leuchtkraft je Höhenstufe, schon mal STEPS. */
+  private readonly glow = new Float64Array(BANDS)
+  /** Licht je Höhen- und Helligkeitsstufe, schon mit der Deckkraft verrechnet: [Höhe][Stufe][Kanal]. */
+  private readonly lit = new Int32Array(BANDS * (STEPS + 1) * 3)
 
   constructor(
     readonly L: WinterLayout,
@@ -65,9 +72,29 @@ export class WinterPainter {
     this.sprites = L.islands.map((island) => paintIsland(island, P))
     this.near = paintBank(L, L.cloudNear, P.cloudNearRim, P.cloudNear, 210, 5, 255)
     for (let q = 0; q <= STEPS; q++) this.alphaOf.push(round((q / STEPS) * P.auroraAlpha))
-    for (let tone = 0; tone < 4; tone++) {
+    const a = P.aurora
+    for (let b = 0; b < BANDS; b++) {
+      // Mitte der Stufe: 0 an der unteren Kante, 1 ganz oben.
+      const f = (b + 0.5) / BANDS
+      let tone: Argb
+      let glow: number
+      if (b === 0) {
+        // Die untere Kante ist der hellste Teil des Vorhangs – auch dort, wo ein Strahl schwach ist.
+        tone = a[0]!
+        glow = 1.4
+      } else if (b === 1) {
+        tone = a[1]!
+        glow = 1.25
+      } else {
+        // Nach oben verglimmt der Vorhang (g·√g) und wird kühler: Smaragd → Türkis → Eisblau → Violett.
+        const g = 1 - f
+        glow = 0.9 * g * Math.sqrt(g)
+        tone = f < 0.3 ? a[2]! : f < 0.55 ? between(a[2]!, a[3]!, (f - 0.3) / 0.25) : f < 0.8 ? between(a[3]!, a[4]!, (f - 0.55) / 0.25) : between(a[4]!, a[5]!, (f - 0.8) / 0.2)
+      }
+      this.tone[b] = tone
+      this.glow[b] = glow * STEPS
       for (let q = 0; q <= STEPS; q++) {
-        for (let c = 0; c < 3; c++) this.lit[(tone * (STEPS + 1) + q) * 3 + c] = ((((P.aurora[tone]! >>> (16 - 8 * c)) & 255) * this.alphaOf[q]! + 127) / 255) | 0
+        for (let c = 0; c < 3; c++) this.lit[(b * (STEPS + 1) + q) * 3 + c] = ((((tone >>> (16 - 8 * c)) & 255) * this.alphaOf[q]! + 127) / 255) | 0
       }
     }
   }
@@ -105,68 +132,70 @@ export class WinterPainter {
   }
 
   /**
-   * Polarlicht: lange Bänder, die sich in Wellen legen und dabei verdrehen. Liegt ein Band flach, ist es breit:
-   * unten ein heller Saum, darüber Cubiq-Grün, oben Türkis, darüber ein Schein, der in Eis-Cyan ausläuft. Wo es
-   * sich dreht, wird es schmal und leuchtet heller. Im Grün glitzern Pixel-Rauten wie im Cubiq-Zeichen.
+   * Polarlicht als Vorhang: lange Bänder, die sich in Wellen legen und dabei verdrehen. Aus jedem Band hängt nach oben
+   * ein Vorhang aus Lichtstrahlen – unten eine helle Kante, darüber verglimmt er über Smaragd, Türkis und Eisblau bis in
+   * ein zartes Violett. Jede Spalte ist ein eigener Strahl: zwei langsam wandernde Rauschen machen ihn heller oder
+   * dunkler und unterschiedlich lang; wo sich das Band dreht, wird der Vorhang kürzer und etwas heller.
    */
   private aurora(out: Uint32Array, t: number, level: number) {
     const { L, P } = this
     const { w, h } = L
-    const sparkle = Math.floor(t * 2)
     const glows = P.auroraGlows
     const lit = this.lit
+    const glowOf = this.glow
+    const tones = this.tone
+    const alphas = this.alphaOf
     // Hintere (höhere) Bänder zuerst.
     for (let k = L.ribbons.length - 1; k >= 0; k--) {
       const r = L.ribbons[k]!
       const fade = (r.to - r.from) * 0.18
+      // Feine Strahlen wandern je Band in die andere Richtung.
+      const drift = k % 2 === 0 ? 0.7 : -0.7
       for (let x = Math.max(0, Math.ceil(r.from)); x < Math.min(w, r.to); x++) {
         const taper = ease(r.from, r.from + fade, x) * ease(r.to, r.to - fade, x)
         if (taper <= 0) continue
         const u = x / w
         const center = h * (r.base + r.amp * wave(u / r.len + t * r.speed + r.phase) + 0.35 * r.amp * wave(u / (0.41 * r.len) - 1.6 * t * r.speed + 2 * r.phase))
         const turn = wave(u / r.twist + 1.8 * t * r.speed + 3 * r.phase)
-        const face = 0.25 + 0.75 * turn * turn
-        const half = Math.max(1.2, h * r.thick * face)
-        const strength = level * taper * r.power * (1.3 - 0.3 * face)
-        const reach = h * r.thick * r.reach * (0.55 + 0.45 * face)
-        const bottom = Math.min(this.horizon - 1, Math.floor(center + half))
-        for (let y = Math.max(0, Math.floor(center - half - reach)); y <= bottom; y++) {
-          const d = y + 0.5 - center
-          let tone: number
-          let glow: number
-          if (d > half) continue
-          if (d > half - 1.2) {
-            tone = 0
-            glow = 1
-          } else if (d > -0.25 * half) {
-            tone = 1
-            glow = 0.82
-          } else if (d > -half) {
-            tone = 2
-            glow = 0.68
-          } else {
-            const g = (-half - d) / reach
-            glow = 0.55 * (1 - g) * (1 - g)
-            tone = g < 0.35 ? 2 : 3
-          }
-          let q = Math.floor(glow * strength * STEPS + threshold(x, y))
+        const face = 0.35 + 0.65 * turn * turn
+        const coarse = glide(x / 6.5 - t * 0.25, 0x7b + k)
+        const rays = 0.22 + 0.78 * (0.55 * glide(x / 1.6 + t * drift, 0x5a + k) + 0.45 * coarse)
+        const bottom = center + h * r.thick * 0.9
+        const tall = h * r.thick * (3.4 + 4.2 * coarse) * (0.6 + 0.4 * face)
+        const strength = 1.3 * level * taper * r.power * rays * (1.15 - 0.15 * face)
+        // Höhenstufe je Texel aus dem Abstand d zur unteren Kante: der Saum ist der erste Texel, die Kante der zweite,
+        // darüber verteilt sich der Vorhang auf die übrigen Stufen. Alle Werte sind hier positiv – `| 0` rundet wie
+        // `floor` ab (im Mod `(int)`), die Rasterschwellen der Spalte liegen schon bereit: das hält die Schleife schnell.
+        const per = BANDS / tall
+        const yb = Math.min(this.horizon - 1, Math.floor(bottom))
+        const t0 = threshold(x, 0)
+        const t1 = threshold(x, 1)
+        const t2 = threshold(x, 2)
+        const t3 = threshold(x, 3)
+        for (let y = Math.max(0, Math.floor(bottom - tall)); y <= yb; y++) {
+          const d = bottom - (y + 0.5)
+          if (d < 0) continue
+          let b = d < 1 ? 0 : d < 2 ? 1 : (d * per) | 0
+          if (b < 2 && d >= 2) b = 2
+          if (b >= BANDS) continue
+          const m = y & 3
+          let q = (glowOf[b]! * strength + (m === 0 ? t0 : m === 1 ? t1 : m === 2 ? t2 : t3)) | 0
           if (q <= 0) continue
-          if (tone === 1 && (x + y + sparkle) % 6 === 0 && (((x - y) % 6) + 6) % 6 === 0) q++
           if (q > STEPS) q = STEPS
           const i = y * w + x
           if (glows) {
             // Wie `light()`, nur mit vorgerechneten Stufen (gleiche Zahlen, schneller).
             const v = out[i]!
-            const o = (tone * (STEPS + 1) + q) * 3
-            const r = (v >>> 16) & 255
-            const g = (v >>> 8) & 255
-            const b = v & 255
+            const o = (b * (STEPS + 1) + q) * 3
+            const cr = (v >>> 16) & 255
+            const cg = (v >>> 8) & 255
+            const cb = v & 255
             const sr = lit[o]!
             const sg = lit[o + 1]!
             const sb = lit[o + 2]!
-            out[i] = (0xff000000 | ((r + sr - (((r * sr + 127) / 255) | 0)) << 16) | ((g + sg - (((g * sg + 127) / 255) | 0)) << 8) | (b + sb - (((b * sb + 127) / 255) | 0))) >>> 0
+            out[i] = (0xff000000 | ((cr + sr - (((cr * sr + 127) / 255) | 0)) << 16) | ((cg + sg - (((cg * sg + 127) / 255) | 0)) << 8) | (cb + sb - (((cb * sb + 127) / 255) | 0))) >>> 0
           } else {
-            out[i] = over(out[i]!, P.aurora[tone]!, this.alphaOf[q]!)
+            out[i] = over(out[i]!, tones[b]!, alphas[q]!)
           }
         }
       }
