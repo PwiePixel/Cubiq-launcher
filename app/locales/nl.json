@@ -153,7 +153,7 @@
     "openFolder": "De map kon niet worden geopend.",
     "instanceNotFound": "Instantie “{id}” is niet gevonden",
     "unknownVersion": "Minecraft-versie “{version}” is onbekend",
-    "authNotApproved": "Inloggen met Microsoft is nog niet ingeschakeld: de app-registratie wacht op goedkeuring door Mojang.",
+    "authNotApproved": "Inloggen met Microsoft is op dit moment niet beschikbaar in Cubiq Launcher: Mojang heeft de app niet goedgekeurd voor inloggen bij Minecraft.",
     "unsupportedOnMobile": "Niet beschikbaar op dit apparaat – alleen in de desktopversie.",
     "mobileUpdate": {
       "notChecked": "Zoek eerst naar updates.",
@@ -2927,7 +2927,7 @@
       "page": "Pagina: {url}",
       "requestingCode": "Code aanvragen …",
       "waiting": "Wachten op Microsoft …",
-      "notApprovedHint": "Dit is geen fout van de launcher: inloggen bij Microsoft en Xbox is gelukt, alleen de goedkeuring van de app door Mojang staat nog open. Zodra die er is, werkt inloggen zonder update."
+      "notApprovedHint": "Met je account is niets mis: Microsoft en Xbox hebben het inloggen geaccepteerd, maar de servers van Minecraft accepteren alleen aanmeldingen van apps die Mojang heeft goedgekeurd, en Cubiq Launcher hoort daar niet bij. We kunnen niet zeggen of en wanneer dat verandert. Je instanties, mods en instellingen blijven zoals ze zijn."
     },
     "remove": {
       "title": "Account uitloggen?",

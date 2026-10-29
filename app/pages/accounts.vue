@@ -109,7 +109,7 @@ async function confirmRemove() {
 
     <div v-if="error" role="alert" class="card mb-4 px-4 py-3 text-sm" :class="notApproved ? 'border-warn/40 text-warn' : 'border-danger-600/50 text-danger-300'">
       {{ error }}
-      <p v-if="notApproved" class="mt-1 text-xs text-base-400">{{ t('accounts.login.notApprovedHint') }}</p>
+      <SignInUnavailable v-if="notApproved" />
     </div>
 
     <ul v-if="accounts.items.length" v-stagger class="space-y-2">

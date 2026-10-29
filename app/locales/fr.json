@@ -153,7 +153,7 @@
     "openFolder": "Impossible d'ouvrir le dossier.",
     "instanceNotFound": "L'instance « {id} » est introuvable",
     "unknownVersion": "La version de Minecraft « {version} » est inconnue",
-    "authNotApproved": "La connexion Microsoft n'est pas encore activée : l'enregistrement de l'application attend l'approbation de Mojang.",
+    "authNotApproved": "La connexion Microsoft n'est pas disponible dans Cubiq Launcher pour le moment : Mojang n'a pas approuvé l'application pour la connexion à Minecraft.",
     "unsupportedOnMobile": "Indisponible sur cet appareil – uniquement dans la version de bureau.",
     "mobileUpdate": {
       "notChecked": "Recherche d'abord les mises à jour.",
@@ -2927,7 +2927,7 @@
       "page": "Page : {url}",
       "requestingCode": "Demande du code…",
       "waiting": "En attente de Microsoft…",
-      "notApprovedHint": "Ce n'est pas un bug du launcher : la connexion Microsoft et Xbox a fonctionné, seule l'approbation de l'application par Mojang est encore en attente. Dès qu'elle sera accordée, la connexion fonctionnera sans mise à jour."
+      "notApprovedHint": "Ton compte n'y est pour rien : Microsoft et Xbox ont accepté la connexion, mais les serveurs de Minecraft n'acceptent que les connexions des applications approuvées par Mojang, et Cubiq Launcher n'en fait pas partie. Nous ne pouvons pas dire si ni quand cela changera. Tes instances, mods et paramètres restent tels quels."
     },
     "remove": {
       "title": "Déconnecter le compte ?",

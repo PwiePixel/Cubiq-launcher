@@ -153,7 +153,7 @@
     "openFolder": "Não foi possível abrir a pasta.",
     "instanceNotFound": "Instância “{id}” não encontrada",
     "unknownVersion": "A versão do Minecraft “{version}” é desconhecida",
-    "authNotApproved": "O login da Microsoft ainda não está ativado: o registro do aplicativo aguarda aprovação da Mojang.",
+    "authNotApproved": "O login da Microsoft não está disponível no Cubiq Launcher no momento: a Mojang não aprovou o aplicativo para o login no Minecraft.",
     "unsupportedOnMobile": "Indisponível neste dispositivo – apenas na versão para desktop.",
     "mobileUpdate": {
       "notChecked": "Procure atualizações primeiro.",
@@ -2927,7 +2927,7 @@
       "page": "Página: {url}",
       "requestingCode": "Solicitando código …",
       "waiting": "Aguardando a Microsoft …",
-      "notApprovedHint": "Isto não é um bug do launcher: o login da Microsoft e do Xbox funcionou, só falta a aprovação do aplicativo pela Mojang. Assim que for concedida, o login vai funcionar sem precisar de atualização."
+      "notApprovedHint": "Sua conta está em ordem: a Microsoft e o Xbox aceitaram o login, mas os servidores do Minecraft só aceitam logins de aplicativos aprovados pela Mojang, e o Cubiq Launcher não é um deles. Não sabemos dizer se nem quando isso vai mudar. Suas instâncias, mods e configurações continuam como estão."
     },
     "remove": {
       "title": "Sair da conta?",

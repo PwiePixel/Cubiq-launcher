@@ -153,7 +153,7 @@
     "openFolder": "Nie udało się otworzyć folderu.",
     "instanceNotFound": "Nie znaleziono instancji „{id}”",
     "unknownVersion": "Wersja Minecrafta „{version}” jest nieznana",
-    "authNotApproved": "Logowanie przez Microsoft nie jest jeszcze włączone: rejestracja aplikacji czeka na zatwierdzenie przez Mojang.",
+    "authNotApproved": "Logowanie przez Microsoft jest obecnie niedostępne w Cubiq Launcher: Mojang nie zatwierdził aplikacji do logowania w Minecraft.",
     "unsupportedOnMobile": "Niedostępne na tym urządzeniu – tylko w wersji na komputer.",
     "mobileUpdate": {
       "notChecked": "Najpierw sprawdź dostępność aktualizacji.",
@@ -2927,7 +2927,7 @@
       "page": "Strona: {url}",
       "requestingCode": "Pobieranie kodu …",
       "waiting": "Czekanie na Microsoft …",
-      "notApprovedHint": "To nie jest błąd launchera: logowanie do Microsoft i Xbox zadziałało, brakuje tylko zatwierdzenia aplikacji przez Mojang. Gdy tylko zostanie udzielone, logowanie zadziała bez aktualizacji."
+      "notApprovedHint": "Z twoim kontem wszystko w porządku: Microsoft i Xbox przyjęły logowanie, ale serwery Minecrafta przyjmują logowania tylko z aplikacji zatwierdzonych przez Mojang, a Cubiq Launcher do nich nie należy. Nie wiemy, czy i kiedy to się zmieni. Twoje instancje, mody i ustawienia pozostają bez zmian."
     },
     "remove": {
       "title": "Wylogować konto?",

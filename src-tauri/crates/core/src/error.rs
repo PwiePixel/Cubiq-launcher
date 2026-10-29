@@ -109,7 +109,9 @@ pub enum Error {
     #[error("{0}")]
     Auth(Msg),
 
-    #[error("Die App-Registrierung ist von Mojang noch nicht freigegeben")]
+    /// `login_with_xbox` antwortet 403: Mojang hat die App-Registrierung nicht für die Minecraft-Anmeldung
+    /// freigegeben. Ehrlich melden, ohne Termin – ob und wann sich das ändert, ist offen.
+    #[error("Mojang hat die App-Registrierung nicht für die Minecraft-Anmeldung freigegeben (login_with_xbox: 403)")]
     AuthNotApproved,
 
     #[error("Vorgang abgebrochen")]
@@ -260,8 +262,8 @@ impl Error {
             Self::Json { .. } => "Daten konnten nicht verarbeitet werden.".into(),
             Self::Download { reason, .. } => download_public(reason).into(),
             Self::AuthNotApproved => {
-                "Der Microsoft-Login ist noch nicht freigeschaltet: Die App-Registrierung wartet \
-                 auf die Freigabe durch Mojang."
+                "Die Microsoft-Anmeldung ist im Cubiq Launcher gerade nicht verfügbar: Mojang hat die App \
+                 nicht für die Minecraft-Anmeldung freigegeben."
                     .into()
             }
             Self::Internal(_) => "Ein interner Fehler ist aufgetreten.".into(),
@@ -333,7 +335,11 @@ mod tests {
         assert_eq!(missing.code, "instanceNotFound");
         assert_eq!(missing.params["id"], "abc");
         assert_eq!(Error::Cancelled.to_user().code, "cancelled");
-        assert_eq!(Error::AuthNotApproved.to_user().code, "authNotApproved");
+        let not_approved = Error::AuthNotApproved.to_user();
+        assert_eq!((not_approved.kind, not_approved.code.as_str()), ("auth_not_approved", "authNotApproved"));
+        // Ehrlich und ohne Versprechen: kein „noch“, kein Termin.
+        assert!(not_approved.message.contains("nicht verfügbar"), "{}", not_approved.message);
+        assert!(!not_approved.message.contains("noch") && !not_approved.message.contains("wartet"));
         let mobile = Error::UnsupportedOnMobile.to_user();
         assert_eq!((mobile.kind, mobile.code.as_str()), ("unsupported_on_mobile", "unsupportedOnMobile"));
     }
