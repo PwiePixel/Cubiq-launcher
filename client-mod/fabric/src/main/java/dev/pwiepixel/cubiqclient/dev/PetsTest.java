@@ -90,8 +90,10 @@ public final class PetsTest {
 					if (tries % 100 == 0) catalog.refresh(true);
 					return true;
 				}
+				// Mütze: die erste des Katalogs oder -PcubiqSys.cubiqclient.autotest.petsHat=<id> (z. B. christmas_hat)
+				String wantHat = System.getProperty("cubiqclient.autotest.petsHat");
 				for (CosmeticCatalog.Item it : s.items) {
-					if ("hat".equals(it.slot) && hat == null) hat = it.id;
+					if ("hat".equals(it.slot) && (hat == null || it.id.equals(wantHat))) hat = it.id;
 					if ("companion".equals(it.slot)) cloud = it.id;
 					if ("wings".equals(it.slot) && it.id.contains("snow")) snowWings = it.id;
 					if ("wings".equals(it.slot) && it.id.contains("ice")) iceWings = it.id;
@@ -137,6 +139,14 @@ public final class PetsTest {
 			case 3:
 				place(mc, 0, 0, 0f);
 				actions.shot("cubiqclient-winter-beard-on");
+				if (!hasBeard(f, mc)) {
+					// Mütze ohne abschaltbaren Bart (z. B. die Zipfelmütze): gleich weiter mit der Wolke
+					if (cloud != null) catalog.wearCompanion(cloud);
+					tries = 0;
+					phase = 6;
+					wait = 5;
+					return true;
+				}
 				// Bart aus (PUT options) und warten, bis der eigene Lookup ihn ohne Bart liefert
 				catalog.setOption("hat", "beard", false, CosmeticCatalog.optionsOf(catalog.state(), catalog.state().item(hat)));
 				tries = 0;
@@ -188,6 +198,26 @@ public final class PetsTest {
 			case 8:
 				place(mc, 0, 0, 0f);
 				actions.shot("cubiqclient-winter-cloud-air");
+				dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.forced = -1;
+				ticks = 0;
+				phase = 24;
+				return true;
+			case 24:
+				// Laufen (ab Cubiq Client 0.24.0): wirklich nach Norden gehen (0,2 Blöcke je Tick) – der Zustand kommt aus
+				// der Bewegung, Mützen mit walk-Animation schwingen mit, andere bleiben bei idle
+				place(mc, 0, -ticks * 0.2, 180f);
+				camera(mc, 160F, 6F);
+				if (++ticks == 16) actions.shot("cubiqclient-winter-hat-walk");
+				if (ticks < 18) return true;
+				// Absprung: erzwungen (ohne jump-Animation spielt das Modell air bzw. idle)
+				place(mc, 0, 0, 0f);
+				dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.forced = dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.JUMP;
+				phase = 25;
+				wait = 8;
+				return true;
+			case 25:
+				place(mc, 0, 0, 0f);
+				actions.shot("cubiqclient-winter-hat-jump");
 				dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.forced = -1;
 				if (snowWings != null) catalog.wearWings(snowWings);
 				tries = 0;
@@ -860,6 +890,16 @@ public final class PetsTest {
 		*///?}
 		mc.player.yHeadRot = yaw;
 		mc.player.yBodyRot = yaw;
+	}
+
+	/** Hat die getragene Mütze den abschaltbaren Bart (Option {@code beard})? */
+	private static boolean hasBeard(OnlineFeatures<Object> f, Minecraft mc) {
+		V2Hat<Object> h = f.hatV2(mc.player.getUUID(), false);
+		if (h == null) return false;
+		for (dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2.Option o : h.model.options) {
+			if ("beard".equals(o.id)) return true;
+		}
+		return false;
 	}
 
 	private static void cmd(CapeTest.Actions actions, String fmt, Object... args) {
