@@ -15,7 +15,7 @@ import net.minecraft.client.multiplayer.resolver.ServerAddress;
 
 /**
  * Fehlerbildschirm: merkt sich, wohin zuletzt verbunden wurde – auch wenn es schon bei der Anmeldung scheitert
- * (dann ist {@code Minecraft#getCurrentServer} nicht verlässlich gesetzt). Für „Erneut verbinden“ / „Neu anmelden“.
+ * (dann ist {@code Minecraft#getCurrentServer} nicht verlässlich gesetzt). Für „Erneut verbinden“.
  */
 @Mixin(ConnectScreen.class)
 public abstract class ConnectTargetMixin {

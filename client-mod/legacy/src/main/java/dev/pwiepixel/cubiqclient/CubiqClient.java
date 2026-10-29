@@ -72,10 +72,8 @@ import java.util.List;
 public final class CubiqClient {
 	/** Suche in der Tastenbelegung (Steuerung); öffentlich für den Autotest. */
 	public static final dev.pwiepixel.cubiqclient.menus.LegacyKeySearch keySearch = new dev.pwiepixel.cubiqclient.menus.LegacyKeySearch();
-	/** Fehlerbildschirm mit Neu anmelden, Erneut verbinden …; öffentlich für den Autotest. */
+	/** Fehlerbildschirm mit Erneut verbinden, Fehler kopieren, Server-Status; öffentlich für den Autotest. */
 	public static final dev.pwiepixel.cubiqclient.menus.LegacyDisconnect disconnect = new dev.pwiepixel.cubiqclient.menus.LegacyDisconnect();
-	/** Kontowechsel (Spiel-Thread über den Client-Tick). */
-	static dev.pwiepixel.cubiqclient.core.account.LegacySessionSwap accountSwap;
 	public static final String MOD_ID = "cubiqclient";
 	public static final Logger LOGGER = LogManager.getLogger("Cubiq Client");
 
@@ -154,15 +152,11 @@ public final class CubiqClient {
 		dev.pwiepixel.cubiqclient.core.ui.Theme.loadFrom(file.getParentFile().toPath());
 		dev.pwiepixel.cubiqclient.core.i18n.I18n.init(file.getParentFile().toPath());
 		dev.pwiepixel.cubiqclient.core.clips.Clips.init(file.getParentFile().toPath());
-		// Konten: Wechsel ohne Neustart (mit Cubiq Launcher dessen Konten, sonst eigene Anmeldung je Instanz).
+		// Sitzung, mit der das Spiel gestartet wurde (nur lesen – keine Anmeldung, kein Kontowechsel im Spiel).
 		java.util.function.Supplier<dev.pwiepixel.cubiqclient.core.account.SessionData> session = () -> {
 			net.minecraft.util.Session s = Minecraft.getMinecraft().getSession();
-			return s == null ? null : new dev.pwiepixel.cubiqclient.core.account.SessionData(s.getPlayerID(), s.getUsername(), s.getToken(), null);
+			return s == null ? null : new dev.pwiepixel.cubiqclient.core.account.SessionData(s.getPlayerID(), s.getUsername(), s.getToken());
 		};
-		accountSwap = new dev.pwiepixel.cubiqclient.core.account.LegacySessionSwap(() -> Minecraft.getMinecraft(),
-				net.minecraft.util.Session.class, session, () -> Mc.world() != null, file.getParentFile().toPath(), "Cubiq-Client/" + version + " (Minecraft " + Mc.version() + "; forge)", message -> LOGGER.info(message));
-		dev.pwiepixel.cubiqclient.core.account.AccountManager.init(accountSwap);
-		// Sitzung des laufenden Spiels (nur lesen) für Garderobe und Fehlerberichte.
 		dev.pwiepixel.cubiqclient.core.account.CurrentSession.init(file.getParentFile().toPath(), "Cubiq-Client/" + version + " (Minecraft " + Mc.version() + "; forge)", session,
 				message -> LOGGER.info(message));
 		// Bug melden (Cubiq-Menü): Mod-Liste, Log und Screenshots aus dem Spielordner, Senden über die Cubiq API.
@@ -352,7 +346,6 @@ public final class CubiqClient {
 	@SubscribeEvent
 	public void onClientTick(TickEvent.ClientTickEvent event) {
 		if (event.phase != TickEvent.Phase.END) return;
-		if (accountSwap != null) accountSwap.drain();
 		dev.pwiepixel.cubiqclient.screenshot.LegacyScreenshots.tick();
 		Minecraft mc = Minecraft.getMinecraft();
 		dev.pwiepixel.cubiqclient.ui.BorderlessDisplay.tick(mc);

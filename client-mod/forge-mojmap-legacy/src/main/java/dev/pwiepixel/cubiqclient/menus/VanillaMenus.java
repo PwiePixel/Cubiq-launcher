@@ -14,7 +14,6 @@ import dev.pwiepixel.cubiqclient.core.account.FaceCache;
 import dev.pwiepixel.cubiqclient.core.ui.Canvas;
 import dev.pwiepixel.cubiqclient.core.ui.Faces;
 import dev.pwiepixel.cubiqclient.core.ui.menus.MenuSkin;
-import dev.pwiepixel.cubiqclient.screen.AccountsScreen;
 import dev.pwiepixel.cubiqclient.screen.MenuScreens;
 import dev.pwiepixel.cubiqclient.ui.Gfx;
 import dev.pwiepixel.cubiqclient.ui.GfxCanvas;
@@ -658,10 +657,10 @@ public final class VanillaMenus {
 		/*b.setMessage(text);*/
 	}
 
-	/** Knöpfe Garderobe, Konten, Clips, Freunde, Server-Info links neben dem Pausenmenü. */
+	/** Knöpfe Garderobe, Clips, Freunde, Server-Info links neben dem Pausenmenü. */
 	static void pauseButtons(final Screen s, WidgetHost host) {
 		int free = (s.width - 204) / 2 - 12;
-		String[] ids = {"wardrobe", "accounts", "clips", "friends", "serverInfo"};
+		String[] ids = {"wardrobe", "clips", "friends", "serverInfo"};
 		int widest = 0;
 		for (String id : ids) widest = Math.max(widest, Mc.mc().font.width(I18n.tr("menus.pause." + id)));
 		// Platz für Symbol links + Text in der Mitte: Text darf das Symbol nicht berühren.
@@ -671,10 +670,10 @@ public final class VanillaMenus {
 		int w = labels ? Math.max(86, Math.min(want, free)) : 20;
 		int h = 20;
 		int gap = 4;
-		int count = 5;
+		int count = ids.length;
 		int y = Math.max(8, s.height / 2 - (count * (h + gap)) / 2);
 		int x = 8;
-		String[] icons = {"shirt", "profile", "image", "friends", "info"};
+		String[] icons = {"shirt", "image", "friends", "info"};
 		for (int i = 0; i < ids.length; i++) {
 			final String id = ids[i];
 			Object b = button(x, y, w, h, labels ? I18n.tr("menus.pause." + id) : "", new Runnable() {
@@ -694,8 +693,6 @@ public final class VanillaMenus {
 		switch (id) {
 			case "wardrobe":
 				return MenuScreens.wardrobe(parent) != null;
-			case "accounts":
-				return AccountsScreen.available();
 			case "friends":
 				return MenuScreens.friendsAvailable();
 			case "serverInfo":
@@ -710,9 +707,6 @@ public final class VanillaMenus {
 		switch (id) {
 			case "wardrobe":
 				next = MenuScreens.wardrobe(parent);
-				break;
-			case "accounts":
-				next = AccountsScreen.available() ? AccountsScreen.create(parent) : null;
 				break;
 			case "clips":
 				next = MenuScreens.clips(parent);

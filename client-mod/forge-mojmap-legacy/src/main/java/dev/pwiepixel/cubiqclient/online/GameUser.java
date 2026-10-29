@@ -22,6 +22,6 @@ public final class GameUser {
 		*///?} else {
 		String uuid = user.getUuid();
 		//?}
-		return new SessionData(uuid, user.getName(), user.getAccessToken(), null);
+		return new SessionData(uuid, user.getName(), user.getAccessToken());
 	}
 }

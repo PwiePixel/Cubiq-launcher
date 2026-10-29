@@ -159,7 +159,7 @@ class WardrobeServiceTest {
 
 		@Override
 		public SessionData session() {
-			return new SessionData(uuid, "Tester", "mc-access-token-123", null);
+			return new SessionData(uuid, "Tester", "mc-access-token-123");
 		}
 
 		@Override

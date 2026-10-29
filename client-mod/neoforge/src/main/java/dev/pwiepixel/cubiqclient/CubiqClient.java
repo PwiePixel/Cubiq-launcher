@@ -183,10 +183,7 @@ public final class CubiqClient {
 		// Cubiq API (Abzeichen, Cubiq-Umhänge, Presence) + Umhang-Physik; nichts davon blockiert den Start.
 		dev.pwiepixel.cubiqclient.online.OnlineHooks.init(FMLPaths.CONFIGDIR.get(), modules, modVersion(MOD_ID),
 				modVersion("minecraft"), "neoforge", message -> LOGGER.info(message));
-		// Konten: Wechsel ohne Neustart (mit Cubiq Launcher dessen Konten, sonst eigene Anmeldung je Instanz).
-		dev.pwiepixel.cubiqclient.core.account.AccountManager.init(new dev.pwiepixel.cubiqclient.online.SessionSwap(
-				FMLPaths.CONFIGDIR.get(), "Cubiq-Client/" + modVersion(MOD_ID) + " (Minecraft " + modVersion("minecraft") + "; neoforge)", message -> LOGGER.info(message)));
-		// Sitzung des laufenden Spiels (nur lesen) für Garderobe und Fehlerberichte.
+		// Sitzung, mit der das Spiel gestartet wurde (nur lesen – keine Anmeldung, kein Kontowechsel im Spiel).
 		dev.pwiepixel.cubiqclient.core.account.CurrentSession.init(FMLPaths.CONFIGDIR.get(), "Cubiq-Client/" + modVersion(MOD_ID) + " (Minecraft " + modVersion("minecraft") + "; neoforge)",
 				dev.pwiepixel.cubiqclient.online.GameUser::current, message -> LOGGER.info(message));
 		// Bug melden (Cubiq-Menü): Mod-Liste, Log und Screenshots aus dem Spielordner, Senden über die Cubiq API.
