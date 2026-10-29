@@ -4099,10 +4099,14 @@
       "toasts": {
         "on": "„{name}“ sitzen auf deinem Rücken",
         "off": "Flügel abgelegt"
-      },
-      "states": "Flügel:",
+      }
+    },
+    "wear": {
+      "states": "Bewegung:",
       "state": {
-        "idle": "Am Boden",
+        "idle": "Stehen",
+        "walk": "Laufen",
+        "jump": "Springen",
         "air": "In der Luft",
         "sneak": "Schleichen"
       }

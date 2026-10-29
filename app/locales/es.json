@@ -4099,10 +4099,14 @@
       "toasts": {
         "on": "«{name}» van en tu espalda",
         "off": "Alas quitadas"
-      },
-      "states": "Alas:",
+      }
+    },
+    "wear": {
+      "states": "Movimiento:",
       "state": {
-        "idle": "En el suelo",
+        "idle": "Quieto",
+        "walk": "Caminando",
+        "jump": "Saltando",
         "air": "En el aire",
         "sneak": "Agachado"
       }

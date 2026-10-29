@@ -4099,10 +4099,14 @@
       "toasts": {
         "on": "“{name}” are on your back",
         "off": "Wings taken off"
-      },
-      "states": "Wings:",
+      }
+    },
+    "wear": {
+      "states": "Movement:",
       "state": {
         "idle": "Standing",
+        "walk": "Walking",
+        "jump": "Jumping",
         "air": "In the air",
         "sneak": "Sneaking"
       }

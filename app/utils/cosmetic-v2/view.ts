@@ -36,8 +36,9 @@ export interface CosmeticInstance {
   root: THREE.Group
   /**
    * Pose, Streifen-Bilder und Höfe zur Wanduhr `timeMs` setzen. `state` = Zustand für
-   * Zustands-Animationen (idle/air/sneak, §7; Begleiter am Boden idle/walk/slide/swim/air) mit
-   * 250 ms Überblenden; ohne Angabe idle. `poseMs` = eigene Pose-Zeit des Zustands, falls nicht `timeMs`
+   * Zustands-Animationen (getragene Teile idle/walk/jump/air/sneak, §7; Begleiter am Boden idle/walk/slide/swim/air …)
+   * mit 250 ms Überblenden; fehlt dem Modell die Animation, läuft ihr Rückfall (`resolveDriver`), ohne Angabe idle.
+   * `poseMs` = eigene Pose-Zeit des Zustands, falls nicht `timeMs`
    * (Begleiter: `grab` ab dem Klick, siehe `petPoseTime`). `action` = laufende Aktion eines Begleiters
    * (Streicheln/Füttern) mit eigener Zeit seit dem Auslösen: ersetzt die Zustands-Pose, solange sie läuft; ein
    * Modell ohne diese Aktion übergeht sie. Leucht-Bilder und Höfe bleiben immer auf `timeMs`.
