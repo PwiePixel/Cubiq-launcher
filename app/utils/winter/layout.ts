@@ -96,6 +96,11 @@ export interface WinterLayoutOptions {
   anchor?: { left: number; top: number; right: number } | null
   /** Waagrechte Mitte der Hauptinsel ohne Anker, 0…1 (Standard 0,72 – links stehen Schrift und Knöpfe). */
   heroX?: number
+  /**
+   * Nur der Himmel (ruhiger Hintergrund hinter Seiten): dieselben Sterne und Polarlicht-Bänder wie die volle Szene,
+   * aber keine Inseln und kein Wolkenmeer. Nur im Launcher – der Cubiq Client kennt das nicht.
+   */
+  sky?: boolean
 }
 
 /** Bildschirm-Lage der oberen Spitze eines Würfels relativ zur Insel (a ist gerade). */
@@ -243,6 +248,11 @@ export function buildWinterLayout(o: WinterLayoutOptions): WinterLayout {
   // Wolkenmeer: die ferne Bank höher, mit kleineren Buckeln und still; die nahe treibt langsam.
   const cloudFar = cloudBank(w, h * 0.82, Math.max(3, h * 0.05), 0, rand)
   const cloudNear = cloudBank(w, h * 0.91, Math.max(4, h * 0.08), 0.5, rand)
+  if (o.sky) {
+    // Nur Himmel: die Bänke liegen ganz unter dem Bild (der Horizont ist der untere Rand), Inseln gibt es keine.
+    const below = (bank: CloudBank): CloudBank => ({ top: new Int16Array(w).fill(h), drift: bank.drift })
+    return { w, h, seed, stars, ribbons, islands: [], cloudFar: below(cloudFar), cloudNear: below(cloudNear) }
+  }
 
   const islands: Island[] = []
   const half = clamp(round(Math.min(h / 30, w / 70)), 2, 7)

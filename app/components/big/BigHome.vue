@@ -13,6 +13,13 @@ const featured = computed(() => instances.items[0] ?? null)
 const game = computed(() => (featured.value ? games.state(featured.value.id) : null))
 const recent = computed(() => instances.items.slice(1, 5))
 const showPlayTime = computed(() => settings.current?.ui.showPlayTime !== false)
+// Polarlicht: kein erzeugtes Titelbild über der Szene im Hintergrund (wie auf der Bühne der Startseite) – nur ein
+// eigenes Banner der Instanz; sonst hält ein Schleier die große Schrift lesbar.
+const design = useDesign()
+const events = useEventsStore()
+const heroArt = computed(
+  () => !!featured.value && (design.value !== 'winter' || events.lookHalloween || instanceBannerSrc(featured.value) !== null),
+)
 
 const router = useRouter()
 const curseforge = useCurseForgeStore()
@@ -34,7 +41,8 @@ function openPack(p: FeaturedPack) {
 <template>
   <div class="space-y-12">
     <section v-if="featured" class="hero" :data-instance="featured.id" :aria-label="t('home.lastPlayed', { name: featured.name })">
-      <InstanceBanner :instance="featured" shade="full" class="hero-banner" />
+      <InstanceBanner v-if="heroArt" :instance="featured" shade="full" class="hero-banner" />
+      <div v-else class="hero-veil" aria-hidden="true" />
       <div class="relative flex flex-wrap items-end gap-x-10 gap-y-8 p-10">
         <InstanceIcon :instance="featured" :size="144" class="shrink-0 ring-4 ring-base-900" />
         <div class="min-w-0 flex-1">
@@ -123,6 +131,29 @@ function openPack(p: FeaturedPack) {
   z-index: -1;
   width: 100%;
   height: 100%;
+}
+/* Polarlicht ohne eigenes Banner: der Himmel des Hintergrunds scheint durch, links dichter für die Schrift. */
+.hero-veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-base-950) 78%, transparent) 0%, color-mix(in srgb, var(--color-base-950) 45%, transparent) 60%, color-mix(in srgb, var(--color-base-950) 20%, transparent) 100%),
+    linear-gradient(0deg, color-mix(in srgb, var(--color-base-950) 70%, transparent) 0%, transparent 60%);
+}
+/* Polarlicht: Saum aus Pixel-Schnee oben auf der großen Karte, zwischen den runden Ecken. */
+:root[data-design="winter"]:not([data-event="halloween"]) .hero::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: var(--winter-lip-height);
+  background: var(--winter-lip) 0 0 / var(--winter-lip-size) repeat-x;
+  opacity: 0.8;
+  filter: drop-shadow(0 1px 1px rgb(var(--shadow-rgb) / 0.35));
+  pointer-events: none;
 }
 /* Der Spielen-Knopf der Startseite (grüne Pille), für den Fernseher vergrößert. */
 .hero-play :deep(.play) {

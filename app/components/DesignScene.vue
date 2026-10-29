@@ -8,6 +8,8 @@ const props = defineProps<{
   progress?: number
   anchor?: HTMLElement | null
   fill?: boolean
+  /** Polarlicht: nur der Himmel (Seiten-Hintergrund) – die anderen Szenen bleiben wie sie sind. */
+  sky?: boolean
   seed?: number
   /** Standbild statt Animation (Einstellung „Animierter Hintergrund“ aus). */
   still?: boolean
@@ -26,7 +28,7 @@ const moonnight = computed(() => events.lookHalloween && !props.noEvent)
   <MoonnightScene v-if="moonnight" :seed="seed" :still="still" :bolts="bolts">
     <slot />
   </MoonnightScene>
-  <WinterScene v-else-if="design === 'winter'" :mode="mode" :progress="progress" :anchor="anchor" :fill="fill" :seed="seed" :still="still">
+  <WinterScene v-else-if="design === 'winter'" :mode="mode" :progress="progress" :anchor="anchor" :fill="fill" :sky="sky" :seed="seed" :still="still">
     <slot />
   </WinterScene>
   <CubiqScene v-else :mode="mode" :progress="progress" :anchor="anchor" :fill="fill" :seed="seed" :still="still">

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { accentAfterSwitch, designAccent, DESIGN_HINT, designs, normalizeDesign, writeDesign } from '../app/utils/design'
 import { uiSettingsSchema } from '../app/utils/schemas'
+import { WINTER_MAX_COLS, WINTER_MAX_ROWS, winterTexel } from '../app/utils/winter/canvas'
 import { auroraLevel, buildWinterLayout, pineTiers, pineTops, voxelX, voxelY, WINTER_SEED } from '../app/utils/winter/layout'
 import { between, checksum, glide, hash, light, over, sequence, wave } from '../app/utils/winter/math'
-import { WinterPainter } from '../app/utils/winter/painter'
+import { paintSky, WinterPainter } from '../app/utils/winter/painter'
 import { AURORA_COLORS, buildWinterPalette, type WinterVariant } from '../app/utils/winter/palette'
 import { WinterSnow } from '../app/utils/winter/snow'
 
@@ -124,6 +125,53 @@ describe('Szene „Polarlicht“', () => {
     const hero = L.islands.find((i) => i.depth === 2)!
     expect(Math.abs(hero.ox + (hero.x0 + hero.x1) / 2 - 420)).toBeLessThanOrEqual(1)
     expect(hero.oy + hero.y1).toBe(125)
+  })
+
+  it('Seiten-Hintergrund: nur der Himmel – dieselben Sterne und Bänder, keine Inseln, kein Wolkenmeer', () => {
+    const full = buildWinterLayout({ cols: 343, rows: 247, seed: WINTER_SEED })
+    const sky = buildWinterLayout({ cols: 343, rows: 247, seed: WINTER_SEED, sky: true })
+    expect([sky.w, sky.h]).toEqual([full.w, full.h])
+    expect(sky.stars).toEqual(full.stars)
+    expect(sky.ribbons).toEqual(full.ribbons)
+    expect(full.islands.length).toBeGreaterThan(0)
+    expect(sky.islands).toEqual([])
+    for (const bank of [sky.cloudFar, sky.cloudNear]) expect([...bank.top].every((top) => top === sky.h)).toBe(true)
+    // Gemalt: der Grund ist der reine Himmel (keine Wolkenbank), darüber nur Sterne und – mit Stärke – das Polarlicht.
+    const palette = buildWinterPalette('dark')
+    const painter = new WinterPainter(sky, palette)
+    expect(checksum(painter.backdrop)).toBe(checksum(paintSky(sky, palette)))
+    const calm = new Uint32Array(sky.w * sky.h)
+    const lit = new Uint32Array(sky.w * sky.h)
+    painter.compose(calm, { tick: 0, seconds: 20, level: 0, moving: true, snow: null })
+    painter.compose(lit, { tick: 0, seconds: 20, level: 1, moving: true, snow: null })
+    const stars = new Set(sky.stars.map((s) => s.y * sky.w + s.x))
+    let changed = 0
+    let foreign = 0
+    for (let i = 0; i < calm.length; i++) {
+      if (!stars.has(i) && calm[i] !== painter.backdrop[i]) foreign++
+      if (lit[i] !== calm[i]) changed++
+    }
+    expect(foreign).toBe(0)
+    expect(changed).toBeGreaterThan(1500)
+    // Die volle Szene bleibt unverändert (Prüfsummen unten, gleich wie im Spiel).
+    expect(buildWinterLayout({ cols: 343, rows: 247, seed: WINTER_SEED, sky: false })).toEqual(full)
+  })
+
+  it('Texel: ganze Gerätepixel und nie mehr als 640 × 400 – große Fenster werden gröber statt teurer', () => {
+    expect([WINTER_MAX_COLS, WINTER_MAX_ROWS]).toEqual([640, 400])
+    expect(winterTexel(1280, 800, 1)).toBe(3)
+    expect(winterTexel(2560, 1440, 1)).toBe(4)
+    expect(winterTexel(1280, 800, 2)).toBe(3)
+    for (const [w, h] of [[300, 90], [1030, 740], [1280, 800], [1920, 1080], [2560, 1440], [3840, 2160], [7680, 4320]] as const) {
+      for (const dpr of [1, 1.25, 1.5, 2, 3]) {
+        const texel = winterTexel(w, h, dpr)
+        expect(Math.ceil(w / texel - 1e-9), `${w}x${h} @${dpr}`).toBeLessThanOrEqual(WINTER_MAX_COLS)
+        expect(Math.ceil(h / texel - 1e-9), `${w}x${h} @${dpr}`).toBeLessThanOrEqual(WINTER_MAX_ROWS)
+        const device = texel * dpr
+        expect(Math.abs(device - Math.round(device)), `${w}x${h} @${dpr}`).toBeLessThan(1e-9)
+        expect(device).toBeGreaterThanOrEqual(2)
+      }
+    }
   })
 
   it('kommt mit kleinen Flächen zurecht (Leer-Zustände, Titelbilder)', () => {

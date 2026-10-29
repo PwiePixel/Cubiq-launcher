@@ -12,7 +12,7 @@ const scene = computed(() => animated.value || events.lookHalloween)
 <template>
   <div class="big-root relative h-full min-h-0 flex-1 overflow-hidden bg-base-950">
     <div v-if="scene" class="big-scene" aria-hidden="true">
-      <DesignScene fill :still="!animated" />
+      <DesignScene fill sky :still="!animated" />
     </div>
     <div class="big-shade" aria-hidden="true" />
     <slot />
