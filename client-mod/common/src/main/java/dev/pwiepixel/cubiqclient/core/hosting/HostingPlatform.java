@@ -124,11 +124,6 @@ public interface HostingPlatform {
 	/** Ins Spiel-Log (nie Tokens). */
 	void log(String message);
 
-	/**
-	 * Nur Entwicklung/Autotest: Server ohne Mojang-Anmeldung (Test-Konten ohne echte Sitzung). Im normalen Spiel
-	 * immer false.
-	 */
-	default boolean offlineTest() {
-		return Boolean.getBoolean("cubiqclient.hosting.offline");
-	}
+	// Bewusst ohne Schalter, der die Mojang-Anmeldung des Servers abschaltet: Gäste einer gehosteten Welt melden sich
+	// immer an (online-mode), in jedem Build – auch nicht für Tests per System-Property.
 }
