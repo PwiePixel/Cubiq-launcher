@@ -1612,8 +1612,20 @@ function frostTwinkle(c, f, { x, y, phase, most = 3 }) {
   c.draw(s, x - (s.w >> 1), y - (s.h >> 1))
 }
 
-/** Cubis Augen beim Zuschauen (je 2 × 3 wie im Sprite): zum Fuchs nach rechts unten, zum Schneemännchen nach links oben. */
-const WINTER_EYES = { fox: CARE.eyes.fox, foxHalf: CARE.eyes.foxHalf, snowman: CARE.eyes.fish, snowmanHalf: CARE.eyes.fishHalf, shut: CARE.eyes.shut }
+/**
+ * Cubis Augen beim Zuschauen, je 2 × 3 Punkte wie im Sprite (gezeichnet auf seine Augenfelder): zum Fuchs nach rechts
+ * unten (wie im Sprite), zum Schneemännchen nach links oben; halb offen (`…Half`, das Lid deckt noch die obere Reihe)
+ * und zu (`shut`, Strich unten wie beim Blinzeln). Eine eigene Tabelle – die Szene hängt an keiner anderen.
+ */
+const WINTER_EYES = Object.fromEntries(
+  Object.entries({
+    fox: ['WW', 'WK', 'WK'],
+    foxHalf: ['GG', 'WK', 'WK'],
+    snowman: ['KW', 'KW', 'WW'],
+    snowmanHalf: ['GG', 'KW', 'WW'],
+    shut: ['GG', 'GG', 'KK'],
+  }).map(([k, rows]) => [k, sprite(rows, { W: C.eye, K: C.pupil, G: C.cubi })]),
+)
 /** Lidschläge: ab Bild 10 schaut Cubi zum Schneemännchen, ab Bild 26 wieder zum Fuchs (beide Male, während er steht). */
 const WINTER_LOOK = [10, 26]
 
