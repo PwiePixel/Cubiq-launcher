@@ -1567,11 +1567,12 @@ function snowFox(f, n, x) {
 }
 
 /**
- * Leiser Schneefall hinter allem: kleine Flocken (1 Punkt) sinken einen halben Punkt je Bild, größere (2 × 2) einen
- * ganzen – beide wiederholen sich in ihrer Spalte, so ist die Schleife nahtlos. Sie wiegen sich sanft hin und her und
- * bleiben einen Punkt vom Bildrand weg.
+ * Leiser Schneefall hinter allem (Ebene `back` der Szene „snowfox“, Bild f von n): kleine Flocken (1 Punkt) sinken
+ * einen halben Punkt je Bild, größere (2 × 2) einen ganzen – beide wiederholen sich in ihrer Spalte, so ist die Schleife
+ * nahtlos (Bild n gleicht Bild 0). Sie wiegen sich sanft hin und her und bleiben einen Punkt vom Bildrand weg.
+ * Exportiert, damit die Tests die Naht des Schnees für sich prüfen können.
  */
-function gentleSnow(f, n) {
+export function gentleSnow(f, n) {
   const c = layer()
   // Größere Flocken nur links und rechts der Mütze – über ihr sähen sie aus wie ein zweiter Bommel
   const far = [[4, 3], [13, 11], [21, 6], [30, 14], [38, 2], [47, 9], [55, 13], [60, 5]]

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { inflateSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_TOPIC, FRAMES, SPECIAL_TOPICS, TOPICS, pickTopic, releaseArt, releaseFrames, seedFor } from '../scripts/release-art.mjs'
+import { DEFAULT_TOPIC, FRAMES, SPECIAL_TOPICS, TOPICS, gentleSnow, pickTopic, releaseArt, releaseFrames, seedFor } from '../scripts/release-art.mjs'
 import { Canvas, encodeApng, encodePng, sprite, upscale } from '../scripts/pixel-art.mjs'
 import { versionSeed } from '../app/utils/changelog'
 
@@ -141,8 +141,9 @@ function cubiEyes(frame: Canvas) {
   return { eyes, mid: [left + 7.5, top + 5] as const }
 }
 
-// Ganze Szenen zeichnen und als APNG packen dauert unter Last länger als die 5 s, die vitest sonst jedem Test gibt.
-describe('Bild je Release', { timeout: 60_000 }, () => {
+// Die Szenen werden Bild für Bild gezeichnet und geprüft: Unter Last (alle Testdateien parallel) dauert ein Test
+// mehrere Sekunden – mehr Zeit als die üblichen 5 s, damit nichts nur wegen der Last scheitert.
+describe('Bild je Release', { timeout: 30_000 }, () => {
   it('wählt das Thema nach dem Text – fette Überschriften zählen mehr', () => {
     expect(pickTopic('- **Cubiq Launcher is here.** The first version.').id).toBe('launch')
     expect(pickTopic('- **Reduced animations in the launcher also calm the Cubiq Client.**').id).toBe('motion')
@@ -548,7 +549,8 @@ describe('Bild je Release', { timeout: 60_000 }, () => {
     expect(colorsOf(frames[10]!, 0, 10)).toContain('#71a330')
   })
 
-  it('Sonderthema „snowfox“ (0.3.5): Cubi mit Zipfelmütze, Schneefuchs und Schneemännchen im leisen Schnee – nahtlos, scharf, ganz im Bild', () => {
+  // Der schwerste Test der Szene: zeichnet sie für fünf Versionen und packt das APNG – eigene, großzügige Zeit.
+  it('Sonderthema „snowfox“ (0.3.5): Cubi mit Zipfelmütze, Schneefuchs und Schneemännchen im leisen Schnee – nahtlos, scharf, ganz im Bild', { timeout: 60_000 }, () => {
     // Nur auf Wunsch (`--topic`): ein Wintertext bekommt das allgemeine Winter-Motiv (Schneemann), nie diese Szene.
     expect(pickTopic(WINTER_FRIENDS_TEXT).id).toBe('winter')
     expect(TOPICS.map((t) => t.id)).not.toContain('snowfox')
@@ -587,8 +589,9 @@ describe('Bild je Release', { timeout: 60_000 }, () => {
     for (const version of ['0.1.0', '0.9.3', '1.0.0', '2.7.11']) {
       for (const frame of releaseFrames(version, 'snowfox').frames) expect(atEdge(frame).filter((p) => !p.endsWith(',63'))).toEqual([])
     }
-    // Nahtlos: Jedes Bild unterscheidet sich vom nächsten (kein Stillstand), und vom letzten zurück zum ersten ändert sich
-    // nicht mehr als bei einem gewöhnlichen Schritt – auch der Schnee springt an der Naht nicht.
+    // Nahtlos im Großen: Jedes Bild unterscheidet sich vom nächsten (kein Stillstand), und vom letzten zurück zum ersten
+    // ändert sich nicht mehr als bei einem gewöhnlichen Schritt. Den Schnee prüft ein eigener Test Flocke für Flocke –
+    // ein Sprung weniger Punkte fiele in dieser Summe nicht auf.
     const changed = (a: Canvas, b: Canvas) => {
       let n = 0
       for (let i = 0; i < a.data.length; i += 4) if (a.data.subarray(i, i + 4).some((v, k) => v !== b.data[i + k])) n++
@@ -654,7 +657,7 @@ describe('Bild je Release', { timeout: 60_000 }, () => {
   it('Sonderthema „snowfox“: Cubi schaut zum Fuchs und zum Schneemännchen – Augen wie im Sprite, jeder Blickwechsel hinter einem Lidschlag', () => {
     const { frames } = releaseFrames('0.3.5', 'snowfox')
     const n = frames.length
-    const faces = frames.map(cubiEyes)
+    const faces = frames.map((frame) => cubiEyes(frame))
     // Beide Augen immer gleich und je 2 × 3 Punkte auf den Augen-Zellen des Sprites (x + 3 und x + 10): links und rechts
     // daneben weder Augenweiß noch Pupille – keine dritte Spalte.
     faces.forEach(({ eyes, mid }, f) => {
@@ -699,6 +702,33 @@ describe('Bild je Release', { timeout: 60_000 }, () => {
       expect(after.pattern.startsWith('··/')).toBe(true)
       expect(open).toMatchObject({ white: 4, x: after.x })
     }
+  })
+
+  it('Sonderthema „snowfox“: Der Schnee fällt stetig – keine Flocke springt, auch nicht an der Naht', () => {
+    const n = 32
+    // Die Ebene hinter allem für sich: Nach einer ganzen Schleife (Bild n) liegt jede Flocke wieder genau da, wo sie in
+    // Bild 0 lag.
+    const snow = Array.from({ length: n + 1 }, (_, f) => gentleSnow(f, n))
+    expect(Buffer.from(snow[n]!.data).equals(Buffer.from(snow[0]!.data))).toBe(true)
+    // Von Bild zu Bild – auch vom letzten zum ersten – sinkt jede Flocke höchstens einen Punkt und wiegt sich höchstens
+    // einen zur Seite: Jeder Punkt Schnee hat einen Vorgänger knapp darüber und einen Nachfolger knapp darunter. Nur oben
+    // kommen Flocken herein (Zeile 1–2), nur unten gehen sie hinaus (Zeile 61–62).
+    const points = (c: Canvas) => {
+      const out: [number, number][] = []
+      for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) if (c.get(x, y)) out.push([x, y])
+      return out
+    }
+    const near = (c: Canvas, x: number, y: number, rows: number[]) => rows.some((dy) => [-1, 0, 1].some((dx) => c.get(x + dx, y + dy)))
+    for (let f = 0; f < n; f++) {
+      const [a, b] = [snow[f]!, snow[f + 1]!]
+      expect(points(a).length).toBeGreaterThan(20)
+      expect([f, points(b).filter(([x, y]) => y > 2 && !near(a, x, y, [-1, 0]))]).toEqual([f, []])
+      expect([f, points(a).filter(([x, y]) => y < 61 && !near(b, x, y, [0, 1]))]).toEqual([f, []])
+    }
+    // Die Szene zeichnet genau diese Ebene hinter allem: Wo Schnee fällt, ist das Bild nie leer.
+    releaseFrames('0.3.5', 'snowfox').frames.forEach((frame, f) => {
+      expect([f, points(snow[f]!).filter(([x, y]) => !frame.get(x, y))]).toEqual([f, []])
+    })
   })
 
   it('nutzt denselben Startwert wie die Szenen im Launcher', () => {
