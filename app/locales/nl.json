@@ -56,7 +56,8 @@
       "gameVersion": "Spelversie",
       "loader": "Modloader"
     },
-    "memoryHigh": "Minecraft heeft zelden meer dan 8–12 GB nodig. Te veel RAM maakt de garbage collection trager en kan het starten van Java verhinderen als andere programma's geheugen gebruiken."
+    "memoryHigh": "Minecraft heeft zelden meer dan 8–12 GB nodig. Te veel RAM maakt de garbage collection trager en kan het starten van Java verhinderen als andere programma's geheugen gebruiken.",
+    "notOfficial": "Geen officieel Minecraft-product. Niet goedgekeurd door of verbonden met Mojang of Microsoft."
   },
   "language": {
     "title": "Taal",

@@ -438,6 +438,7 @@ onBeforeUnmount(() => {
               <button class="btn btn-ghost h-11 px-5" @click="next">{{ t('common.actions.later') }}</button>
             </template>
           </div>
+          <NotOfficialNotice class="mt-6 max-w-lg" />
         </div>
 
         <!-- 3 · Importieren -->

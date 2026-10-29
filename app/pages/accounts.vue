@@ -143,6 +143,8 @@ async function confirmRemove() {
       {{ t('mobile.accountsPage.browser') }}
     </button>
 
+    <NotOfficialNotice class="mt-6" />
+
     <BaseDialog v-if="login" :title="t('accounts.login.signInMicrosoft')" @close="cancel">
       <template v-if="login.mode === 'browser'">
         <p class="text-sm text-base-200">{{ t('accounts.login.browserOpened') }}</p>

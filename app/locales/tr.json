@@ -56,7 +56,8 @@
       "gameVersion": "Oyun sürümü",
       "loader": "Mod yükleyici"
     },
-    "memoryHigh": "Minecraft nadiren 8–12 GB'tan fazlasına ihtiyaç duyar. Çok fazla RAM çöp toplamayı yavaşlatır ve diğer programlar bellek kullanırken Java'nın başlamasını engelleyebilir."
+    "memoryHigh": "Minecraft nadiren 8–12 GB'tan fazlasına ihtiyaç duyar. Çok fazla RAM çöp toplamayı yavaşlatır ve diğer programlar bellek kullanırken Java'nın başlamasını engelleyebilir.",
+    "notOfficial": "Resmi bir Minecraft ürünü değildir. Mojang veya Microsoft tarafından onaylanmamıştır ve onlarla bağlantılı değildir."
   },
   "language": {
     "title": "Dil",

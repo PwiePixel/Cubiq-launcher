@@ -56,7 +56,8 @@
       "gameVersion": "Game version",
       "loader": "Mod loader"
     },
-    "memoryHigh": "Minecraft rarely needs more than 8–12 GB. Too much RAM makes garbage collection slower and can stop Java from starting when other programs use memory."
+    "memoryHigh": "Minecraft rarely needs more than 8–12 GB. Too much RAM makes garbage collection slower and can stop Java from starting when other programs use memory.",
+    "notOfficial": "Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft."
   },
   "language": {
     "title": "Language",

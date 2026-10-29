@@ -56,7 +56,8 @@
       "gameVersion": "Wersja gry",
       "loader": "Mod loader"
     },
-    "memoryHigh": "Minecraft rzadko potrzebuje więcej niż 8–12 GB. Za dużo RAM spowalnia odśmiecanie pamięci i może uniemożliwić start Javy, gdy inne programy zajmują pamięć."
+    "memoryHigh": "Minecraft rzadko potrzebuje więcej niż 8–12 GB. Za dużo RAM spowalnia odśmiecanie pamięci i może uniemożliwić start Javy, gdy inne programy zajmują pamięć.",
+    "notOfficial": "To nie jest oficjalny produkt Minecraft. Nie jest zatwierdzony przez Mojang ani Microsoft i nie jest z nimi powiązany."
   },
   "language": {
     "title": "Język",

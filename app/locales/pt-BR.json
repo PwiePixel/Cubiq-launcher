@@ -56,7 +56,8 @@
       "gameVersion": "Versão do jogo",
       "loader": "Mod loader"
     },
-    "memoryHigh": "O Minecraft raramente precisa de mais de 8–12 GB. RAM demais deixa a coleta de lixo mais lenta e pode impedir o Java de iniciar quando outros programas usam memória."
+    "memoryHigh": "O Minecraft raramente precisa de mais de 8–12 GB. RAM demais deixa a coleta de lixo mais lenta e pode impedir o Java de iniciar quando outros programas usam memória.",
+    "notOfficial": "Não é um produto oficial do Minecraft. Não é aprovado pela Mojang nem pela Microsoft, nem associado a elas."
   },
   "language": {
     "title": "Idioma",

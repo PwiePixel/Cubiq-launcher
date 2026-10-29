@@ -41,3 +41,28 @@ describe('Microsoft-Anmeldung nicht freigegeben', () => {
     expect(read('app/components/SignInUnavailable.vue')).toContain("t('accounts.login.notApprovedHint')")
   })
 })
+
+describe('Hinweis „kein offizielles Minecraft-Produkt“', () => {
+  it('steht in allen Sprachen – auf Englisch im Wortlaut der Nutzungsrichtlinien', () => {
+    expect(load('en').common.notOfficial).toBe('Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.')
+    expect(load('de').common.notOfficial).toBe('Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.')
+    expect(load('es').common.notOfficial).toBe('No es un producto oficial de Minecraft. No está aprobado por Mojang ni Microsoft ni asociado con ellos.')
+    for (const locale of supportedLocales) {
+      const text = load(locale).common.notOfficial
+      for (const name of ['Minecraft', 'Mojang', 'Microsoft']) expect(text, `${locale}: ${name}`).toContain(name)
+    }
+  })
+
+  it('in den Einstellungen (bei der Version) und bei jeder Anmeldung', () => {
+    expect(read('app/components/NotOfficialNotice.vue')).toContain("t('common.notOfficial')")
+    const settings = read('app/components/AppSettingsDialog.vue')
+    const footer = settings.slice(settings.indexOf('<template #nav-footer>'), settings.indexOf('</template>', settings.indexOf('<template #nav-footer>')))
+    expect(footer).toContain('Cubiq Launcher v{{ info.version }}')
+    expect(footer).toContain('<NotOfficialNotice')
+    for (const file of ['app/pages/accounts.vue', 'app/components/OnboardingWizard.vue']) expect(read(file), file).toContain('<NotOfficialNotice')
+    // Im Assistenten im Schritt „Anmelden“.
+    const wizard = read('app/components/OnboardingWizard.vue')
+    const login = wizard.slice(wizard.indexOf(`step === 'login'`), wizard.indexOf(`step === 'import'`))
+    expect(login).toContain('<NotOfficialNotice')
+  })
+})

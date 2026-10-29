@@ -56,7 +56,8 @@
       "gameVersion": "Spielversion",
       "loader": "Modloader"
     },
-    "memoryHigh": "Minecraft braucht selten mehr als 8–12 GB. Zu viel RAM macht die Speicherbereinigung langsamer und kann den Start verhindern, wenn andere Programme Speicher belegen."
+    "memoryHigh": "Minecraft braucht selten mehr als 8–12 GB. Zu viel RAM macht die Speicherbereinigung langsamer und kann den Start verhindern, wenn andere Programme Speicher belegen.",
+    "notOfficial": "Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden."
   },
   "language": {
     "title": "Sprache",
