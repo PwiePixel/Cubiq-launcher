@@ -185,6 +185,13 @@ public final class NewSince {
 	 * Begleiter am Boden.
 	 */
 	public static final String PET_INTERACT = "0.24.0";
+	/**
+	 * Winter 2026 „Winterfreunde“ (Cubiq Client 0.24.0): fünf Winter-Emotes; Hut, Begleiter am Kopf und Flügel folgen
+	 * Laufen und Springen.
+	 */
+	public static final String WINTER_2026 = "0.24.0";
+	/** Garderobe → Emotes: Schneeballwurf, Bibbern, Hände wärmen, Freudensprung, Fäustlings-Winken. */
+	public static final String WARDROBE_WINTER_EMOTES = "wardrobe:winterEmotes";
 
 	private static final Map<String, String> SINCE = new LinkedHashMap<String, String>();
 	/** Zusatzbereiche je Modul (Modul-ID → Einträge). */
@@ -276,6 +283,8 @@ public final class NewSince {
 		add(MAPS_4, "minimap.style");
 		// Begleiter per Rechtsklick streicheln/füttern (Schalter in Cubiq Online).
 		add(PET_INTERACT, "cubiqOnline.petInteract");
+		// Winter 2026: fünf neue Emotes in der Garderobe.
+		add(WINTER_2026, WARDROBE_WINTER_EMOTES);
 	}
 
 	private NewSince() {

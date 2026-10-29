@@ -650,7 +650,7 @@ public final class TitleUi extends UiScreen {
 		}
 		Icons.draw(c, "shirt", accX + 5, accY + dy + 4, 1, on ? t.accentText : t.textDim);
 		if (isNew(NewSince.MENU_WARDROBE) || isNew(NewSince.WARDROBE_COSMETICS) || isNew(NewSince.WARDROBE_COMPANION)
-				|| unseenOffers()) NewBadge.dot(c, accX + accW - 7, accY + dy + 2);
+				|| isNew(NewSince.WARDROBE_WINTER_EMOTES) || unseenOffers()) NewBadge.dot(c, accX + accW - 7, accY + dy + 2);
 		String lbl = c.clip(accountLabel, accW - 20);
 		labels.add(new Label(lbl, accX + 16 + (accW - 18 - c.textWidth(lbl)) / 2, accY + dy + 4, seasonal ? t.text : Paint.secondaryText(accHover), false));
 		press(c, accX, accY, accW, 16, accFlash);
@@ -765,7 +765,8 @@ public final class TitleUi extends UiScreen {
 			}
 			boolean isNew = isNew(b.newId)
 					|| ((NewSince.MENU_SOCIAL.equals(b.newId) || NewSince.MENU_WARDROBE.equals(b.newId)) && unseenOffers())
-					|| (NewSince.MENU_WARDROBE.equals(b.newId) && (isNew(NewSince.WARDROBE_COSMETICS) || isNew(NewSince.WARDROBE_COMPANION)));
+					|| (NewSince.MENU_WARDROBE.equals(b.newId) && (isNew(NewSince.WARDROBE_COSMETICS) || isNew(NewSince.WARDROBE_COMPANION)
+							|| isNew(NewSince.WARDROBE_WINTER_EMOTES)));
 			if (sideMode == SIDE_FULL) {
 				Icons.draw(c, b.icon, b.x + 7, b.y + dy + (b.h - 8) / 2, 1, iconColor);
 				int room = b.w - 24;
