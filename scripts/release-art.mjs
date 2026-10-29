@@ -1077,10 +1077,11 @@ function cubiArm(c, sx, sy, hx, hy, hand = 3) {
 function caringCubi(f, x, { eyes, feed, pet, lift = 0 }) {
   const c = layer()
   const top = GROUND - 13 - lift
-  // Ärmchen zuerst: sie kommen hinter dem Körper hervor. Das rechte setzt so hoch an, dass es oberhalb der Augen des
-  // Füchschens zu seinem Kopf reicht – sonst läge sein Umriss auf der Augenzeile und verlängerte das linke Auge.
+  // Ärmchen zuerst: sie kommen hinter dem Körper hervor. Das rechte setzt so hoch an, dass es fast waagerecht über den
+  // Kopf des Füchschens reicht: Sein Umriss stößt nirgends an dessen Augen – nicht seitlich (dann wirkte das linke Auge
+  // länger) und nicht von oben (dann verschmölze es mit dem Umriss zu einem dicken Fleck).
   cubiArm(c, x + 1, top + 2, feed[0], feed[1])
-  cubiArm(c, x + 13, top + 4, pet[0], pet[1], 2)
+  cubiArm(c, x + 13, top + 3, pet[0], pet[1], 2)
   c.draw(CUBI.body, x, top)
   for (const ex of [x + 3, x + 10]) c.draw(CUBI_EYES[eyes], ex, top + 4)
   c.draw(CUBI.feet, x, GROUND - 1)
@@ -1907,8 +1908,11 @@ const PROPS = {
     // Fisch über dem Pinguin, Cubi hält ihn an der Schwanzflosse; beim Zuschnappen ruckt er nach unten.
     const fishX = px + 4
     const fishY = GROUND - 18 + (s === 'B' ? 1 : 0)
-    // Kraulen: die Hand fährt zweimal je Schleife über den Kopf des Füchschens (sanft hin und her), Cubi geht mit.
+    // Kraulen: die Hand fährt zweimal je Schleife über den Kopf des Füchschens (sanft hin und her), Cubi geht mit. Sie
+    // liegt oben auf dem Kopf (der beginnt bei `GROUND - 10`, siehe pettedFox): Ihr Umriss deckt die angelegten Ohren,
+    // darunter bleibt eine Reihe Fell – die Augen bleiben zwei freie kurze Striche.
     const stroke = Math.round(1.5 - 1.5 * Math.cos((f / n) * 4 * Math.PI))
+    const petY = GROUND - 11
     const c = layer()
     c.draw(fedPenguin(f, px))
     // Das Füchschen geht der Hand ein Stück nach.
@@ -1919,15 +1923,15 @@ const PROPS = {
     const caring = caringCubi(f, hero, {
       eyes: gaze(f, n, LOOK_FOX, 'downRight', 'upLeft'),
       feed: [fishX + 9, fishY + 2],
-      pet: [fx + 1 + stroke, GROUND - 10],
+      pet: [fx + 1 + stroke, petY],
       lift: stroke === 3 ? 1 : 0,
     })
-    // Herzchen: alle 8 Bilder eins, steigt hoch über die Insel und treibt mal zur Mitte, mal nach außen (im ruhigen
-    // Bild ist gerade ein großes ganz zu sehen).
+    // Herzchen: alle 8 Bilder eins, ploppt knapp über der Hand auf (nicht auf ihr), steigt hoch über die Insel und
+    // treibt mal zur Mitte, mal nach außen (im ruhigen Bild ist gerade ein großes ganz zu sehen).
     const hearts = layer()
     for (let k = 0; k < 4; k++) {
       const drift = [-1, 7, -2, 5][k]
-      risingHeart(hearts, (f - k * 8 - 4 + 2 * n) % n, fx + 3, GROUND - 13, { life: 24, rise: 24, drift, big: k % 2 ? 2 : 3 })
+      risingHeart(hearts, (f - k * 8 - 4 + 2 * n) % n, fx + 3, petY - 3, { life: 24, rise: 24, drift, big: k % 2 ? 2 : 3 })
     }
     const front = hearts.outline(C.outline)
     // Krümel: Der Blitz beim Zuschnappen leuchtet vorn, die fliegenden Krümel ziehen hinter den Figuren vorbei – keiner

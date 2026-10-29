@@ -433,8 +433,10 @@ describe('Bild je Release', { timeout: 30_000 }, () => {
     expect(split).toEqual([])
   })
 
-  it('Sonderthema „petting“: Das Füchschen hat zwei gleich lange Augenstriche – Cubis Ärmchen reicht über sie hinweg', () => {
+  it('Sonderthema „petting“: Das Füchschen hat zwei gleiche, freie Augenstriche – Cubis Hand liegt oben auf seinem Kopf', () => {
     const { frames } = releaseFrames('0.3.2', 'petting')
+    // Pupille und Umriss sehen gleich dunkel aus: Stößt der Umriss des Ärmchens an ein Auge, wirkt es länger (von der
+    // Seite) oder verschmilzt zu einem dicken Fleck (von oben).
     const dark = new Set(['#18210f', '#141b18'])
     frames.forEach((frame, f) => {
       // Die Nase des Füchschens (dunkel zwischen hellen Wangen, Spalte 3 seiner Schnauzenzeile) gibt die Lage; zwei
@@ -447,15 +449,19 @@ describe('Bild je Release', { timeout: 30_000 }, () => {
       }
       expect(noses).toHaveLength(1)
       const [nx, ny] = noses[0]!
-      // Länge des dunklen Strichs (Pupille oder Umriss, die beiden sehen gleich aus) durch (x, y)
-      const dash = (x: number, y: number) => {
-        if (!dark.has(hexAt(frame, x, y) ?? '')) return 0
-        let [a, b] = [x, x]
-        while (dark.has(hexAt(frame, a - 1, y) ?? '')) a--
-        while (dark.has(hexAt(frame, b + 1, y) ?? '')) b++
-        return b - a + 1
+      for (const ex of [nx - 2, nx + 1]) {
+        // Jedes Auge ein Strich aus zwei Pupillenpunkten, rundherum – darüber, daneben, darunter, auch schräg – nichts
+        // Dunkles (Lage relativ zum Auge, falls doch).
+        const touching: string[] = []
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 2; dx++) {
+            if (dy === 0 && (dx === 0 || dx === 1)) continue
+            if (dark.has(hexAt(frame, ex + dx, ny - 2 + dy) ?? '')) touching.push(`${dx},${dy}`)
+          }
+        }
+        const eye = [hexAt(frame, ex, ny - 2), hexAt(frame, ex + 1, ny - 2)]
+        expect([f, ex - nx, eye, touching]).toEqual([f, ex - nx, ['#18210f', '#18210f'], []])
       }
-      expect([f, dash(nx - 2, ny - 2), dash(nx + 1, ny - 2)]).toEqual([f, 2, 2])
     })
   })
 
