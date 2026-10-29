@@ -259,7 +259,6 @@ impl AccountStore {
                 uuid: account.id.clone(),
                 access_token: crypto::unprotect(&account.access_token)?,
                 xuid: account.xuid.clone(),
-                demo: false,
             }));
         }
 
@@ -283,7 +282,6 @@ impl AccountStore {
                     uuid: account.id.clone(),
                     access_token: crypto::unprotect(&account.access_token)?,
                     xuid: account.xuid.clone(),
-                    demo: false,
                 }));
             }
             Err(e) => return Err(e),
@@ -298,7 +296,6 @@ impl AccountStore {
             uuid: session.uuid,
             access_token: session.access_token,
             xuid: session.xuid,
-            demo: false,
         }))
     }
 }

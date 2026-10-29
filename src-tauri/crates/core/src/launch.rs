@@ -17,13 +17,12 @@ pub struct Session {
     pub uuid: String,
     pub access_token: String,
     pub xuid: String,
-    /// Offizieller Demo-Modus des Spiels (nur Entwicklungs-Builds ohne Account).
-    pub demo: bool,
 }
 
 impl Session {
+    /// Es gibt immer ein angemeldetes Konto, dem das Spiel gehört – nie den Demo-Modus.
     pub fn features(&self) -> Features {
-        Features { demo_user: self.demo, custom_resolution: true, quick_play_multiplayer: false }
+        Features { custom_resolution: true, quick_play_multiplayer: false }
     }
 }
 
@@ -199,9 +198,6 @@ pub fn build_command(
             args.extend(legacy.split_whitespace().map(fill));
             args.extend(["--width".into(), resolution.width.to_string()]);
             args.extend(["--height".into(), resolution.height.to_string()]);
-            if session.demo {
-                args.push("--demo".into());
-            }
         }
         _ => return Err(Error::launch(crate::msg!("launch.noArguments", "Die Versions-Metadaten enthalten keine Startargumente."))),
     }
@@ -643,7 +639,6 @@ mod tests {
             uuid: "00000000000000000000000000000001".into(),
             access_token: "geheimes-token-123".into(),
             xuid: "42".into(),
-            demo: false,
         }
     }
 
@@ -1001,7 +996,7 @@ mod tests {
     }
 
     #[test]
-    fn demo_and_overrides() {
+    fn instance_overrides() {
         let mut inst = instance();
         inst.overrides = InstanceOverrides {
             max_memory_mb: Some(8192),
@@ -1009,12 +1004,30 @@ mod tests {
             resolution: Some(Resolution { width: 1920, height: 1080 }),
             ..Default::default()
         };
-        let args = build(&prepared(MODERN), &inst, &Session { demo: true, ..session() });
+        let args = build(&prepared(MODERN), &inst, &session());
         assert!(args.contains(&"-Xmx8192M".to_owned()));
         assert!(args.contains(&"-Dfoo=a b".to_owned()));
-        assert!(args.contains(&"--demo".to_owned()));
         assert!(args.contains(&"1920".to_owned()));
         assert!(!args.contains(&"--fullscreen".to_owned()));
+    }
+
+    /// Cubiq startet das Spiel nie im Demo-Modus – auch nicht, wenn die Versions-Metadaten ihn anbieten
+    /// (neue Versionen über die Regel `is_demo_user`, alte über ein eigenes `--demo`).
+    #[test]
+    fn never_starts_the_demo_mode() {
+        let legacy = prepared(
+            r#"{"id":"1.6.4","assets":"legacy","mainClass":"net.minecraft.client.main.Main",
+                "minecraftArguments":"--username ${auth_player_name} --session ${auth_session}"}"#,
+        );
+        for p in [prepared(MODERN), legacy] {
+            let args = build(&p, &instance(), &session());
+            assert!(!args.iter().any(|a| a == "--demo"), "{args:?}");
+            // Gestartet wird immer mit dem Konto der Sitzung.
+            assert!(args.iter().any(|a| a.contains("geheimes-token-123")));
+        }
+        let demo: Vec<crate::meta::version::Rule> =
+            serde_json::from_str(r#"[{"action":"allow","features":{"is_demo_user":true}}]"#).unwrap();
+        assert!(!rules_allow(&demo, &session().features()));
     }
 
     #[test]
