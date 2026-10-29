@@ -11,8 +11,8 @@ import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 /**
  * Cubiq-Flügel für Forge 1.8.9–1.12.2 (Slot {@code wings}, Format 2, {@code attach: "body"}): eigene Ebene der
  * Spieler-Renderer, zeichnet mit dem v2-Weg der Kopf-Kosmetik ({@link HatLayer#renderPart}) am Körper
- * ({@code bipedBody.postRender}) – folgt Körper-Drehung und Schleich-Neigung. Zustand idle/air/sneak mit Überblendung,
- * unsichtbar mit Elytra.
+ * ({@code bipedBody.postRender}) – folgt Körper-Drehung und Schleich-Neigung. Zustand aus der Bewegung mit
+ * Überblendung, unsichtbar mit Elytra.
  */
 public final class WingsLayer implements LayerRenderer<AbstractClientPlayer> {
 	private final RenderPlayer renderer;
@@ -36,8 +36,13 @@ public final class WingsLayer implements LayerRenderer<AbstractClientPlayer> {
 		}
 	}
 
-	/** Zustand für Zustands-Animationen ({@code WingState} IDLE/AIR/SNEAK): Flügel, Kopf-Kosmetik, Begleiter am Kopf. */
+	/**
+	 * Zustand für Zustands-Animationen ({@code WingState#classify}: idle/walk/jump/air/sneak): Flügel, Kopf-Kosmetik,
+	 * Begleiter am Kopf. Geschwindigkeit wie in {@link HatLayer}: Weg seit dem letzten Tick.
+	 */
 	static int state(AbstractClientPlayer player) {
+		double dx = player.posX - player.prevPosX;
+		double dz = player.posZ - player.prevPosZ;
 		//? if >=1.9 {
 		/*boolean riding = player.isRiding();
 		boolean flying = player.capabilities.isFlying || player.isElytraFlying();
@@ -46,7 +51,7 @@ public final class WingsLayer implements LayerRenderer<AbstractClientPlayer> {
 		boolean flying = player.capabilities.isFlying;
 		//?}
 		return WingState.classify(player.onGround, player.isSneaking(), flying, riding, player.isInWater() || player.isInLava(),
-				player.isOnLadder());
+				player.isOnLadder(), (float) Math.sqrt(dx * dx + dz * dz), (float) (player.posY - player.prevPosY));
 	}
 
 	@Override

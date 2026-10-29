@@ -261,26 +261,29 @@ public final class OnlineFeatures<T> {
 	}
 
 	/**
-	 * Wie {@link #hatV2(UUID, boolean)} mit Zustands-Animation ({@code state} = {@code WingState} IDLE/AIR/SNEAK aus der
-	 * Bewegung, überblendet 250 ms) – z. B. die Weihnachtsmütze im Sprung. Modelle ohne Animation des Zustands spielen
-	 * {@code idle} (Format §7).
+	 * Wie {@link #hatV2(UUID, boolean)} mit Zustands-Animation: {@code state} = {@code WingState} aus der Bewegung
+	 * (IDLE/WALK/JUMP/AIR/SNEAK, {@code WingState#classify}), je Modell abgebildet ({@code WingState#forModel}) und
+	 * 250 ms überblendet – z. B. Mützen beim Laufen und im Sprung. Modelle ohne Animation des Zustands spielen
+	 * {@code idle} (Format §7); Modelle nur mit idle laufen ohne Zustand.
 	 */
 	public dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<T> hatV2(UUID uuid, boolean helmet, int state) {
-		return withState(uuid, hatV2(uuid, helmet), state);
+		return withState(hatStates, uuid, hatV2(uuid, helmet), state);
 	}
 
-	/** Wie {@link #companionV2(UUID, boolean)} mit Zustands-Animation (siehe {@link #hatV2(UUID, boolean, int)}). */
+	/**
+	 * Wie {@link #companionV2(UUID, boolean)} mit Zustands-Animation (siehe {@link #hatV2(UUID, boolean, int)}), mit
+	 * eigenem Zustand je Spieler.
+	 */
 	public dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<T> companionV2(UUID uuid, boolean helmet, int state) {
-		return withState(uuid, companionV2(uuid, helmet), state);
+		return withState(companionStates, uuid, companionV2(uuid, helmet), state);
 	}
 
-	private dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<T> withState(UUID uuid,
-			dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<T> hat, int state) {
-		if (hat == null || !hat.model.hasDriver(dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2.DRIVER_AIR)
-				&& !hat.model.hasDriver(dev.pwiepixel.cubiqclient.core.cosmetic.v2.CosmeticV2.DRIVER_SNEAK)) {
+	private dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<T> withState(dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState tracker,
+			UUID uuid, dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<T> hat, int state) {
+		if (hat == null || !dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.hasStates(hat.model)) {
 			return hat; // nur idle: keine Zustände nötig
 		}
-		dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.Snapshot s = headStates.update(uuid, state, hat.now);
+		dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.Snapshot s = tracker.update(uuid, hat.model, state, hat.now);
 		return hat.withState(s.driver, s.prevDriver, s.blend);
 	}
 
@@ -294,16 +297,21 @@ public final class OnlineFeatures<T> {
 		return v2(online.info(uuid).companion, helmet);
 	}
 
-	/** Zustand der Flügel je Spieler (idle/air/sneak mit Überblendung). */
+	/**
+	 * Zustände je Fach und Spieler, jeder mit eigener Überblendung: Hut und Begleiter am Kopf bilden walk/jump je nach
+	 * Modell verschieden ab ({@code WingState#forModel}), ein gemeinsamer Zustand würde dann bei jedem Bild hin- und
+	 * herspringen.
+	 */
 	private final dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState wingStates = new dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState();
-	/** Gleicher Zustand für Kopf-Kosmetik und Begleiter am Kopf (eigene Überblendung, unabhängig von den Flügeln). */
-	private final dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState headStates = new dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState();
+	private final dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState hatStates = new dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState();
+	private final dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState companionStates = new dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState();
 
 	/**
 	 * Flügel (Slot {@code wings}, Format 2, {@code attach: "body"}) für dieses Bild oder null: nichts getragen, Module
-	 * aus, noch nicht geladen, oder der Spieler trägt eine Elytra ({@code elytra}). {@code state} = {@code WingState}
-	 * IDLE/AIR/SNEAK aus der Bewegung (überblendet 250 ms). {@code self} = eigener Spieler (für die Selbsttest-Flügel
-	 * {@code -Dcubiqclient.devWings}). Nur im Spiel-/Render-Thread wirksam.
+	 * aus, noch nicht geladen, oder der Spieler trägt eine Elytra ({@code elytra}). {@code state} = {@code WingState} aus
+	 * der Bewegung wie bei {@link #hatV2(UUID, boolean, int)} (Flügel ohne walk/jump: idle/air/sneak wie bisher).
+	 * {@code self} = eigener Spieler (für die Selbsttest-Flügel {@code -Dcubiqclient.devWings}). Nur im Spiel-/Render-Thread
+	 * wirksam.
 	 */
 	public dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<T> wingsV2(UUID uuid, boolean self, boolean elytra, int state) {
 		if (Thread.currentThread() != gameThread || elytra) return null;
@@ -312,7 +320,7 @@ public final class OnlineFeatures<T> {
 		if (piece == null && self) piece = dev.pwiepixel.cubiqclient.core.cosmetic.v2.DevWings.info(online);
 		dev.pwiepixel.cubiqclient.core.cosmetic.v2.V2Hat<T> hat = v2(piece, false);
 		if (hat == null) return null;
-		dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.Snapshot s = wingStates.update(uuid, state, hat.now);
+		dev.pwiepixel.cubiqclient.core.cosmetic.v2.WingState.Snapshot s = wingStates.update(uuid, hat.model, state, hat.now);
 		return hat.withState(s.driver, s.prevDriver, s.blend);
 	}
 
