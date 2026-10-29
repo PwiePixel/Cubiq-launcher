@@ -2524,8 +2524,10 @@
         "reduced": "Reduzir animações"
       },
       "startIntroTitle": "Animação de início",
-      "startIntroDescription": "Ao abrir o launcher, o logotipo do Cubiq aparece rapidamente. Clique ou pressione qualquer tecla para pular.",
-      "startIntroReplay": "Reproduzir agora"
+      "startIntroDescription": "Ao abrir o launcher, as peças do logotipo do Cubiq se encaixam. Clique ou pressione qualquer tecla para pular a animação.",
+      "startIntroReplay": "Reproduzir agora",
+      "startIntroSoundTitle": "Som de início",
+      "startIntroSoundDescription": "Um som curto acompanha a animação de início, a 30 % do volume."
     },
     "features": {
       "instancePage": "Página da instância",

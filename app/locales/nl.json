@@ -2524,8 +2524,10 @@
         "reduced": "Animaties beperken"
       },
       "startIntroTitle": "Startanimatie",
-      "startIntroDescription": "Bij het openen van de launcher verschijnt kort het Cubiq-logo. Klik of druk op een toets om het over te slaan.",
-      "startIntroReplay": "Nu afspelen"
+      "startIntroDescription": "Bij het openen van de launcher klikken de delen van het Cubiq-logo in elkaar. Klik of druk op een toets om de animatie over te slaan.",
+      "startIntroReplay": "Nu afspelen",
+      "startIntroSoundTitle": "Startgeluid",
+      "startIntroSoundDescription": "Bij de startanimatie klinkt een kort geluid op 30 % volume."
     },
     "features": {
       "instancePage": "Instantiepagina",

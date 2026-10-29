@@ -369,6 +369,14 @@ async function allowFirewall() {
     firewallBusy.value = false
   }
 }
+
+// --- Start-Ton ----------------------------------------------------------------
+/** Start-Ton schalten; beim Einschalten gleich eine Hörprobe (30 %), wie beim Hinweiston der Benachrichtigungen. */
+function setStartIntroSound(on: boolean) {
+  if (!form.value) return
+  form.value.ui.startIntroSound = on
+  if (on) void previewStartSound()
+}
 </script>
 
 <template>
@@ -488,6 +496,20 @@ async function allowFirewall() {
             @update:model-value="(on: boolean) => form && (form.ui.startIntro = on)"
           />
         </div>
+      </SettingRow>
+      <!-- Start-Ton (fest 30 %): am Handy nie – Android spielt ihn auch im Lautlos-Modus. -->
+      <SettingRow
+        v-if="!isMobile"
+        :title="t('settings.appearance.startIntroSoundTitle')"
+        :description="t('settings.appearance.startIntroSoundDescription')"
+        data-testid="settings-start-intro-sound"
+      >
+        <ToggleSwitch
+          :model-value="form.ui.startIntroSound !== false"
+          :disabled="form.ui.startIntro === false"
+          :label="t('settings.appearance.startIntroSoundTitle')"
+          @update:model-value="setStartIntroSound"
+        />
       </SettingRow>
     </div>
 

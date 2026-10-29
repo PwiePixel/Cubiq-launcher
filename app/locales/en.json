@@ -2567,8 +2567,10 @@
       "halloweenFlickerTitle": "Flicker & grain",
       "halloweenFlickerDescription": "Film grain in the background and a short flicker on lightning (only during Halloween). The Cubiq Client uses the same setting. With animations off nothing ever flickers.",
       "startIntroTitle": "Start animation",
-      "startIntroDescription": "The Cubiq logo fades in briefly when the launcher opens. Click or press any key to skip it.",
-      "startIntroReplay": "Play now"
+      "startIntroDescription": "When the launcher opens, the parts of the Cubiq logo snap together. Click or press any key to skip it.",
+      "startIntroReplay": "Play now",
+      "startIntroSoundTitle": "Start sound",
+      "startIntroSoundDescription": "A short chime plays with the start animation, at 30 % volume."
     },
     "features": {
       "instancePage": "Instance page",

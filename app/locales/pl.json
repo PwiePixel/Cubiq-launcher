@@ -2524,8 +2524,10 @@
         "reduced": "Ogranicz animacje"
       },
       "startIntroTitle": "Animacja startowa",
-      "startIntroDescription": "Po otwarciu launchera na chwilę pojawia się logo Cubiq. Kliknij lub naciśnij dowolny klawisz, aby je pominąć.",
-      "startIntroReplay": "Odtwórz teraz"
+      "startIntroDescription": "Po otwarciu launchera części logo Cubiq składają się w całość. Kliknij lub naciśnij dowolny klawisz, aby pominąć animację.",
+      "startIntroReplay": "Odtwórz teraz",
+      "startIntroSoundTitle": "Dźwięk startowy",
+      "startIntroSoundDescription": "Animacji startowej towarzyszy krótki dźwięk o głośności 30 %."
     },
     "features": {
       "instancePage": "Strona instancji",
