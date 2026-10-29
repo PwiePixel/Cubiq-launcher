@@ -34,7 +34,9 @@ class EmoteTest {
 				{"daumen_hoch", "1500", "false"}, {"tanzen", "6000", "true"}, {"salutieren", "2000", "false"},
 				{"luftgitarre", "5000", "true"}, {"redstone_tanz", "6000", "true"}, {"party", "6000", "true"},
 				{"count_bow", "2500", "false"}, {"ghost_float", "4000", "true"}, {"zombie_walk", "5000", "true"},
-				{"moon_howl", "3000", "false"}};
+				{"moon_howl", "3000", "false"},
+				{"snowball_throw", "2400", "false"}, {"shiver", "4800", "true"}, {"warm_hands", "5000", "true"},
+				{"happy_jump", "2000", "false"}, {"mitten_wave", "2500", "false"}};
 		assertEquals(api.length, Emotes.ALL.size());
 		for (int i = 0; i < api.length; i++) {
 			EmoteDef d = Emotes.ALL.get(i);

@@ -210,6 +210,80 @@ public final class Emotes {
 				.key(ROOT_Y, 0, 0, 600, 0.6f, 2500, 0.6f, 2900, 0)
 				.build());
 
+		// --- Winter 2026 (für alle frei) ---
+
+		// Schneeballwurf: tief bücken und Schnee zusammenschieben, aufrichten und vor dem Bauch formen (zweimal klopfen,
+		// Blick auf den Ball), ausholen (Brust nach rechts, nach hinten lehnen, Hand hinter den Kopf, linker Arm zeigt aufs
+		// Ziel), Schritt vor und werfen, nachschwingen.
+		all.add(EmoteDef.builder("snowball_throw", 2400, false, 0, "snowball")
+				.key(TORSO_LEAN, 0, 0, 450, 70, 700, 70, 1050, 4, 1400, -12, 1600, 16, 1900, 10, 2300, 0)
+				.key(TORSO_TWIST, 0, 0, 1050, 0, 1400, 25, 1600, -18, 1900, -14, 2300, 0)
+				.key(ROOT_Y, 0, 0, 450, -0.8f, 700, -0.8f, 1050, 0)
+				.key(HEAD_X, 0, 0, 450, 6, 700, 6, 1050, 28, 1250, 24, 1400, 6, 1600, -8, 1900, -6, 2300, 0)
+				.key(HEAD_Y, 0, 0, 1050, 0, 1400, -25, 1600, 18, 1900, 14, 2300, 0)
+				.key(R_ARM_X, 0, 0, 450, -84, 600, -72, 700, -84, 1050, -58, 1200, -66, 1400, -175, 1600, -60, 1900, -40, 2300, 0)
+				.key(R_ARM_Y, 0, 0, 450, -14, 700, -24, 1050, -36, 1130, -26, 1210, -36, 1400, 0, 1600, -14, 1900, -10, 2300, 0)
+				.key(R_ARM_Z, 0, 0, 1050, 0, 1400, -14, 1600, 6, 2300, 0)
+				.key(L_ARM_X, 0, 0, 450, -84, 600, -72, 700, -84, 1050, -58, 1200, -66, 1400, -80, 1600, 22, 1900, 14, 2300, 0)
+				.key(L_ARM_Y, 0, 0, 450, 14, 700, 24, 1050, 36, 1130, 26, 1210, 36, 1400, -22, 1600, 0, 2300, 0)
+				.key(L_ARM_Z, 0, 0, 1400, -6, 1600, -14, 2300, 0)
+				.key(L_LEG_X, 0, 0, 1050, 0, 1400, -14, 1600, -20, 1900, -16, 2300, 0)
+				.key(R_LEG_X, 0, 0, 1050, 0, 1400, 6, 1600, 10, 1900, 8, 2300, 0)
+				.build());
+
+		// Bibbern (Schleife 1,2 s): Arme vor der Brust verschränkt, Schultern hoch, Kinn runter; schnelles Zittern
+		// (60 ms je Richtung), Zähneklappern; einmal je Durchgang ein „Brrr“ (Kopf schüttelt, Schultern zucken).
+		all.add(EmoteDef.builder("shiver", 4800, true, 1200, "snowflake")
+				.hold(R_ARM_X, -62)
+				.hold(R_ARM_Y, -48)
+				.hold(L_ARM_X, -68)
+				.hold(L_ARM_Y, 48)
+				.hold(TORSO_LEAN, 8)
+				.key(SHOULDERS, 0, 1.2f, 600, 1.2f, 750, 2f, 950, 2f, 1100, 1.2f)
+				.osc(TORSO_ROLL, -1.6f, 1.6f, 60, 0, 1140)
+				.osc(ROOT_X, -0.25f, 0.25f, 60, 0, 1140)
+				.osc(HEAD_X, 12, 15, 60, 0, 1140)
+				.key(HEAD_Y, 0, 0, 600, 0, 680, -12, 760, 12, 840, -10, 920, 10, 1000, 0)
+				.build());
+
+		// Hände wärmen (Schleife 1,25 s): Hände vor der Brust aneinander reiben (Arme im Gegentakt), dann vor den Mund
+		// heben und hineinpusten (Kopf leicht vor, Schultern hoch), zurück.
+		all.add(EmoteDef.builder("warm_hands", 5000, true, 1250, "warmHands")
+				.key(R_ARM_X, 0, -76, 120, -88, 240, -76, 360, -88, 480, -76, 600, -88, 720, -82, 850, -120, 1100, -120)
+				.key(L_ARM_X, 0, -88, 120, -76, 240, -88, 360, -76, 480, -88, 600, -76, 720, -82, 850, -120, 1100, -120)
+				.key(R_ARM_Y, 0, -30, 720, -30, 850, -36, 1100, -36)
+				.key(L_ARM_Y, 0, 30, 720, 30, 850, 36, 1100, 36)
+				.key(HEAD_X, 0, 14, 650, 14, 850, 4, 1100, 4)
+				.key(SHOULDERS, 0, 0.8f, 650, 0.8f, 850, 1.4f, 1100, 1.4f)
+				.hold(TORSO_LEAN, 6)
+				.build());
+
+		// Freudensprung: in die Hocke (Arme zurück), zwei Sprünge mit Armen hoch (V) und Fersen nach hinten, Landung
+		// federt, zum Schluss V-Pose, zurück. Gehobene Arme: R_ARM_Z negativ = nach außen.
+		all.add(EmoteDef.builder("happy_jump", 2000, false, 0, "jump")
+				.key(ROOT_Y, 0, 0, 220, -0.8f, 480, 3.2f, 720, -0.6f, 980, 3.2f, 1220, -0.6f, 1550, 0)
+				.key(TORSO_LEAN, 0, 0, 220, 14, 480, -8, 720, 12, 980, -8, 1220, 10, 1550, -4, 1900, 0)
+				.key(R_ARM_X, 0, 0, 220, 35, 480, -165, 720, -40, 980, -165, 1220, -40, 1550, -150, 1900, 0)
+				.key(R_ARM_Z, 0, 0, 220, 6, 480, -24, 720, 18, 980, -24, 1220, 18, 1550, -30, 1900, 0)
+				.key(L_ARM_X, 0, 0, 220, 35, 480, -165, 720, -40, 980, -165, 1220, -40, 1550, -150, 1900, 0)
+				.key(L_ARM_Z, 0, 0, 220, -6, 480, 24, 720, -18, 980, 24, 1220, -18, 1550, 30, 1900, 0)
+				.key(HEAD_X, 0, 0, 220, 6, 480, -16, 720, 4, 980, -16, 1220, 4, 1550, -10, 1900, 0)
+				.key(R_LEG_X, 0, 0, 220, 0, 480, 22, 720, 0, 980, 22, 1220, 0)
+				.key(L_LEG_X, 0, 0, 220, 0, 480, 22, 720, 0, 980, 22, 1220, 0)
+				.build());
+
+		// Fäustlings-Winken: beide Arme hoch, Hände winken wie Scheibenwischer (beide zugleich nach rechts, dann nach
+		// links), federn auf den Zehen, Kopf wiegt mit. Fäustlinge selbst kann ein Emote nicht zeigen (nur Posen).
+		all.add(EmoteDef.builder("mitten_wave", 2500, false, 0, "mitten")
+				.key(R_ARM_X, 0, -30, 300, -160, 2200, -160, 2500, -30)
+				.key(L_ARM_X, 0, -30, 300, -160, 2200, -160, 2500, -30)
+				.key(R_ARM_Z, 0, 12, 300, -10, 550, -30, 800, 2, 1050, -30, 1300, 2, 1550, -30, 1800, 2, 2050, -10, 2500, 12)
+				.key(L_ARM_Z, 0, -12, 300, 10, 550, -2, 800, 30, 1050, -2, 1300, 30, 1550, -2, 1800, 30, 2050, 10, 2500, -12)
+				.key(ROOT_Y, 0, 0, 300, 0, 550, 0.8f, 800, 0, 1050, 0.8f, 1300, 0, 1550, 0.8f, 1800, 0)
+				.key(HEAD_Z, 0, 0, 550, -8, 800, 8, 1050, -8, 1300, 8, 1550, -8, 1800, 8, 2050, 0)
+				.hold(HEAD_X, -8)
+				.build());
+
 		for (EmoteDef d : all) BY_ID.put(d.id(), d);
 		ALL = Collections.unmodifiableList(all);
 	}
