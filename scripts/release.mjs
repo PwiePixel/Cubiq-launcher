@@ -14,7 +14,10 @@
 // - Bild: hat der Abschnitt noch kein Motiv, zeichnet scripts/release-art.mjs eins passend zum Text – ruhig
 //   (public/news/<version>/banner.png) und bewegt (banner-anim.png) – und trägt beide in die Banner-Zeile ein.
 // - Nichts für Spieler seit dem letzten Release und kein fester Sprung: kein Release.
-// Ausgabe (für $GITHUB_OUTPUT): version=…, tag=…, title=…, skipped=true|false
+// - Cubiq Client (In-Game-Mod): Haben sich seine Quellen geändert (oder hat sein Update-Kanal noch nichts Neueres als
+//   das Launcher-Paket), bekommt er eine neue mod_version (scripts/client-mod-version.mjs) – der Release-Commit trägt
+//   sie ein, .github/workflows/client-mod.yml baut alle Jars und veröffentlicht sie im Kanal.
+// Ausgabe (für $GITHUB_OUTPUT): version=…, tag=…, title=…, client_mod=<Version oder leer>, skipped=true|false
 
 import { execFileSync } from 'node:child_process'
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -22,6 +25,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { changelogFor, parseChangelog, releaseTitle } from '../app/utils/changelog.ts'
 import { releaseArt } from './release-art.mjs'
+import { bundledModVersion, channelModVersion, isClientModSource, nextClientModVersion, readModVersion, writeModVersion } from './client-mod-version.mjs'
 import { bumpFor, changelogItem, parseChangeNote, parseGitLog, prepareChangelog, relocateShots, setBannerMotif, setReleaseDate, today, unreleasedReady } from './release-lib.mjs'
 import { currentVersion, nextVersion, setVersion } from './version.mjs'
 
@@ -106,6 +110,29 @@ if (!released) {
   }
 }
 
+/**
+ * Neue Version des Cubiq Client für dieses Release oder `null`. Ein Fehler hier (z. B. mod_version nicht überall
+ * gleich) hält das Launcher-Release nicht auf – der Client kommt dann eben nicht mit, und der Lauf sagt warum.
+ */
+async function clientModPlan() {
+  try {
+    const repo = readModVersion(root)
+    const next = nextClientModVersion({
+      repo,
+      channel: await channelModVersion(process.env.GITHUB_REPOSITORY || undefined),
+      bundled: bundledModVersion(root),
+      changed: commits.some((c) => c.files.some(isClientModSource)),
+    })
+    return { repo, next }
+  } catch (e) {
+    const message = `Cubiq Client nicht dabei: ${e.message.split('\n')[0]}`
+    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=Cubiq Client::${message}`)
+    console.error(message)
+    return { repo: null, next: null }
+  }
+}
+const clientMod = await clientModPlan()
+
 let next = setReleaseDate(text, version, today())
 let consumed = []
 /** Screenshots der Spieler-Texte: changes/<datei> → public/news/<version>/<name> (relocateShots). */
@@ -158,11 +185,13 @@ if (entry && !entry.banner?.motif) {
 }
 
 const title = releaseTitle(entry, version)
+const clientNote = clientMod.next ? `, Cubiq Client ${clientMod.repo === clientMod.next ? '' : `${clientMod.repo} → `}${clientMod.next}` : ''
 if (dryRun) {
-  console.error(`Version ${current} → ${version} (${title})${art ? ` – Bild: ${art.topic}` : ''}\n\n${entry?.en ?? ''}\n\n${entry?.de ?? ''}`)
+  console.error(`Version ${current} → ${version} (${title})${art ? ` – Bild: ${art.topic}` : ''}${clientNote}\n\n${entry?.en ?? ''}\n\n${entry?.de ?? ''}`)
 } else {
   if (next !== text) writeFileSync(changelogPath, next)
   if (version !== current) setVersion(version)
+  if (clientMod.next && clientMod.next !== clientMod.repo) writeModVersion(root, clientMod.next)
   for (const name of consumed) rmSync(join(changesDir, name))
   if (shotMoves.length) mkdirSync(join(root, 'public', 'news', version), { recursive: true })
   for (const { from, to } of shotMoves) {
@@ -170,6 +199,6 @@ if (dryRun) {
     // Dieselbe Datei kann in zwei Texten stehen – nur einmal löschen.
     if (existsSync(join(changesDir, from))) rmSync(join(changesDir, from))
   }
-  console.error(`Version ${version} vorbereitet: ${title}${art ? ` (Bild: ${art.topic})` : ''}${consumed.length ? `, Texte aus changes/: ${consumed.join(', ')}` : ''}`)
+  console.error(`Version ${version} vorbereitet: ${title}${art ? ` (Bild: ${art.topic})` : ''}${clientNote}${consumed.length ? `, Texte aus changes/: ${consumed.join(', ')}` : ''}`)
 }
-console.log(`version=${version}\ntag=v${version}\ntitle=${title}\nskipped=false`)
+console.log(`version=${version}\ntag=v${version}\ntitle=${title}\nclient_mod=${clientMod.next ?? ''}\nskipped=false`)

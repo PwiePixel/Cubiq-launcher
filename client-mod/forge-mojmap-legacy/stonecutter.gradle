@@ -16,7 +16,12 @@ stonecutter.active '1.16.5'
  * Nur über Task-Pfade verknüpft, damit "configure on demand" die Versionsprojekte nicht vorzeitig braucht.
  */
 def distDir = rootProject.file('../dist')
-def versions = stonecutter.versions.collect { it.project }
+// Optional nur ein Teil (CI baut in mehreren Jobs, scripts/client-mod-build.mjs): -PcubiqVersions=1.14.4,1.16.5
+def selected = providers.gradleProperty('cubiqVersions').orNull?.tokenize(',')*.trim()
+def versions = stonecutter.versions.collect { it.project }.findAll { selected == null || it in selected }
+if (selected && selected.any { !(it in versions) }) {
+	throw new GradleException("cubiqVersions: unknown version(s) ${selected - versions}")
+}
 def modVersion = rootProject.mod_version
 
 tasks.register('collectLauncherJars') {
@@ -24,8 +29,9 @@ tasks.register('collectLauncherJars') {
 	description = 'Builds every Forge version and writes the jars and builds-forge-mojmap-legacy.json to client-mod/dist/'
 
 	dependsOn(versions.collect { ":${it}:remapJar" })
-	// Unit-Tests der gemeinsamen Logik (laufen im 1.19.4-Projekt) müssen grün sein.
-	dependsOn(':1.19.4:test')
+	// Unit-Tests der gemeinsamen Logik (laufen im 1.19.4-Projekt) müssen grün sein – im Teil-Bau nur in dem Job,
+	// der 1.19.4 baut.
+	if ('1.19.4' in versions) dependsOn(':1.19.4:test')
 	outputs.upToDateWhen { false }
 
 	doLast {

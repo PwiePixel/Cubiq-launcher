@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // Veröffentlicht den Cubiq Client im eigenen Update-Kanal (GitHub-Release `client-mod`).
+// Läuft normalerweise automatisch: Bringt ein Launcher-Release einen neuen Cubiq Client (scripts/release.mjs
+// erhöht dann mod_version), baut .github/workflows/client-mod.yml alle Jars und ruft dieses Skript auf.
 //
 //   node scripts/publish-client-mod.mjs --dry-run      nur lokal: Manifest + Signatur schreiben und prüfen
 //   node scripts/publish-client-mod.mjs                 zusätzlich hochladen (gh release upload --clobber)
 //   node scripts/publish-client-mod.mjs --bump minor   mod_version in allen gradle.properties erhöhen
 //
-// Ablauf: Jars mit `collectLauncherJars` nach client-mod/dist bauen (Projekte nacheinander),
+// Ablauf von Hand: Jars mit `collectLauncherJars` nach client-mod/dist bauen (Projekte nacheinander),
 // dann dieses Skript. Es liest dist/builds.json + dist/builds-*.json, schreibt
 // client-mod.json { version, builds[] mit sha256/size }, signiert es mit dem Schlüssel
 // des Tauri-Updaters (`tauri signer sign`) und prüft die Signatur selbst nach.
@@ -13,14 +15,17 @@
 // damit der nächste Launcher-Release den Stand mitbringt.
 //
 // Optionen:
-//   --dist <ordner>   Jars + builds*.json (Standard: client-mod/dist)
-//   --out <ordner>    Ausgabe für client-mod.json(.sig) (Standard: client-mod/dist/channel)
-//   --no-bundle       src-tauri/resources/client-mod nicht anfassen
-//   --force           auch veröffentlichen, wenn die Version nicht neuer ist als im Kanal
-//   --repo <o/r>      Standard: PwiePixel/Cubiq-launcher
+//   --dist <ordner>          Jars + builds*.json (Standard: client-mod/dist)
+//   --out <ordner>           Ausgabe für client-mod.json(.sig) (Standard: client-mod/dist/channel)
+//   --no-bundle              src-tauri/resources/client-mod nicht anfassen (so im CI)
+//   --no-sign                nur mit --dry-run: Manifest ohne Signatur (Prüfung im Pull Request, ohne Schlüssel)
+//   --expect-version <v>     abbrechen, wenn mod_version nicht genau <v> ist (CI: Version aus dem Release)
+//   --skip-if-published      nichts tun, wenn der Kanal genau diese Version schon hat (Wiederholung im CI)
+//   --force                  auch veröffentlichen, wenn die Version nicht neuer ist als im Kanal
+//   --repo <o/r>             Standard: PwiePixel/Cubiq-launcher
 //
-// Schlüssel: %USERPROFILE%\.tauri\cubiq-launcher.key (+ .password). Beides wird nur hier
-// gelesen und nur per Umgebungsvariable an den Signierer gegeben – nie ausgegeben.
+// Schlüssel: im CI TAURI_SIGNING_PRIVATE_KEY (+ _PASSWORD) aus den Secrets; lokal
+// %USERPROFILE%\.tauri\cubiq-launcher.key (+ .password). Beides nur per Umgebungsvariable an den Signierer – nie ausgegeben.
 
 import { spawnSync } from 'node:child_process'
 import { createHash, createPublicKey, verify as verifySignature } from 'node:crypto'
@@ -28,18 +33,17 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync,
 import { homedir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { bumpModVersion, CHANNEL_MANIFEST, CHANNEL_TAG, channelModVersion, isNewer, readModVersion, writeModVersion } from './client-mod-version.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const TAG = 'client-mod'
-const MANIFEST = 'client-mod.json'
+const TAG = CHANNEL_TAG
+const MANIFEST = CHANNEL_MANIFEST
 const SIGNATURE = `${MANIFEST}.sig`
 const LOADERS = new Set(['fabric', 'forge', 'neoforge'])
 // Muss zu MAX_JAR_BYTES in src-tauri/crates/core/src/client_mod_update.rs passen.
 const MAX_JAR_BYTES = 32 * 1024 * 1024
-const VERSION_RE = /^\d{1,9}(\.\d{1,9}){0,3}(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$/
 const FILE_RE = /^[A-Za-z0-9][A-Za-z0-9._+-]*\.jar$/
 const BUNDLE_DIR = join(ROOT, 'src-tauri', 'resources', 'client-mod')
-const GRADLE_PROPERTIES = join(ROOT, 'client-mod', 'gradle.properties')
 
 function fail(message) {
   console.error(`Fehler: ${message}`)
@@ -50,7 +54,10 @@ function parseArgs(argv) {
   const args = {
     dryRun: false,
     bundle: true,
+    sign: true,
     force: false,
+    skipIfPublished: false,
+    expectVersion: null,
     bump: null,
     dist: join(ROOT, 'client-mod', 'dist'),
     out: null,
@@ -61,7 +68,10 @@ function parseArgs(argv) {
     const value = () => argv[++i] ?? fail(`${a} braucht einen Wert`)
     if (a === '--dry-run') args.dryRun = true
     else if (a === '--no-bundle') args.bundle = false
+    else if (a === '--no-sign') args.sign = false
     else if (a === '--force') args.force = true
+    else if (a === '--skip-if-published') args.skipIfPublished = true
+    else if (a === '--expect-version') args.expectVersion = value()
     else if (a === '--bump') args.bump = value()
     else if (a === '--dist') args.dist = resolve(value())
     else if (a === '--out') args.out = resolve(value())
@@ -71,66 +81,27 @@ function parseArgs(argv) {
       process.exit(0)
     } else fail(`Unbekannte Option ${a}`)
   }
+  if (!args.sign && !args.dryRun) fail('--no-sign geht nur mit --dry-run (unsigniert lädt kein Launcher)')
   args.out ??= join(args.dist, 'channel')
   return args
 }
 
 // --- Version --------------------------------------------------------------------
 
-/** Alle gradle.properties mit mod_version (Wurzel + Projekte mit eigenem Build). */
-function versionFiles() {
-  const dir = join(ROOT, 'client-mod')
-  const files = [GRADLE_PROPERTIES]
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const file = join(dir, entry.name, 'gradle.properties')
-    if (entry.isDirectory() && existsSync(file) && /^mod_version=/m.test(readFileSync(file, 'utf8'))) files.push(file)
+function modVersion() {
+  try {
+    return readModVersion(ROOT)
+  } catch (e) {
+    return fail(e.message)
   }
-  return files
-}
-
-function readModVersion() {
-  const versions = new Map()
-  for (const file of versionFiles()) {
-    const match = readFileSync(file, 'utf8').match(/^mod_version=(.+)$/m)
-    if (match) versions.set(file, match[1].trim())
-  }
-  const distinct = [...new Set(versions.values())]
-  if (distinct.length !== 1) {
-    fail(`mod_version ist nicht überall gleich:\n${[...versions].map(([f, v]) => `  ${v}  ${f}`).join('\n')}`)
-  }
-  const version = distinct[0]
-  if (!VERSION_RE.test(version) || version.length > 32) fail(`Ungültige mod_version "${version}"`)
-  return version
-}
-
-function parseVersion(v) {
-  const [core, pre] = v.split(/-(.*)/s)
-  return { nums: core.split('.').map(Number), pre: pre || null }
-}
-
-/** a > b? */
-function isNewer(a, b) {
-  const x = parseVersion(a)
-  const y = parseVersion(b)
-  const len = Math.max(x.nums.length, y.nums.length)
-  for (let i = 0; i < len; i++) {
-    const d = (x.nums[i] ?? 0) - (y.nums[i] ?? 0)
-    if (d !== 0) return d > 0
-  }
-  if (x.pre === null) return y.pre !== null
-  return y.pre !== null && x.pre > y.pre
 }
 
 function bump(kind) {
-  const current = readModVersion()
-  const [major, minor, patch] = [...parseVersion(current).nums, 0, 0, 0]
-  const next = { major: `${major + 1}.0.0`, minor: `${major}.${minor + 1}.0`, patch: `${major}.${minor}.${patch + 1}` }[kind]
-  if (!next) fail('--bump braucht major, minor oder patch')
-  for (const file of versionFiles()) {
-    const text = readFileSync(file, 'utf8')
-    writeFileSync(file, text.replace(/^mod_version=.*$/m, `mod_version=${next}`))
-  }
-  console.log(`mod_version ${current} → ${next} (${versionFiles().length} Dateien).`)
+  const current = modVersion()
+  if (!['major', 'minor', 'patch'].includes(kind)) fail('--bump braucht major, minor oder patch')
+  const next = bumpModVersion(current, kind)
+  const files = writeModVersion(ROOT, next)
+  console.log(`mod_version ${current} → ${next} (${files} Dateien).`)
   console.log('Jetzt die Jars neu bauen (collectLauncherJars je Projekt), dann veröffentlichen.')
 }
 
@@ -175,18 +146,26 @@ function readBuilds(dist) {
 // --- Signatur --------------------------------------------------------------------
 
 function sign(file) {
-  const keyPath = join(homedir(), '.tauri', 'cubiq-launcher.key')
-  const passwordPath = `${keyPath}.password`
-  if (!existsSync(keyPath)) fail(`Signier-Schlüssel fehlt: ${keyPath}`)
-  const raw = existsSync(passwordPath) ? readFileSync(passwordPath, 'utf8') : ''
   const cli = join(ROOT, 'node_modules', '@tauri-apps', 'cli', 'tauri.js')
   if (!existsSync(cli)) fail('Tauri-CLI fehlt – erst `pnpm install`')
-  // Zuerst ohne Zeilenende am Ende der Passwortdatei, notfalls genau wie gespeichert.
-  const candidates = [...new Set([raw.replace(/\r?\n$/, ''), raw])]
+  const candidates = []
+  if (process.env.TAURI_SIGNING_PRIVATE_KEY) {
+    // CI: Schlüssel aus den Secrets (von scripts/check-signing.mjs --export bereinigt).
+    candidates.push({ ...process.env })
+  } else {
+    const keyPath = join(homedir(), '.tauri', 'cubiq-launcher.key')
+    const passwordPath = `${keyPath}.password`
+    if (!existsSync(keyPath)) fail(`Signier-Schlüssel fehlt: ${keyPath} (oder TAURI_SIGNING_PRIVATE_KEY setzen)`)
+    const raw = existsSync(passwordPath) ? readFileSync(passwordPath, 'utf8') : ''
+    // Zuerst ohne Zeilenende am Ende der Passwortdatei, notfalls genau wie gespeichert.
+    for (const password of new Set([raw.replace(/\r?\n$/, ''), raw])) {
+      const env = { ...process.env, TAURI_SIGNING_PRIVATE_KEY_PATH: keyPath, TAURI_SIGNING_PRIVATE_KEY_PASSWORD: password }
+      delete env.TAURI_SIGNING_PRIVATE_KEY
+      candidates.push(env)
+    }
+  }
   let last = null
-  for (const password of candidates) {
-    const env = { ...process.env, TAURI_SIGNING_PRIVATE_KEY_PATH: keyPath, TAURI_SIGNING_PRIVATE_KEY_PASSWORD: password }
-    delete env.TAURI_SIGNING_PRIVATE_KEY
+  for (const env of candidates) {
     last = spawnSync(process.execPath, [cli, 'signer', 'sign', file], { env, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' })
     if (last.status === 0 && existsSync(`${file}.sig`)) return
   }
@@ -236,17 +215,6 @@ function bundle(dist, manifestText, builds) {
 
 // --- GitHub ------------------------------------------------------------------------
 
-async function channelVersion(repo) {
-  try {
-    const res = await fetch(`https://github.com/${repo}/releases/download/${TAG}/${MANIFEST}`, { signal: AbortSignal.timeout(10_000) })
-    if (res.status === 404) return null
-    if (!res.ok) return undefined
-    return (await res.json()).version ?? null
-  } catch {
-    return undefined
-  }
-}
-
 function gh(args, { allowFail = false } = {}) {
   const r = spawnSync('gh', args, { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' })
   if (r.error) fail(`gh nicht gefunden: ${r.error.message}`)
@@ -290,14 +258,21 @@ if (args.bump) {
   process.exit(0)
 }
 
-const version = readModVersion()
+const version = modVersion()
+if (args.expectVersion && args.expectVersion !== version) {
+  fail(`mod_version ist ${version}, erwartet war ${args.expectVersion} – falscher Stand ausgecheckt?`)
+}
 const builds = readBuilds(args.dist)
 const manifestText = `${JSON.stringify({ version, builds }, null, 2)}\n`
 console.log(`Cubiq Client ${version}: ${builds.length} Builds aus ${args.dist}`)
 
-const current = await channelVersion(args.repo)
+const current = await channelModVersion(args.repo)
 if (current === undefined) console.log('Kanal: aktueller Stand nicht abrufbar (offline?)')
 else console.log(`Kanal: ${current ?? 'noch leer'}`)
+if (args.skipIfPublished && current === version && !args.force) {
+  console.log(`Cubiq Client ${version} ist schon im Kanal – nichts zu tun.`)
+  process.exit(0)
+}
 if (current && !isNewer(version, current) && !args.force) {
   const msg = `Version ${version} ist nicht neuer als ${current} im Kanal – Launcher würden sie ignorieren. Erst \`--bump patch\` und neu bauen (oder --force).`
   if (args.dryRun) console.warn(`Warnung: ${msg}`)
@@ -308,9 +283,13 @@ mkdirSync(args.out, { recursive: true })
 const manifestFile = join(args.out, MANIFEST)
 writeFileSync(manifestFile, manifestText)
 rmSync(`${manifestFile}.sig`, { force: true })
-sign(manifestFile)
-verifyLikeTheLauncher(readFileSync(manifestFile), readFileSync(`${manifestFile}.sig`, 'utf8'))
-console.log(`Signiert und geprüft: ${manifestFile}(.sig)`)
+if (args.sign) {
+  sign(manifestFile)
+  verifyLikeTheLauncher(readFileSync(manifestFile), readFileSync(`${manifestFile}.sig`, 'utf8'))
+  console.log(`Signiert und geprüft: ${manifestFile}(.sig)`)
+} else {
+  console.log(`Ohne Signatur geschrieben: ${manifestFile}`)
+}
 
 if (args.bundle) bundle(args.dist, manifestText, builds)
 

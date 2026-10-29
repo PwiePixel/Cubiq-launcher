@@ -15,7 +15,10 @@ stonecutter.active '1.21.1'
  * Einträge anderer Loader/Projekte in einer vorhandenen builds.json bleiben erhalten.
  */
 def distDir = rootProject.layout.projectDirectory.dir('dist')
-def nodes = stonecutter.versions.collect { project(":fabric:${it.project}") }
+// Mit -PcubiqVersions=… (CI baut in mehreren Jobs, scripts/client-mod-build.mjs) nur diese Versionen sammeln –
+// die eingecheckte Version richtet settings.gradle immer mit ein, gebaut wird sie dann nicht.
+def selected = providers.gradleProperty('cubiqVersions').orNull?.tokenize(',')*.trim()
+def nodes = stonecutter.versions.findAll { selected == null || it.project in selected }.collect { project(":fabric:${it.project}") }
 
 tasks.register('collectLauncherJars') {
 	group = 'build'

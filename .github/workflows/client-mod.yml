@@ -1,0 +1,215 @@
+name: Cubiq Client
+
+# Baut den Cubiq Client (In-Game-Mod) für alle Loader und Minecraft-Versionen und veröffentlicht ihn im eigenen
+# Update-Kanal (GitHub-Release `client-mod`). Der Launcher holt ihn von dort, prüft die Signatur und installiert die
+# passende Jar in jede Instanz – ohne Launcher-Update. Niemand muss dafür etwas von Hand bauen.
+#
+# - Automatisch: Bringt ein Release eine neue mod_version (scripts/release.mjs → scripts/client-mod-version.mjs:
+#   Quellen in client-mod/ oder data/ geändert, oder der Kanal ist noch leer), startet auto-release.yml diesen
+#   Workflow für das Release-Tag mit publish=true.
+# - Von Hand: Actions → Cubiq Client → Run workflow (Branch/Tag wählen; „publish“ aus = nur bauen und prüfen).
+# - Pull Requests, die den Bau selbst ändern (Gradle-Dateien, diese Skripte): alles bauen und prüfen, nichts
+#   veröffentlichen.
+#
+# Ablauf:
+#   plan     teilt die Versionen auf Teil-Jobs auf (scripts/client-mod-build.mjs plan) – alle Versionen in einem Job
+#            dauerten Stunden und sprengten den Speicher des Runners.
+#   build    baut je Teil-Job die Jars (collectLauncherJars), prüft sie und lädt sie als Artefakt hoch.
+#   channel  führt alle Teile zusammen und schreibt client-mod.json; beim Veröffentlichen signiert es mit dem
+#            Update-Schlüssel (Secrets TAURI_SIGNING_PRIVATE_KEY + _PASSWORD, wie der Launcher-Release) und lädt alles
+#            hoch (scripts/publish-client-mod.mjs). Ein schon veröffentlichter Stand wird nicht noch einmal hochgeladen.
+# Schlägt ein Teil fehl, wird nichts veröffentlicht; der nächste Release mit derselben mod_version versucht es neu.
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' && inputs.publish && format('Cubiq Client {0} veröffentlichen', inputs.version || github.ref_name)
+  || format('Cubiq Client – Probebau ({0})', github.head_ref || github.ref_name) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Im Update-Kanal veröffentlichen (sonst nur bauen und prüfen)"
+        type: boolean
+        default: false
+      version:
+        description: "Erwartete mod_version (leer = wie im gewählten Stand)"
+        type: string
+        default: ""
+  pull_request:
+    paths:
+      - .github/workflows/client-mod.yml
+      - scripts/client-mod-build.mjs
+      - scripts/client-mod-version.mjs
+      - scripts/publish-client-mod.mjs
+      - "client-mod/**/*.gradle"
+      - "client-mod/**/gradle.properties"
+      - "client-mod/**/gradle-wrapper.properties"
+      - "client-mod/**/gradle-daemon-jvm.properties"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: client-mod-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PUBLISH: ${{ github.event_name == 'workflow_dispatch' && inputs.publish }}
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      jobs: ${{ steps.plan.outputs.jobs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Split into build jobs
+        id: plan
+        run: node scripts/client-mod-build.mjs plan >> "$GITHUB_OUTPUT"
+
+  build:
+    name: ${{ matrix.job.name }}
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        job: ${{ fromJSON(needs.plan.outputs.jobs) }}
+    env:
+      # Toolchains aus setup-java statt Download (foojay bleibt Rückfall) – wie im CI.
+      GRADLE_TOOLCHAINS: -Porg.gradle.java.installations.fromEnv=JAVA_HOME_8_X64,JAVA_HOME_17_X64,JAVA_HOME_21_X64,JAVA_HOME_25_X64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Jede Minecraft-Version bringt einige hundert MB an Spiel-Jars und Mappings mit.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL || true
+          df -h /
+
+      # 8: Forge bis 1.16, 17/21: Minecraft bis 1.21.11, 25: Minecraft 26.x und Gradle selbst (JAVA_HOME = zuletzt genannte).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            8
+            17
+            21
+            25
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Liest den Gradle-Cache des CI (main), schreibt aber nichts – die vielen Minecraft-Versionen würden den
+      # Cache-Platz des Repos (10 GB) füllen und die Caches der Launcher-Builds verdrängen.
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+
+      - name: Build
+        env:
+          JOB: ${{ matrix.job.id }}
+        run: node scripts/client-mod-build.mjs build "$JOB"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: client-mod-${{ matrix.job.id }}
+          path: client-mod/dist/
+          if-no-files-found: error
+          # Jars sind schon gepackt.
+          compression-level: 0
+          retention-days: 7
+          overwrite: true
+
+      - name: Test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-mod-reports-${{ matrix.job.id }}
+          path: client-mod/**/build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  channel:
+    name: ${{ env.PUBLISH == 'true' && 'Publish' || 'Check' }}
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      # Release `client-mod` anlegen und Dateien hochladen.
+      contents: write
+    # Nie zwei Veröffentlichungen gleichzeitig.
+    concurrency:
+      group: client-mod-channel
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Nur die Tauri-CLI (Signatur) – ohne Nuxt-Vorbereitung.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: client-mod-*
+          path: client-mod/dist
+          merge-multiple: true
+
+      - name: All parts there?
+        env:
+          JOBS: ${{ needs.plan.outputs.jobs }}
+        run: node scripts/client-mod-build.mjs verify
+
+      - name: Check channel files
+        if: env.PUBLISH != 'true'
+        run: node scripts/publish-client-mod.mjs --dry-run --no-sign --no-bundle --repo "$GITHUB_REPOSITORY"
+
+      - name: Update signature
+        id: signing
+        if: env.PUBLISH == 'true'
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: node scripts/check-signing.mjs --export
+
+      - name: Publish to the update channel
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SIGNING: ${{ steps.signing.outputs.status }}
+          SIGNING_REASON: ${{ steps.signing.outputs.reason }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$SIGNING" != "ok" ]; then
+            echo "::error title=Update-Signatur::$SIGNING_REASON Ohne gültigen Schlüssel nimmt kein Launcher den Cubiq Client an."
+            exit 1
+          fi
+          node scripts/publish-client-mod.mjs --no-bundle --skip-if-published --repo "$GITHUB_REPOSITORY" ${VERSION:+--expect-version "$VERSION"}
+
+      - name: Summary
+        if: always()
+        env:
+          STATUS: ${{ job.status }}
+        run: node scripts/client-mod-build.mjs summary >> "$GITHUB_STEP_SUMMARY"
