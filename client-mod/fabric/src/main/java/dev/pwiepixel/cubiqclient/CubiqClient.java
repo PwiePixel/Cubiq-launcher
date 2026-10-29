@@ -167,6 +167,9 @@ public final class CubiqClient implements ClientModInitializer {
 		// Konten: Wechsel ohne Neustart (mit Cubiq Launcher dessen Konten, sonst eigene Anmeldung je Instanz).
 		dev.pwiepixel.cubiqclient.core.account.AccountManager.init(new dev.pwiepixel.cubiqclient.online.SessionSwap(
 				FabricLoader.getInstance().getConfigDir(), "Cubiq-Client/" + version + " (Minecraft " + minecraft + "; fabric)", message -> LOGGER.info(message)));
+		// Sitzung des laufenden Spiels (nur lesen) für Garderobe und Fehlerberichte.
+		dev.pwiepixel.cubiqclient.core.account.CurrentSession.init(FabricLoader.getInstance().getConfigDir(), "Cubiq-Client/" + version + " (Minecraft " + minecraft + "; fabric)",
+				dev.pwiepixel.cubiqclient.online.GameUser::current, message -> LOGGER.info(message));
 		// Bug melden (Cubiq-Menü): Mod-Liste, Log und Screenshots aus dem Spielordner, Senden über die Cubiq API.
 		dev.pwiepixel.cubiqclient.core.bugreport.BugReports.init(FabricLoader.getInstance().getConfigDir(), version, minecraft, "fabric");
 		// Leistung (Dynamische FPS, Culling, Partikel, Welt-Details, FPS-Boost); Leistungs-Mods übernehmen ihre Teile.

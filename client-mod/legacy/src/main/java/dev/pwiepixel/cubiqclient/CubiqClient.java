@@ -155,12 +155,16 @@ public final class CubiqClient {
 		dev.pwiepixel.cubiqclient.core.i18n.I18n.init(file.getParentFile().toPath());
 		dev.pwiepixel.cubiqclient.core.clips.Clips.init(file.getParentFile().toPath());
 		// Konten: Wechsel ohne Neustart (mit Cubiq Launcher dessen Konten, sonst eigene Anmeldung je Instanz).
+		java.util.function.Supplier<dev.pwiepixel.cubiqclient.core.account.SessionData> session = () -> {
+			net.minecraft.util.Session s = Minecraft.getMinecraft().getSession();
+			return s == null ? null : new dev.pwiepixel.cubiqclient.core.account.SessionData(s.getPlayerID(), s.getUsername(), s.getToken(), null);
+		};
 		accountSwap = new dev.pwiepixel.cubiqclient.core.account.LegacySessionSwap(() -> Minecraft.getMinecraft(),
-				net.minecraft.util.Session.class, () -> {
-					net.minecraft.util.Session s = Minecraft.getMinecraft().getSession();
-					return s == null ? null : new dev.pwiepixel.cubiqclient.core.account.SessionData(s.getPlayerID(), s.getUsername(), s.getToken(), null);
-				}, () -> Mc.world() != null, file.getParentFile().toPath(), "Cubiq-Client/" + version + " (Minecraft " + Mc.version() + "; forge)", message -> LOGGER.info(message));
+				net.minecraft.util.Session.class, session, () -> Mc.world() != null, file.getParentFile().toPath(), "Cubiq-Client/" + version + " (Minecraft " + Mc.version() + "; forge)", message -> LOGGER.info(message));
 		dev.pwiepixel.cubiqclient.core.account.AccountManager.init(accountSwap);
+		// Sitzung des laufenden Spiels (nur lesen) für Garderobe und Fehlerberichte.
+		dev.pwiepixel.cubiqclient.core.account.CurrentSession.init(file.getParentFile().toPath(), "Cubiq-Client/" + version + " (Minecraft " + Mc.version() + "; forge)", session,
+				message -> LOGGER.info(message));
 		// Bug melden (Cubiq-Menü): Mod-Liste, Log und Screenshots aus dem Spielordner, Senden über die Cubiq API.
 		dev.pwiepixel.cubiqclient.core.bugreport.BugReports.init(file.getParentFile().toPath(), version, Mc.version(), "forge");
 		// Grafik-Modus „Schön“/„Max FPS“ (config/cubiqclient/fps-mode.json).

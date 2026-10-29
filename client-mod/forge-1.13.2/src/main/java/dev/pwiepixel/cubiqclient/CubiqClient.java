@@ -151,12 +151,16 @@ public final class CubiqClient {
 		dev.pwiepixel.cubiqclient.core.i18n.I18n.init(FMLPaths.CONFIGDIR.get());
 		dev.pwiepixel.cubiqclient.core.clips.Clips.init(FMLPaths.CONFIGDIR.get());
 		// Konten: Wechsel ohne Neustart (mit Cubiq Launcher dessen Konten, sonst eigene Anmeldung je Instanz).
+		java.util.function.Supplier<dev.pwiepixel.cubiqclient.core.account.SessionData> session = () -> {
+			net.minecraft.util.Session s = Minecraft.getInstance().getSession();
+			return s == null ? null : new dev.pwiepixel.cubiqclient.core.account.SessionData(s.getPlayerID(), s.getUsername(), s.getToken(), null);
+		};
 		accountSwap = new dev.pwiepixel.cubiqclient.core.account.LegacySessionSwap(() -> Minecraft.getInstance(),
-				net.minecraft.util.Session.class, () -> {
-					net.minecraft.util.Session s = Minecraft.getInstance().getSession();
-					return s == null ? null : new dev.pwiepixel.cubiqclient.core.account.SessionData(s.getPlayerID(), s.getUsername(), s.getToken(), null);
-				}, () -> Minecraft.getInstance().world != null, FMLPaths.CONFIGDIR.get(), "Cubiq-Client/" + client.version + " (Minecraft 1.13.2; forge)", message -> LOGGER.info(message));
+				net.minecraft.util.Session.class, session, () -> Minecraft.getInstance().world != null, FMLPaths.CONFIGDIR.get(), "Cubiq-Client/" + client.version + " (Minecraft 1.13.2; forge)", message -> LOGGER.info(message));
 		dev.pwiepixel.cubiqclient.core.account.AccountManager.init(accountSwap);
+		// Sitzung des laufenden Spiels (nur lesen) für Garderobe und Fehlerberichte.
+		dev.pwiepixel.cubiqclient.core.account.CurrentSession.init(FMLPaths.CONFIGDIR.get(), "Cubiq-Client/" + client.version + " (Minecraft 1.13.2; forge)", session,
+				message -> LOGGER.info(message));
 		// Bug melden (Cubiq-Menü): Mod-Liste, Log und Screenshots aus dem Spielordner, Senden über die Cubiq API.
 		dev.pwiepixel.cubiqclient.core.bugreport.BugReports.init(FMLPaths.CONFIGDIR.get(), client.version, "1.13.2", "forge");
 		client.config = new ConfigStore(FMLPaths.CONFIGDIR.get().resolve("cubiqclient.json"));
