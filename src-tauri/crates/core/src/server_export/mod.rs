@@ -97,7 +97,6 @@ pub struct ServerExportOptions {
     pub port: u16,
     pub motd: String,
     pub max_players: u32,
-    pub online_mode: bool,
     pub ram_mb: u32,
     /// Der Nutzer hat die Minecraft-EULA ausdrücklich angenommen.
     pub eula_accepted: bool,
@@ -218,7 +217,6 @@ pub fn check_options(options: &ServerExportOptions) -> Result<CheckedOptions> {
             port: options.port,
             motd: motd.trim().to_owned(),
             max_players: options.max_players,
-            online_mode: options.online_mode,
         },
     })
 }

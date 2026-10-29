@@ -115,7 +115,7 @@ export interface ServerExportProgress {
   percent: number
 }
 
-/** Was an `export_server` geht. */
+/** Was an `export_server` geht. Einen Offline-Modus gibt es nicht – exportierte Server haben immer `online-mode=true`. */
 export interface ServerExportOptions {
   name: string
   mods: string[]
@@ -124,7 +124,6 @@ export interface ServerExportOptions {
   port: number
   motd: string
   maxPlayers: number
-  onlineMode: boolean
   ramMb: number
   eulaAccepted: boolean
   zip: boolean
@@ -151,7 +150,6 @@ export const serverExportOptionsSchema = z
       .int(err('errors.serverExport.invalidMaxPlayers'))
       .min(1, err('errors.serverExport.invalidMaxPlayers'))
       .max(1000, err('errors.serverExport.invalidMaxPlayers')),
-    onlineMode: z.boolean(),
     ramMb: z.number().int().min(512, err('serverExport.ramRange')).max(131072, err('serverExport.ramRange')),
     eulaAccepted: z.boolean(),
     zip: z.boolean(),

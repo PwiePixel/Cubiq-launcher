@@ -35,13 +35,12 @@ pub fn memory_args(ram_mb: u32) -> Vec<String> {
     vec![format!("-Xms{}M", ram_mb.min(1024)), format!("-Xmx{ram_mb}M")]
 }
 
-/// Einstellungen für `server.properties`.
+/// Einstellungen für `server.properties`. Den Online-Modus gibt es hier bewusst nicht: Er ist immer an.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ServerProperties {
     pub port: u16,
     pub motd: String,
     pub max_players: u32,
-    pub online_mode: bool,
 }
 
 /// Wert für eine Java-Properties-Datei: `\` und Steuerzeichen raus bzw.
@@ -71,7 +70,9 @@ pub fn server_properties(props: &ServerProperties, has_world: bool) -> String {
     out.push_str(&format!("query.port={}\n", props.port));
     out.push_str(&format!("motd={}\n", escape_property(&props.motd)));
     out.push_str(&format!("max-players={}\n", props.max_players));
-    out.push_str(&format!("online-mode={}\n", props.online_mode));
+    // Immer Online-Modus: Beitreten nur mit einem echten, bei Mojang angemeldeten Minecraft-Konto. Cubiq erzeugt keine
+    // Server, die die Anmeldung abschalten (auch nicht auf Wunsch).
+    out.push_str("online-mode=true\n");
     out.push_str("level-name=world\n");
     if !has_world {
         out.push_str("level-seed=\n");

@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import {
@@ -65,7 +67,6 @@ const options = {
   port: 25565,
   motd: 'Hallo',
   maxPlayers: 20,
-  onlineMode: true,
   ramMb: 4096,
   eulaAccepted: false,
   zip: true,
@@ -111,6 +112,14 @@ describe('Formular', () => {
     // Lokal starten nur mit akzeptierter EULA – nie stillschweigend.
     expect(serverExportOptionsSchema.safeParse({ ...options, local: true }).success).toBe(false)
     expect(serverExportOptionsSchema.safeParse({ ...options, local: true, eulaAccepted: true }).success).toBe(true)
+  })
+
+  it('kennt keinen Offline-Modus: Server verlangen immer die Mojang-Anmeldung', () => {
+    // Ein alter Wert fällt beim Prüfen weg – der Kern schreibt ohnehin immer online-mode=true.
+    const parsed = serverExportOptionsSchema.parse({ ...options, onlineMode: false })
+    expect(parsed).not.toHaveProperty('onlineMode')
+    const dialog = fs.readFileSync(path.resolve(__dirname, '../app/components/ServerExportDialog.vue'), 'utf8')
+    expect(dialog).not.toMatch(/onlineMode|online-mode/)
   })
 
   it('bereinigt Konsolen-Befehle wie der Kern', () => {
