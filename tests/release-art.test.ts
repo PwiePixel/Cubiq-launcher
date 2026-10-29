@@ -104,15 +104,16 @@ function centre(frame: Canvas, color: string) {
 }
 
 /**
- * Cubis Augen in einem Bild der Szene „petting“: Sein Mund (nur Cubi hat diese Farbe) gibt die Lage des Gesichts, die
- * Augen sind je 2 × 3 Punkte wie im Sprite. Je Auge das Muster (W = Augenweiß, K = Pupille, · = Lid), wie viel Weiß zu
- * sehen ist und wohin die Pupille schaut: `x`/`y` je −1 (links/oben), 0 oder 1 (rechts/unten), bei geschlossenen Augen
- * 0. Dazu `mid`, die Mitte zwischen den Augen.
+ * Cubis Augen in einem Bild: Sein Mund gibt die Lage des Gesichts (gesucht ab Zeile `from` – in der Szene „waypoints“
+ * hat der blaue Freund darüber denselben Mund), die Augen sind je 2 × 3 Punkte wie im Sprite. Je Auge das Muster (W =
+ * Augenweiß, K = Pupille, · = Lid), wie viel Weiß zu sehen ist und wohin die Pupille schaut: `x`/`y` je −1
+ * (links/oben), 0 oder 1 (rechts/unten), bei geschlossenen Augen 0. Dazu `mid`, die Mitte zwischen den Augen, und
+ * `left`/`top`, die linke obere Ecke des Sprites.
  */
-function cubiEyes(frame: Canvas) {
+function cubiEyes(frame: Canvas, from = 0) {
   let mx = 64
   let my = 64
-  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (hexAt(frame, x, y) === '#22301a') [mx, my] = [Math.min(mx, x), Math.min(my, y)]
+  for (let y = from; y < 64; y++) for (let x = 0; x < 64; x++) if (hexAt(frame, x, y) === '#22301a') [mx, my] = [Math.min(mx, x), Math.min(my, y)]
   const left = mx - 6
   const top = my - 8
   const eyes = [left + 3, left + 10].map((ex) => {
@@ -132,10 +133,12 @@ function cubiEyes(frame: Canvas) {
     const mean = (k: number) => pupils.reduce((sum, p) => sum + p[k]!, 0) / pupils.length
     return { pattern, white, x: white ? Math.sign(mean(0) - 0.5) : 0, y: white ? Math.sign(mean(1) - 1) : 0 }
   })
-  return { eyes, mid: [left + 7.5, top + 5] as const }
+  return { eyes, mid: [left + 7.5, top + 5] as const, left, top }
 }
 
-describe('Bild je Release', () => {
+// Die Szenen werden Bild für Bild gezeichnet und geprüft: Unter Last (alle Testdateien parallel) dauert ein Test
+// mehrere Sekunden – mehr Zeit als die üblichen 5 s, damit nichts nur wegen der Last scheitert.
+describe('Bild je Release', { timeout: 30_000 }, () => {
   it('wählt das Thema nach dem Text – fette Überschriften zählen mehr', () => {
     expect(pickTopic('- **Cubiq Launcher is here.** The first version.').id).toBe('launch')
     expect(pickTopic('- **Reduced animations in the launcher also calm the Cubiq Client.**').id).toBe('motion')
@@ -288,6 +291,71 @@ describe('Bild je Release', () => {
     }
   })
 
+  it('Sonderthema „waypoints“: Cubis Augen gleich breit, ohne Streifen, Blickwechsel nur mit Lidschlag', () => {
+    const { frames } = releaseFrames('0.3.3', 'waypoints')
+    const n = frames.length
+    // Cubis Mund ist der einzige in der unteren Bildhälfte: Der blaue Freund mit demselben Mund steht oben auf seinem
+    // Inselchen, Cubi hüpft höchstens 2 Punkte hoch.
+    const faces = frames.map((frame) => cubiEyes(frame, 28))
+    // Bei der Landung (Bild 5 bis 7) freut er sich mit geschlossenen Augen: kleine Bögen über den Augenfeldern.
+    const happy = [5, 6, 7]
+    frames.forEach((frame, f) => {
+      const { left, top } = faces[f]!
+      // Augenweiß und Pupillen auf dem ganzen Gesicht, Lage im Sprite (16 × 13).
+      const marks: [number, number, string][] = []
+      for (let dy = 0; dy < 13; dy++) {
+        for (let dx = 0; dx < 16; dx++) {
+          const c = hexAt(frame, left + dx, top + dy)
+          if (c === '#f6f9f2' || c === '#18210f') marks.push([dx, dy, c === '#f6f9f2' ? 'W' : 'K'])
+        }
+      }
+      // Beide Augen gleich: rechts genau dasselbe wie links, 7 Spalten weiter (Augenfelder 3–4 und 10–11) – kein Auge
+      // breiter als das andere, kein Bogen versetzt, sonst nichts davon auf dem Gesicht.
+      const side = (from: number) => marks.filter(([dx]) => dx >= from && dx < from + 7).map(([dx, dy, k]) => `${dx - from},${dy}${k}`)
+      expect([f, side(7), marks.length]).toEqual([f, side(0), 2 * side(0).length])
+      // Nichts neben den Augenfeldern (Zeilen 4–6) – nur die Bögen der Freude reichen eine Spalte weiter nach außen.
+      if (happy.includes(f)) expect([f, side(0)]).toEqual([f, ['3,5K', '4,5K', '2,6K', '5,6K']])
+      else expect([f, marks.filter(([dx, dy]) => ![3, 4, 10, 11].includes(dx) || dy < 4 || dy > 6)]).toEqual([f, []])
+    })
+    for (const { eyes } of faces) expect(eyes[1]!.pattern).toBe(eyes[0]!.pattern)
+    const look = faces.map(({ eyes }) => eyes[0]!)
+
+    // Das ruhige Bild (Bild 0): ganz offen, nach rechts oben zur Karte.
+    expect(look[0]!.pattern).toBe('WK/WK/WW')
+    // Solange der Freund schreibt (die Blase geht in Bild 17 auf, in Bild 27 springt der Wegpunkt heraus), schaut Cubi
+    // nach links oben zu ihm, sonst nach rechts oben zur Karte – beide liegen wirklich dort.
+    const writing = (f: number) => f >= 17 && f < 27
+    look.forEach((e, f) => {
+      if (!e.white) return
+      expect([f, e.x]).toEqual([f, writing(f) ? -1 : 1])
+      if (e.white === 4) expect([f, e.y]).toEqual([f, -1])
+      const [tx, ty] = centre(frames[f]!, writing(f) ? '#b4def7' : '#353f4f')
+      expect([f, tx < faces[f]!.mid[0], ty < faces[f]!.mid[1]]).toEqual([f, writing(f), true])
+    })
+
+    // Die Pupillen springen nie: Zwischen zwei Bildern, in denen sie zu sehen sind, bleibt die Richtung gleich – auch
+    // über die Naht. Zu sind die Augen nur beim Lidschlag (Strich unten) an den beiden Blickwechseln und vor Freude.
+    for (let f = 0; f < n; f++) {
+      const [a, b] = [look[f]!, look[(f + 1) % n]!]
+      if (a.white && b.white) expect([f, b.x]).toEqual([f, a.x])
+    }
+    expect(look.flatMap((e, f) => (e.white ? [] : [f]))).toEqual([...happy, 17, 27])
+    for (const f of happy) expect(look[f]!.pattern).toBe('··/KK/··')
+    for (const f of [17, 27]) {
+      expect(look[f]!.pattern).toBe('··/··/KK')
+      // Jeder Lidschlag ist ein Blickwechsel (Karte ↔ Freund), die neue Richtung schon beim halb offenen Auge.
+      expect(look[f + 1]!.x).toBe(-look[f - 1]!.x)
+    }
+    // Nach jedem Schließen gehen die Lider in zwei Schritten auf: halb (das Lid deckt noch die obere Reihe), dann ganz.
+    for (const f of [7, 17, 27]) {
+      const [half, open] = [look[f + 1]!, look[f + 2]!]
+      expect(half.pattern.startsWith('··/')).toBe(true)
+      expect(half.white).toBeGreaterThan(0)
+      expect(half.white).toBeLessThan(4)
+      expect(open).toMatchObject({ white: 4, x: half.x })
+    }
+  })
+
   it('Sonderthema „petting“: Krümel fliegen hinter dem Pinguin und Cubi vorbei – kein heller Fleck auf ihnen', () => {
     const { frames } = releaseFrames('0.3.2', 'petting')
     // Krümelfarben (Papierweiß, Fischsilber hell und mittel) direkt neben dem Frack des Pinguins oder Cubis Körper
@@ -363,6 +431,46 @@ describe('Bild je Release', () => {
     })
     expect(specks).toEqual([])
     expect(split).toEqual([])
+  })
+
+  it('Sonderthema „petting“: Das Füchschen hat zwei gleich lange Augenstriche – Cubis Ärmchen reicht über sie hinweg', () => {
+    const { frames } = releaseFrames('0.3.2', 'petting')
+    const dark = new Set(['#18210f', '#141b18'])
+    frames.forEach((frame, f) => {
+      // Die Nase des Füchschens (dunkel zwischen hellen Wangen, Spalte 3 seiner Schnauzenzeile) gibt die Lage; zwei
+      // Zeilen darüber liegen die geschlossenen Augen, Spalten 1–2 und 4–5.
+      const noses: (readonly [number, number])[] = []
+      for (let y = 0; y < 64; y++) {
+        for (let x = 0; x < 64; x++) {
+          if (hexAt(frame, x, y) === '#18210f' && hexAt(frame, x - 1, y) === '#f8f0e5' && hexAt(frame, x + 1, y) === '#f8f0e5') noses.push([x, y])
+        }
+      }
+      expect(noses).toHaveLength(1)
+      const [nx, ny] = noses[0]!
+      // Länge des dunklen Strichs (Pupille oder Umriss, die beiden sehen gleich aus) durch (x, y)
+      const dash = (x: number, y: number) => {
+        if (!dark.has(hexAt(frame, x, y) ?? '')) return 0
+        let [a, b] = [x, x]
+        while (dark.has(hexAt(frame, a - 1, y) ?? '')) a--
+        while (dark.has(hexAt(frame, b + 1, y) ?? '')) b++
+        return b - a + 1
+      }
+      expect([f, dash(nx - 2, ny - 2), dash(nx + 1, ny - 2)]).toEqual([f, 2, 2])
+    })
+  })
+
+  it('Sonderthemen „cosmetics“ und „petting“: Das Glühwürmchen behält beide Augen – auch wenn die Laterne am hellsten leuchtet', () => {
+    for (const [version, topic] of [['0.3.0', 'cosmetics'], ['0.3.2', 'petting']] as const) {
+      releaseFrames(version, topic).frames.forEach((frame, f) => {
+        // Den roten Panzer hat nur das Glühwürmchen; die Augen (weiß) liegen drei Zeilen unter seiner Oberkante.
+        const shell: (readonly [number, number])[] = []
+        for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (hexAt(frame, x, y) === '#e8603d') shell.push([x, y])
+        const top = Math.min(...shell.map(([, y]) => y))
+        const from = Math.min(...shell.map(([x]) => x)) - 2
+        const eyes = Array.from({ length: 12 }, (_, i) => from + i).filter((x) => hexAt(frame, x, top + 3) === '#ffffff')
+        expect([topic, f, eyes.length]).toEqual([topic, f, 2])
+      })
+    }
   })
 
   it('zeichnet ein freigestelltes 512er-Bild – je Version anders, dieselbe Version immer gleich', () => {
