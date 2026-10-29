@@ -804,7 +804,8 @@ public final class MenuSkin {
 		Paint.radialGlow(c, width * 3 / 5, height / 8, width * 2 / 5, Math.max(8, height / 10), a[3], 24, width, height);
 		float t = sceneSeconds();
 		// Strahlen: alle 2 Pixel einer, Länge und Helligkeit aus langsam wanderndem Rauschen; nach oben verglimmt jeder in
-		// sechs Stufen über Smaragd und Türkis in Eisblau. Die Kante liegt auf einer sanften Welle, die Enden laufen weich aus.
+		// feinen Stufen (etwa alle 3 Pixel) über Smaragd und Türkis in Eisblau. Die Kante liegt auf einer sanften Welle, die
+		// Enden laufen weich aus.
 		int edgeY = height / 4;
 		int reach = Math.max(12, height / 5);
 		for (int x = width / 10; x < width - width / 10; x += 2) {
@@ -815,11 +816,15 @@ public final class MenuSkin {
 			if (alpha < 6) continue;
 			int edge = edgeY + (int) Math.round(WinterMath.wave(u * 1.4 + t * 0.015) * Math.max(2, height / 36));
 			int len = (int) Math.round(reach * (0.4 + 0.6 * WinterMath.glide(x / 13.0 + t * 0.12, 0x7b)));
-			for (int s = 0; s < 6; s++) {
-				int top = edge - 2 - len * (s + 1) / 6;
-				int bottom = edge - 2 - len * s / 6;
-				int color = s < 3 ? a[2] : (s < 5 ? a[3] : a[4]);
-				c.fill(x, top, x + 2, bottom, ColorMath.withAlpha(color, alpha * (6 - s) / 11));
+			int steps = Math.max(6, len / 3);
+			for (int s = 0; s < steps; s++) {
+				int top = edge - 2 - len * (s + 1) / steps;
+				int bottom = edge - 2 - len * s / steps;
+				float f = s / (float) steps;
+				int fade = Math.round(alpha * 0.85f * (1 - f) * (1 - f));
+				if (bottom <= top || fade <= 0) continue;
+				int color = f < 0.45f ? a[2] : (f < 0.8f ? a[3] : a[4]);
+				c.fill(x, top, x + 2, bottom, ColorMath.withAlpha(color, fade));
 			}
 			c.fill(x, edge - 2, x + 2, edge - 1, ColorMath.withAlpha(a[1], alpha));
 			c.fill(x, edge - 1, x + 2, edge, ColorMath.withAlpha(a[0], alpha));
