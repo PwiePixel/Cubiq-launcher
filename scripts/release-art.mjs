@@ -180,6 +180,19 @@ const C = Object.fromEntries(
     heartHi: '#ffd0e2',
     heart: '#f2648c',
     heartDark: '#c43c66',
+    // Winterfreunde (Sonderthema „snowfox“): Schneefuchs in den Farben der Website (Fell, eisblaue Augen, dunkle Söckchen
+    // und Ohrspitzen), Zipfelmütze aus rotem Filz mit weißem Pelz
+    snowFurHi: '#ffffff',
+    snowFur: '#eef3f8',
+    snowFurLo: '#c5d3e2',
+    snowFurDeep: '#9fb2c8',
+    iris: '#6fb7e8',
+    earIn: '#4b3127',
+    feltHi: '#ef5a63',
+    felt: '#d8343f',
+    feltDark: '#a5222e',
+    feltDeep: '#7c1825',
+    frost: '#a9d8f5',
   }).map(([k, v]) => [k, hex(v)]),
 )
 
@@ -226,6 +239,10 @@ export const SPECIAL_TOPICS = [
   // Stellen statt der Würfel; die Insel ist etwas breiter, so bleibt ihre Unterseite beim Schweben ganz im Bild.
   // Schleife wie bei 0.3.0.
   { id: 'waypoints', subject: 'waypoints', wide: 2, cubes: 0, sparkles: 0, float: 1, frames: 32, frameMs: 80 },
+  // 0.3.5: Winterfreunde – Cubi hüpft mit Zipfelmütze mitten auf der verschneiten, schwebenden Insel (Zipfel und Bommel
+  // schwingen nach), rechts sitzt der Schneefuchs und wedelt mit dem buschigen Schwanz, links winkt das Schneemännchen.
+  // Hinter allem fällt leise Schnee, statt der Funken blitzen kleine Schneeflocken. Schleife wie bei 0.3.0.
+  { id: 'snowfox', subject: 'snowfox', snowy: true, hero: 'middle', wide: 6, cubes: 0, sparkles: 0, float: 1, frames: 32, frameMs: 80 },
 ]
 
 function count(haystack, needle) {
@@ -657,8 +674,12 @@ function hopBody(f, hero) {
   return { left, right: left + w - 1, top: bottom - h + 1, bottom, w, h, lift, phase: f % HOP.length }
 }
 
-/** Cubi im Hüpf-Bild: Deckel, Glanz links, Schatten rechts, Gesicht und Füße wie im Sprite, nur neu verteilt. */
-function hoppingCubi(f, n, b) {
+/**
+ * Cubi im Hüpf-Bild: Deckel, Glanz links, Schatten rechts, Gesicht und Füße wie im Sprite, nur neu verteilt. Wahlweise
+ * eigene Augen (`eyes`, 2 × 3 wie im Sprite, statt Blick nach rechts unten mit Lidschlag in der Mitte der Schleife) und
+ * ohne Pflänzchen (`sprout: false`, etwa unter einer Mütze).
+ */
+function hoppingCubi(f, n, b, { eyes = null, sprout: withSprout = true } = {}) {
   const c = layer()
   for (let y = b.top; y <= b.bottom; y++) {
     for (let x = b.left; x <= b.right; x++) {
@@ -677,7 +698,8 @@ function hoppingCubi(f, n, b) {
   const mid = b.left + (b.w - 1) / 2
   const eye = b.top + Math.floor((b.h - 13) / 2 + 4.5)
   for (const ex of [mid - 4.5, mid + 2.5]) {
-    if (f === n / 2) c.rect(ex, eye + 2, 2, 1, C.pupil)
+    if (eyes) c.draw(eyes, ex, eye)
+    else if (f === n / 2) c.rect(ex, eye + 2, 2, 1, C.pupil)
     else c.rect(ex, eye, 2, 3, C.eye).rect(ex + 1, eye + 1, 1, 2, C.pupil)
   }
   c.rect(mid - 5.5, eye + 3, 2, 1, C.cheek).rect(mid + 3.5, eye + 3, 2, 1, C.cheek)
@@ -689,7 +711,7 @@ function hoppingCubi(f, n, b) {
   c.rect(mid - 5.5, feet, 3, 1, C.cubiBottom).rect(mid + 3.5, feet, 3, 1, C.cubiBottom)
   // Pflänzchen: beim Ausholen und Landen platt, beim Steigen nach oben geweht, sonst wie immer
   const sprout = b.w > 16 ? PET.sprout.flat : b.phase >= 2 && b.phase <= 4 ? PET.sprout.up : CUBI.sprout[b.phase === 5 || b.phase === 6 ? 1 : 0]
-  c.draw(sprout, mid - 1.5, b.top - 3)
+  if (withSprout) c.draw(sprout, mid - 1.5, b.top - 3)
   return c.outline(C.outline)
 }
 
@@ -1373,11 +1395,245 @@ function watchingCubi(f, n, x, { look, happy, lift }) {
   return c.outline(C.outline)
 }
 
+// ---------------------------------------------------------------- Winterfreunde (Sonderthema „snowfox“)
+//
+// Cubi trägt die Zipfelmütze und hüpft zweimal je Schleife, dazwischen steht er still: Krempe und Kegel sitzen fest,
+// der lange weiche Zipfel mit dem Bommel federt nach – beim Absprung und Aufkommen sackt er nach unten, im Steigen
+// fliegt er hoch, danach schwingt er aus. Rechts sitzt der Schneefuchs und wedelt mit dem buschigen Schwanz, links
+// winkt das Schneemännchen; Cubi schaut abwechselnd zu den beiden, jeder Blickwechsel hinter einem Lidschlag. Hinter
+// allem fällt leise Schnee. Alles hängt am Bild der Schleife, damit sie nahtlos bleibt.
+
+/** Hüpf-Bild (Index in HOP) im Bild f: Hüpfer in Bild 0–7 und 16–23, dazwischen steht Cubi wie in Bild 0 des Hüpfers. */
+const winterHop = (f) => (f % 16 < 8 ? f % 16 : 0)
+
+/**
+ * Wie der Zipfel nachschwingt, je Bild einer Schleife aus `n` Bildern: [Zipfel, Bommel], + sackt nach unten, − fliegt
+ * hoch (etwa −1 … 1). Zwei gedämpfte Federn: Cubis Beschleunigung stößt den Zipfel an, der Bommel folgt ihm etwas
+ * später. Gerechnet wird, bis die Schleife eingeschwungen ist – dann wiederholt sie sich bis auf die letzte Stelle genau.
+ */
+function capSwing(n) {
+  const tops = Array.from({ length: n }, (_, f) => hopBody(winterHop(f), 0).top)
+  // Beschleunigung nach oben (Punkte je Bild², Bildzeilen wachsen nach unten)
+  const lift = tops.map((_, f) => -(tops[(f + 1) % n] - 2 * tops[f] + tops[(f + n - 1) % n]))
+  let [tip, tipV, pom, pomV] = [0, 0, 0, 0]
+  const out = []
+  for (let k = 0; k < n * 14; k++) {
+    const f = k % n
+    tipV += -0.8 * tip - 0.5 * tipV + 0.12 * lift[f]
+    tip += tipV
+    pomV += -0.9 * (pom - tip) - 0.6 * pomV
+    pom += pomV
+    if (k >= n * 13) out[f] = [tip, pom]
+  }
+  return out
+}
+
+/**
+ * Weicher Schlauch (Zipfel der Mütze, Schwanz des Fuchses) ab (x, y): Glieder mit Länge, Richtung (Grad ab senkrecht
+ * nach oben, + = nach rechts) und halber Breite `r` am Anfang, am Ende `end`. Liefert je überdeckten Punkt den Anteil
+ * der Länge (0 … 1), an dem er liegt (wo sich Teile überlappen, der weiter außen), und den Endpunkt.
+ */
+function tube(x, y, segs, end) {
+  const total = segs.reduce((sum, g) => sum + g.len, 0)
+  const cells = new Map()
+  const stamp = (px, py, r, s) => {
+    for (let j = Math.floor(py - r); j <= Math.ceil(py + r); j++) {
+      for (let i = Math.floor(px - r); i <= Math.ceil(px + r); i++) {
+        if ((i - px) ** 2 + (j - py) ** 2 > r * r) continue
+        const key = `${i},${j}`
+        if (!cells.has(key) || cells.get(key).s < s) cells.set(key, { x: i, y: j, s })
+      }
+    }
+  }
+  let done = 0
+  segs.forEach((g, k) => {
+    const r1 = segs[k + 1]?.r ?? end
+    const a = (g.a * Math.PI) / 180
+    const [dx, dy] = [Math.sin(a), -Math.cos(a)]
+    for (let t = 0; t < g.len; t += 0.25) stamp(x + dx * t, y + dy * t, g.r + ((r1 - g.r) * t) / g.len, (done + t) / total)
+    x += dx * g.len
+    y += dy * g.len
+    done += g.len
+  })
+  stamp(x, y, end, 1)
+  return { cells, end: [x, y] }
+}
+
+/** Fläche mit Licht von oben links: Rand oben/links `hi`, unten/rechts `lo`, innen `base` – nach der Maske `has`. */
+function shade(has, x, y, { hi, base, lo }) {
+  if (!has(x - 1, y) || !has(x, y - 1)) return hi
+  if (!has(x + 1, y) || !has(x, y + 1)) return lo
+  return base
+}
+
+/** Bommel der Zipfelmütze */
+const POM = sprite(['.wW.', 'wWWs', 'WWss', '.ss.'], { w: C.white, W: C.snow, s: C.snowShade })
+
+/**
+ * Zipfelmütze auf Cubis Körper b (aus hopBody): weiße Pelzkrempe über dem Deckel, darüber der rote Filzkegel, dessen
+ * langer Zipfel zur Seite kippt und mit dem Bommel herunterhängt. `swing` = [Zipfel, Bommel] aus capSwing, `sway`
+ * neigt den Kegel ein wenig (Grad).
+ */
+function christmasHat(b, [tipSwing, pomSwing], sway = 0) {
+  const c = layer()
+  const mid = b.left + (b.w - 1) / 2
+  const bend = (a) => Math.max(-20, Math.min(165, a))
+  const { cells, end } = tube(mid, b.top + 1, [
+    { len: 5, r: (b.w - 2) / 2, a: 4 + sway },
+    { len: 4, r: 4.2, a: bend(38 + 30 * tipSwing) },
+    { len: 4, r: 2.6, a: bend(92 + 44 * pomSwing) },
+    { len: 3.5, r: 1.8, a: bend(132 + 44 * pomSwing) },
+  ], 1.2)
+  // Unter der Krempe nichts vom Kegel (sein breiter Fuß reicht sonst ins Gesicht)
+  for (const [key, p] of cells) if (p.y > b.top + 1 && p.s < 0.4) cells.delete(key)
+  const has = (x, y) => cells.has(`${x},${y}`)
+  const at = (x, y) => cells.get(`${x},${y}`)
+  for (const { x, y, s } of cells.values()) {
+    let col = shade(has, x, y, { hi: C.feltHi, base: C.felt, lo: C.feltDark })
+    // Falte: wo der Zipfel über dem Kegel liegt, wirft er einen Schatten nach unten
+    const above = at(x, y - 1)
+    if (above && above.s - s > 0.3) col = C.feltDeep
+    c.set(x, y, col)
+  }
+  // Pelzkrempe: zwei Reihen über dem Deckel, an jeder Seite einen Punkt breiter, flauschig gesprenkelt
+  for (let x = b.left - 1; x <= b.right + 1; x++) {
+    const k = x - b.left
+    c.set(x, b.top, k % 3 === 1 ? C.white : C.snow)
+    c.set(x, b.top + 1, k % 3 === 2 ? C.snow : C.snowShade)
+  }
+  c.erase(b.left - 1, b.top + 1)
+  c.erase(b.right + 1, b.top + 1)
+  // Bommel am Ende des Zipfels: runder Pelzball mit eigenem Umriss – auch wenn er auf der Krempe liegt, bleibt er ein Ball
+  const [px, py] = end.map((v) => Math.round(v - 0.5))
+  return c.outline(C.outline).draw(layer().draw(POM, px - 1, py - 1).outline(C.outline))
+}
+
+/**
+ * Schneefuchs in den Farben der Website: sitzt im Profil und schaut nach links (zu Cubi) – spitze Schnauze mit dunkler
+ * Nase, große weiße Ohren mit dunklen Spitzen, eisblaues Auge, helle Kehle, dunkle Söckchen. Der Schwanz kommt eigens
+ * dazu (snowFox).
+ */
+const SNOW_FOX = sprite(
+  [
+    '.....S...S...',
+    '.....Oi..OL..',
+    '....HOO.HOL..',
+    '....HOOOOOL..',
+    '...HOOOOOOOL.',
+    '..HOKEOOOOOL.',
+    'NHOOOOOOOOLL.',
+    '.CCCOOOOOLL..',
+    '..CCCOOOLL...',
+    '...CCOOOHOOL.',
+    '...COOOHOOOOL',
+    '...HOOLOOOOOL',
+    '...HOOLOOOOLL',
+    '...HOOLOOOLLL',
+    '...SSL.SSLLL.',
+  ],
+  { O: C.snowFur, H: C.snowFurHi, L: C.snowFurLo, S: C.sock, i: C.earIn, E: C.iris, K: C.pupil, N: C.sock, C: C.cream },
+)
+
+/**
+ * Schneefuchs (sitzt, linke Kante x): wedelt mit dem buschigen Schwanz (weiße Spitze), blinzelt mit den eisblauen
+ * Augen, ab und zu zuckt ein Ohr.
+ */
+function snowFox(f, n, x) {
+  const top = GROUND - 15
+  // Schwanz hinter dem Körper (eigener Umriss): vom Hinterteil im Bogen hoch, die weiße Spitze schwingt hin und her
+  const wag = 10 * swing(f, n, 0, 2)
+  const { cells } = tube(x + 11, top + 12, [
+    { len: 3, r: 1.3, a: 50 },
+    { len: 3.5, r: 2.2, a: 20 + wag * 0.4 },
+    { len: 3, r: 2.6, a: -5 + wag },
+    { len: 2, r: 2.3, a: -25 + wag },
+  ], 1.6)
+  const has = (i, j) => cells.has(`${i},${j}`)
+  const tail = layer()
+  for (const { x: i, y: j, s } of cells.values()) {
+    tail.set(i, j, s > 0.8 ? shade(has, i, j, { hi: C.white, base: C.white, lo: C.snowFurLo }) : shade(has, i, j, { hi: C.snowFurLo, base: C.snowFurLo, lo: C.snowFurDeep }))
+  }
+  const c = layer().draw(SNOW_FOX, x, top)
+  // Blinzeln (zweimal je Schleife), Ohr zuckt
+  if (f % (n / 2) === 6) {
+    c.set(x + 4, top + 5, C.pupil)
+    c.set(x + 5, top + 5, C.pupil)
+  }
+  if (f % (n / 2) === 12 || f % (n / 2) === 13) {
+    c.erase(x + 9, top)
+    c.set(x + 10, top + 1, C.sock)
+  }
+  return tail.outline(C.outline).draw(c.outline(C.outline))
+}
+
+/**
+ * Leiser Schneefall hinter allem: kleine Flocken (1 Punkt) sinken einen halben Punkt je Bild, größere (2 × 2) einen
+ * ganzen – beide wiederholen sich in ihrer Spalte, so ist die Schleife nahtlos. Sie wiegen sich sanft hin und her und
+ * bleiben einen Punkt vom Bildrand weg.
+ */
+function gentleSnow(f, n) {
+  const c = layer()
+  // Größere Flocken nur links und rechts der Mütze – über ihr sähen sie aus wie ein zweiter Bommel
+  const far = [[4, 3], [13, 11], [21, 6], [30, 14], [38, 2], [47, 9], [55, 13], [60, 5]]
+  const near = [[3, 22], [9, 6], [16, 37], [49, 28], [55, 2], [60, 45]]
+  for (const [i, [x0, y0]] of far.entries()) {
+    for (let k = 0; k < 4; k++) {
+      const y = (y0 + Math.floor(f / 2) + k * 16) % 64
+      const x = x0 + Math.round(swing(f, n, i / 8))
+      if (y >= 1 && y <= 62 && x >= 1 && x <= 62) c.set(x, y, mix(C.snow, C.snowShade, 0.5))
+    }
+  }
+  for (const [i, [x0, y0]] of near.entries()) {
+    for (let k = 0; k < 2; k++) {
+      const y = (y0 + f + k * 32) % 64
+      const x = x0 + Math.round(1.5 * swing(f, n, i / 6 + 0.3))
+      if (y < 1 || y > 61 || x < 1 || x > 61) continue
+      c.set(x, y, C.snow)
+      c.set(x + 1, y, C.snowShade)
+      c.set(x, y + 1, C.snowShade)
+      c.set(x + 1, y + 1, C.snowShade)
+    }
+  }
+  return c
+}
+
+/** Kleine Schneeflocke, die aufblitzt: Punkt, Kreuz, Stern mit acht Armen (Größe 1 … 3). */
+const FROST = [
+  sprite(['w'], { w: C.white }),
+  sprite(['.a.', 'awa', '.a.'], { a: C.frost, w: C.white }),
+  sprite(['a.a.a', '.aba.', 'abwba', '.aba.', 'a.a.a'], { a: C.frost, b: C.snow, w: C.white }),
+]
+
+/** Funkeln am Himmel: eine kleine Schneeflocke blitzt auf (Größe nach TWINKLE, höchstens `most`). */
+function frostTwinkle(c, f, { x, y, phase, most = 3 }) {
+  const size = Math.min(most, TWINKLE[(f + phase) % FRAMES])
+  if (!size) return
+  const s = FROST[size - 1]
+  c.draw(s, x - (s.w >> 1), y - (s.h >> 1))
+}
+
+/** Cubis Augen beim Zuschauen (je 2 × 3 wie im Sprite): zum Fuchs nach rechts unten, zum Schneemännchen nach links oben. */
+const WINTER_EYES = { fox: CARE.eyes.fox, foxHalf: CARE.eyes.foxHalf, snowman: CARE.eyes.fish, snowmanHalf: CARE.eyes.fishHalf, shut: CARE.eyes.shut }
+/** Lidschläge: ab Bild 10 schaut Cubi zum Schneemännchen, ab Bild 26 wieder zum Fuchs (beide Male, während er steht). */
+const WINTER_LOOK = [10, 26]
+
+/**
+ * Cubis Blick im Bild f (Schlüssel in WINTER_EYES): Jeder Wechsel geschieht hinter einem Lidschlag – zu, halb auf in die
+ * neue Richtung, ganz auf –, so springen die Pupillen nie (zwei Lidschläge je Schleife, auch über die Naht hinweg).
+ */
+function winterGaze(f, n) {
+  const [toSnowman, toFox] = WINTER_LOOK
+  const snowman = f >= toSnowman && f < toFox
+  const since = (f - (snowman ? toSnowman : toFox) + n) % n
+  return since === 0 ? 'shut' : `${snowman ? 'snowman' : 'fox'}${since === 1 ? 'Half' : ''}`
+}
+
 /**
  * Jeder Gegenstand: f → Ebenen. `layer` bekommt einen Umriss, `front` (Licht, Flammen, Funken) und `ground`
  * (Rauch, Schatten auf der Insel) nicht bzw. eigene. `x` = linker Rand des freien Platzes rechts von Cubi.
  * Als zweites kommt die Lage von Insel und Cubi (`{ left, right, hero, frames }`); ein Gegenstand kann Cubi auch selbst
- * zeichnen (`hero`) und Ebenen am Himmel liefern (`sky`), die nicht mit der Insel schweben.
+ * zeichnen (`hero`) und Ebenen am Himmel liefern, die nicht mit der Insel schweben: `sky` vor allem, `back` hinter allem
+ * (etwa fallender Schnee).
  */
 const PROPS = {
   rocket(f) {
@@ -2064,6 +2320,24 @@ const PROPS = {
     c.outline(C.outline)
     return { layer: c }
   },
+
+  /**
+   * Winterfreunde: Cubi hüpft mit der Zipfelmütze mitten auf der verschneiten Insel (`hero: 'middle'`, zwei Punkte nach
+   * links gerückt – rechts braucht der Fuchs mit seinem Schwanz mehr Platz), links winkt das Schneemännchen, rechts
+   * sitzt der Schneefuchs. Hinter allem fällt leise Schnee, am Himmel blitzen kleine Schneeflocken.
+   */
+  snowfox(f, { hero, frames: n }) {
+    const x = hero - 2
+    const body = hopBody(winterHop(f), x)
+    const cubiLayer = hoppingCubi(f, n, body, { eyes: WINTER_EYES[winterGaze(f, n)], sprout: false })
+    cubiLayer.draw(christmasHat(body, capSwing(n)[f], 3 * swing(f, n)))
+    const c = layer().draw(snowmanPet(f, n, x - 13)).draw(snowFox(f, n, x + 20))
+    const sky = layer()
+    for (const [sx, sy, phase, most] of [[6, 6, 2, 3], [57, 5, 9, 3], [31, 4, 13, 2], [4, 31, 5, 2], [60, 33, 11, 2], [9, 57, 7, 2], [55, 58, 0, 3]]) {
+      frostTwinkle(sky, f, { x: sx, y: sy, phase, most })
+    }
+    return { layer: c, hero: cubiLayer, back: gentleSnow(f, n), sky }
+  },
 }
 
 // ---------------------------------------------------------------- Szene
@@ -2083,7 +2357,7 @@ export function releaseFrames(version, topicId) {
   const topic = [...TOPICS, ...SPECIAL_TOPICS, DEFAULT_TOPIC].find((t) => t.id === topicId) ?? DEFAULT_TOPIC
   const count = topic.frames ?? FRAMES
   const rnd = random(seedFor(version))
-  const snowy = topic.id === 'winter'
+  const snowy = topic.id === 'winter' || topic.snowy === true
   const ground = island(rnd, { snowy, wide: topic.wide ?? 0 })
   // Cubi steht links neben dem Gegenstand – bei `hero: 'middle'` mitten auf der Insel, der Gegenstand um ihn herum.
   const heroX = topic.hero === 'middle' ? Math.floor((ground.left + ground.right + 1) / 2) - 8 : ground.left + 3 + Math.floor(rnd() * 2)
@@ -2114,19 +2388,21 @@ export function releaseFrames(version, topicId) {
     // Etwa die Hälfte leuchtet im ersten Bild (dem ruhigen Bild), der Rest später.
     sparkles.push({ x, y, phase: [2, 9, 4, 12, 3][sparkles.length] })
   }
-  const flakes = snowy ? snowfall(rnd) : []
+  // Schnee wie beim Thema „winter“; ein Sonderthema mit `snowy` bringt seinen eigenen Schneefall mit (Ebene `back`).
+  const flakes = topic.id === 'winter' ? snowfall(rnd) : []
   const mini = MINI_CUBE(snowy)
 
   const frames = []
   for (let f = 0; f < count; f++) {
     const frame = layer()
-    if (snowy) drawSnow(frame, f, flakes)
+    const p = prop(f)
+    if (p.back) frame.draw(p.back)
+    if (flakes.length) drawSnow(frame, f, flakes)
     for (const s of sparkles.slice(0, 2)) sparkle(frame, f, s)
     for (const c of cubes) frame.draw(layer().draw(mini, c.x, c.y + Math.round(wave(f, c.phase))).outline(C.outline))
     // `float`: Die Insel schwebt auf und ab, alles darauf mit – nur der Himmel (`sky`) bleibt, wo er ist.
     const dy = topic.float ? -Math.round(Math.sin((f / count) * 2 * Math.PI) * topic.float) : 0
     frame.draw(ground.canvas, 0, dy)
-    const p = prop(f)
     if (p.ground) frame.draw(p.ground, 0, dy)
     frame.draw(p.layer, 0, dy)
     // Ein Gegenstand kann Cubi selbst zeichnen (`hero`), etwa mit eigener Bewegung.

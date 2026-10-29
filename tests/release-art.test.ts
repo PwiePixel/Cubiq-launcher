@@ -69,6 +69,12 @@ const COSMETICS_TEXT =
 const PETTING_TEXT =
   '- **Pet and feed your companions.** Right-click your own pet with an empty hand to pet it or with food to feed it – or use the Pet and Feed buttons in the previews.'
 
+/** Dasselbe für das Sonderthema „snowfox“ (Winterfreunde). */
+const WINTER_FRIENDS_TEXT = [
+  '- **A snow fox joins your companions.** A new free pet with ice-blue eyes and a bushy tail – pet it and feed it like the fox kit.',
+  '- **A Christmas hat that moves with you.** Its long tip and pom-pom swing when you walk, jump and sneak through the snow.',
+].join('\n')
+
 /** Farben eines Bilds als „#rrggbb“, wahlweise nur die Zeilen y0 … y1 - 1. */
 function colorsOf(frame: Canvas, y0 = 0, y1 = 64) {
   const set = new Set<string>()
@@ -135,7 +141,8 @@ function cubiEyes(frame: Canvas) {
   return { eyes, mid: [left + 7.5, top + 5] as const }
 }
 
-describe('Bild je Release', () => {
+// Ganze Szenen zeichnen und als APNG packen dauert unter Last länger als die 5 s, die vitest sonst jedem Test gibt.
+describe('Bild je Release', { timeout: 60_000 }, () => {
   it('wählt das Thema nach dem Text – fette Überschriften zählen mehr', () => {
     expect(pickTopic('- **Cubiq Launcher is here.** The first version.').id).toBe('launch')
     expect(pickTopic('- **Reduced animations in the launcher also calm the Cubiq Client.**').id).toBe('motion')
@@ -539,6 +546,159 @@ describe('Bild je Release', () => {
     for (const f of [21, 24]) expect(inMap(f)).toEqual([])
     // Nach der Landung steigt ein grünes „+“ über die Karte.
     expect(colorsOf(frames[10]!, 0, 10)).toContain('#71a330')
+  })
+
+  it('Sonderthema „snowfox“ (0.3.5): Cubi mit Zipfelmütze, Schneefuchs und Schneemännchen im leisen Schnee – nahtlos, scharf, ganz im Bild', () => {
+    // Nur auf Wunsch (`--topic`): ein Wintertext bekommt das allgemeine Winter-Motiv (Schneemann), nie diese Szene.
+    expect(pickTopic(WINTER_FRIENDS_TEXT).id).toBe('winter')
+    expect(TOPICS.map((t) => t.id)).not.toContain('snowfox')
+    expect(SPECIAL_TOPICS.map((t) => t.id).slice(-2)).toEqual(['waypoints', 'snowfox'])
+
+    // Schleife wie bei 0.3.0: 32 Bilder à 80 ms (2,56 s), endlos; das erste ist das ruhige Bild.
+    const art = releaseArt({ version: '0.3.5', text: WINTER_FRIENDS_TEXT, topic: 'snowfox' })
+    expect(art.topic).toBe('snowfox')
+    const list = chunks(art.apng)
+    const actl = list.find((c) => c.type === 'acTL')!.data
+    expect([actl.readUInt32BE(0), actl.readUInt32BE(4)]).toEqual([32, 0])
+    const delays = list.filter((c) => c.type === 'fcTL').map((c) => c.data.readUInt16BE(20) / c.data.readUInt16BE(22))
+    expect(delays).toEqual(Array.from({ length: 32 }, () => 0.08))
+    expect(Buffer.from(decode(art.apng).rgba).equals(Buffer.from(decode(art.png).rgba))).toBe(true)
+    const png = decode(art.png)
+    expect([png.width, png.height, png.colorType, decode(art.apng).colorType]).toEqual([512, 512, 3, 3])
+    expect(art.png.length).toBeLessThan(20_000)
+    expect(art.apng.length).toBeLessThan(150_000)
+
+    const { frames } = releaseFrames('0.3.5', 'snowfox')
+    expect(frames).toHaveLength(32)
+    // Fest: noch einmal gezeichnet, Punkt für Punkt dieselben Bilder.
+    const again = releaseFrames('0.3.5', 'snowfox').frames
+    expect(frames.every((frame, f) => Buffer.from(frame.data).equals(Buffer.from(again[f]!.data)))).toBe(true)
+    // Scharfe Pixel, und nichts berührt den Bildrand – weder Schnee noch Mütze noch die Unterseite der Insel. Bei anderen
+    // Versionen darf nur die Insel (ihre Wurzeln) die untere Zeile erreichen.
+    expect(frames.every((frame) => frame.data.every((v, i) => i % 4 !== 3 || v === 0 || v === 255))).toBe(true)
+    const atEdge = (frame: Canvas) => {
+      const hits: string[] = []
+      for (let i = 0; i < frame.w; i++) {
+        for (const [x, y] of [[i, 0], [i, frame.h - 1], [0, i], [frame.w - 1, i]]) if (frame.get(x!, y!)) hits.push(`${x},${y}`)
+      }
+      return hits
+    }
+    for (const frame of frames) expect(atEdge(frame)).toEqual([])
+    for (const version of ['0.1.0', '0.9.3', '1.0.0', '2.7.11']) {
+      for (const frame of releaseFrames(version, 'snowfox').frames) expect(atEdge(frame).filter((p) => !p.endsWith(',63'))).toEqual([])
+    }
+    // Nahtlos: Jedes Bild unterscheidet sich vom nächsten (kein Stillstand), und vom letzten zurück zum ersten ändert sich
+    // nicht mehr als bei einem gewöhnlichen Schritt – auch der Schnee springt an der Naht nicht.
+    const changed = (a: Canvas, b: Canvas) => {
+      let n = 0
+      for (let i = 0; i < a.data.length; i += 4) if (a.data.subarray(i, i + 4).some((v, k) => v !== b.data[i + k])) n++
+      return n
+    }
+    const steps = frames.map((frame, f) => changed(frame, frames[(f + 1) % frames.length]!))
+    expect(Math.min(...steps)).toBeGreaterThan(0)
+    const median = [...steps].sort((a, b) => a - b)[steps.length >> 1]!
+    expect(steps[steps.length - 1]).toBeLessThanOrEqual(2 * median)
+
+    // Im ruhigen Bild ist alles zu sehen – je eine kennzeichnende Farbe: Cubi; der rote Filz der Mütze (Licht, Mitte,
+    // Schatten) und ihr weißer Pelz; Fell, eisblaue Augen, dunkle Söckchen und silbriger Schwanz des Fuchses; Mütze und
+    // Karottennase des Schneemännchens; die verschneite Insel.
+    const still = colorsOf(frames[0]!)
+    for (const color of ['#71a330', '#ef5a63', '#d8343f', '#a5222e', '#ffffff', '#eef3f8', '#6fb7e8', '#3c2a24', '#c5d3e2', '#2aa894', '#f08a2c', '#f5f9fc']) {
+      expect(still).toContain(color)
+    }
+    // Es schneit in jedem Bild: kleine Flocken am Himmel über der Insel.
+    for (const frame of frames) expect(colorsOf(frame, 1, 40)).toContain('#e1eaf2')
+  })
+
+  it('Sonderthema „snowfox“: Zipfel und Bommel der Mütze schwingen beim Hüpfen nach', () => {
+    const { frames } = releaseFrames('0.3.5', 'snowfox')
+    const felt = new Set(['#ef5a63', '#d8343f', '#a5222e', '#7c1825'])
+    const fur = new Set(['#ffffff', '#f5f9fc', '#cddbe8'])
+    // Je Bild: Cubis Mund (nur Cubi hat diese Farbe), darüber die oberste Reihe der Pelzkrempe (mindestens 12 Punkte Pelz
+    // über dem Gesicht), wie hoch der rote Filz darüber reicht und welche Form er – vom Mund aus gesehen – hat.
+    const hats = frames.map((frame) => {
+      let [mx, my] = [64, 64]
+      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (hexAt(frame, x, y) === '#22301a') [mx, my] = [Math.min(mx, x), Math.min(my, y)]
+      let brim = -1
+      for (let y = 0; y < my && brim < 0; y++) {
+        let count = 0
+        for (let x = mx - 7; x <= mx + 10; x++) if (fur.has(hexAt(frame, x, y) ?? '')) count++
+        if (count >= 12) brim = y
+      }
+      const cells: string[] = []
+      let top = 64
+      for (let y = 0; y < 64; y++) {
+        for (let x = 0; x < 64; x++) {
+          if (!felt.has(hexAt(frame, x, y) ?? '')) continue
+          cells.push(`${x - mx},${y - my}`)
+          top = Math.min(top, y)
+        }
+      }
+      return { brim, height: brim - top, shape: cells.join(' ') }
+    })
+    // Die Mütze sitzt in jedem Bild auf Cubi: die Krempe über dem Gesicht, der Filz darüber.
+    for (const hat of hats) expect([hat.brim > 0, hat.height > 0]).toEqual([true, true])
+    // In beiden Hüpfern (ab Bild 0 und 16): Beim Ausholen (Bild 1) und Aufkommen (Bild 7) sackt der Zipfel auf die
+    // Krempe – die Mütze ist so niedrig wie nie –, ganz oben (Bild 4) fliegt er hoch, höher als in jedem Bild, in dem
+    // Cubi steht.
+    const heights = hats.map((hat) => hat.height)
+    const standing = heights.filter((_, f) => f % 16 >= 8)
+    for (const k of [0, 16]) {
+      for (const f of [k + 1, k + 7]) expect([f, heights[f]]).toEqual([f, Math.min(...heights)])
+      expect(heights[k + 4]).toBeGreaterThan(Math.max(...standing))
+    }
+    // Danach steht Cubi still (Bild 9 … 13, auch die Insel bewegt sich nicht), der Zipfel aber schwingt aus.
+    expect(new Set(hats.slice(9, 14).map((hat) => hat.shape)).size).toBeGreaterThan(1)
+  })
+
+  it('Sonderthema „snowfox“: Cubi schaut zum Fuchs und zum Schneemännchen – Augen wie im Sprite, jeder Blickwechsel hinter einem Lidschlag', () => {
+    const { frames } = releaseFrames('0.3.5', 'snowfox')
+    const n = frames.length
+    const faces = frames.map(cubiEyes)
+    // Beide Augen immer gleich und je 2 × 3 Punkte auf den Augen-Zellen des Sprites (x + 3 und x + 10): links und rechts
+    // daneben weder Augenweiß noch Pupille – keine dritte Spalte.
+    faces.forEach(({ eyes, mid }, f) => {
+      expect(eyes[1]!.pattern).toBe(eyes[0]!.pattern)
+      const [left, top] = [mid[0] - 7.5, mid[1] - 5]
+      for (const x of [left + 2, left + 5, left + 9, left + 12]) {
+        for (let dy = 0; dy < 3; dy++) expect([f, x, hexAt(frames[f]!, x, top + 4 + dy)]).toEqual([f, x, '#71a330'])
+      }
+    })
+    const look = faces.map(({ eyes }) => eyes[0]!)
+
+    // Zum Fuchs (Bild 28 … 9, über die Naht; dazu gehört das ruhige Bild): ganz offen mit Cubis gewohntem Blick nach
+    // rechts unten – der Fuchs sitzt rechts neben ihm.
+    for (const f of [28, 29, 30, 31, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+      expect(look[f]).toMatchObject({ pattern: 'WW/WK/WK', white: 4, x: 1, y: 1 })
+      expect(centre(frames[f]!, '#eef3f8')[0]).toBeGreaterThan(faces[f]!.mid[0] + 8)
+    }
+    // Zum Schneemännchen (Bild 12 … 25): nach links oben – es steht links, und solange Cubi steht, ist seine Mütze über
+    // Cubis Augen.
+    for (let f = 12; f <= 25; f++) {
+      expect(look[f]).toMatchObject({ pattern: 'KW/KW/WW', white: 4, x: -1, y: -1 })
+      const [hatX, hatY] = centre(frames[f]!, '#2aa894')
+      expect(hatX).toBeLessThan(faces[f]!.mid[0])
+      if (f % 16 >= 8) expect(hatY).toBeLessThan(faces[f]!.mid[1])
+    }
+
+    // Die Pupillen springen nie: Zwischen zwei Bildern, in denen sie zu sehen sind, bleibt die Richtung gleich – auch
+    // über die Naht. Sie wechselt nur über ein Bild mit geschlossenen Augen (Strich unten wie beim Blinzeln), danach gehen
+    // die Lider in zwei Schritten auf: halb, ganz.
+    for (let f = 0; f < n; f++) {
+      const [a, b] = [look[f]!, look[(f + 1) % n]!]
+      if (a.white && b.white) expect([f, b.x]).toEqual([f, a.x])
+    }
+    const shut = look.flatMap((e, f) => (e.white ? [] : [f]))
+    expect(shut).toEqual([10, 26])
+    for (const f of shut) {
+      expect(look[f]!.pattern).toBe('··/··/KK')
+      const [before, after, open] = [look[(f + n - 1) % n]!, look[(f + 1) % n]!, look[(f + 2) % n]!]
+      expect(after.x).toBe(-before.x)
+      expect(after.white).toBeGreaterThan(0)
+      expect(after.white).toBeLessThan(4)
+      expect(after.pattern.startsWith('··/')).toBe(true)
+      expect(open).toMatchObject({ white: 4, x: after.x })
+    }
   })
 
   it('nutzt denselben Startwert wie die Szenen im Launcher', () => {
