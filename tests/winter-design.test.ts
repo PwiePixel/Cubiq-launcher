@@ -3,11 +3,12 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { accentAfterSwitch, designAccent, DESIGN_HINT, designs, normalizeDesign, writeDesign } from '../app/utils/design'
 import { uiSettingsSchema } from '../app/utils/schemas'
+import { winterBannerCurtain, winterBannerLevel } from '../app/utils/winter/banner'
 import { WINTER_MAX_COLS, WINTER_MAX_ROWS, winterTexel } from '../app/utils/winter/canvas'
 import { auroraLevel, buildWinterLayout, pineTiers, pineTops, voxelX, voxelY, WINTER_SEED } from '../app/utils/winter/layout'
 import { between, checksum, glide, hash, light, over, sequence, wave } from '../app/utils/winter/math'
 import { paintSky, WinterPainter } from '../app/utils/winter/painter'
-import { AURORA_COLORS, buildWinterPalette, type WinterVariant } from '../app/utils/winter/palette'
+import { AURORA_COLORS, buildWinterPalette, CURTAINS, type WinterVariant } from '../app/utils/winter/palette'
 import { WinterSnow } from '../app/utils/winter/snow'
 
 // Design „Polarlicht“ (winter): die Einstellung, die Szene und – vor allem – dass der Cubiq Client im Spiel
@@ -254,6 +255,32 @@ describe('Szene „Polarlicht“', () => {
       }
     }
     expect(sideways / upDown).toBeGreaterThan(0.85)
+  })
+
+  it('Titelbilder der Instanzen: einer von drei Vorhängen und eigene Stärke je Instanz – die Szene selbst bleibt beim ersten', () => {
+    expect(CURTAINS).toHaveLength(3)
+    expect(CURTAINS[0]).toBe(AURORA_COLORS)
+    for (const set of CURTAINS) expect(set).toHaveLength(6)
+    expect(buildWinterPalette('dark').aurora).toEqual(buildWinterPalette('dark', 0).aurora)
+    const used = new Set<number>()
+    for (let n = 0; n < 200; n++) {
+      const seed = Math.imul(n + 1, 0x9e3779b1) >>> 0
+      used.add(winterBannerCurtain(seed))
+      expect(winterBannerLevel(seed)).toBeGreaterThanOrEqual(0.65)
+      expect(winterBannerLevel(seed)).toBeLessThanOrEqual(1)
+    }
+    expect([...used].sort()).toEqual([0, 1, 2])
+    // Ein anderer Vorhang färbt das Polarlicht anders, sonst bleibt alles gleich.
+    const L = buildWinterLayout({ cols: 256, rows: 96, seed: 12345 })
+    const frames = [0, 1, 2].map((curtain) => {
+      const px = new Uint32Array(L.w * L.h)
+      new WinterPainter(L, buildWinterPalette('dark', curtain)).compose(px, { tick: 7, seconds: 30, level: 0.9, moving: false, snow: null })
+      return px
+    })
+    expect(new Set(frames.map(checksum)).size).toBe(3)
+    const calm = new Uint32Array(L.w * L.h)
+    new WinterPainter(L, buildWinterPalette('dark', 2)).compose(calm, { tick: 7, seconds: 30, level: 0, moving: false, snow: null })
+    for (let i = 0; i < calm.length; i++) if (frames[1]![i] !== frames[2]![i]) expect(calm[i]).not.toBe(frames[2]![i])
   })
 
   it('Standbild: Inseln und Wolken stehen still, egal welche Sekunde', () => {

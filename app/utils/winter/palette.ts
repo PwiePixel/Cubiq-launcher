@@ -44,23 +44,35 @@ export interface WinterPalette {
 /** Vorhang von unten nach oben: heller Saum, Kante in hellem Cubiq-Grün (#a9d46b), Smaragd, Türkis, Eisblau, Violett. */
 export const AURORA_COLORS = ['#e9fff0', '#a9d46b', '#4dffa0', '#26e3c6', '#5fb8ff', '#8a78ff'] as const
 
+/**
+ * Vorhänge für die erzeugten Titelbilder der Instanzen (nur im Launcher): 0 ist der Vorhang der Szene, 1 läuft von
+ * Türkis nach Violett, 2 von Eisblau über Flieder nach Rosa – so unterscheiden sich die Instanzen in der Bibliothek auf
+ * einen Blick.
+ */
+export const CURTAINS = [
+  AURORA_COLORS,
+  ['#effffb', '#7ff0d8', '#2fe0c4', '#3fc8f0', '#7f8cff', '#c08cff'],
+  ['#f3f8ff', '#a6dcff', '#62c6ff', '#9a9cff', '#c88cff', '#ff8fcf'],
+] as const
+
 /** Einzelne Töne (Inseln, Wolken, Schnee) – alles außer Himmel, Sternen und Polarlicht. */
 type Tones = Omit<WinterPalette, 'variant' | 'sky' | 'stars' | 'aurora' | 'auroraAlpha' | 'auroraGlows'>
 
-function palette(variant: WinterVariant, tones: Record<keyof Tones, string>, sky: string[], stars: [string, string, string] | null, auroraAlpha: number): WinterPalette {
+function palette(variant: WinterVariant, tones: Record<keyof Tones, string>, sky: string[], stars: [string, string, string] | null, auroraAlpha: number, curtain: number): WinterPalette {
   const parsed = Object.fromEntries(Object.entries(tones).map(([key, value]) => [key, rgb(value)])) as Tones
   return {
     variant,
     sky: sky.map(rgb),
     stars: stars ? [rgb(stars[0]), rgb(stars[1]), rgb(stars[2])] : null,
-    aurora: AURORA_COLORS.map(rgb),
+    aurora: (CURTAINS[curtain] ?? AURORA_COLORS).map(rgb),
     auroraAlpha,
     auroraGlows: variant !== 'light',
     ...parsed,
   }
 }
 
-export function buildWinterPalette(variant: WinterVariant): WinterPalette {
+/** Palette zum Farbschema; `curtain` wählt einen anderen Vorhang (nur Titelbilder im Launcher, ab Werk der der Szene). */
+export function buildWinterPalette(variant: WinterVariant, curtain = 0): WinterPalette {
   if (variant === 'light') {
     return palette(
       variant,
@@ -88,6 +100,7 @@ export function buildWinterPalette(variant: WinterVariant): WinterPalette {
       ['#8ebde2', '#a2c9e8', '#b7d6ee', '#cbe2f3', '#deedf8', '#eef6fc'],
       null,
       110,
+      curtain,
     )
   }
   if (variant === 'oled') {
@@ -117,6 +130,7 @@ export function buildWinterPalette(variant: WinterVariant): WinterPalette {
       ['#000000', '#010309', '#030813', '#070f20', '#0c1830', '#132240'],
       ['#33425c', '#7d90b0', '#f2f8ff'],
       255,
+      curtain,
     )
   }
   return palette(
@@ -145,6 +159,7 @@ export function buildWinterPalette(variant: WinterVariant): WinterPalette {
     ['#03060e', '#060c1a', '#0a1428', '#0f1d36', '#152846', '#1c3352'],
     ['#3b4c6b', '#8a9dbd', '#f2f8ff'],
     242,
+    curtain,
   )
 }
 

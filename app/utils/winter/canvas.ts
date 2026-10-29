@@ -32,10 +32,16 @@ export function copyPixels(pixels: Uint32Array, data: Uint8ClampedArray) {
   }
 }
 
-/** Standbild der Szene in ein neues Canvas (Texel-Auflösung); `null` ohne 2D-Kontext. */
-export function paintWinterStill(options: WinterLayoutOptions, variant: WinterVariant, frame: Omit<WinterFrame, 'snow' | 'moving'>, snowDensity = 0.8): HTMLCanvasElement | null {
+/** Standbild der Szene in ein neues Canvas (Texel-Auflösung); `null` ohne 2D-Kontext. `curtain`: Vorhang (siehe CURTAINS). */
+export function paintWinterStill(
+  options: WinterLayoutOptions,
+  variant: WinterVariant,
+  frame: Omit<WinterFrame, 'snow' | 'moving'>,
+  snowDensity = 0.8,
+  curtain = 0,
+): HTMLCanvasElement | null {
   const layout = buildWinterLayout(options)
-  const painter = new WinterPainter(layout, buildWinterPalette(variant))
+  const painter = new WinterPainter(layout, buildWinterPalette(variant, curtain))
   const pixels = new Uint32Array(layout.w * layout.h)
   painter.compose(pixels, { ...frame, moving: false, snow: new WinterSnow(layout.w, layout.h, options.seed ^ 0x5e0, snowDensity) })
   const canvas = document.createElement('canvas')
