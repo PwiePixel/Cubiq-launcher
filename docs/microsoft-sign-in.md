@@ -1,97 +1,127 @@
-# Microsoft sign-in (Azure app + Minecraft approval)
+# Microsoft sign-in (status: not approved)
 
-Players sign in with their own Microsoft account. For that the launcher needs **its own Azure app** ("AppID") that
-Microsoft has approved for the Minecraft services. One app is enough for everything: the launcher, the in-game
-sign-in of the Cubiq Client and the website login.
+**Status (29 October 2026): Mojang did not approve the Azure app "Cubiq Launcher"** (client ID
+`5cc8876f-8fe1-4c27-bc28-9355a79db635`) for the allow list of the Minecraft services. The decision came as a template
+e-mail without reasons. Microsoft and Xbox Live still accept the sign-in, but
+`api.minecraftservices.com/authentication/login_with_xbox` answers **403** ("Invalid app registration"), so Cubiq never
+gets a Minecraft token. No other endpoint, flow or Azure setting changes that. There is no date for a change.
 
-How sign-in works (for the review and for you):
+## What does not work
+
+- **Signing in to Cubiq Launcher** on Windows, Linux, Android and iOS. The launcher says so honestly: Microsoft sign-in
+  is not available in Cubiq Launcher because Mojang has not approved the app. It promises no date.
+- **Playing through Cubiq.** The launcher starts the game only for a signed-in account that owns Minecraft: Java
+  Edition. There is no offline, "cracked" or demo mode – not in release builds, development builds or the trade-fair
+  build either. Without an account a launch ends with the request to sign in first.
+- Everything else that needs the Minecraft token: the Mojang skins and capes page, and all Cubiq services in the
+  launcher (friends, chat, Cubiq capes and cosmetics, achievements, creator, remote control, world hosting, cloud
+  sync, confirming website sign-ins). The Cubiq services identify players like a Minecraft server does
+  (session-server `join` → `hasJoined`), which needs that token.
+- The in-game sign-in of the Cubiq Client uses the same app ID and fails the same way.
+- Website: "Sign in with Microsoft" has been removed. The sign-in with the launcher account needs a signed-in
+  launcher; the owner's one-time link from the server shell (`deploy/cubiq-server.sh login`) still works.
+
+## What still works
+
+- Instances, every game version, Fabric, Quilt, Forge and NeoForge, Modrinth and CurseForge content and modpacks,
+  shared folders, worlds, screenshots, the skin library and all settings.
+- Export as a modpack (`.mrpack`), for example to play an instance in an approved launcher. The export leaves out the
+  Cubiq Client on purpose.
+- Server export: servers always run with `online-mode=true`, so only players with a real Minecraft account can join.
+- In a game started by an approved launcher, the Cubiq Client logs in to the Cubiq services with the running game's
+  own session (`join`/`hasJoined`) – Cubiq never sees that token. The mod needs the address of the services for that
+  (`-Dcubiqclient.api.url=…`), which today only Cubiq Launcher passes.
+
+## The old guidance is withdrawn
+
+Earlier versions of this guide said that one app is enough for everything: the launcher, the in-game sign-in of the
+Cubiq Client and the website login, with a **Web** platform and a **client secret** in the same registration. **That
+advice is withdrawn.** Microsoft recommends one registration per app and no credentials on an app that is only a
+public client, and a single registration that is a desktop client, an in-game account switcher and a website with a
+secret at the same time looks exactly like the phishing pattern the allow list exists to stop.
+
+## The plan: a separate, desktop-only registration
+
+A new application is sent **once**, and only after the changes below are released and can be checked:
+
+1. **New registration** "Cubiq Launcher" in the Azure portal (**App registrations** → **New registration**),
+   supported account types **Personal Microsoft accounts only**.
+2. **Only one platform:** **Mobile and desktop applications** with the redirect `http://localhost/login`. **No Web
+   platform, no client secret, no certificate.**
+3. **Allow public client flows → No** (this turns off the device-code sign-in). Test first that the browser sign-in
+   *and* the token refresh still work.
+4. **Branding & properties:** logo, home page `https://launcher.cubiq.studio`, privacy
+   `https://launcher.cubiq.studio/privacy`.
+5. **Used by the desktop launcher only.** The Cubiq Client contains no client ID and no Microsoft sign-in, the website
+   has no Microsoft sign-in, and Android/iOS builds do not use this registration (they need their own one later).
+6. **Disclose the old app ID** in the form ("Other information") together with what changed, so the new ID cannot look
+   like an attempt to get around the decision.
+
+What already changed on the way there:
+
+- Honest error text (8 languages) instead of "waiting for approval … will work without an update".
+- No launch without a signed-in account that owns the game, in any build; the account-less demo start of the
+  trade-fair build was removed.
+- Server export always `online-mode=true`; the Cubiq Client's hosting has no switch any more that turns the login of
+  guests off.
+- The notice "Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft." in the
+  launcher (settings, accounts page, sign-in step of the setup wizard).
+- Website: no Microsoft sign-in, page titles name Cubiq first instead of "Minecraft".
+
+Still to do before the application: remove the Cubiq Client's own Microsoft sign-in and account switcher, split the
+client ID per platform (no mobile build with the desktop ID), switch the launcher to the new ID and drop the
+device-code sign-in on the desktop.
+
+### For the owner now
+
+- **Old registration** in the Azure portal: **Certificates & secrets** → delete the client secret; **Authentication**
+  → remove the **Web** platform. Delete the whole registration later, once no release uses it.
+- **Server:** the website no longer reads `MS_CLIENT_ID` and `MS_CLIENT_SECRET`; remove them from `api/.env`.
+- **Optional check** whether Microsoft disabled the app: install the Azure CLI, run
+  `az login --tenant f549d532-b025-4e54-8fea-8dbc13d91ed7 --allow-no-subscriptions`, then
+  `az ad app show --id 5cc8876f-8fe1-4c27-bc28-9355a79db635 --query disabledByMicrosoftStatus`. `null` or
+  `NotDisabled` means fine; `DisabledDueToViolationOfServicesAgreement` means Microsoft disabled it. (The Cloud Shell
+  only works with an Azure subscription.)
+
+### The review form
+
+https://aka.ms/mce-reviewappid – one form per app ID. Its current text (changed 20 October 2026) requires that apps
+verify game ownership and require sign-in before anyone can play or use servers or sites; apps that bypass or disable
+authentication, ownership or license checks or other safety features are not approved, "regardless of server
+configuration". Names must not contain Mojang, Minecraft, Microsoft, Live, Xbox, Discord or Hypixel. Reviews happen
+weekly, and sending several submissions does not speed them up. The answers for the new registration are written
+together with it; the answers that were in this file described the old, shared registration and are no longer valid.
+
+## Never
+
+- **Another app's client ID** (the official launcher's, Prism's or anyone else's) – not even "temporarily".
+- **Offline, cracked or demo play** without a signed-in account that owns the game.
+- **Tokens Cubiq did not obtain itself:** Cubiq never opens `launcher_msa_credentials*` or `launcher_accounts*`, never
+  reads the `authenticationDatabase`/`clientToken` keys of `launcher_profiles*.json` and never reads other programs'
+  command lines.
+- **Bypassing checks:** no other endpoints, no skipped ownership or profile check, no ownership check through Xbox
+  only, no servers or hosted worlds without the Mojang login.
+
+## How sign-in works (current builds)
 
 - Microsoft identity platform, `consumers` endpoint (personal accounts), scope `XboxLive.signin offline_access`.
-- Launcher and Cubiq Client: public client, Authorization Code + PKCE with a loopback redirect
-  (`http://localhost/login`, Microsoft ignores the port for `localhost`), device code as fallback. No secret, the
-  player types the password only on Microsoft's page.
-- Website: confidential client (Authorization Code + PKCE + client secret), redirect
-  `<SITE_URL>/auth/microsoft/callback`; it keeps only UUID and name and drops all tokens after sign-in.
+- Authorization Code + PKCE in the system browser with a loopback redirect (`http://localhost/login`, Microsoft
+  ignores the port for `localhost`), device code as fallback. No secret; the password is only typed on Microsoft's
+  page.
 - Microsoft token → Xbox Live → XSTS (`rp://api.minecraftservices.com/`) → `login_with_xbox` → **ownership check**
-  (`/entitlements/mcstore`) → profile. Release builds start the game only for a signed-in account that owns
-  Minecraft: Java Edition – there are no offline accounts. Refresh tokens are stored encrypted on the device; the
-  Cubiq services verify players through Mojang's session server, so tokens never reach Cubiq servers.
+  (`/entitlements/mcstore`) → profile. A 403 from `login_with_xbox` becomes the error `auth_not_approved`.
+- Refresh and access tokens are stored encrypted on the device. Access tokens only go to Microsoft, Xbox and Mojang
+  endpoints and to the local game process – never to Cubiq servers.
 
-Code: `src-tauri/crates/core/src/auth/microsoft.rs`, `client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java`,
-website `api/server/lib/microsoft.ts`.
+## In the code
 
-## 1. Directory (tenant)
-
-App registrations need a Microsoft Entra directory. A personal Microsoft account alone is no longer enough; the usual
-way is a free Azure account (https://azure.microsoft.com/free) – Microsoft verifies it with a phone number and a card
-but charges nothing, and app registrations stay free. Use the same Microsoft account whose e-mail you give in the
-review form.
-
-## 2. App registration
-
-1. https://portal.azure.com → **Microsoft Entra ID** → **App registrations** → **New registration**.
-2. Name **Cubiq Launcher** (names must not contain Mojang, Minecraft, Microsoft, Live, Xbox, Discord or Hypixel).
-   Supported account types: **Personal Microsoft accounts only**. Leave the redirect URI empty → **Register**.
-3. **Authentication** → **Add a platform** → **Mobile and desktop applications** → custom redirect URI
-   `http://localhost/login` → **Configure**.
-4. **Authentication** → **Settings** → **Allow public client flows** → **Yes** (device code) → **Save**.
-5. For the website (also later): **Add a platform** → **Web** → `https://<your-domain>/auth/microsoft/callback`, then
-   **Certificates & secrets** → **New client secret** – copy the *Value* right away (it is shown once and expires;
-   renew it in time).
-6. Optional but helpful for the review: **Branding & properties** → logo, home page
-   `https://github.com/PwiePixel/Cubiq-launcher`, privacy and terms links of your website.
-7. **Overview**: copy **Application (client) ID** and **Directory (tenant) ID**.
-
-No API permissions are needed; `XboxLive.signin` is requested at sign-in.
-
-## 3. Review form
-
-https://aka.ms/mce-reviewappid – one form per AppID, reviewed weekly; sending it twice does not help. Before approval
-the launcher shows "not approved" at sign-in (`login_with_xbox` answers 403); after approval it can take up to a day.
-
-| Question | Answer |
-|---|---|
-| 1. Read EULA + Usage Guidelines | **Yes** – after reading http://aka.ms/mcusageguidelines and the Minecraft EULA |
-| 2. Contact | the e-mail of the Microsoft account that owns the app in the Azure portal |
-| 3. Type | **New AppID for Approval** |
-| 4. Application name | `Cubiq Launcher` |
-| 5. Application ID | Application (client) ID from step 2.7 |
-| 6. Tenant ID | Directory (tenant) ID from step 2.7 |
-| 7. Website | `https://github.com/PwiePixel/Cubiq-launcher` (or your website once it is online) |
-| 8. Justification | text below |
-| 9. Other information | text below |
-
-**8. Justification**
-
-> Cubiq Launcher is a free, open-source (GPL-3.0) launcher for Minecraft: Java Edition on Windows and Linux, with
-> Android and iOS versions in development. It downloads the official game files from Mojang, manages instances and
-> modpacks, and ships an optional client-side mod (Cubiq Client). We need this AppID so players can sign in with their
-> own Microsoft account: Microsoft identity platform (consumers) with Authorization Code + PKCE on a loopback redirect
-> and device code as fallback, scope XboxLive.signin offline_access, then Xbox Live, XSTS and
-> api.minecraftservices.com (login_with_xbox, entitlements/mcstore, minecraft/profile). The launcher verifies game
-> ownership before every launch: only signed-in accounts that own Minecraft: Java Edition can play, there are no
-> offline or cracked accounts, and authentication, ownership and license checks are never bypassed or disabled.
-
-**9. Other information**
-
-> The same AppID is used by our in-game mod for signing in inside the game (same public-client flow) and by our
-> website (confidential web flow with client secret, only reads UUID and player name, discards all tokens after
-> sign-in). Passwords are only entered on Microsoft's own sign-in page. Refresh tokens are stored encrypted on the
-> player's device; access tokens are passed to the game like the official launcher does and are never sent to our
-> servers – our online features verify players through Mojang's session server (join/hasJoined). Source code of the
-> sign-in: https://github.com/PwiePixel/Cubiq-launcher/blob/main/src-tauri/crates/core/src/auth/microsoft.rs
-
-## 4. The app in the code
-
-The Azure app "Cubiq Launcher" is registered (application/client ID `5cc8876f-8fe1-4c27-bc28-9355a79db635`, tenant
-`f549d532-b025-4e54-8fea-8dbc13d91ed7`, personal accounts only, public client redirect `http://localhost/login`). Its
-client ID is built in – nothing else to set for the launcher and the Cubiq Client:
-
-- Launcher: `CUBIQ_APP_ID` in `src-tauri/crates/core/src/auth/microsoft.rs`. A build can use a different app with the
-  repository variable (or environment variable) `CUBIQ_MSA_CLIENT_ID`.
-- Cubiq Client: `MsAuth.CLIENT_ID` (`client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java`).
-- Website: `MS_CLIENT_ID` is prefilled in `.env.example`; add the **Web** redirect and a client secret
-  (`MS_CLIENT_SECRET`) once the website runs (step 2.5).
-
-Until Microsoft approves the app, signing in shows that the login is still waiting for the approval; afterwards it
-works without a new release.
+- Launcher: `CUBIQ_APP_ID` in `src-tauri/crates/core/src/auth/microsoft.rs` (still the old ID). The build variable
+  `CUBIQ_MSA_CLIENT_ID` is only for a fork with its **own** approved Azure app.
+- Error text: `errors.authNotApproved`, explanation `accounts.login.notApprovedHint` in
+  `app/components/SignInUnavailable.vue` (shared by the accounts page and the setup wizard – the place for a later way
+  to play without signing in through Cubiq).
+- Without an account: `sign_in_required()` in `src-tauri/crates/core/src/lib.rs` (`launcher.signInFirst`) – the only
+  result for desktop and mobile launches without an account.
+- Cubiq Client: `MsAuth.CLIENT_ID` in
+  `client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java` (to be removed together with
+  the in-game sign-in).
