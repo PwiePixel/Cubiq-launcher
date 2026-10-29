@@ -4,7 +4,10 @@
 //
 // Einstellbar über window.__MOCK_CFG (JSON, von cdp.mjs gesetzt):
 //   { version: '0.1.0', locale: 'de', seen: '0.0.9' }   seen = zuletzt gesehene Version → „Was ist neu“
-//   optional Aussehen: theme ('dark' | 'oled' | 'light'), accent ('cubiq' | 'amber' | 'emerald' | 'lapis' | 'amethyst' | 'ice' | 'orange'), animatedBackground (true)
+//   optional Aussehen: theme ('dark' | 'oled' | 'light'), accent ('cubiq' | 'amber' | 'emerald' | 'lapis' | 'amethyst' | 'ice' | 'orange'),
+//     design ('cubiq' | 'winter'), animatedBackground (true)
+//   optional intro (true): Start-Animation samt Start-Ton an und den Spiegel `cubiq-intro` nicht anfassen (Aufnahmen der
+//     Animation setzen ihn selbst). Ohne: Animation und Ton aus, damit Screenshots sofort die Oberfläche zeigen.
 // und window.__MOCK_RESPONSES (eigene Datei, cdp.mjs … --extra datei.js): { befehl: (args) => antwort }
 ;(() => {
   const cfg = window.__MOCK_CFG || {}
@@ -15,6 +18,7 @@
     localStorage.setItem('cubiq.locale', locale)
     localStorage.setItem('cubiq.whatsNew.seen', cfg.seen || '9.9.9')
     localStorage.removeItem('cubiq.updateNews.hidden')
+    if (!cfg.intro) localStorage.setItem('cubiq-intro', JSON.stringify({ enabled: false, motion: 'full', sound: false }))
   } catch {}
   const iso = (msAgo) => new Date(Date.now() - msAgo).toISOString()
   const H = 36e5
@@ -24,11 +28,11 @@
     highPriority: false, autoFirewall: true, fullscreen: false, hooks: { preLaunch: null, wrapper: null, postExit: null },
     sync: { options: true, servers: true, resourcePacks: true, commandHistory: false, hotbar: false },
     ui: {
-      theme: cfg.theme || 'dark', accent: cfg.accent || 'cubiq', design: 'cubiq',
+      theme: cfg.theme || 'dark', accent: cfg.accent || 'cubiq', design: cfg.design || 'cubiq',
       advancedRendering: true, animatedBackground: cfg.animatedBackground === true, worldsTab: true, screenshotsTab: true,
       historyTab: true, sidebarRecent: true, sidebarAccount: true, hideRightSidebar: false, compactLibrary: false, showPlayTime: true,
       language: locale, motion: 'full', bigPictureOnStart: false, bigPictureAuto: true, eventIcons: true, halloweenFlicker: true, halloweenFlickerHintSeen: true,
-      startIntro: false, startIntroSound: false, startIntroFlicker: true, startIntroHintSeen: true,
+      startIntro: cfg.intro === true, startIntroSound: cfg.intro === true, startIntroFlicker: true, startIntroHintSeen: true,
     },
     allowLogUpload: true, discordPresence: true, java: { java8: null, java17: null, java21: null, java25: null },
     clips: { enabled: false, bufferSeconds: 30, resolution: '1080p', fps: 60, quality: 'medium', encoder: 'auto', systemAudio: true, microphone: false, folder: null, maxStorageGb: 20 },
