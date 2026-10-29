@@ -383,12 +383,17 @@ class EmoteTest {
 	@Test
 	void wheelRadiusFitsAndDoesNotOverlap() {
 		int[][] screens = {{427, 240}, {854, 480}, {320, 240}, {1920, 1080}};
-		for (int[] s : screens) {
-			int slot = Math.min(s[0], s[1]) >= 300 ? 28 : 22;
-			int r = WheelMath.radius(s[0], s[1], 11, slot);
-			assertTrue(r + slot / 2 + 12 <= Math.min(s[0], s[1]) / 2 + 1, Arrays.toString(s) + " passt: r=" + r);
-			double chord = 2 * r * Math.sin(Math.PI / 11);
-			if (Math.min(s[0], s[1]) >= 240) assertTrue(chord >= slot, Arrays.toString(s) + " keine Überlappung: r=" + r);
+		// 11 Plätze und das Rad ohne Belegung: alle Emotes (seit Winter 2026: 21)
+		for (int n : new int[] {11, Emotes.ALL.size()}) {
+			for (int[] s : screens) {
+				int slot = Math.min(s[0], s[1]) >= 300 ? 28 : 22;
+				int r = WheelMath.radius(s[0], s[1], n, slot);
+				assertTrue(r + slot / 2 + 12 <= Math.min(s[0], s[1]) / 2 + 1, Arrays.toString(s) + " passt (" + n + "): r=" + r);
+				double chord = 2 * r * Math.sin(Math.PI / n);
+				if (Math.min(s[0], s[1]) >= 240) {
+					assertTrue(chord >= slot, Arrays.toString(s) + " keine Überlappung (" + n + "): r=" + r);
+				}
+			}
 		}
 	}
 }
