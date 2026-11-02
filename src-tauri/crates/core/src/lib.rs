@@ -1654,7 +1654,9 @@ mod tests {
         let options = LaunchOptions { extra: true, ..Default::default() };
         let again = launcher.launch_with(&instance.id, None, options, &no_progress).await.unwrap_err();
         assert_eq!(again.message_code(), "launcher.signInFirst");
-        let mobile = launcher.prepare_mobile_launch(&instance.id, None, None, false, None, &no_progress).await.unwrap_err();
+        let Err(mobile) = launcher.prepare_mobile_launch(&instance.id, None, None, false, None, &no_progress).await else {
+            panic!("Handy-Start ohne Konto");
+        };
         assert_eq!((mobile.kind(), mobile.message_code()), ("auth", "launcher.signInFirst"));
         // Ein Konto, das es nicht gibt, ersetzt keine Anmeldung.
         let options = LaunchOptions { account_id: Some("0".repeat(32)), ..Default::default() };
