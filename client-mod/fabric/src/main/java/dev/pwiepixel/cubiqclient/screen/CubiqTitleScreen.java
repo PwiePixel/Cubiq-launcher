@@ -104,13 +104,6 @@ public final class CubiqTitleScreen extends CubiqUiScreen {
 		}
 
 		@Override
-		public boolean openAccounts() {
-			if (!AccountsScreen.available()) return false;
-			Mc.setScreen(AccountsScreen.create(screen));
-			return true;
-		}
-
-		@Override
 		public boolean openWardrobe() {
 			if (!WardrobeScreen.available()) return false;
 			Mc.setScreen(WardrobeScreen.create(screen));

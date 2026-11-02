@@ -30,18 +30,6 @@ public interface MenuHost {
 
 	boolean hasPacks();
 
-	/**
-	 * Kontobildschirm öffnen (Kontowechsel ohne Neustart, siehe
-	 * {@link dev.pwiepixel.cubiqclient.core.ui.account.AccountsUi}). Nur wenn {@link #hasAccounts()}.
-	 */
-	default void openAccounts() {
-	}
-
-	/** Gibt es in dieser Version den Kontobildschirm? */
-	default boolean hasAccounts() {
-		return false;
-	}
-
 	/** Garderobe öffnen (Skins, Outfits, Umhänge, Emotes). Nur wenn {@link #hasWardrobe()}. */
 	default void openWardrobe() {
 	}

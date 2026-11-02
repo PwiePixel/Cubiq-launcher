@@ -52,8 +52,6 @@ import java.util.Set;
 @Mod(modid = CubiqClient.MOD_ID, name = "Cubiq Client", version = Tags.VERSION,
 		acceptedMinecraftVersions = "[1.7.10]", acceptableRemoteVersions = "*")
 public final class CubiqClient {
-	/** Kontowechsel (Spiel-Thread über den Client-Tick). */
-	static dev.pwiepixel.cubiqclient.core.account.LegacySessionSwap accountSwap;
 	public static final String MOD_ID = "cubiqclient";
 	public static final Logger LOGGER = LogManager.getLogger("Cubiq Client");
 	/** Gamma für Fullbright (Vanilla-Maximum ist 1.0). */
@@ -141,13 +139,13 @@ public final class CubiqClient {
 		dev.pwiepixel.cubiqclient.core.ui.Theme.loadFrom(file.getParentFile().toPath());
 		dev.pwiepixel.cubiqclient.core.i18n.I18n.init(file.getParentFile().toPath());
 		dev.pwiepixel.cubiqclient.core.clips.Clips.init(file.getParentFile().toPath());
-		// Konten: Wechsel ohne Neustart (mit Cubiq Launcher dessen Konten, sonst eigene Anmeldung je Instanz).
-		accountSwap = new dev.pwiepixel.cubiqclient.core.account.LegacySessionSwap(() -> Minecraft.getMinecraft(),
-				net.minecraft.util.Session.class, () -> {
-					net.minecraft.util.Session s = Minecraft.getMinecraft().getSession();
-					return s == null ? null : new dev.pwiepixel.cubiqclient.core.account.SessionData(s.getPlayerID(), s.getUsername(), s.getToken(), null);
-				}, () -> Minecraft.getMinecraft().theWorld != null, file.getParentFile().toPath(), "Cubiq-Client/" + version + " (Minecraft 1.7.10; forge)", message -> LOGGER.info(message));
-		dev.pwiepixel.cubiqclient.core.account.AccountManager.init(accountSwap);
+		// Sitzung, mit der das Spiel gestartet wurde (nur lesen – keine Anmeldung, kein Kontowechsel im Spiel).
+		java.util.function.Supplier<dev.pwiepixel.cubiqclient.core.account.SessionData> session = () -> {
+			net.minecraft.util.Session s = Minecraft.getMinecraft().getSession();
+			return s == null ? null : new dev.pwiepixel.cubiqclient.core.account.SessionData(s.getPlayerID(), s.getUsername(), s.getToken());
+		};
+		dev.pwiepixel.cubiqclient.core.account.CurrentSession.init(file.getParentFile().toPath(), "Cubiq-Client/" + version + " (Minecraft 1.7.10; forge)", session,
+				message -> LOGGER.info(message));
 		// Bug melden (Cubiq-Menü): Mod-Liste, Log und Screenshots aus dem Spielordner, Senden über die Cubiq API.
 		dev.pwiepixel.cubiqclient.core.bugreport.BugReports.init(file.getParentFile().toPath(), version, "1.7.10", "forge");
 		config = new ConfigStore(file.toPath());
@@ -225,8 +223,7 @@ public final class CubiqClient {
 		@SubscribeEvent
 		public void onClientTick(TickEvent.ClientTickEvent event) {
 			Minecraft mc = Minecraft.getMinecraft();
-			if (accountSwap != null) accountSwap.drain();
-			if (event.phase == TickEvent.Phase.START) {
+				if (event.phase == TickEvent.Phase.START) {
 				pvp.countPresses(mc);
 				return;
 			}

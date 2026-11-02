@@ -16,7 +16,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 /**
  * Selbsttest Fehlerbildschirm ({@code -PcubiqAutotestOnly=disconnect}) unter 1.8.9–1.12.2: „Anmeldung fehlgeschlagen:
- * Ungültige Sitzung“ nachstellen, Neu anmelden / Fehler kopieren / Server-Status drücken; Bilder und Knopftexte.
+ * Ungültige Sitzung“ nachstellen, Fehler kopieren / Server-Status drücken; Bilder und Knopftexte.
  */
 public final class DisconnectTest {
 	private int phase;
@@ -75,9 +75,8 @@ public final class DisconnectTest {
 			case 1:
 				CubiqClient.LOGGER.info("[Autotest] Fehlerbildschirm Anfang: {}", CubiqClient.disconnect.testLabels());
 				shot(mc, "session");
-				CubiqClient.disconnect.testPress(0);
-				CubiqClient.disconnect.testPress(3);
-				CubiqClient.disconnect.testPress(4);
+				CubiqClient.disconnect.testPress(1);
+				CubiqClient.disconnect.testPress(2);
 				phase++;
 				wait = 80;
 				return;
