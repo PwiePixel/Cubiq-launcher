@@ -7,6 +7,7 @@ import {
   petGroupSlots,
   petPoseTime,
   petTimeOffset,
+  resolveDriver,
   validateModel,
   type ActionDriver,
   type ActionPlay,
@@ -15,7 +16,7 @@ import {
   type OptionChoices,
   type PetState,
   type ViewerCosmetic,
-  type WingState,
+  type WearState,
 } from '~/utils/cosmetic-v2/format'
 import { capeLooksSmooth } from '~/utils/capeHd'
 
@@ -54,8 +55,8 @@ const props = withDefaults(
     companion?: ViewerCosmetic | null
     /** Flügel (slot wings, `attach: body`): hängen am Rumpf, Ursprung am Nacken. */
     wings?: ViewerCosmetic | null
-    /** Zustand für die Zustands-Animationen der Flügel (idle/air/sneak); sneak neigt den Rumpf. */
-    wingState?: WingState
+    /** Bewegung für die Zustands-Animationen getragener Teile (Hut, Begleiter am Kopf, Flügel); sneak neigt den Rumpf. */
+    wearState?: WearState
     /** Begleiter am Boden (slot pet, `attach: ground`): steht neben dem Spieler auf dem Boden. */
     pet?: ViewerCosmetic | null
     /** So viele Begleiter am Boden (1…4, vom Server), versetzt nebeneinander. */
@@ -99,7 +100,7 @@ const props = withDefaults(
     cosmetic: null,
     companion: null,
     wings: null,
-    wingState: 'idle',
+    wearState: 'idle',
     pet: null,
     petCount: 1,
     petScale: 1,
@@ -301,16 +302,18 @@ async function applySkin() {
 interface CosmeticSlot {
   id: CosmeticSlotId
   inst: CosmeticInstance | null
+  /** Modell von `inst` – entscheidet, welche Bewegung es selbst animiert (`resolveDriver`). */
+  model: CosmeticModel | null
   top: number
   token: number
   /** Ohne Modell: Kamera-Oberkante (Hut 8 = Nacken, Begleiter 0). */
   emptyTop: number
 }
 
-const hatSlot: CosmeticSlot = { id: 'hat', inst: null, top: 8, token: 0, emptyTop: 8 }
-const companionSlot: CosmeticSlot = { id: 'companion', inst: null, top: 0, token: 0, emptyTop: 0 }
+const hatSlot: CosmeticSlot = { id: 'hat', inst: null, model: null, top: 8, token: 0, emptyTop: 8 }
+const companionSlot: CosmeticSlot = { id: 'companion', inst: null, model: null, top: 0, token: 0, emptyTop: 0 }
 /** Flügel am Rumpf (Kamera: zählen nur, wenn sie über den Nacken ragen). */
-const wingsSlot: CosmeticSlot = { id: 'wings', inst: null, top: 0, token: 0, emptyTop: 0 }
+const wingsSlot: CosmeticSlot = { id: 'wings', inst: null, model: null, top: 0, token: 0, emptyTop: 0 }
 
 /** Begleiter am Boden: bis zu 4 Exemplare desselben Modells, je mit eigenem Zeitversatz. */
 interface PetEntry {
@@ -336,6 +339,7 @@ async function applySlot(slot: CosmeticSlot, data: ViewerCosmetic | null | undef
   if (!data) {
     slot.inst?.dispose()
     slot.inst = null
+    slot.model = null
     slot.top = slot.emptyTop
     applyFocus()
     return
@@ -354,6 +358,7 @@ async function applySlot(slot: CosmeticSlot, data: ViewerCosmetic | null | undef
     const next = createCosmetic(data.model as unknown as CosmeticModel, { texture, glow: hasGlow ? glow : null })
     slot.inst?.dispose()
     slot.inst = next
+    slot.model = data.model as unknown as CosmeticModel
     next.setOptions(props.cosmeticOptions?.[slot.id])
     slot.top = modelTop(data.model as unknown as CosmeticModel)
     if (slot === wingsSlot) {
@@ -370,6 +375,7 @@ async function applySlot(slot: CosmeticSlot, data: ViewerCosmetic | null | undef
     console.warn(e)
     slot.inst?.dispose()
     slot.inst = null
+    slot.model = null
     emit('cosmeticError')
   }
 }
@@ -619,9 +625,9 @@ function beforeRender() {
   stepCamera()
   if (viewer) {
     const now = Date.now()
-    hatSlot.inst?.update(now, { camera: viewer.camera })
-    companionSlot.inst?.update(now, { camera: viewer.camera })
-    wingsSlot.inst?.update(now, { camera: viewer.camera, state: props.wingState })
+    hatSlot.inst?.update(now, { camera: viewer.camera, state: wornState(hatSlot) })
+    companionSlot.inst?.update(now, { camera: viewer.camera, state: wornState(companionSlot) })
+    wingsSlot.inst?.update(now, { camera: viewer.camera, state: wornState(wingsSlot) })
     // Pose von grab/Aktion zu ihrer eigenen Zeit; Leuchten und Höfe bleiben auf der Zeit des Begleiters.
     const action = petActionPlay(now)
     for (const p of petSlot.list) updatePet(p, now, action)
@@ -629,12 +635,21 @@ function beforeRender() {
   }
 }
 
+/**
+ * Bewegung, die ein getragenes Teil zeigt: je Fach und Modell der Treiber, den es wirklich spielt (walk ohne eigene
+ * Animation → idle, jump ohne eigene → air, sonst idle – wie im Cubiq Client vor dem Überblenden). Wechselt nur ein
+ * anderes Teil den Zustand, bleibt dieses so ungestört in seiner Animation.
+ */
+function wornState(slot: CosmeticSlot) {
+  return slot.model ? resolveDriver(slot.model, props.wearState) : 'idle'
+}
+
 /** Schleich-Vorschau: Rumpf 0,5 rad um den Nacken nach vorn neigen (wie Vanilla, §7). */
 const SNEAK_LEAN = 0.5
 function leanForSneak() {
   const body = viewer?.playerObject.skin.body
   if (!body) return
-  const lean = props.wingState === 'sneak' && !!wingsSlot.inst ? SNEAK_LEAN : 0
+  const lean = props.wearState === 'sneak' && !!(hatSlot.inst || companionSlot.inst || wingsSlot.inst) ? SNEAK_LEAN : 0
   if (lean === 0 && body.rotation.x === 0) return
   body.rotation.x = lean
   body.position.y = -6 * Math.cos(lean)
@@ -669,6 +684,9 @@ onBeforeUnmount(() => {
   hatSlot.inst = null
   companionSlot.inst = null
   wingsSlot.inst = null
+  hatSlot.model = null
+  companionSlot.model = null
+  wingsSlot.model = null
   observer?.disconnect()
   viewer?.dispose()
   viewer = null

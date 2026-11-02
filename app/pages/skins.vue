@@ -14,7 +14,9 @@ import {
   type OptionChoices,
   type PetState,
   type ViewerCosmetic,
-  type WingState,
+  type WearState,
+  WEAR_STATES,
+  wearStateAvailable,
 } from '~/utils/cosmetic-v2/format'
 import type { CubiqCosmeticSlot } from '~/utils/cubiq'
 import { optionToggles, toggleOption, type OptionToggle } from '~/utils/cubiqCosmetics'
@@ -243,8 +245,8 @@ const shownCompanion = computed(() => companionPreview.value ?? companionEquippe
 const wingsPreview = ref<CubiqHeadCosmetic | null>(null)
 const wingsEquipped = ref<CubiqHeadCosmetic | null>(null)
 const shownWings = computed(() => wingsPreview.value ?? wingsEquipped.value)
-/** Vorschau der Flügel-Zustände: am Boden, in der Luft, beim Schleichen. */
-const wingState = ref<WingState>('idle')
+/** Vorschau der Bewegung getragener Teile (Hut, Begleiter am Kopf, Flügel): steht, läuft, springt, in der Luft, schleicht. */
+const wearState = ref<WearState>('idle')
 /** Begleiter am Boden (Pinguin, seit Winter 2026): steht neben dem Spieler, eigene Zustände. */
 const petPreview = ref<CubiqHeadCosmetic | null>(null)
 const petEquipped = ref<CubiqHeadCosmetic | null>(null)
@@ -342,6 +344,25 @@ bindCosmetic(() => shownHead.value, viewerCosmetic)
 bindCosmetic(() => shownCompanion.value, viewerCompanion)
 bindCosmetic(() => shownWings.value, viewerWings)
 bindCosmetic(() => shownPet.value, viewerPet)
+
+/**
+ * Knöpfe der Bewegung getragener Teile (Hut, Begleiter am Kopf, Flügel): „steht“ und jeder Zustand, den eines der
+ * gezeigten Modelle selbst animiert – Flügel wie bisher steht/in der Luft/schleicht, die Zipfelmütze alle fünf. Animiert
+ * keins mehr als idle, gibt es keine Leiste.
+ */
+const wearStateKeys = computed(() => {
+  const models = [viewerCosmetic.value, viewerCompanion.value, viewerWings.value].flatMap((v) => (v ? [v.model] : []))
+  return models.length ? WEAR_STATES.filter((k) => models.some((m) => wearStateAvailable(m, k))) : []
+})
+// Andere Teile ohne den gewählten Zustand → zurück auf „steht“.
+watch(wearStateKeys, (keys) => {
+  if (!keys.includes(wearState.value)) wearState.value = 'idle'
+})
+/** Zustand wählen (Standard „steht“); „läuft“ lässt auch den Körper laufen. */
+function chooseWearState(key: WearState) {
+  wearState.value = key
+  if (key === 'walk') animation.value = 'walk'
+}
 
 /** Knöpfe der Zustände: die fünf Grundzustände immer, sneak/grab/flee/handsup nur wenn das Modell sie hat. */
 const petStateKeys = computed(() =>
@@ -893,7 +914,7 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
                   :cosmetic="viewerCosmetic"
                   :companion="viewerCompanion"
                   :wings="viewerWings"
-                  :wing-state="wingState"
+                  :wear-state="wearState"
                   :pet="viewerPet"
                   :pet-count="shownPetCount"
                   :pet-scale="shownPetScale"
@@ -1027,18 +1048,19 @@ const packSkinCount = computed(() => packs.value?.reduce((n, p) => n + p.skins.l
                   {{ t(`headCosmetics.pet.state.${key}`) }}
                 </button>
               </div>
-              <!-- Flügel: Zustände vorführen (am Boden, in der Luft, Schleichen). -->
-              <div v-if="viewerWings" class="flex items-center gap-1 border-t border-base-800/80 bg-base-950/60 p-1 text-[11px] backdrop-blur-sm" data-testid="wings-states">
-                <span class="px-1 text-base-400">{{ t('headCosmetics.wings.states') }}</span>
+              <!-- Getragene Teile: Bewegung vorführen (steht, läuft, springt, in der Luft, schleicht) – je Modell nur, was es kann. -->
+              <div v-if="wearStateKeys.length > 1" class="flex flex-wrap items-center gap-1 border-t border-base-800/80 bg-base-950/60 p-1 text-[11px] backdrop-blur-sm" data-testid="wear-states">
+                <span class="px-1 text-base-400">{{ t('headCosmetics.wear.states') }}</span>
                 <button
-                  v-for="key in (['idle', 'air', 'sneak'] as const)"
+                  v-for="key in wearStateKeys"
                   :key="key"
-                  class="seg flex-1 rounded px-2 py-1 mobile:min-h-10"
-                  :class="{ 'seg-on': wingState === key }"
-                  :aria-pressed="wingState === key"
-                  @click="wingState = key"
+                  class="seg flex-1 rounded px-2 py-1 whitespace-nowrap mobile:min-h-10"
+                  :class="{ 'seg-on': wearState === key }"
+                  :aria-pressed="wearState === key"
+                  :data-state="key"
+                  @click="chooseWearState(key)"
                 >
-                  {{ t(`headCosmetics.wings.state.${key}`) }}
+                  {{ t(`headCosmetics.wear.state.${key}`) }}
                 </button>
               </div>
               <div class="flex flex-col gap-1 border-t border-base-800/80 bg-base-950/60 p-1 text-[11px] backdrop-blur-sm mobile:flex-row mobile:items-center">

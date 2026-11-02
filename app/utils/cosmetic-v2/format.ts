@@ -31,6 +31,25 @@ export const SLOT_ATTACH: Record<CosmeticSlot, Attach> = { hat: 'head', companio
 /** Zustände für Zustands-Animationen (§7): Vorrang sneak > air > idle. */
 export const STATES = ['idle', 'air', 'sneak'] as const
 export type WingState = (typeof STATES)[number]
+/**
+ * Bewegung getragener Teile (Hut, Begleiter am Kopf, Flügel): wie `STATES`, dazu `walk` (am Boden unterwegs) und `jump`
+ * (Absprung, steigt noch). Vorrang sneak > jump > air > walk > idle. Ältere Clients kennen nur idle/air/sneak – walk
+ * zeigen sie als idle, jump als air.
+ */
+export const WEAR_STATES = ['idle', 'walk', 'jump', 'air', 'sneak'] as const
+export type WearState = (typeof WEAR_STATES)[number]
+/** Rückfall eines Zustands getragener Teile ohne eigene Animation: jump → air, alles andere → idle. */
+export const WEAR_FALLBACK: Partial<Record<WearState, WearState>> = { jump: 'air' }
+/**
+ * Schwellen der Bewegung, gleich wie im Cubiq Client (`WingState`): walk ab dieser waagerechten Geschwindigkeit
+ * (Blöcke je Tick; Gehen ≈ 0,216, Schleichen ≈ 0,065), jump, solange der Spieler schneller steigt als `JUMP_VY` (Absprung
+ * 0,42). Der Client hält walk noch `WALK_HOLD_MS` nach dem letzten Mal (kein Flackern zwischen zwei Ticks oder beim
+ * Abbremsen), jump beginnt sofort, air wie bisher erst nach 100 ms – direkt nach jump ohne Wartezeit. Die Vorschau im
+ * Launcher zeigt die Zustände über Knöpfe.
+ */
+export const WALK_SPEED = 0.04
+export const WALK_HOLD_MS = 150
+export const JUMP_VY = 0.05
 /** Zustände eines Begleiters am Boden (Anhang D); fehlt eine Animation → idle. */
 export const PET_STATES = ['idle', 'walk', 'slide', 'swim', 'air', 'sneak', 'grab', 'flee', 'handsup'] as const
 export type PetState = (typeof PET_STATES)[number]
@@ -49,8 +68,8 @@ export const ACTION_DRIVERS = ['pet', 'eat'] as const
 export type ActionDriver = (typeof ACTION_DRIVERS)[number]
 /** Grenzen der Aktionen: höchstens 16 Einträge, Länge 300…10 000 ms (ganzzahlig). */
 export const ACTION_LIMITS = { entries: 16, lengthMs: [300, 10000] } as const
-/** Jeder Zustand, den ein Modell spielen kann (Spieler- oder Begleiter-Zustand). */
-export type AnimState = WingState | PetState
+/** Jeder Zustand, den ein Modell spielen kann (Bewegung des Spielers für getragene Teile oder Begleiter-Zustand). */
+export type AnimState = WearState | PetState
 /** Höchstens so viele Begleiter am Boden je Spieler (`count` vom Server). */
 export const MAX_PETS = 4
 /** Gefolge: höchstens so viele zusätzliche Begleiter (Creator), gesamt höchstens `MAX_PET_GROUP` je Besitzer. */
@@ -391,20 +410,64 @@ function addTracks(poses: Map<string, BonePose>, tracks: readonly CosmeticTrack[
   }
 }
 
-/** Zustand eines Spielers (§7), Vorrang sneak > air > idle. */
-export function wingState(p: { crouching?: boolean; flying?: boolean; onGround?: boolean; riding?: boolean; inLiquid?: boolean; climbing?: boolean }): WingState {
+/** Was ein Client von der Bewegung eines Spielers sieht (je Bild, ohne Server oder Protokoll). */
+export interface Movement {
+  crouching?: boolean
+  flying?: boolean
+  onGround?: boolean
+  riding?: boolean
+  /** In Wasser oder Lava. */
+  inLiquid?: boolean
+  /** An Leiter oder Ranke. */
+  climbing?: boolean
+  /** Waagerechte Geschwindigkeit in Blöcken je Tick: √(dx² + dz²). */
+  speed?: number
+  /** Senkrechte Geschwindigkeit in Blöcken je Tick: y − yo (+ = steigt). */
+  vy?: number
+}
+
+/**
+ * Zustand eines Spielers (§7), Vorrang sneak > air > idle: sneak beim Schleichen (nicht im Flug), air ohne Boden oder im
+ * Flug – nicht beim Reiten, in Wasser/Lava oder an Leiter/Ranke. Wie `WingState.classify` im Cubiq Client.
+ */
+export function wingState(p: Movement): WingState {
   if (p.crouching && !p.flying) return 'sneak'
-  if (!p.onGround && !p.riding && !p.inLiquid && !p.climbing) return 'air'
+  if ((!p.onGround || p.flying) && !p.riding && !p.inLiquid && !p.climbing) return 'air'
   return 'idle'
 }
 
-/** Welcher Treiber für einen Zustand läuft: der Zustand selbst, sonst Rückfall idle (§7). */
+/**
+ * Welcher Treiber für einen Zustand läuft: der Zustand selbst, sonst der Rückfall – Begleiter am Boden nach Anhang E,
+ * getragene Teile jump → air, alles andere idle (§7).
+ */
 export function resolveDriver(model: Pick<CosmeticModel, 'animations'> & { slot?: string }, state: AnimState = 'idle'): Driver {
   const has = (d: string) => (model.animations ?? []).some((a) => (a.driver ?? 'idle') === d)
   if (has(state)) return state
-  // Begleiter am Boden: sneak/flee → walk, grab/handsup → idle (Anhang E); Flügel fallen immer auf idle.
-  const back = model.slot === 'pet' ? PET_FALLBACK[state as PetState] : undefined
+  // Begleiter am Boden: sneak/flee → walk, grab/handsup → idle (Anhang E); getragene Teile: jump → air, sonst idle.
+  const back = model.slot === 'pet' ? PET_FALLBACK[state as PetState] : WEAR_FALLBACK[state as WearState]
   return back && has(back) ? back : 'idle'
+}
+
+/**
+ * Bewegung eines Spielers für getragene Teile (Hut, Begleiter am Kopf, Flügel), Vorrang sneak > jump > air > walk > idle:
+ * jump in der Luft, nicht im Flug und schneller steigend als `JUMP_VY`, sonst air; walk am Boden – nicht beim Reiten, in
+ * Wasser/Lava oder an Leiter/Ranke – schneller als `WALK_SPEED`. Wie die Einteilung im Cubiq Client.
+ */
+export function wearState(p: Movement): WearState {
+  const s = wingState(p)
+  if (s === 'air') return !p.flying && (p.vy ?? 0) > JUMP_VY ? 'jump' : 'air'
+  if (s === 'idle' && p.onGround && !p.riding && !p.inLiquid && !p.climbing && (p.speed ?? 0) > WALK_SPEED) return 'walk'
+  return s
+}
+
+/**
+ * Knopf für eine Bewegung getragener Teile zeigen? idle immer, sonst nur, wenn das Modell sie selbst animiert (jump nur
+ * mit eigenem `jump`). Das Modell kommt ungeprüft vom Server – ein kaputtes zeigt einfach keine weiteren Knöpfe.
+ */
+export function wearStateAvailable(model: unknown, state: WearState): boolean {
+  if (state === 'idle') return true
+  const anims = isObject(model) && Array.isArray(model.animations) ? (model.animations as unknown[]) : []
+  return anims.some((a) => isObject(a) && a.driver === state)
 }
 
 /** Kann die Vorschau diesen Begleiter-Zustand zeigen? Die fünf Grundzustände immer, die übrigen nur mit eigener Animation. */

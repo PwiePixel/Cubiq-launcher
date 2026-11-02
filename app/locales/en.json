@@ -4099,10 +4099,14 @@
       "toasts": {
         "on": "“{name}” are on your back",
         "off": "Wings taken off"
-      },
-      "states": "Wings:",
+      }
+    },
+    "wear": {
+      "states": "Movement:",
       "state": {
         "idle": "Standing",
+        "walk": "Walking",
+        "jump": "Jumping",
         "air": "In the air",
         "sneak": "Sneaking"
       }
@@ -6901,7 +6905,7 @@
       "emote": "Reward: emote “{name}”",
       "wearNow": "Wear now",
       "whereEmote": "Where is it?",
-      "emoteHint": "“{name}” is in your emote wheel in the Cubiq Client (default key G)."
+      "emoteHint": "“{name}” is in your emote wheel in the Cubiq Client (default key R)."
     },
     "toast": {
       "title": "Achievement unlocked!",
