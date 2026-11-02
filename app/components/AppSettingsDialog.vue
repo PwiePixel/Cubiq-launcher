@@ -383,6 +383,7 @@ async function allowFirewall() {
         <svg viewBox="0 0 24 24" class="size-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="icons.help" /></svg>
         {{ t('docs.open') }}
       </button>
+      <NotOfficialNotice class="mt-2" />
     </template>
 
     <div v-if="!form" class="space-y-3">

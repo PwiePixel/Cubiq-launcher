@@ -56,7 +56,8 @@
       "gameVersion": "Versión del juego",
       "loader": "Cargador de mods"
     },
-    "memoryHigh": "Minecraft rara vez necesita más de 8–12 GB. Demasiada RAM hace más lenta la recolección de basura y puede impedir que Java arranque si otros programas usan memoria."
+    "memoryHigh": "Minecraft rara vez necesita más de 8–12 GB. Demasiada RAM hace más lenta la recolección de basura y puede impedir que Java arranque si otros programas usan memoria.",
+    "notOfficial": "No es un producto oficial de Minecraft. No está aprobado por Mojang ni Microsoft ni asociado con ellos."
   },
   "language": {
     "title": "Idioma",
@@ -153,7 +154,7 @@
     "openFolder": "No se pudo abrir la carpeta.",
     "instanceNotFound": "No se encontró la instancia «{id}»",
     "unknownVersion": "La versión de Minecraft «{version}» es desconocida",
-    "authNotApproved": "El inicio de sesión de Microsoft aún no está habilitado: el registro de la aplicación está pendiente de aprobación por parte de Mojang.",
+    "authNotApproved": "El inicio de sesión con Microsoft no está disponible en Cubiq Launcher por ahora: Mojang no ha aprobado la aplicación para iniciar sesión en Minecraft.",
     "unsupportedOnMobile": "No disponible en este dispositivo: solo en la versión de escritorio.",
     "mobileUpdate": {
       "notChecked": "Primero busca actualizaciones.",
@@ -2970,7 +2971,7 @@
       "page": "Página: {url}",
       "requestingCode": "Solicitando código …",
       "waiting": "Esperando a Microsoft …",
-      "notApprovedHint": "No es un fallo del launcher: el inicio de sesión de Microsoft y Xbox ha funcionado; solo falta que Mojang apruebe la app. En cuanto lo haga, podrás iniciar sesión sin actualizar nada."
+      "notApprovedHint": "Tu cuenta está bien: Microsoft y Xbox aceptaron el inicio de sesión, pero los servidores de Minecraft solo aceptan inicios de sesión de aplicaciones aprobadas por Mojang, y Cubiq Launcher no es una de ellas. No podemos decir si esto cambiará ni cuándo. Tus instancias, mods y ajustes se quedan como están."
     },
     "remove": {
       "title": "¿Cerrar sesión de la cuenta?",
@@ -7233,9 +7234,6 @@
     "port": "Puerto",
     "maxPlayers": "Máx. jugadores",
     "motd": "Descripción del servidor (MOTD)",
-    "onlineMode": "Modo online",
-    "onlineModeOn": "Solo pueden entrar jugadores con una cuenta real de Minecraft (recomendado).",
-    "onlineModeOff": "Cualquiera puede entrar con cualquier nombre: no recomendado.",
     "ram": "RAM",
     "ramValue": "{gb} GB",
     "ramRange": "La RAM debe estar entre 512 MB y 128 GB.",

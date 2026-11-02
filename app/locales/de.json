@@ -56,7 +56,8 @@
       "gameVersion": "Spielversion",
       "loader": "Modloader"
     },
-    "memoryHigh": "Minecraft braucht selten mehr als 8–12 GB. Zu viel RAM macht die Speicherbereinigung langsamer und kann den Start verhindern, wenn andere Programme Speicher belegen."
+    "memoryHigh": "Minecraft braucht selten mehr als 8–12 GB. Zu viel RAM macht die Speicherbereinigung langsamer und kann den Start verhindern, wenn andere Programme Speicher belegen.",
+    "notOfficial": "Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden."
   },
   "language": {
     "title": "Sprache",
@@ -153,7 +154,7 @@
     "openFolder": "Ordner konnte nicht geöffnet werden.",
     "instanceNotFound": "Instanz „{id}“ wurde nicht gefunden",
     "unknownVersion": "Minecraft-Version „{version}“ ist unbekannt",
-    "authNotApproved": "Der Microsoft-Login ist noch nicht freigeschaltet: Die App-Registrierung wartet auf die Freigabe durch Mojang.",
+    "authNotApproved": "Die Microsoft-Anmeldung ist im Cubiq Launcher gerade nicht verfügbar: Mojang hat die App nicht für die Minecraft-Anmeldung freigegeben.",
     "unsupportedOnMobile": "Auf diesem Gerät nicht verfügbar – nur in der Desktop-Version.",
     "mobileUpdate": {
       "notChecked": "Bitte zuerst nach Updates suchen.",
@@ -2970,7 +2971,7 @@
       "page": "Seite: {url}",
       "requestingCode": "Fordere Code an …",
       "waiting": "Warte auf Microsoft …",
-      "notApprovedHint": "Das ist kein Fehler im Launcher: Microsoft-Login und Xbox-Anmeldung haben funktioniert, nur Mojangs Freigabe der App steht noch aus. Sobald sie da ist, klappt die Anmeldung ohne Update."
+      "notApprovedHint": "Mit deinem Konto ist alles in Ordnung: Microsoft und Xbox haben die Anmeldung angenommen, aber die Minecraft-Server akzeptieren nur Anmeldungen aus Apps, die Mojang freigegeben hat – und der Cubiq Launcher gehört nicht dazu. Ob und wann sich das ändert, können wir nicht sagen. Deine Instanzen, Mods und Einstellungen bleiben, wie sie sind."
     },
     "remove": {
       "title": "Account abmelden?",
@@ -7233,9 +7234,6 @@
     "port": "Port",
     "maxPlayers": "Max. Spieler",
     "motd": "Server-Beschreibung (MOTD)",
-    "onlineMode": "Online-Modus",
-    "onlineModeOn": "Nur Spieler mit echtem Minecraft-Konto können beitreten (empfohlen).",
-    "onlineModeOff": "Jeder kann mit beliebigem Namen beitreten – nicht empfohlen.",
     "ram": "Arbeitsspeicher",
     "ramValue": "{gb} GB",
     "ramRange": "Der Arbeitsspeicher muss zwischen 512 MB und 128 GB liegen.",

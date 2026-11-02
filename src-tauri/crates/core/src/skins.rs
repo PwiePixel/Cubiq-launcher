@@ -619,7 +619,6 @@ impl Launcher {
         self.accounts()
             .active_session()
             .await?
-            .filter(|s| !s.demo)
             .ok_or_else(|| Error::auth(crate::msg!(
                 "skins.signInFirst",
                 "Bitte melde dich zuerst unter „Accounts“ an."

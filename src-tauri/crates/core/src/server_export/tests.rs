@@ -145,7 +145,6 @@ fn options() -> ServerExportOptions {
         port: 25565,
         motd: "Hallo\nWelt".into(),
         max_players: 10,
-        online_mode: true,
         ram_mb: 4096,
         eula_accepted: false,
         zip: true,
@@ -246,6 +245,24 @@ fn start_scripts_use_ram_and_launch_spec() {
     assert!(files::start_sh(&args, 6144, 17).contains("@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt nogui"));
 }
 
+/// Exportierte und lokal gestartete Server verlangen immer die Mojang-Anmeldung – auch wenn eine alte Oberfläche
+/// noch `onlineMode: false` schickt (das Feld gibt es nicht mehr und wird ignoriert).
+#[test]
+fn servers_always_use_online_mode() {
+    let old_ui: ServerExportOptions = serde_json::from_value(serde_json::json!({
+        "name": "Alt", "port": 25565, "motd": "x", "maxPlayers": 4, "onlineMode": false,
+        "ramMb": 2048, "eulaAccepted": true, "zip": true
+    }))
+    .unwrap();
+    let checked = check_options(&old_ui).unwrap();
+    for has_world in [true, false] {
+        let text = files::server_properties(&checked.props, has_world);
+        assert!(text.contains("\nonline-mode=true\n"), "{text}");
+        assert!(!text.contains("online-mode=false"));
+        assert_eq!(text.matches("online-mode=").count(), 1);
+    }
+}
+
 #[test]
 fn launch_spec_round_trips_as_json() {
     let spec = LaunchSpec::ArgsFile { windows: "a/win_args.txt".into(), unix: "a/unix_args.txt".into() };
@@ -256,7 +273,7 @@ fn launch_spec_round_trips_as_json() {
 
 #[test]
 fn properties_escape_and_basics() {
-    let props = ServerProperties { port: 25570, motd: "Grüße \\ von §6Cubiq".into(), max_players: 8, online_mode: true };
+    let props = ServerProperties { port: 25570, motd: "Grüße \\ von §6Cubiq".into(), max_players: 8 };
     let text = files::server_properties(&props, true);
     assert!(text.contains("server-port=25570\n"));
     assert!(text.contains("max-players=8\n"));

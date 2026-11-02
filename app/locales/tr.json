@@ -56,7 +56,8 @@
       "gameVersion": "Oyun sürümü",
       "loader": "Mod yükleyici"
     },
-    "memoryHigh": "Minecraft nadiren 8–12 GB'tan fazlasına ihtiyaç duyar. Çok fazla RAM çöp toplamayı yavaşlatır ve diğer programlar bellek kullanırken Java'nın başlamasını engelleyebilir."
+    "memoryHigh": "Minecraft nadiren 8–12 GB'tan fazlasına ihtiyaç duyar. Çok fazla RAM çöp toplamayı yavaşlatır ve diğer programlar bellek kullanırken Java'nın başlamasını engelleyebilir.",
+    "notOfficial": "Resmi bir Minecraft ürünü değildir. Mojang veya Microsoft tarafından onaylanmamıştır ve onlarla bağlantılı değildir."
   },
   "language": {
     "title": "Dil",
@@ -153,7 +154,7 @@
     "openFolder": "Klasör açılamadı.",
     "instanceNotFound": "Kurulum bulunamadı: “{id}”",
     "unknownVersion": "Bilinmeyen Minecraft sürümü: “{version}”",
-    "authNotApproved": "Microsoft girişi henüz etkin değil: uygulama kaydı Mojang onayını bekliyor.",
+    "authNotApproved": "Microsoft girişi şu anda Cubiq Launcher'da kullanılamıyor: Mojang, uygulamayı Minecraft girişi için onaylamadı.",
     "unsupportedOnMobile": "Bu cihazda kullanılamaz – yalnızca masaüstü sürümünde.",
     "mobileUpdate": {
       "notChecked": "Lütfen önce güncellemeleri kontrol et.",
@@ -2927,7 +2928,7 @@
       "page": "Sayfa: {url}",
       "requestingCode": "Kod isteniyor …",
       "waiting": "Microsoft bekleniyor …",
-      "notApprovedHint": "Bu bir launcher hatası değil: Microsoft ve Xbox girişi çalıştı, yalnızca Mojang'ın uygulama onayı hâlâ bekliyor. Onay verilir verilmez giriş güncelleme gerekmeden çalışacak."
+      "notApprovedHint": "Hesabında bir sorun yok: Microsoft ve Xbox girişi kabul etti, ancak Minecraft sunucuları yalnızca Mojang'ın onayladığı uygulamalardan gelen girişleri kabul ediyor ve Cubiq Launcher bunlardan biri değil. Bunun değişip değişmeyeceğini ya da ne zaman değişeceğini söyleyemiyoruz. Kurulumların, modların ve ayarların olduğu gibi kalır."
     },
     "remove": {
       "title": "Hesaptan çıkış yapılsın mı?",
@@ -7087,9 +7088,6 @@
     "port": "Port",
     "maxPlayers": "Maks. oyuncu",
     "motd": "Sunucu açıklaması (MOTD)",
-    "onlineMode": "Çevrimiçi mod",
-    "onlineModeOn": "Yalnızca gerçek Minecraft hesabı olan oyuncular katılabilir (önerilir).",
-    "onlineModeOff": "Herkes herhangi bir adla katılabilir – önerilmez.",
     "ram": "RAM",
     "ramValue": "{gb} GB",
     "ramRange": "RAM 512 MB ile 128 GB arasında olmalı.",

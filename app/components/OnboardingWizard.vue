@@ -423,7 +423,7 @@ onBeforeUnmount(() => {
             :class="notApproved ? 'border-warn/40 text-warn' : 'border-danger-600/50 text-danger-300'"
           >
             {{ loginError }}
-            <p v-if="notApproved" class="mt-1 text-xs text-base-400">{{ t('accounts.login.notApprovedHint') }}</p>
+            <SignInUnavailable v-if="notApproved" />
           </div>
 
           <div class="mt-8 flex gap-3">
@@ -438,6 +438,7 @@ onBeforeUnmount(() => {
               <button class="btn btn-ghost h-11 px-5" @click="next">{{ t('common.actions.later') }}</button>
             </template>
           </div>
+          <NotOfficialNotice class="mt-6 max-w-lg" />
         </div>
 
         <!-- 3 · Importieren -->

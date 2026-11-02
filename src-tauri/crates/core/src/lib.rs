@@ -102,7 +102,7 @@ pub use error::{Error, Result};
 use history::{HistoryEntry, HistoryKind};
 use hooks::{HookContext, HookKind};
 use instance::{Instance, InstanceStore, Loader, LoaderKind, NewInstance, UpdateInstance};
-use launch::{EventSink, GameEvent, GameManager, Session};
+use launch::{EventSink, GameEvent, GameManager};
 use paths::Paths;
 use servers::ServerStore;
 use prepare::{ProgressFn, Stage, StageProgress};
@@ -923,10 +923,7 @@ impl Launcher {
                 .session_for(id, false)
                 .await?
                 .ok_or_else(|| Error::launch(crate::msg!("launcher.accountMissing", "Das gewählte Konto gibt es nicht mehr.")))?,
-            None => match self.accounts.active_session().await? {
-                Some(session) => session,
-                None => demo_session()?,
-            },
+            None => self.accounts.active_session().await?.ok_or_else(sign_in_required)?,
         };
         let settings = self.settings().await;
         // Statistik: Instanz, wie der Nutzer sie gewählt hat (vor der Cubiq-Optimierung).
@@ -1620,38 +1617,55 @@ fn describe_version(game_version: &str, loader: &Loader) -> String {
     }
 }
 
-/// Messe-Build: Besucher dürfen ohne Konto im offiziellen Demo-Modus spielen.
-static DEMO_WITHOUT_ACCOUNT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-
-/// Ohne Konto im Demo-Modus starten lassen (nur der Messe-Build ruft das beim Start auf).
-pub fn allow_demo_without_account() {
-    DEMO_WITHOUT_ACCOUNT.store(true, std::sync::atomic::Ordering::Relaxed);
-}
-
 /// Umgebungsvariable für ein Zweitfenster derselben Instanz („Erneut starten“): Der Cubiq Client speichert dann
 /// weder seine Config noch den Sync-Stand und synchronisiert nicht (siehe `ConfigStore.readOnly()` im Mod).
 pub const SECONDARY_ENV: &str = "CUBIQ_CLIENT_SECONDARY";
 
-/// Ohne Account startet nur ein Entwicklungs-Build oder der Messe-Build – und dann im
-/// offiziellen Demo-Modus des Spiels. Release-Builds verlangen sonst immer eine Anmeldung.
-fn demo_session() -> Result<Session> {
-    if cfg!(debug_assertions) || DEMO_WITHOUT_ACCOUNT.load(std::sync::atomic::Ordering::Relaxed) {
-        tracing::warn!("Kein Account angemeldet – starte im Demo-Modus");
-        Ok(Session {
-            player_name: "Player".into(),
-            uuid: "0".repeat(32),
-            access_token: "0".into(),
-            xuid: String::new(),
-            demo: true,
-        })
-    } else {
-        Err(Error::auth(crate::msg!("launcher.signInFirst", "Bitte melde dich zuerst unter „Accounts“ mit deinem Microsoft-Konto an.")))
-    }
+/// Kein Konto angemeldet: Gespielt wird nur mit einem angemeldeten Konto, dem das Spiel gehört – in jedem Build
+/// (auch Entwicklungs- und Messe-Builds), ohne Demo- oder Offline-Modus. Gilt für PC und Handy.
+///
+/// Andockpunkt für einen anderen Weg zum Spielen (z. B. über den offiziellen Minecraft Launcher): Die Oberfläche
+/// erkennt diesen Fehler am Code `launcher.signInFirst` und kann dort den Ausweg anbieten.
+pub(crate) fn sign_in_required() -> Error {
+    Error::auth(crate::msg!("launcher.signInFirst", "Bitte melde dich zuerst unter „Accounts“ mit deinem Microsoft-Konto an."))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Ohne angemeldetes Konto startet kein Spiel – weder am PC noch auf dem Handy, in keinem Build
+    /// (kein Demo-, kein Offline-Modus). Es bleibt die Bitte, sich anzumelden.
+    #[tokio::test]
+    async fn no_game_starts_without_a_signed_in_account() {
+        let dir = tempfile::tempdir().unwrap();
+        let launcher = Arc::new(Launcher::init(dir.path(), Arc::new(|_| {})).await.unwrap());
+        let instance = launcher
+            .instances
+            .create(NewInstance { name: "Ohne Konto".into(), game_version: "1.21.1".into(), loader: Loader::vanilla() })
+            .await
+            .unwrap();
+        let no_progress = |_: StageProgress| {};
+        assert!(launcher.accounts.active_session().await.unwrap().is_none());
+
+        let pc = launcher.launch(&instance.id, None, &no_progress).await.unwrap_err();
+        assert_eq!((pc.kind(), pc.message_code()), ("auth", "launcher.signInFirst"));
+        // Zweitfenster („Erneut starten“) läuft über denselben Weg.
+        let options = LaunchOptions { extra: true, ..Default::default() };
+        let again = launcher.launch_with(&instance.id, None, options, &no_progress).await.unwrap_err();
+        assert_eq!(again.message_code(), "launcher.signInFirst");
+        let Err(mobile) = launcher.prepare_mobile_launch(&instance.id, None, None, false, None, &no_progress).await else {
+            panic!("Handy-Start ohne Konto");
+        };
+        assert_eq!((mobile.kind(), mobile.message_code()), ("auth", "launcher.signInFirst"));
+        // Ein Konto, das es nicht gibt, ersetzt keine Anmeldung.
+        let options = LaunchOptions { account_id: Some("0".repeat(32)), ..Default::default() };
+        let unknown = launcher.launch_with(&instance.id, None, options, &no_progress).await.unwrap_err();
+        assert_eq!(unknown.message_code(), "launcher.accountMissing");
+
+        assert!(launcher.games.running().is_empty());
+        assert!(!launcher.is_preparing(&instance.id));
+    }
 
     #[test]
     fn linked_resource_packs_skip_the_copy_sync() {

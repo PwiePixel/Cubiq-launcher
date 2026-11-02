@@ -234,7 +234,6 @@ public final class HostingHooks {
 				throw new IllegalStateException("publish hook missing");
 			}
 			if (!ok && !s.isPublished()) throw new IllegalStateException("publish failed");
-			if (offlineTest()) s.setUsesAuthentication(false);
 			apply(o);
 		}
 

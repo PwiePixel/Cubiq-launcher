@@ -56,7 +56,8 @@
       "gameVersion": "Versão do jogo",
       "loader": "Mod loader"
     },
-    "memoryHigh": "O Minecraft raramente precisa de mais de 8–12 GB. RAM demais deixa a coleta de lixo mais lenta e pode impedir o Java de iniciar quando outros programas usam memória."
+    "memoryHigh": "O Minecraft raramente precisa de mais de 8–12 GB. RAM demais deixa a coleta de lixo mais lenta e pode impedir o Java de iniciar quando outros programas usam memória.",
+    "notOfficial": "Não é um produto oficial do Minecraft. Não é aprovado pela Mojang nem pela Microsoft, nem associado a elas."
   },
   "language": {
     "title": "Idioma",
@@ -153,7 +154,7 @@
     "openFolder": "Não foi possível abrir a pasta.",
     "instanceNotFound": "Instância “{id}” não encontrada",
     "unknownVersion": "A versão do Minecraft “{version}” é desconhecida",
-    "authNotApproved": "O login da Microsoft ainda não está ativado: o registro do aplicativo aguarda aprovação da Mojang.",
+    "authNotApproved": "O login da Microsoft não está disponível no Cubiq Launcher no momento: a Mojang não aprovou o aplicativo para o login no Minecraft.",
     "unsupportedOnMobile": "Indisponível neste dispositivo – apenas na versão para desktop.",
     "mobileUpdate": {
       "notChecked": "Procure atualizações primeiro.",
@@ -2927,7 +2928,7 @@
       "page": "Página: {url}",
       "requestingCode": "Solicitando código …",
       "waiting": "Aguardando a Microsoft …",
-      "notApprovedHint": "Isto não é um bug do launcher: o login da Microsoft e do Xbox funcionou, só falta a aprovação do aplicativo pela Mojang. Assim que for concedida, o login vai funcionar sem precisar de atualização."
+      "notApprovedHint": "Sua conta está em ordem: a Microsoft e o Xbox aceitaram o login, mas os servidores do Minecraft só aceitam logins de aplicativos aprovados pela Mojang, e o Cubiq Launcher não é um deles. Não sabemos dizer se nem quando isso vai mudar. Suas instâncias, mods e configurações continuam como estão."
     },
     "remove": {
       "title": "Sair da conta?",
@@ -7087,9 +7088,6 @@
     "port": "Porta",
     "maxPlayers": "Máx. de jogadores",
     "motd": "Descrição do servidor (MOTD)",
-    "onlineMode": "Modo online",
-    "onlineModeOn": "Só jogadores com uma conta real de Minecraft podem entrar (recomendado).",
-    "onlineModeOff": "Qualquer um pode entrar com qualquer nome – não recomendado.",
     "ram": "RAM",
     "ramValue": "{gb} GB",
     "ramRange": "A RAM deve ficar entre 512 MB e 128 GB.",

@@ -182,7 +182,6 @@ public final class LegacyHosting {
 			IntegratedServer s = server();
 			if (s == null) throw new IllegalStateException("no world");
 			setPublic(s, true);
-			if (offlineTest()) s.setOnlineMode(false);
 			apply(o);
 		}
 

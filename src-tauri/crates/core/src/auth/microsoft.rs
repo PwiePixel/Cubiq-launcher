@@ -14,8 +14,9 @@ use tokio::net::TcpListener;
 use crate::{Error, Result};
 
 /// Anwendungs-ID der Azure-App „Cubiq Launcher“ (öffentlicher Client, kein Secret – die ID ist nicht
-/// geheim). Dieselbe ID nutzen die Anmeldung im Spiel (`MsAuth.CLIENT_ID` im Cubiq Client) und die
-/// Website (`MS_CLIENT_ID`). Für die Minecraft-API muss Microsoft die App freigeben (docs/microsoft-sign-in.md).
+/// geheim). Dieselbe ID nutzt noch die Anmeldung im Spiel (`MsAuth.CLIENT_ID` im Cubiq Client); die Website
+/// meldet sich nicht mehr mit Microsoft an. Mojang hat die App nicht für die Minecraft-API freigegeben
+/// (`login_with_xbox` → 403) – Stand und Plan: docs/microsoft-sign-in.md.
 pub const CUBIQ_APP_ID: &str = "5cc8876f-8fe1-4c27-bc28-9355a79db635";
 
 /// Eigene Azure-App beim Bauen: `CUBIQ_MSA_CLIENT_ID=<ID>`. Leer oder nicht gesetzt (GitHub setzt

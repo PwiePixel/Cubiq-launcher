@@ -39,7 +39,6 @@ const includeConfigs = ref(true)
 const port = ref(25565)
 const motd = ref('')
 const maxPlayers = ref(20)
-const onlineMode = ref(true)
 const ramMb = ref(4096)
 const eula = ref(false)
 const asZip = ref(true)
@@ -127,7 +126,6 @@ async function start() {
     port: Number(port.value),
     motd: motd.value,
     maxPlayers: Number(maxPlayers.value),
-    onlineMode: onlineMode.value,
     ramMb: Number(ramMb.value),
     eulaAccepted: eula.value,
     zip: asZip.value,
@@ -280,13 +278,6 @@ async function start() {
           <div>
             <label class="label" for="se-motd">{{ t('serverExport.motd') }}</label>
             <input id="se-motd" v-model="motd" class="field" maxlength="100" :disabled="!!progress" />
-          </div>
-          <div class="flex items-center justify-between gap-4">
-            <div class="min-w-0">
-              <p class="text-sm text-base-100">{{ t('serverExport.onlineMode') }}</p>
-              <p class="text-xs text-base-400">{{ onlineMode ? t('serverExport.onlineModeOn') : t('serverExport.onlineModeOff') }}</p>
-            </div>
-            <ToggleSwitch v-model="onlineMode" :label="t('serverExport.onlineMode')" :disabled="!!progress" />
           </div>
           <div>
             <label class="label flex justify-between" for="se-ram">

@@ -222,6 +222,19 @@ describe('Messe: Build-Konfiguration', () => {
     expect(desktop.permissions).not.toContain('process:allow-exit')
   })
 
+  it('Spielen nur mit dem angemeldeten Stand-Konto – kein Demo-Modus ohne Konto', () => {
+    // Die Messe-Kennung ändert nur den Datenordner, nie die Anmeldepflicht (siehe Rust-Test
+    // `no_game_starts_without_a_signed_in_account`).
+    const app = fs.readFileSync(path.join(root, 'src-tauri/src/lib.rs'), 'utf8')
+    const core = fs.readFileSync(path.join(root, 'src-tauri/crates/core/src/lib.rs'), 'utf8')
+    expect(app).not.toMatch(/demo/i)
+    expect(core).not.toMatch(/allow_demo_without_account|DEMO_WITHOUT_ACCOUNT|demo_session/)
+    expect(core).toMatch(/fn sign_in_required\(\) -> Error/)
+    const readme = fs.readFileSync(path.join(root, 'scripts/messe/README.txt'), 'utf8')
+    expect(readme).not.toMatch(/kein Konto nötig|sonst Demo-Modus/)
+    expect(readme).toMatch(/Ohne angemeldetes Konto startet\s+das Spiel nicht/)
+  })
+
   it('Präsentation nur im Messe-Build eingebunden und nicht im Git', () => {
     const nuxtConfig = fs.readFileSync(path.join(root, 'nuxt.config.ts'), 'utf8')
     expect(nuxtConfig).toMatch(/publicAssets: messe \?/)

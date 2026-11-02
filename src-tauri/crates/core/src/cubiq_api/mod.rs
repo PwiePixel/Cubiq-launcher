@@ -868,7 +868,7 @@ impl CubiqApi {
         if let Some(token) = self.store.token(account).await {
             return Ok(token);
         }
-        let session = sessions.session(account, false).await?.filter(|s| !s.demo).ok_or_else(no_account)?;
+        let session = sessions.session(account, false).await?.ok_or_else(no_account)?;
 
         let challenge: ApiChallenge = parse(
             &self.send(&Req::post("/v1/auth/challenge", serde_json::json!({})), None).await.map_err(Failure::into_error)?,
@@ -883,7 +883,7 @@ impl CubiqApi {
             Err(JoinError::Rejected) => {
                 // Minecraft-Token abgelaufen/widerrufen: einmal erneuern und neu versuchen.
                 let renewed =
-                    sessions.session(account, true).await?.filter(|s| !s.demo).ok_or_else(no_account)?;
+                    sessions.session(account, true).await?.ok_or_else(no_account)?;
                 match self.mojang_join(&renewed, &challenge.server_id).await {
                     Ok(()) => renewed.player_name.clone(),
                     Err(e) => return Err(e.into_error()),

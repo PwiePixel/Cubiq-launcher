@@ -114,10 +114,6 @@ pub fn run() {
                     log::warn!("game-event konnte nicht gesendet werden: {e}");
                 }
             });
-            // Messe-Build: Besucher spielen ohne Stand-Konto im Demo-Modus des Spiels.
-            if app.config().identifier.ends_with(data_location::MESSE_IDENTIFIER_SUFFIX) {
-                cubiq_core::allow_demo_without_account();
-            }
             let launcher = tauri::async_runtime::block_on(Launcher::init(root, events))?;
             // Android/iOS: kein mitgelieferter Cubiq Client (nur der Update-Kanal, je Instanz ein Jar)
             // und keine Clips.

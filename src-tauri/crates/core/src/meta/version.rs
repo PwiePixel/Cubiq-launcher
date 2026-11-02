@@ -86,7 +86,6 @@ pub struct OsRule {
 /// Feature-Flags, gegen die `rules.features` geprüft wird.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Features {
-    pub demo_user: bool,
     pub custom_resolution: bool,
     /// Direkt auf einen Server verbinden (`--quickPlayMultiplayer`, ab 1.20).
     pub quick_play_multiplayer: bool,
@@ -95,7 +94,8 @@ pub struct Features {
 impl Features {
     fn get(&self, name: &str) -> bool {
         match name {
-            "is_demo_user" => self.demo_user,
+            // Gespielt wird nur mit einem angemeldeten Konto, dem das Spiel gehört – nie im Demo-Modus.
+            "is_demo_user" => false,
             "has_custom_resolution" => self.custom_resolution,
             "is_quick_play_multiplayer" => self.quick_play_multiplayer,
             // Quick-Play & Co. unterstützen wir (noch) nicht.
@@ -502,7 +502,8 @@ mod tests {
         let demo: Vec<Rule> =
             serde_json::from_str(r#"[{"action":"allow","features":{"is_demo_user":true}}]"#).unwrap();
         assert!(!rules_allow(&demo, &Features::default()));
-        assert!(rules_allow(&demo, &Features { demo_user: true, ..Default::default() }));
+        let all = Features { custom_resolution: true, quick_play_multiplayer: true };
+        assert!(!rules_allow(&demo, &all), "kein Demo-Modus, egal welche anderen Features");
     }
 
     #[test]

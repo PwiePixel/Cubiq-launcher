@@ -56,7 +56,8 @@
       "gameVersion": "Game version",
       "loader": "Mod loader"
     },
-    "memoryHigh": "Minecraft rarely needs more than 8–12 GB. Too much RAM makes garbage collection slower and can stop Java from starting when other programs use memory."
+    "memoryHigh": "Minecraft rarely needs more than 8–12 GB. Too much RAM makes garbage collection slower and can stop Java from starting when other programs use memory.",
+    "notOfficial": "Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft."
   },
   "language": {
     "title": "Language",
@@ -153,7 +154,7 @@
     "openFolder": "The folder could not be opened.",
     "instanceNotFound": "Instance “{id}” was not found",
     "unknownVersion": "Minecraft version “{version}” is unknown",
-    "authNotApproved": "Microsoft login is not enabled yet: the app registration is waiting for approval by Mojang.",
+    "authNotApproved": "Microsoft sign-in isn't available in Cubiq Launcher right now: Mojang hasn't approved the app for Minecraft sign-in.",
     "unsupportedOnMobile": "Not available on this device – only in the desktop version.",
     "mobileUpdate": {
       "notChecked": "Please check for updates first.",
@@ -2970,7 +2971,7 @@
       "page": "Page: {url}",
       "requestingCode": "Requesting code …",
       "waiting": "Waiting for Microsoft …",
-      "notApprovedHint": "This isn't a launcher bug: the Microsoft and Xbox sign-in worked, only Mojang's approval of the app is still pending. As soon as it's granted, signing in will work without an update."
+      "notApprovedHint": "Your account is fine: Microsoft and Xbox accepted the sign-in, but Minecraft's servers only accept sign-ins from apps that Mojang has approved, and Cubiq Launcher isn't one of them. We can't say whether or when that will change. Your instances, mods and settings stay as they are."
     },
     "remove": {
       "title": "Sign out account?",
@@ -7233,9 +7234,6 @@
     "port": "Port",
     "maxPlayers": "Max. players",
     "motd": "Server description (MOTD)",
-    "onlineMode": "Online mode",
-    "onlineModeOn": "Only players with a real Minecraft account can join (recommended).",
-    "onlineModeOff": "Anyone can join with any name – not recommended.",
     "ram": "RAM",
     "ramValue": "{gb} GB",
     "ramRange": "RAM must be between 512 MB and 128 GB.",

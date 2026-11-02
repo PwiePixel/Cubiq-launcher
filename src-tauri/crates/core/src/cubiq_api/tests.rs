@@ -52,7 +52,6 @@ impl SessionSource for FakeSessions {
                 uuid: account.into(),
                 access_token: self.access.lock().unwrap().clone(),
                 xuid: "1".into(),
-                demo: false,
             }))
         })
     }

@@ -56,7 +56,8 @@
       "gameVersion": "Spelversie",
       "loader": "Modloader"
     },
-    "memoryHigh": "Minecraft heeft zelden meer dan 8–12 GB nodig. Te veel RAM maakt de garbage collection trager en kan het starten van Java verhinderen als andere programma's geheugen gebruiken."
+    "memoryHigh": "Minecraft heeft zelden meer dan 8–12 GB nodig. Te veel RAM maakt de garbage collection trager en kan het starten van Java verhinderen als andere programma's geheugen gebruiken.",
+    "notOfficial": "Geen officieel Minecraft-product. Niet goedgekeurd door of verbonden met Mojang of Microsoft."
   },
   "language": {
     "title": "Taal",
@@ -153,7 +154,7 @@
     "openFolder": "De map kon niet worden geopend.",
     "instanceNotFound": "Instantie “{id}” is niet gevonden",
     "unknownVersion": "Minecraft-versie “{version}” is onbekend",
-    "authNotApproved": "Inloggen met Microsoft is nog niet ingeschakeld: de app-registratie wacht op goedkeuring door Mojang.",
+    "authNotApproved": "Inloggen met Microsoft is op dit moment niet beschikbaar in Cubiq Launcher: Mojang heeft de app niet goedgekeurd voor inloggen bij Minecraft.",
     "unsupportedOnMobile": "Niet beschikbaar op dit apparaat – alleen in de desktopversie.",
     "mobileUpdate": {
       "notChecked": "Zoek eerst naar updates.",
@@ -2927,7 +2928,7 @@
       "page": "Pagina: {url}",
       "requestingCode": "Code aanvragen …",
       "waiting": "Wachten op Microsoft …",
-      "notApprovedHint": "Dit is geen fout van de launcher: inloggen bij Microsoft en Xbox is gelukt, alleen de goedkeuring van de app door Mojang staat nog open. Zodra die er is, werkt inloggen zonder update."
+      "notApprovedHint": "Met je account is niets mis: Microsoft en Xbox hebben het inloggen geaccepteerd, maar de servers van Minecraft accepteren alleen aanmeldingen van apps die Mojang heeft goedgekeurd, en Cubiq Launcher hoort daar niet bij. We kunnen niet zeggen of en wanneer dat verandert. Je instanties, mods en instellingen blijven zoals ze zijn."
     },
     "remove": {
       "title": "Account uitloggen?",
@@ -7087,9 +7088,6 @@
     "port": "Poort",
     "maxPlayers": "Max. spelers",
     "motd": "Serverbeschrijving (MOTD)",
-    "onlineMode": "Online-modus",
-    "onlineModeOn": "Alleen spelers met een echt Minecraft-account kunnen meedoen (aanbevolen).",
-    "onlineModeOff": "Iedereen kan meedoen met elke naam – niet aanbevolen.",
     "ram": "RAM",
     "ramValue": "{gb} GB",
     "ramRange": "Het RAM moet tussen 512 MB en 128 GB liggen.",

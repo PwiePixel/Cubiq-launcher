@@ -234,10 +234,7 @@ impl Launcher {
                 .session_for(id, false)
                 .await?
                 .ok_or_else(|| Error::launch(crate::msg!("launcher.accountMissing", "Das gewählte Konto gibt es nicht mehr.")))?,
-            None => match self.accounts.active_session().await? {
-                Some(session) => session,
-                None => crate::demo_session()?,
-            },
+            None => self.accounts.active_session().await?.ok_or_else(crate::sign_in_required)?,
         };
         let settings = self.settings().await;
 
@@ -416,7 +413,7 @@ impl Launcher {
 /// Session ohne Token für Tests (nicht öffentlich nutzbar).
 #[cfg(test)]
 fn test_session() -> launch::Session {
-    launch::Session { player_name: "Steve".into(), uuid: "0".repeat(32), access_token: "token".into(), xuid: String::new(), demo: false }
+    launch::Session { player_name: "Steve".into(), uuid: "0".repeat(32), access_token: "token".into(), xuid: String::new() }
 }
 
 #[cfg(test)]
