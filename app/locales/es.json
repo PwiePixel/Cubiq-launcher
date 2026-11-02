@@ -2567,8 +2567,10 @@
       "halloweenFlickerTitle": "Parpadeo y grano",
       "halloweenFlickerDescription": "Grano de película en el fondo y un breve parpadeo con los rayos (solo durante Halloween). El Cubiq Client usa el mismo ajuste. Con las animaciones desactivadas nunca parpadea nada.",
       "startIntroTitle": "Animación de inicio",
-      "startIntroDescription": "Al abrir el launcher aparece brevemente el logotipo de Cubiq. Haz clic o pulsa cualquier tecla para saltarlo.",
-      "startIntroReplay": "Reproducir ahora"
+      "startIntroDescription": "Al abrir el launcher, las piezas del logotipo de Cubiq encajan entre sí. Haz clic o pulsa cualquier tecla para saltar la animación.",
+      "startIntroReplay": "Reproducir ahora",
+      "startIntroSoundTitle": "Sonido de inicio",
+      "startIntroSoundDescription": "Un breve sonido acompaña la animación de inicio, al 30 % del volumen."
     },
     "features": {
       "instancePage": "Página de instancia",

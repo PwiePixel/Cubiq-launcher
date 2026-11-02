@@ -2567,8 +2567,10 @@
       "halloweenFlickerTitle": "Flackern & Rauschen",
       "halloweenFlickerDescription": "Filmkorn-Rauschen im Hintergrund und kurzes Aufflackern bei Blitzen (nur während Halloween). Der Cubiq Client nutzt dieselbe Einstellung. Bei „Animationen aus“ flackert nie etwas.",
       "startIntroTitle": "Start-Animation",
-      "startIntroDescription": "Beim Öffnen des Launchers blendet kurz das Cubiq-Logo ein. Ein Klick oder eine beliebige Taste überspringt es.",
-      "startIntroReplay": "Jetzt abspielen"
+      "startIntroDescription": "Beim Öffnen des Launchers rasten die Teile des Cubiq-Logos zusammen. Ein Klick oder eine beliebige Taste überspringt die Animation.",
+      "startIntroReplay": "Jetzt abspielen",
+      "startIntroSoundTitle": "Start-Ton",
+      "startIntroSoundDescription": "Zur Start-Animation spielt ein kurzer Klang mit 30 % Lautstärke."
     },
     "features": {
       "instancePage": "Instanz-Seite",

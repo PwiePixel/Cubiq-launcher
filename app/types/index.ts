@@ -119,11 +119,14 @@ export interface UiSettings {
   halloweenFlickerHintSeen: boolean
   /** Start-Animation beim Öffnen (ab Werk an; fehlt bei älteren Kernen). */
   startIntro?: boolean
-  /** Ton der Start-Animation (ab Werk an). */
+  /** Start-Ton zur Start-Animation (ab Werk an; fest 30 %, nie am Handy – siehe utils/startSound.ts). */
   startIntroSound?: boolean
-  /** Flackern und Lichtblitze in der Start-Animation (aus = ruhige Fassung). */
-  /** Lautstärke der Start-Animation 0–100 (ab Werk 25). */
+  /**
+   * Ungenutzt (aus dem Kern übernommen, gespeichert als 25). Der Start-Ton spielt fest mit 30 %; ein Regler bekäme
+   * ein neues Feld, sonst wären es bei allen bestehenden Einstellungen 25 %.
+   */
   startIntroVolume?: number
+  /** Flackern und Lichtblitze in der Start-Animation (aus = ruhige Fassung). */
   startIntroFlicker?: boolean
   /** Erst-Hinweis zur Start-Animation („bei jedem Start?“) schon gezeigt. */
   startIntroHintSeen?: boolean

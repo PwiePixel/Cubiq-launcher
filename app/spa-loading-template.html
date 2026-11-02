@@ -1,54 +1,128 @@
 <!-- Ladebildschirm, bis die Oberfläche bereit ist (auch nach einem Update-Neustart).
      Sprachneutral: Hier ist noch keine Übersetzung geladen, also nur Logo und Markenname.
+     Dieselbe Bühne wie die Start-Animation (components/StartIntro.vue): Logo aus vier Teilen (drei Arme + Würfel,
+     Umrisse per clip-path), 128 px, Mitte 30 px über der Fenstermitte, Ladebalken 62 px darunter. Läuft gleich
+     die Start-Animation (Spiegel `cubiq-intro`, gleiche Regel wie shouldPlayIntro), warten die Teile schon in ihrer
+     Startpose (`data-intro="on"`) – das erste Bild der Animation gleicht diesem hier, nichts springt.
+     Sonst: fertiges Logo mit Namen (`off`), bei „Animationen: reduziert“ mit ruhendem Balken (`still`).
      Halloween: der Merker `cubiq-event` steht, wenn das Event beim letzten Lauf aktiv war.
-     Design „Polarlicht“: der Merker `cubiq-design` (utils/design.ts, DESIGN_HINT) – Nachtblau statt Grün. -->
+     Design „Polarlicht“: der Merker `cubiq-design` (utils/design.ts, DESIGN_HINT) – Nachtblau statt Grün.
+     REC-Overlay (/clip-overlay, eigenes Fenster über dem Spiel): kein Ladebildschirm, Hintergrund bleibt durchsichtig. -->
 <script>
-  try {
-    if (localStorage.getItem('cubiq-event') === 'halloween') document.documentElement.dataset.event = 'halloween'
-    if (localStorage.getItem('cubiq-design') === 'winter') document.documentElement.dataset.design = 'winter'
-  } catch (e) {}
+  ;(function () {
+    var html = document.documentElement
+    var store = null
+    try {
+      store = window.localStorage
+      if (store.getItem('cubiq-event') === 'halloween') html.dataset.event = 'halloween'
+      if (store.getItem('cubiq-design') === 'winter') html.dataset.design = 'winter'
+    } catch (e) {}
+    if (location.pathname.indexOf('/clip-overlay') === 0) {
+      html.dataset.overlay = ''
+      return
+    }
+    var prefs = {}
+    try {
+      prefs = JSON.parse(store.getItem('cubiq-intro') || '{}') || {}
+    } catch (e) {}
+    var motion = typeof prefs.motion === 'string' ? prefs.motion : 'full'
+    var systemReduced = false
+    try {
+      systemReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    } catch (e) {}
+    var reduced = motion === 'reduced' || (motion === 'system' && systemReduced)
+    var meta = window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.metadata
+    var label = meta && meta.currentWindow ? meta.currentWindow.label : 'main'
+    var play = prefs.enabled !== false && !reduced && label === 'main' && document.visibilityState !== 'hidden'
+    html.dataset.intro = play ? 'on' : reduced ? 'still' : 'off'
+  })()
 </script>
-<div class="cubiq-splash" role="status" aria-busy="true" aria-label="Cubiq Launcher">
-  <img src="/logo.png" alt="" width="96" height="96" />
-  <div class="cubiq-splash-name">Cubiq <span>Launcher</span></div>
-  <div class="cubiq-splash-bar"><span></span></div>
-</div>
 <style>
-  html, body { margin: 0; height: 100%; background: #070a1d; }
+  html, body { margin: 0; height: 100%; background: #0c100e; }
+  /* Bühne je Aussehen – dieselben Werte wie in StartIntro.vue (Test start-intro). */
   .cubiq-splash {
-    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-    background: radial-gradient(circle at 50% 46%, rgba(113, 163, 48, 0.16) 0%, rgba(113, 163, 48, 0) 38%), #070a1d;
-    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: #f2f4fd;
+    --stage: radial-gradient(circle at 50% calc(50% - 30px), rgba(113, 163, 48, 0.16) 0%, rgba(113, 163, 48, 0) 38%), #0c100e;
+    --ink: #f2f5f3;
+    --ink-accent: #a9d46b;
+    --track: #1d2520;
+    --bar: linear-gradient(90deg, transparent, #71a330, #a9d46b, transparent);
+    position: fixed; inset: 0; overflow: hidden;
+    background: var(--stage);
+    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: var(--ink);
   }
-  .cubiq-splash img { filter: drop-shadow(0 10px 28px rgba(2, 4, 20, 0.6)); }
-  .cubiq-splash-name { font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
-  .cubiq-splash-name span { color: #a9d46b; }
-  .cubiq-splash-bar { position: relative; width: 140px; height: 3px; border-radius: 999px; background: #1a2046; overflow: hidden; }
+  .cubiq-mark { position: absolute; left: 50%; top: calc(50% - 30px); width: 128px; height: 128px; margin: -64px 0 0 -64px; }
+  .cubiq-part { position: absolute; inset: 0; background: url('/logo.png') 0 0 / 100% 100% no-repeat; transform-origin: 45.31% 43.52%; }
+  .cubiq-part[data-part='arm-top'] {
+    --dx: -0.12%;
+    --dy: -13.67%;
+    clip-path: polygon(-10.84% 11.88%, 3.40% -5.45%, 22.71% -16.84%, 44.75% -20.94%, 66.86% -17.23%, 86.37% -6.17%, 100.90% 10.90%, 61.40% 34.08%, 57.19% 29.14%, 51.55% 25.94%, 45.15% 24.86%, 38.77% 26.05%, 33.18% 29.35%, 29.06% 34.36%);
+  }
+  .cubiq-part[data-part='arm-right'] {
+    --dx: 11.90%;
+    --dy: 6.73%;
+    clip-path: polygon(100.90% 10.90%, 108.70% 31.83%, 108.88% 54.15%, 101.44% 75.20%, 87.26% 92.45%, 68.04% 103.83%, 46.10% 107.96%, 45.54% 62.17%, 51.89% 60.97%, 57.45% 57.68%, 61.55% 52.69%, 63.71% 46.59%, 63.66% 40.13%, 61.40% 34.08%);
+  }
+  .cubiq-part[data-part='arm-left'] {
+    --dx: -11.77%;
+    --dy: 6.96%;
+    clip-path: polygon(46.10% 107.96%, 23.99% 104.34%, 4.46% 93.37%, -10.14% 76.37%, -18.03% 55.41%, -18.28% 33.01%, -10.84% 11.88%, 29.06% 34.36%, 26.91% 40.47%, 26.98% 46.96%, 29.27% 53.02%, 33.49% 57.94%, 39.14% 61.12%, 45.54% 62.17%);
+  }
+  .cubiq-part[data-part='cube'] {
+    clip-path: polygon(63.96% 43.52%, 63.33% 48.34%, 61.47% 52.84%, 58.50% 56.70%, 54.64% 59.67%, 50.14% 61.53%, 45.31% 62.17%, 40.48% 61.53%, 35.99% 59.67%, 32.12% 56.70%, 29.16% 52.84%, 27.30% 48.34%, 26.66% 43.52%, 27.30% 38.69%, 29.16% 34.19%, 32.12% 30.33%, 35.99% 27.36%, 40.48% 25.50%, 45.31% 24.86%, 50.14% 25.50%, 54.64% 27.36%, 58.50% 30.33%, 61.47% 34.19%, 63.33% 38.69%);
+  }
+  /* Startpose der Animation: Arme 13,67 % nach außen, halb durchsichtig, etwas kleiner; Würfel klein und matt. */
+  html[data-intro='on'] .cubiq-part { transform: translate(var(--dx), var(--dy)) scale(0.92); opacity: 0.5; }
+  html[data-intro='on'] .cubiq-part[data-part='cube'] { transform: scale(0.8); opacity: 0.55; }
+  .cubiq-splash-name {
+    position: absolute; left: 0; right: 0; top: calc(50% + 48px);
+    font-size: 26px; line-height: 1; font-weight: 650; letter-spacing: -0.02em; text-align: center;
+  }
+  .cubiq-splash-name span { color: var(--ink-accent); }
+  html[data-intro='on'] .cubiq-splash-name { display: none; }
+  .cubiq-splash-bar {
+    position: absolute; left: 50%; top: calc(50% + 96px); width: 140px; height: 3px; margin-left: -70px;
+    border-radius: 999px; background: var(--track); overflow: hidden;
+  }
+  html[data-intro='on'] .cubiq-splash-bar { top: calc(50% + 62px); }
   .cubiq-splash-bar span {
     position: absolute; inset: 0; width: 40%; border-radius: 999px;
-    background: linear-gradient(90deg, transparent, #71a330, #a9d46b, transparent);
+    background: var(--bar);
     animation: cubiq-load 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
   /* Polarlicht: Nachtblau mit einem Schimmer Polarlicht, Schnee auf den oberen Kanten des Logos, Ladebalken aus Eis. */
   html[data-design="winter"]:not([data-event="halloween"]), html[data-design="winter"]:not([data-event="halloween"]) body { background: #070c18; }
   html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash {
-    background:
-      radial-gradient(ellipse 70% 20% at 50% 16%, rgba(113, 163, 48, 0.16) 0%, rgba(42, 168, 148, 0.08) 55%, rgba(42, 168, 148, 0) 100%),
-      radial-gradient(circle at 50% 46%, rgba(127, 211, 255, 0.12) 0%, rgba(127, 211, 255, 0) 38%), #070c18;
-    color: #eef5fc;
+    --stage: radial-gradient(ellipse 70% 22% at 50% 14%, rgba(77, 255, 160, 0.1) 0%, rgba(38, 227, 198, 0.06) 55%, rgba(38, 227, 198, 0) 100%),
+      radial-gradient(circle at 50% calc(50% - 30px), rgba(127, 211, 255, 0.12) 0%, rgba(127, 211, 255, 0) 38%), #070c18;
+    --ink: #eef5fc;
+    --ink-accent: #9fe7ff;
+    --track: #142138;
+    --bar: linear-gradient(90deg, transparent, #2b97d6, #e8fbff, transparent);
   }
-  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash img { filter: drop-shadow(0 -2px 0 rgba(244, 250, 255, 0.95)) drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45)); }
-  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash-name span { color: #9fe7ff; }
-  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash-bar { background: #142138; }
-  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-splash-bar span { background: linear-gradient(90deg, transparent, #2b97d6, #e8fbff, transparent); }
+  html[data-design="winter"]:not([data-event="halloween"]) .cubiq-part { filter: drop-shadow(0 -2px 0 rgba(244, 250, 255, 0.95)); }
   /* Halloween: Nacht und Mondsilber. */
   html[data-event="halloween"], html[data-event="halloween"] body { background: #07060c; }
   html[data-event="halloween"] .cubiq-splash {
-    background: radial-gradient(circle at 50% 46%, rgba(142, 108, 201, 0.2) 0%, rgba(142, 108, 201, 0) 38%), #07060c;
-    color: #ece9f5;
+    --stage: radial-gradient(circle at 50% calc(50% - 30px), rgba(142, 108, 201, 0.2) 0%, rgba(142, 108, 201, 0) 38%), #07060c;
+    --ink: #ece9f5;
+    --ink-accent: #b9a2ea;
+    --track: #1c1828;
+    --bar: linear-gradient(90deg, transparent, #8e6cc9, #cfd5e3, transparent);
   }
-  html[data-event="halloween"] .cubiq-splash-name span { color: #b9a2ea; }
-  html[data-event="halloween"] .cubiq-splash-bar span { background: linear-gradient(90deg, transparent, #8e6cc9, #cfd5e3, transparent); }
   @keyframes cubiq-load { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
-  @media (prefers-reduced-motion: reduce) { .cubiq-splash-bar span { animation: none; width: 100%; } }
+  /* „Animationen: reduziert“ (Einstellung, bei „Wie System“ auch das System): Balken steht. */
+  html[data-intro='still'] .cubiq-splash-bar span { animation: none; width: 100%; }
+  /* REC-Overlay: nichts zeichnen, durchsichtig bleiben (auch bevor die Seite selbst es setzt). */
+  html[data-overlay], html[data-overlay] body { background: transparent !important; }
+  html[data-overlay] .cubiq-splash { display: none; }
 </style>
+<div class="cubiq-splash" role="status" aria-busy="true" aria-label="Cubiq Launcher">
+  <div class="cubiq-mark" aria-hidden="true">
+    <span class="cubiq-part" data-part="arm-top"></span>
+    <span class="cubiq-part" data-part="arm-right"></span>
+    <span class="cubiq-part" data-part="arm-left"></span>
+    <span class="cubiq-part" data-part="cube"></span>
+  </div>
+  <div class="cubiq-splash-name">Cubiq <span>Launcher</span></div>
+  <div class="cubiq-splash-bar"><span></span></div>
+</div>

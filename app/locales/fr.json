@@ -2524,8 +2524,10 @@
         "reduced": "Réduire les animations"
       },
       "startIntroTitle": "Animation de démarrage",
-      "startIntroDescription": "Le logo Cubiq apparaît brièvement à l'ouverture du launcher. Cliquez ou appuyez sur une touche pour le passer.",
-      "startIntroReplay": "Lire maintenant"
+      "startIntroDescription": "À l'ouverture du launcher, les pièces du logo Cubiq s'assemblent. Cliquez ou appuyez sur une touche pour passer l'animation.",
+      "startIntroReplay": "Lire maintenant",
+      "startIntroSoundTitle": "Son de démarrage",
+      "startIntroSoundDescription": "Un court carillon accompagne l'animation de démarrage, à 30 % du volume."
     },
     "features": {
       "instancePage": "Page d'instance",

@@ -2524,8 +2524,10 @@
         "reduced": "Animasyonları azalt"
       },
       "startIntroTitle": "Başlangıç animasyonu",
-      "startIntroDescription": "Başlatıcı açılırken Cubiq logosu kısa bir süre görünür. Atlamak için tıklayın veya herhangi bir tuşa basın.",
-      "startIntroReplay": "Şimdi oynat"
+      "startIntroDescription": "Başlatıcı açılırken Cubiq logosunun parçaları birleşir. Animasyonu atlamak için tıklayın veya herhangi bir tuşa basın.",
+      "startIntroReplay": "Şimdi oynat",
+      "startIntroSoundTitle": "Başlangıç sesi",
+      "startIntroSoundDescription": "Başlangıç animasyonuna %30 ses seviyesinde kısa bir ses eşlik eder."
     },
     "features": {
       "instancePage": "Kurulum sayfası",
