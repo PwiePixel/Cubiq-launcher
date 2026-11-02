@@ -28,13 +28,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>Protokoll 2 (siehe {@link LinkTarget}, {@link LinkCrypto}): {@code hello} mit Zufallswert →
  * {@code challenge} mit Beweis des Launchers (wird geprüft, bevor irgendetwas anderes gesendet wird) →
  * {@code auth} mit Beweis des Spiels. Danach Statuszeilen der Clips, Tastendrücke und Anfragen
- * ({@code req}/{@code res}) für Konten. Protokoll 1 (alte Launcher): {@code hello} mit Token aus clips.json,
- * nur Clips.
+ * ({@code req}/{@code res}) für Clips und Welt-Hosting. Konten oder Minecraft-Tokens gehen nie über die Verbindung.
+ * Protokoll 1 (alte Launcher): {@code hello} mit Token aus clips.json, nur Clips.
  *
  * <p>Das Spiel liest nur {@link #status()}; Zeilen gehen an {@link Listener} (im Netz-Thread).
  */
 public final class CubiqLink {
-	/** Größte Zeile vom Launcher (Kontenliste, versiegeltes Token). */
+	/** Größte Zeile vom Launcher (z. B. Mod-Liste beim Welt-Hosting). */
 	static final int MAX_LINE = 256 * 1024;
 	private static final int CONNECT_TIMEOUT_MS = 2000;
 	/** Warten auf Zeilen in kleinen Schritten, damit Anfragen pünktlich ablaufen. */
@@ -50,8 +50,8 @@ public final class CubiqLink {
 
 	/** Empfänger der Zeilen (Netz-Thread – schnell bleiben, nie blockieren). */
 	public interface Listener {
-		/** Angemeldet; {@code accounts} = der Launcher kann Konten liefern (Protokoll 2). */
-		void onConnected(CubiqLink link, boolean accounts);
+		/** Angemeldet (Statuszeile empfangen). */
+		void onConnected(CubiqLink link);
 
 		/** Eine Zeile nach der Anmeldung (außer Antworten auf Anfragen). */
 		void onLine(CubiqLink link, Line line);
@@ -71,24 +71,18 @@ public final class CubiqLink {
 	public static final class Status {
 		public final boolean connected;
 		public final int protocol;
-		public final boolean accounts;
 		/** Der Launcher kann Clips auf Wunsch des Spiels einschalten ({@code clips.enable}, ab Launcher 0.6.1). */
 		public final boolean clipsEnable;
 		/** Alle Merkmale aus dem {@code challenge} des Launchers (leer bei Protokoll 1). */
 		private final java.util.Set<String> features;
 
-		Status(boolean connected, int protocol, boolean accounts) {
-			this(connected, protocol, accounts, false, null);
+		Status(boolean connected, int protocol) {
+			this(connected, protocol, false, null);
 		}
 
-		Status(boolean connected, int protocol, boolean accounts, boolean clipsEnable) {
-			this(connected, protocol, accounts, clipsEnable, null);
-		}
-
-		Status(boolean connected, int protocol, boolean accounts, boolean clipsEnable, java.util.Collection<String> features) {
+		Status(boolean connected, int protocol, boolean clipsEnable, java.util.Collection<String> features) {
 			this.connected = connected;
 			this.protocol = protocol;
-			this.accounts = accounts;
 			this.clipsEnable = clipsEnable;
 			this.features = features == null ? Collections.<String>emptySet()
 					: Collections.unmodifiableSet(new java.util.HashSet<String>(features));
@@ -130,7 +124,7 @@ public final class CubiqLink {
 	/** Merkmal des Launchers: Mod-Dialog einer gehosteten Welt im Launcher öffnen ({@code hosting.open {roomId}}). */
 	public static final String FEATURE_HOSTING_OPEN = "hosting.open";
 
-	static final Status OFFLINE = new Status(false, 0, false);
+	static final Status OFFLINE = new Status(false, 0);
 
 	/** DTO einer Zeile vom Launcher (Gson 2.2.4-tauglich: nur Felder, geboxte Typen). */
 	public static final class Line {
@@ -159,9 +153,6 @@ public final class CubiqLink {
 		public Long id;
 		public Boolean ok;
 		public String error;
-		public List<AccountDto> accounts;
-		public AccountDto account;
-		public SessionDto session;
 		/** Antwort auf {@code clips.preview}. */
 		public PreviewDto preview;
 		/** Push {@code hostingJoin} / Antwort auf {@code hosting.join}: gehostete Welt beitreten (oder null). */
@@ -206,20 +197,6 @@ public final class CubiqLink {
 		public Long durationMs;
 	}
 
-	public static final class AccountDto {
-		public String id;
-		public String name;
-		public String skinUrl;
-		public Boolean active;
-	}
-
-	public static final class SessionDto {
-		public String id;
-		public String name;
-		public String xuid;
-		public String token;
-	}
-
 	private final Path configDir;
 	private final LinkTarget env;
 	private final Object wake = new Object();
@@ -229,7 +206,6 @@ public final class CubiqLink {
 	private volatile Status status = OFFLINE;
 	private volatile OutputStream out;
 	private volatile Socket socket;
-	private volatile byte[] sealKey;
 	private volatile boolean running;
 	private volatile LinkTarget lastTarget = LinkTarget.MISSING;
 	private Thread thread;
@@ -256,7 +232,7 @@ public final class CubiqLink {
 
 	private static volatile CubiqLink shared;
 
-	/** Die gemeinsame Verbindung des Spiels (Clips + Konten); beim Start einmal anlegen. */
+	/** Die gemeinsame Verbindung des Spiels (Clips, Welt-Hosting, Leistung); beim Start einmal anlegen. */
 	public static synchronized CubiqLink initShared(Path configDir) {
 		if (shared == null) {
 			String value = null;
@@ -281,14 +257,14 @@ public final class CubiqLink {
 		shared = link;
 	}
 
-	/** Hat der Launcher dieses Spiel mit Protokoll 2 gestartet (Konten möglich)? */
+	/** Hat der Launcher dieses Spiel mit Protokoll 2 gestartet (Schlüssel in der Umgebung)? */
 	public boolean launchedByLauncher() {
 		return env != null;
 	}
 
 	public void addListener(Listener listener) {
 		listeners.add(listener);
-		if (status.connected) listener.onConnected(this, status.accounts);
+		if (status.connected) listener.onConnected(this);
 	}
 
 	public void removeListener(Listener listener) {
@@ -362,12 +338,6 @@ public final class CubiqLink {
 			Pending p = pending.remove(id);
 			if (p != null) p.callback.failed("offline");
 		}
-	}
-
-	/** Entsiegelt ein Token dieser Verbindung (null = ungültig oder keine Protokoll-2-Verbindung). */
-	public byte[] unseal(String sealed) {
-		byte[] key = sealKey;
-		return key == null ? null : LinkCrypto.unseal(key, sealed);
 	}
 
 	private boolean write(OutputStream o, String line) {
@@ -471,7 +441,7 @@ public final class CubiqLink {
 		} else if (!before.connected && next.connected) {
 			for (Listener l : listeners) {
 				try {
-					l.onConnected(this, next.accounts);
+					l.onConnected(this);
 				} catch (RuntimeException ignored) {
 					// dito
 				}
@@ -512,7 +482,6 @@ public final class CubiqLink {
 	private Result session(LinkTarget target) {
 		Socket s = new Socket();
 		boolean greeted = false;
-		sealKey = null;
 		partial.reset();
 		try {
 			s.setTcpNoDelay(true);
@@ -526,7 +495,6 @@ public final class CubiqLink {
 			OutputStream o = s.getOutputStream();
 			InputStream in = new java.io.BufferedInputStream(s.getInputStream());
 			Gson gson = new Gson();
-			boolean accounts = false;
 			boolean clipsEnable = false;
 			List<String> features = null;
 			String gameNonce = null;
@@ -549,8 +517,6 @@ public final class CubiqLink {
 				if (!write(o, "{\"type\":\"auth\",\"proof\":\"" + proof + "\",\"features\":" + gameFeaturesJson() + "}")) {
 					return Result.FAILED;
 				}
-				sealKey = LinkCrypto.sealKey(target.key, gameNonce, challenge.nonce);
-				accounts = challenge.features != null && challenge.features.contains("accounts");
 				clipsEnable = challenge.features != null && challenge.features.contains(FEATURE_CLIPS_ENABLE);
 				features = challenge.features;
 			} else {
@@ -582,7 +548,7 @@ public final class CubiqLink {
 					if (!"state".equals(line.type)) continue;
 					greeted = true;
 					out = o;
-					setStatus(new Status(true, target.kind == LinkTarget.Kind.V2 ? 2 : 1, accounts, clipsEnable, features));
+					setStatus(new Status(true, target.kind == LinkTarget.Kind.V2 ? 2 : 1, clipsEnable, features));
 				}
 				if ("res".equals(line.type)) {
 					Pending p = line.id == null ? null : pending.remove(line.id);
@@ -609,7 +575,6 @@ public final class CubiqLink {
 			return greeted ? Result.OK : Result.FAILED;
 		} finally {
 			out = null;
-			sealKey = null;
 			if (socket == s) socket = null;
 			try {
 				s.close();
@@ -651,7 +616,7 @@ public final class CubiqLink {
 	}
 
 	private static final List<String> ERRORS = Collections.unmodifiableList(java.util.Arrays.asList(
-			"rate_limited", "unknown_account", "not_allowed", "busy", "cancelled", "auth_failed", "offline",
+			"rate_limited", "not_allowed", "busy", "cancelled", "auth_failed", "offline",
 			"unknown_op", "timeout", "unsupported", "unknown_clip", "no_ffmpeg", "error"));
 
 	/** Nur bekannte Fehlercodes durchlassen. */

@@ -339,7 +339,7 @@ public final class ClipLink implements CubiqLink.Listener {
 	}
 
 	@Override
-	public void onConnected(CubiqLink l, boolean accounts) {
+	public void onConnected(CubiqLink l) {
 		// Neue Verbindung: den Wunsch zur Puffer-Anzeige gleich (wieder) melden.
 		hudSent = null;
 		hudSentAt = 0;
