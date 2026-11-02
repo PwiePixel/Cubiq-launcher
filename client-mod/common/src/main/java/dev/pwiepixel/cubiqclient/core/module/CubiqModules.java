@@ -631,7 +631,7 @@ public final class CubiqModules {
 				"Color grading of the game image: saturation, contrast, brightness, vibrance and color temperature. "
 						+ "The HUD and menus stay untouched.", false));
 		emotes = registry.register(new Module("emotes", "Emotes",
-				"Hold G for the emote wheel, point with the mouse and release to play the emote. Other Cubiq players "
+				"Hold R for the emote wheel, point with the mouse and release to play the emote. Other Cubiq players "
 						+ "see it too. Uses the Cubiq Online Features; only unlocked emotes can be played.",
 				true));
 		redstoneSignal = registry.register(new HudModule("redstoneSignal", "Signal Strength",

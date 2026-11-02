@@ -14,9 +14,9 @@ import net.minecraft.world.item.Items;
 
 /**
  * Cubiq-Flügel im Spiel (Slot {@code wings}, Format 2, {@code attach: "body"}): am Körper-Teil des bereits posierten
- * Spielermodells (folgt Körper-Drehung, Schleich-Neigung, Schwimmen), Zustand idle/air/sneak mit Überblendung, unsichtbar
- * mit Elytra. Gezeichnet wird mit demselben v2-Weg wie die Kopf-Kosmetik ({@link HatHooks#drawV2}). Aufgerufen aus
- * {@code WingsLayerMixin} (am Umhang-Layer, der für jeden Spieler läuft).
+ * Spielermodells (folgt Körper-Drehung, Schleich-Neigung, Schwimmen), Zustand aus der Bewegung mit Überblendung,
+ * unsichtbar mit Elytra. Gezeichnet wird mit demselben v2-Weg wie die Kopf-Kosmetik ({@link HatHooks#drawV2}).
+ * Aufgerufen aus {@code WingsLayerMixin} (am Umhang-Layer, der für jeden Spieler läuft).
  */
 public final class WingsHooks {
 	private WingsHooks() {
@@ -30,10 +30,13 @@ public final class WingsHooks {
 	}
 
 	/**
-	 * Zustand des Spielers für Zustands-Animationen ({@code WingState} IDLE/AIR/SNEAK) – Flügel, aber auch Kopf-Kosmetik
-	 * und Begleiter am Kopf (z. B. Weihnachtsmütze im Sprung).
+	 * Zustand des Spielers für Zustands-Animationen ({@code WingState#classify}: idle/walk/jump/air/sneak) – Flügel, aber
+	 * auch Kopf-Kosmetik und Begleiter am Kopf (z. B. Mützen beim Laufen und im Sprung). Geschwindigkeit wie in
+	 * {@link HatHooks#wearer}: Weg seit dem letzten Tick.
 	 */
 	static int state(AbstractClientPlayer p) {
+		double dx = p.getX() - p.xo;
+		double dz = p.getZ() - p.zo;
 		//? if >=1.17 {
 		/*boolean flying = p.getAbilities().flying || p.isFallFlying();
 		*///?} else
@@ -48,7 +51,8 @@ public final class WingsHooks {
 		boolean climbing = p.onClimbable();
 		//?} else
 		/*boolean climbing = p.onLadder();*/
-		return WingState.classify(ground, p.isCrouching(), flying, p.isPassenger(), p.isInWater() || p.isInLava(), climbing);
+		return WingState.classify(ground, p.isCrouching(), flying, p.isPassenger(), p.isInWater() || p.isInLava(), climbing,
+				(float) Math.sqrt(dx * dx + dz * dz), (float) (p.getY() - p.yo));
 	}
 
 	//? if >=1.21.9 {

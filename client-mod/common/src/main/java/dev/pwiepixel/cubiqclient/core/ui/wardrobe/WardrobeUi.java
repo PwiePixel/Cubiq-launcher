@@ -783,6 +783,7 @@ public final class WardrobeUi extends UiScreen {
 					|| isNew(NewSince.WARDROBE_PET))) {
 				NewBadge.dot(c, x + w - 7, cy + 2);
 			}
+			if (cat == Category.EMOTES && isNew(NewSince.WARDROBE_WINTER_EMOTES)) NewBadge.dot(c, x + w - 7, cy + 2);
 			hits.add(x, cy, w, rowH, () -> {
 				host.playClick();
 				category = cat;
@@ -1130,6 +1131,8 @@ public final class WardrobeUi extends UiScreen {
 	}
 
 	private int emotes(Canvas c, WardrobeService.State s, int x, int y, int w, int mx, int my) {
+		// Reiter offen: die neuen Winter-Emotes sind gesehen (NEU-Punkt am Reiter und im Startbildschirm weg).
+		seen(NewSince.WARDROBE_WINTER_EMOTES);
 		int start = y;
 		Theme t = Theme.get();
 		y = section(c, I18n.tr("wardrobe.emotes.wheel"), x, y, w);

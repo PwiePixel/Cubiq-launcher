@@ -9,8 +9,14 @@
 // (Flügel, Eis durchsichtig mit Leuchten + Höfen) und test_penguin (slot pet, attach ground, idle/walk/slide/swim/air).
 //
 // Nur für eine lokale Sichtprüfung: WINTER_REAL_DIR=<Ordner mit <id>.json/.png/-glow.png> (außerhalb des Repos) bietet
-// stattdessen santa_hat, snow_cloud, snow_wings, ice_wings, penguin aus diesem Ordner an – zur Laufzeit gelesen, nie
-// kopiert. WINTER_PET_COUNT (1–4, Standard 1) = Anzahl der Pinguine im Lookup.
+// stattdessen santa_hat, snow_cloud, snow_wings, ice_wings, penguin und die Teile des Winter-Updates 2026
+// (christmas_hat, earmuffs, snowflake, snow_fox) aus diesem Ordner an – was dort fehlt, wird übersprungen; zur Laufzeit
+// gelesen, nie kopiert. Mit dem Ordner api/assets/cosmetics/v2 der Website und -PcubiqSys.cubiqclient.autotest.petsHat=
+// christmas_hat zeigt der Selbsttest die Zipfelmütze beim Laufen und im Sprung. WINTER_PET_COUNT (1–4, Standard 1) =
+// Anzahl der Pinguine im Lookup.
+//
+// Emotes: alle 21 Emotes der API sind freigeschaltet (GET /v1/me/cosmetics, GET /v1/emotes), POST /v1/emotes/play
+// antwortet mit der Dauer (höchstens eines alle 2 s, sonst 429 mit Retry-After) – für Bilder vom Emote-Rad.
 //
 // Gefolge (Creator-Begleiter, Vertrag pixelcst-penguins): WINTER_PET_EXTRAS=1 gibt dem Pinguin im Lookup und in
 // /v1/me/cosmetics `extras` mit vier weiteren Pinguinen (Kaiserpinguin mit `petScale: 1.25`, Mütze, Sonnenbrille und
@@ -360,7 +366,10 @@ const EXTRAS = REAL
 	? [['penguin_emperor', 1.25], ['penguin_beanie', 1], ['penguin_shades', 1], ['penguin_heist', 1]]
 	: [['test_penguin_emperor', 1.25], ['test_penguin_beanie', 1], ['test_penguin_shades', 1], ['test_penguin_heist', 1]];
 if (REAL) {
-	for (const id of ['santa_hat', 'snow_cloud', 'snow_wings', 'ice_wings', 'penguin']) addReal(id);
+	for (const id of ['santa_hat', 'snow_cloud', 'snow_wings', 'ice_wings', 'penguin', 'christmas_hat', 'earmuffs', 'snowflake', 'snow_fox']) {
+		if (fs.existsSync(path.join(REAL, `${id}.json`))) addReal(id);
+		else say(`${id} fehlt in ${REAL} – übersprungen`);
+	}
 	for (const [id] of EXTRAS) if (fs.existsSync(path.join(REAL, `${id}.json`))) addReal(id, true);
 	say(`Echte Exporte aus ${REAL} (nur zur Laufzeit gelesen)`);
 } else {
@@ -374,6 +383,17 @@ if (REAL) {
 	addSynthetic(penguin('test_penguin_shades', 'Test-Pinguin mit Sonnenbrille', 'shades'), null, penguinPal('shades'), true);
 	addSynthetic(penguin('test_penguin_heist', 'Test-Schwarzes-Schaf', 'heist'), null, penguinPal('heist'), true);
 }
+
+// ---------- Emotes (wie api/server/lib/emotes.ts: IDs, Reihenfolge, Dauer, Schleife) ----------
+const EMOTES = [
+	['winken', 2000, false], ['klatschen', 2500, false], ['jubeln', 2500, false], ['verbeugen', 2000, false],
+	['facepalm', 2000, false], ['schulterzucken', 1500, false], ['daumen_hoch', 1500, false], ['tanzen', 6000, true],
+	['salutieren', 2000, false], ['luftgitarre', 5000, true], ['redstone_tanz', 6000, true], ['party', 6000, true],
+	['count_bow', 2500, false], ['ghost_float', 4000, true], ['zombie_walk', 5000, true], ['moon_howl', 3000, false],
+	['snowball_throw', 2400, false], ['shiver', 4800, true], ['warm_hands', 5000, true], ['happy_jump', 2000, false],
+	['mitten_wave', 2500, false],
+].map(([id, durationMs, loop]) => ({ id, durationMs, loop }));
+let lastEmoteAt = 0;
 
 // ---------- Zustand ----------
 const SLOTS = ['hat', 'companion', 'wings', 'pet'];
@@ -411,7 +431,7 @@ function view(slot) {
 function mine() {
 	const eq = {};
 	for (const s of SLOTS) eq[s] = view(s);
-	return { equipped: eq, emotes: [] };
+	return { equipped: eq, emotes: EMOTES.map((e) => e.id) };
 }
 function catalog() {
 	return {
@@ -546,7 +566,21 @@ const server = http.createServer(async (req, res) => {
 		if (m === 'GET' && p === '/v1/friends') return send(res, 200, { friends: [], requests: { incoming: [], outgoing: [] }, capeOffers: 0 });
 		if (m === 'GET' && p === '/v1/blocks') return send(res, 200, { blocked: [] });
 		if (m === 'GET' && p === '/v1/cape-offers') return send(res, 200, { incoming: [], outgoing: [] });
-		if (m === 'GET' && p === '/v1/emotes') return send(res, 200, { emotes: [] });
+		if (m === 'GET' && p === '/v1/emotes') return send(res, 200, { emotes: EMOTES.map((e) => ({ ...e, unlocked: true })) });
+		if (m === 'POST' && p === '/v1/emotes/play') {
+			if (!user) return fail(res, 401, 'unauthorized');
+			const b = JSON.parse((await readBody(req)) || '{}');
+			const e = EMOTES.find((x) => x.id === b.emote);
+			if (!e) return fail(res, 404, 'emote_not_found');
+			const wait = lastEmoteAt + 2000 - Date.now();
+			if (wait > 0) {
+				res.setHeader('Retry-After', String(Math.ceil(wait / 1000)));
+				return fail(res, 429, 'rate_limited');
+			}
+			lastEmoteAt = Date.now();
+			say(`Emote ${e.id} (${e.durationMs} ms)`);
+			return send(res, 200, { emote: e.id, durationMs: e.durationMs });
+		}
 		if (m === 'GET' && p === '/v1/capes') return send(res, 200, { capes: [] });
 		if (m === 'GET' && p === '/v1/chat/unread') return send(res, 200, { total: 0, conversations: [] });
 		if (m === 'GET' && p === '/v1/chat/conversations') return send(res, 200, { conversations: [], nextCursor: null });

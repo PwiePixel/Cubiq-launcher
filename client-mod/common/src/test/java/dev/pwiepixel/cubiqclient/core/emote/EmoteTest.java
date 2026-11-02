@@ -34,7 +34,9 @@ class EmoteTest {
 				{"daumen_hoch", "1500", "false"}, {"tanzen", "6000", "true"}, {"salutieren", "2000", "false"},
 				{"luftgitarre", "5000", "true"}, {"redstone_tanz", "6000", "true"}, {"party", "6000", "true"},
 				{"count_bow", "2500", "false"}, {"ghost_float", "4000", "true"}, {"zombie_walk", "5000", "true"},
-				{"moon_howl", "3000", "false"}};
+				{"moon_howl", "3000", "false"},
+				{"snowball_throw", "2400", "false"}, {"shiver", "4800", "true"}, {"warm_hands", "5000", "true"},
+				{"happy_jump", "2000", "false"}, {"mitten_wave", "2500", "false"}};
 		assertEquals(api.length, Emotes.ALL.size());
 		for (int i = 0; i < api.length; i++) {
 			EmoteDef d = Emotes.ALL.get(i);
@@ -381,12 +383,17 @@ class EmoteTest {
 	@Test
 	void wheelRadiusFitsAndDoesNotOverlap() {
 		int[][] screens = {{427, 240}, {854, 480}, {320, 240}, {1920, 1080}};
-		for (int[] s : screens) {
-			int slot = Math.min(s[0], s[1]) >= 300 ? 28 : 22;
-			int r = WheelMath.radius(s[0], s[1], 11, slot);
-			assertTrue(r + slot / 2 + 12 <= Math.min(s[0], s[1]) / 2 + 1, Arrays.toString(s) + " passt: r=" + r);
-			double chord = 2 * r * Math.sin(Math.PI / 11);
-			if (Math.min(s[0], s[1]) >= 240) assertTrue(chord >= slot, Arrays.toString(s) + " keine Überlappung: r=" + r);
+		// 11 Plätze und das Rad ohne Belegung: alle Emotes (seit Winter 2026: 21)
+		for (int n : new int[] {11, Emotes.ALL.size()}) {
+			for (int[] s : screens) {
+				int slot = Math.min(s[0], s[1]) >= 300 ? 28 : 22;
+				int r = WheelMath.radius(s[0], s[1], n, slot);
+				assertTrue(r + slot / 2 + 12 <= Math.min(s[0], s[1]) / 2 + 1, Arrays.toString(s) + " passt (" + n + "): r=" + r);
+				double chord = 2 * r * Math.sin(Math.PI / n);
+				if (Math.min(s[0], s[1]) >= 240) {
+					assertTrue(chord >= slot, Arrays.toString(s) + " keine Überlappung (" + n + "): r=" + r);
+				}
+			}
 		}
 	}
 }

@@ -144,7 +144,8 @@ public final class WardrobeTest {
 			case 9:
 				AutoTest.shot(mc, "cubiqclient-wardrobe-capes");
 				ui.category("emotes");
-				ui.selectEmote("winken");
+				// Gewähltes Emote der Vorschau: -PcubiqSys.cubiqclient.autotest.emote=<id> (z. B. snowball_throw)
+				ui.selectEmote(System.getProperty("cubiqclient.autotest.emote", "winken"));
 				phase++;
 				wait = 25;
 				return;

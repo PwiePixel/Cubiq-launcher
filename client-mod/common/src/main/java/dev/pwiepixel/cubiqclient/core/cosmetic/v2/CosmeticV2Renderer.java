@@ -81,8 +81,9 @@ public final class CosmeticV2Renderer {
 
 	/**
 	 * Wie {@link #pose(CosmeticV2, long, boolean, boolean)} mit Zustands-Animation: Animationen des Treibers
-	 * {@code driver} (fehlt er im Modell: {@code idle}), überblendet aus {@code prevDriver} ({@code blend} 0..1, siehe
-	 * {@link WingState}). Hüte nutzen nur {@code idle} (0, 0, 1).
+	 * {@code driver} (fehlt er im Modell: {@code idle}), überblendet aus {@code prevDriver} ({@code blend} 0..1). Hüte,
+	 * Begleiter am Kopf und Flügel bekommen ihren Zustand aus der Bewegung (idle/walk/jump/air/sneak, siehe
+	 * {@link WingState}); ohne Zustand {@code idle} (0, 0, 1).
 	 */
 	public void pose(CosmeticV2 m, long timeMs, boolean animate, boolean helmet, int driver, int prevDriver, float blend) {
 		pose(m, timeMs, animate, helmet, driver, prevDriver, blend, 0L);

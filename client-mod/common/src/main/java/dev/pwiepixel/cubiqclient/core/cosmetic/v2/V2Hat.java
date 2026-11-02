@@ -33,8 +33,10 @@ public final class V2Hat<T> {
 	public final boolean helmet;
 
 	/**
-	 * Zustands-Animation (Flügel): Treiber des aktuellen Zustands, des vorigen und die Überblendung dazwischen (0 = nur
-	 * {@link #prevDriver}, 1 = nur {@link #driver}). Hüte: immer {@code idle} (0, 0, 1).
+	 * Zustands-Animation: Treiber des aktuellen Zustands, des vorigen und die Überblendung dazwischen (0 = nur
+	 * {@link #prevDriver}, 1 = nur {@link #driver}). Hut, Begleiter am Kopf und Flügel: Zustand aus der Bewegung
+	 * (idle/walk/jump/air/sneak, siehe {@link WingState}); Begleiter am Boden: siehe {@link #forPet}. Ohne Zustand
+	 * {@code idle} (0, 0, 1).
 	 */
 	public final int driver;
 	public final int prevDriver;
@@ -113,7 +115,7 @@ public final class V2Hat<T> {
 		return t == null ? glow : t;
 	}
 
-	/** Gleiches Teil mit einer Zustands-Animation (Flügel: idle/air/sneak, siehe {@link WingState}). */
+	/** Gleiches Teil mit einer Zustands-Animation (Hut, Begleiter am Kopf, Flügel: siehe {@link WingState}). */
 	public V2Hat<T> withState(int driver, int prevDriver, float blend) {
 		return new V2Hat<T>(model, base, glow, halo, now, poseMs, prevPoseMs, helmet, lod, driver, prevDriver, blend, hiddenBones,
 				pet);
