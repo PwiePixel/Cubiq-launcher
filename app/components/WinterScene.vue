@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { copyPixels, WINTER_MAX_COLS, WINTER_MAX_ROWS, winterTexel } from '~/utils/winter/canvas'
-import { auroraLevel, buildWinterLayout, WINTER_SEED } from '~/utils/winter/layout'
+import { auroraLevel, buildWinterLayout, islandHalf, WINTER_SEED } from '~/utils/winter/layout'
 import { WinterPainter } from '~/utils/winter/painter'
 import { buildWinterPalette, documentVariant } from '~/utils/winter/palette'
 
@@ -8,7 +8,8 @@ import { buildWinterPalette, documentVariant } from '~/utils/winter/palette'
 // ein Wolkenmeer in Pixel-Art – gemalt nach denselben Regeln wie im Cubiq Client (utils/winter). Ein Texel sind gut
 // 3 Bildschirmpixel (höchstens 640 × 400 Texel); das Canvas hat Texel-Auflösung, CSS skaliert es pixelig. Der Schnee
 // fällt als drei weiche CSS-Ebenen darüber (flüssig und auf der Grafikkarte statt im Pixel-Takt).
-// Auf der Startseite sitzt der Schein am Spielen-Knopf (`anchor`), die große Insel schwebt rechts neben dem Titel;
+// Auf der Startseite sitzt der Schein am Spielen-Knopf (`anchor`), die große Insel schwebt rechts neben dem Titel
+// (`clear`) – ist dort kein Platz (schmales Fenster, langer Name), bleibt sie weg;
 // beim Spielstart wird das Polarlicht mit dem Fortschritt kräftiger, läuft das Spiel, leuchtet es voll. Hinter Seiten
 // (`sky`) bleibt nur der ruhige Himmel. Neue Bilder entstehen im Takt von 80 ms (Seiten-Hintergründe jeden zweiten
 // Takt) und nur, solange die Szene zu sehen ist; „Animationen reduzieren“ oder `still` zeigen ein Standbild.
@@ -19,6 +20,8 @@ const props = withDefaults(
     progress?: number
     /** Element, an dem der Schein sitzt (der Spielen-Knopf). */
     anchor?: HTMLElement | null
+    /** Text, neben dem die große Insel Platz lässt (der Titel) – sie schwebt im freien Raum rechts davon. */
+    clear?: HTMLElement | null
     /** Ganze Fläche füllen (Seiten-Hintergrund) statt eines Kopfbereichs. */
     fill?: boolean
     /** Nur Himmel mit Sternen und Polarlicht – ohne Inseln und Wolkenmeer (ruhig hinter Seiten). */
@@ -27,7 +30,7 @@ const props = withDefaults(
     /** Standbild (Einstellung „Animierter Hintergrund“ aus). */
     still?: boolean
   }>(),
-  { mode: 'idle', progress: 0, anchor: null, fill: false, sky: false, seed: WINTER_SEED, still: false },
+  { mode: 'idle', progress: 0, anchor: null, clear: null, fill: false, sky: false, seed: WINTER_SEED, still: false },
 )
 
 const host = useTemplateRef<HTMLDivElement>('host')
@@ -47,6 +50,21 @@ const TICK_MS = 80
 const REST = { tick: 40, seconds: 21 }
 /** Große Insel auf der Startseite: rechts neben Titel und Knöpfen (Anteil der Breite). */
 const HERO_X = 0.8
+
+/**
+ * Wo die große Insel neben dem Titel schweben kann: Mitte des freien Raums rechts vom Text (Anteil der Breite) oder
+ * `null`, wenn sie dort nicht hinpasst. Gemessen wird der Text selbst (der Titel ist ein Block über die ganze Breite).
+ */
+function heroBeside(text: HTMLElement, rect: DOMRect, texel: number, cols: number, rows: number): number | null {
+  const range = document.createRange()
+  range.selectNodeContents(text)
+  const box = text.getBoundingClientRect()
+  const right = Math.min(range.getBoundingClientRect().right, box.right)
+  // Platz ab dem Textende (mit Abstand); die Insel ist höchstens 7 Würfel = 14 halbe Würfel breit.
+  const from = Math.ceil((right - rect.left) / texel) + 4
+  const need = 14 * islandHalf(cols, rows) + 4
+  return cols - from >= need ? (from + (cols - from) / 2) / cols : null
+}
 
 interface Stage {
   key: string
@@ -112,10 +130,14 @@ function rebuild() {
       y: Math.min(100, Math.max(0, ((a.top + a.height / 2 - rect.top) / rect.height) * 100)),
     }
   }
+  // Große Insel: ohne Anker wie im Spiel; mit Anker rechts neben dem Titel – oder gar nicht, wenn dort kein Platz ist.
+  const beside = anchored && props.clear ? heroBeside(props.clear, rect, texel, cols, rows) : undefined
+  const heroX = beside ?? (anchored ? HERO_X : undefined)
+  const hero = beside !== null
   const variant = documentVariant()
-  const key = [cols, rows, anchored, props.seed, variant, props.fill, props.sky].join(':')
+  const key = [cols, rows, heroX === undefined ? '' : heroX.toFixed(3), hero, props.seed, variant, props.fill, props.sky].join(':')
   if (stage?.key !== key) {
-    const layout = buildWinterLayout({ cols, rows, seed: props.seed, heroX: anchored ? HERO_X : undefined, sky: props.sky })
+    const layout = buildWinterLayout({ cols, rows, seed: props.seed, heroX, hero, sky: props.sky })
     c.width = layout.w
     c.height = layout.h
     stage = {
@@ -180,6 +202,20 @@ watch(
     soon()
   },
 )
+// Neuer Titel (andere Instanz auf der Bühne) → Platz neben dem Text neu messen.
+let textObserver: MutationObserver | undefined
+watch(
+  () => props.clear,
+  (text) => {
+    textObserver?.disconnect()
+    if (text && typeof MutationObserver !== 'undefined') {
+      textObserver = new MutationObserver(soon)
+      textObserver.observe(text, { childList: true, characterData: true, subtree: true })
+    }
+    soon()
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   startedAt = performance.now()
@@ -197,6 +233,8 @@ onMounted(() => {
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
   document.addEventListener('visibilitychange', onVisibility)
   canvas.value?.addEventListener('contextrestored', onVisibility)
+  // Die Schrift des Titels lädt evtl. später – danach den Platz neben dem Text neu messen.
+  void document.fonts?.ready.then(() => soon())
   rebuild()
 })
 
@@ -208,6 +246,7 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   viewObserver?.disconnect()
   themeObserver?.disconnect()
+  textObserver?.disconnect()
   document.removeEventListener('visibilitychange', onVisibility)
   canvas.value?.removeEventListener('contextrestored', onVisibility)
 })

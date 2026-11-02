@@ -68,6 +68,9 @@ const design = useDesign()
 const stageArt = computed(
   () => !!featured.value && (design.value !== 'winter' || events.lookHalloween || instanceBannerSrc(featured.value) !== null),
 )
+// Titel der Bühne: die große Insel der Polarlicht-Szene schwebt rechts daneben (bzw. bleibt weg, wenn kein Platz ist).
+const stageInfo = ref<HTMLElement | null>(null)
+const stageTitle = computed(() => stageInfo.value?.querySelector<HTMLElement>('.stage-title') ?? null)
 
 const sceneMode = computed(() =>
   game.value?.phase === 'running' ? 'running' : game.value?.phase === 'preparing' ? 'starting' : 'idle',
@@ -137,7 +140,7 @@ function play(instance: Instance) {
         <HalloweenEventCard v-if="events.halloween" class="hw-card" />
 
         <div class="stage-top relative">
-          <DesignScene :mode="sceneMode" :progress="sceneProgress" :anchor="lamp">
+          <DesignScene :mode="sceneMode" :progress="sceneProgress" :anchor="lamp" :clear="stageTitle">
             <div v-if="featured && stageArt" class="stage-art">
               <InstanceBanner :instance="featured" shade="none" class="size-full" />
             </div>
@@ -155,7 +158,7 @@ function play(instance: Instance) {
                 <NuxtLink :to="`/instances/${featured.id}`" class="icon-frame squircle shrink-0 outline-none" tabindex="-1" aria-hidden="true">
                   <InstanceIcon :instance="featured" :size="mobile ? 64 : 104" />
                 </NuxtLink>
-                <div class="min-w-0 flex-1 pb-1 mobile:pb-0">
+                <div ref="stageInfo" class="min-w-0 flex-1 pb-1 mobile:pb-0">
                   <p class="eyebrow flex items-center gap-2 text-primary-300">
                     <span class="diamond" />
                     <span class="truncate">{{ t('instance.lastPlayed') }} · {{ formatRelative(featured.lastPlayed) }}</span>

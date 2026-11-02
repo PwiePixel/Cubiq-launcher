@@ -101,6 +101,11 @@ export interface WinterLayoutOptions {
    * aber keine Inseln und kein Wolkenmeer. Nur im Launcher – der Cubiq Client kennt das nicht.
    */
   sky?: boolean
+  /**
+   * Große Insel zeigen (Standard). Ohne `hero` bleibt sie weg, etwa wenn neben dem Titel kein Platz ist – die
+   * Zufallsfolge läuft gleich weiter, die übrige Szene bleibt dieselbe. Nur im Launcher.
+   */
+  hero?: boolean
 }
 
 /** Bildschirm-Lage der oberen Spitze eines Würfels relativ zur Insel (a ist gerade). */
@@ -133,6 +138,11 @@ export function pineTops(tiers: number[]): number[] {
     tops.push(y)
   }
   return tops
+}
+
+/** Halbe Würfelgröße der Hauptinsel (in halben Würfeln) für eine Szene von w × h Texeln. */
+export function islandHalf(w: number, h: number): number {
+  return clamp(round(Math.min(h / 30, w / 70)), 2, 7)
 }
 
 /** Polarlicht im Ruhezustand: atmet in gut einer Minute zwischen 0,55 und 0,95. */
@@ -255,7 +265,7 @@ export function buildWinterLayout(o: WinterLayoutOptions): WinterLayout {
   }
 
   const islands: Island[] = []
-  const half = clamp(round(Math.min(h / 30, w / 70)), 2, 7)
+  const half = islandHalf(w, h)
   const free = (x0: number, y0: number, x1: number, y1: number) =>
     islands.every((b) => x1 + 8 <= b.ox + b.x0 || x0 - 8 >= b.ox + b.x1 || y1 + 6 <= b.oy + b.y0 || y0 - 6 >= b.oy + b.y1)
   const make = (depth: number, a: number, W: number, D: number, pines: number) => {
@@ -279,7 +289,7 @@ export function buildWinterLayout(o: WinterLayoutOptions): WinterLayout {
     }
     ox = clamp(ox, 2 - isl.x0, w - 2 - isl.x1)
     oy = Math.max(oy, 2 - isl.y0)
-    islands.push({ ...isl, ox, oy })
+    if (o.hero !== false) islands.push({ ...isl, ox, oy })
   }
   // Nebeninseln, eher rechts.
   if (h >= 80 && w >= 100) {

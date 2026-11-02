@@ -26,6 +26,10 @@ const scene = computed(() => animated.value || events.lookHalloween)
   opacity: 0.35;
   pointer-events: none;
 }
+/* Polarlicht: hier liegt nur der ruhige Himmel (die große Karte hat ihre eigene Szene) – er darf etwas mehr leuchten. */
+:root[data-design="winter"]:not([data-event="halloween"]) .big-scene {
+  opacity: 0.55;
+}
 /* Abdunkeln, damit große Schrift auf der Würfel-Szene lesbar bleibt. */
 .big-shade {
   position: absolute;

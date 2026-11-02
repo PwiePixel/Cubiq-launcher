@@ -5,7 +5,7 @@ import { accentAfterSwitch, designAccent, DESIGN_HINT, designs, normalizeDesign,
 import { uiSettingsSchema } from '../app/utils/schemas'
 import { winterBannerCurtain, winterBannerLevel } from '../app/utils/winter/banner'
 import { WINTER_MAX_COLS, WINTER_MAX_ROWS, winterTexel } from '../app/utils/winter/canvas'
-import { auroraLevel, buildWinterLayout, pineTiers, pineTops, voxelX, voxelY, WINTER_SEED } from '../app/utils/winter/layout'
+import { auroraLevel, buildWinterLayout, islandHalf, pineTiers, pineTops, voxelX, voxelY, WINTER_SEED } from '../app/utils/winter/layout'
 import { between, checksum, glide, hash, light, over, sequence, wave } from '../app/utils/winter/math'
 import { paintSky, WinterPainter } from '../app/utils/winter/painter'
 import { AURORA_COLORS, buildWinterPalette, CURTAINS, type WinterVariant } from '../app/utils/winter/palette'
@@ -175,6 +175,21 @@ describe('Szene „Polarlicht“', () => {
         expect(device).toBeGreaterThanOrEqual(2)
       }
     }
+  })
+
+  it('Bühne ohne Platz neben dem Titel: die große Insel bleibt weg, Himmel, Polarlicht und Wolken bleiben gleich', () => {
+    const full = buildWinterLayout({ cols: 210, rows: 85, seed: WINTER_SEED, heroX: 0.8 })
+    const bare = buildWinterLayout({ cols: 210, rows: 85, seed: WINTER_SEED, heroX: 0.8, hero: false })
+    expect(full.islands.filter((i) => i.depth === 2)).toHaveLength(1)
+    expect(bare.islands.filter((i) => i.depth === 2)).toHaveLength(0)
+    expect(bare.stars).toEqual(full.stars)
+    expect(bare.ribbons).toEqual(full.ribbons)
+    expect(bare.cloudFar).toEqual(full.cloudFar)
+    expect(bare.cloudNear).toEqual(full.cloudNear)
+    // Größe der Hauptinsel wie im Aufbau: höchstens 7 Würfel = 14 halbe Würfel breit.
+    const hero = full.islands.find((i) => i.depth === 2)!
+    expect(hero.a).toBe(2 * islandHalf(210, 85))
+    expect(hero.x1 - hero.x0).toBeLessThanOrEqual(14 * islandHalf(210, 85))
   })
 
   it('kommt mit kleinen Flächen zurecht (Leer-Zustände, Titelbilder)', () => {
