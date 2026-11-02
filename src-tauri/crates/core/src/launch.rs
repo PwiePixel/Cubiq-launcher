@@ -71,6 +71,44 @@ pub fn insert_jvm_args(command: &mut Command, prepared: &Prepared, extra: Vec<St
     command.args.splice(pos..pos, extra);
 }
 
+/// JVM-Argumente für eine Installation im offiziellen Minecraft Launcher (`javaArgs` – er nimmt
+/// sie statt seiner eigenen): Speicher und GC-Flags wie ohne FPS-Boost, aber ohne Vorab-Belegen
+/// (gestartet wird später und ohne Speicher-Probe), dann die eigenen JVM-Argumente der Instanz und
+/// zuletzt `extra` (Cubiq Client), sofern dieselbe Eigenschaft nicht schon gesetzt ist. Der offizielle
+/// Launcher trennt nur an Leerzeichen – Argumente mit Leerzeichen oder Anführungszeichen fallen weg.
+pub fn profile_jvm_args(
+    instance: &Instance,
+    settings: &Settings,
+    java_major: u32,
+    system_mb: Option<u32>,
+    extra: Vec<String>,
+) -> Vec<String> {
+    let user = split_args(instance.overrides.jvm_args.as_deref().unwrap_or(&settings.jvm_args));
+    let opts = JvmOptions {
+        tuned: false,
+        java_major,
+        max_mb: instance.overrides.max_memory_mb.unwrap_or(settings.max_memory_mb),
+        min_mb: settings.min_memory_mb,
+        system_mb,
+        free_mb: None,
+        safe: false,
+    };
+    let JvmFlags { heap, tuning } = jvm_flags(&opts, &user);
+    let mut args = heap;
+    args.extend(["-Dfile.encoding=UTF-8".into(), "-Dstdout.encoding=UTF-8".into(), "-Dstderr.encoding=UTF-8".into()]);
+    args.push("-Dlog4j2.formatMsgNoLookups=true".into());
+    args.extend(tuning);
+    args.extend(user);
+    for arg in extra {
+        let key = arg.split('=').next().unwrap_or(&arg).to_owned();
+        if !args.iter().any(|a| a.split('=').next() == Some(key.as_str())) {
+            args.push(arg);
+        }
+    }
+    args.retain(|a| !a.is_empty() && !a.chars().any(|c| c.is_whitespace() || c == '"'));
+    args
+}
+
 /// Arbeitsspeicher des PCs beim Start (`None` = unbekannt).
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Memory {

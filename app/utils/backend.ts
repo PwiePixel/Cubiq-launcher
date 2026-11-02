@@ -266,6 +266,7 @@ import type {
 } from '~/types'
 import { presetCheckSchema, presetPickListSchema, sharedFolderStatusSchema } from './schemas'
 import { pingStatusSchema } from './ping'
+import { handoffOutcomeSchema, officialPrefsSchema, officialStatusSchema, type PlayWith } from './officialLauncher'
 import { gamePerfSchema } from './perfLive'
 import type { PlayStatsData } from './playStats'
 import type { BackupInfo, BackupJob, BackupOverview, BackupUsage, RestoreMode, RestoreOutcome } from './worldBackups'
@@ -500,6 +501,21 @@ export const backend = {
     call<void>('repair_instance', { id, onProgress: channel(onProgress), taskId }),
   /** Lädt den Log geschwärzt auf mclo.gs hoch; liefert den Link. */
   shareLog: (id: string) => call<string>('share_log', { id }),
+
+  /** „Mit dem Minecraft Launcher spielen“: Übergabe an den offiziellen Launcher (Kern: `official_launcher`). */
+  officialLauncher: {
+    status: () => checked(officialStatusSchema, 'official_launcher_status'),
+    /** `null` = unverändert. */
+    setPrefs: (playWith: PlayWith | null, explained: boolean | null) =>
+      checked(officialPrefsSchema, 'official_launcher_set_prefs', { playWith, explained }),
+    /** Vorbereiten, als „Cubiq · <Name>“ eintragen und öffnen; Fortschritt wie beim Start. */
+    play: (id: string, ignoreRunning: boolean, onProgress: (p: StageProgress) => void, taskId: string | null = null) =>
+      checked(handoffOutcomeSchema, 'play_with_official_launcher', { id, ignoreRunning, onProgress: channel(onProgress), taskId }),
+    /** Nur öffnen; `false` = ließ sich nicht starten. */
+    open: () => checked(z.boolean(), 'open_official_launcher'),
+    /** Alle Cubiq-Installationen entfernen; liefert, wie viele. */
+    removeAll: () => checked(z.number().int().nonnegative(), 'remove_official_profiles'),
+  },
 
   listAccounts: () => call<Account[]>('list_accounts'),
   loginBrowser: () => call<Account>('login_browser'),

@@ -138,6 +138,9 @@ async function confirmRemove() {
       <button v-if="!messeRestricted" class="btn btn-primary" :disabled="!!login" @click="start(primaryMode)">{{ t('accounts.login.signInMicrosoft') }}</button>
     </EmptyState>
 
+    <!-- Spielen geht auch ohne Anmeldung in Cubiq: über den offiziellen Minecraft Launcher. -->
+    <OfficialLauncherHint v-if="!mobile && (notApproved || (accounts.loaded && !accounts.items.length))" class="mt-4" @chosen="navigateTo('/')" />
+
     <!-- Handy: Browser-Anmeldung nur als Ausweg (der Rückruf an localhost klappt dort nicht immer). -->
     <button v-if="mobile" class="btn btn-ghost mt-4 w-full" :disabled="!!login" data-testid="accounts-browser" @click="start('browser')">
       {{ t('mobile.accountsPage.browser') }}

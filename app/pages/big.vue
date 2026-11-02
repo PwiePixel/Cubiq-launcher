@@ -109,6 +109,8 @@ const layerInstance = computed(() => {
   return layer?.kind === 'instance' ? (instances.items.find((i) => i.id === layer.id) ?? null) : null
 })
 const layerGame = computed(() => (layerInstance.value ? games.state(layerInstance.value.id) : null))
+/** Ohne angemeldetes Konto übernimmt der offizielle Minecraft Launcher (Knopf sagt es). */
+const official = useOfficialLauncherStore()
 
 function playFromLayer() {
   const instance = layerInstance.value
@@ -263,7 +265,7 @@ function backPress() {
           <div class="flex flex-col gap-3">
             <button v-if="layerGame?.phase === 'idle'" type="button" class="bp-btn bp-btn-primary justify-start" data-bp-autofocus @click="playFromLayer">
               <svg viewBox="0 0 24 24" class="size-6" fill="currentColor"><path :d="icons.play" /></svg>
-              {{ t('common.actions.play') }}
+              {{ official.route === 'official' ? t('officialLauncher.playWith') : t('common.actions.play') }}
             </button>
             <button v-else-if="layerGame?.phase === 'preparing'" type="button" class="bp-btn justify-start" data-bp-autofocus @click="games.cancelLaunch(layerInstance.id); store.closeLayer()">
               {{ t('play.cancelLaunch') }}

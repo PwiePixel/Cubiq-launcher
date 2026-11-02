@@ -67,6 +67,22 @@ pub async fn fetch_profile(
     }
 }
 
+/// Das Loader-Profil genau so, wie die Meta es liefert – für den offiziellen Minecraft Launcher
+/// ([`fetch_profile`] speichert eine umgewandelte Fassung ohne `time`/`releaseTime`).
+pub async fn fetch_profile_raw(http: &reqwest::Client, game_version: &str, loader: &Loader) -> Result<Vec<u8>> {
+    let base = meta_base(loader.kind)?;
+    let loader_version = match &loader.version {
+        Some(v) => v.clone(),
+        None => latest_loader_version(http, base, game_version).await?,
+    };
+    if !crate::meta::is_safe_id(game_version) || !is_listable(&loader_version) {
+        return Err(Error::validation(crate::msg!("loaders.invalidGameVersion", "Ungültige Minecraft-Version")));
+    }
+    let url = format!("{base}/versions/loader/{game_version}/{loader_version}/profile/json");
+    let bytes = http.get(&url).send().await?.error_for_status()?.bytes().await?;
+    Ok(bytes.to_vec())
+}
+
 async fn cached_profile(
     paths: &Paths,
     game_version: &str,

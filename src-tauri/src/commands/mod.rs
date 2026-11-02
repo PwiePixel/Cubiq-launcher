@@ -23,6 +23,8 @@ pub mod logs;
 pub mod meta;
 pub mod moderation;
 pub mod news;
+/// „Mit dem Minecraft Launcher spielen“.
+pub mod official_launcher;
 pub mod packs;
 /// Spielzeit-Statistik.
 pub mod play_stats;

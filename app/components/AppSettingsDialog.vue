@@ -536,6 +536,9 @@ async function allowFirewall() {
         <button class="btn btn-ghost" @click="close(); onboarding.restart()">{{ t('common.actions.start') }}</button>
       </SettingRow>
 
+      <!-- Womit „Spielen“ startet und Cubiq-Installationen im offiziellen Minecraft Launcher -->
+      <OfficialLauncherSettings v-if="caps.gameLaunch" />
+
       <h3 class="section-heading mt-6">{{ t('settings.bigPicture.title') }}</h3>
       <SettingRow :title="t('settings.bigPicture.openTitle')" :description="t('settings.bigPicture.openDescription')">
         <button class="btn btn-ghost" data-testid="settings-big-picture" @click="openBigPicture">{{ t('settings.bigPicture.open') }}</button>
