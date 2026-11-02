@@ -71,6 +71,8 @@ onMounted(async () => {
   void useClipsStore().init()
   void useHostingStore().init()
   void useLocalServersStore().init()
+  // Spielen-Knopf: offizieller Minecraft Launcher gefunden, Wahl „Spiele starten mit“.
+  void useOfficialLauncherStore().load()
   // Darstellung (Theme, Akzent) und Oberflächen-Schalter früh laden.
   settings.load().catch(() => {})
   // Erst wenn beides geladen ist, entscheiden, ob der Einrichtungs-Assistent kommt.
@@ -274,6 +276,7 @@ onBeforeUnmount(() => void backListener?.unregister())
     <CrashHelperDialog />
     <ModConflictDialog />
     <ExtraLaunchDialog />
+    <OfficialLauncherDialogs />
     <BisectPanel />
     <DuplicateModsDialog />
   </div>

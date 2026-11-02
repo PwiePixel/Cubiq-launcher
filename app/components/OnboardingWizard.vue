@@ -426,6 +426,9 @@ onBeforeUnmount(() => {
             <p v-if="notApproved" class="mt-1 text-xs text-base-400">{{ t('accounts.login.notApprovedHint') }}</p>
           </div>
 
+          <!-- Ohne Anmeldung in Cubiq spielen: über den offiziellen Minecraft Launcher. -->
+          <OfficialLauncherHint v-if="!accounts.active && !loggingIn && !mobile" class="mt-4 max-w-lg" @chosen="next" />
+
           <div class="mt-8 flex gap-3">
             <template v-if="accounts.active">
               <button data-primary class="btn btn-primary h-11 px-6 text-base" @click="next">{{ t('common.actions.continue') }}</button>

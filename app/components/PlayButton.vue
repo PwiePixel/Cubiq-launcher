@@ -7,6 +7,9 @@ const props = withDefaults(defineProps<{ instanceId: string; large?: boolean }>(
 const games = useGamesStore()
 const events = useEventsStore()
 const game = computed(() => games.state(props.instanceId))
+// Ohne angemeldetes Konto (oder auf Wunsch immer) übernimmt der offizielle Minecraft Launcher.
+const official = useOfficialLauncherStore()
+const viaOfficial = computed(() => official.route === 'official')
 
 const percent = computed(() =>
   game.value.progress ? Math.floor(overallPercent(game.value.progress.stage, game.value.progress.percent)) : 0,
@@ -78,9 +81,20 @@ const files = computed(() => {
       </span>
     </button>
 
-    <button v-else-if="game.phase === 'idle'" class="play play-idle" @click="games.launch(instanceId)">
+    <button
+      v-else-if="game.phase === 'idle'"
+      class="play play-idle"
+      :title="viaOfficial ? t('officialLauncher.playWith') : undefined"
+      :aria-label="viaOfficial ? t('officialLauncher.playWith') : undefined"
+      data-testid="play-idle"
+      @click="games.launch(instanceId)"
+    >
       <span class="play-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" class="ml-0.5 size-4" fill="currentColor"><path d="M7.5 4.6v14.8a1 1 0 0 0 1.5.86l12.2-7.4a1 1 0 0 0 0-1.72L9 3.74a1 1 0 0 0-1.5.86Z" /></svg></span>
-      <span class="display text-lg">{{ t('common.actions.play') }}</span>
+      <span v-if="viaOfficial" class="flex min-w-0 flex-col items-start leading-tight">
+        <span class="display text-lg">{{ t('common.actions.play') }}</span>
+        <span class="truncate text-[11px] font-medium opacity-80">{{ t('officialLauncher.via') }}</span>
+      </span>
+      <span v-else class="display text-lg">{{ t('common.actions.play') }}</span>
     </button>
 
     <div
@@ -136,9 +150,17 @@ const files = computed(() => {
       </span>
       <ProgressBar :percent="install.percent ?? 0" class="mt-1 w-full" />
     </button>
-    <button v-else-if="game.phase === 'idle'" class="btn btn-primary w-full" @click="games.launch(instanceId)">
+    <button
+      v-else-if="game.phase === 'idle'"
+      class="btn btn-primary w-full"
+      :title="viaOfficial ? t('officialLauncher.playWith') : undefined"
+      :aria-label="viaOfficial ? t('officialLauncher.playWith') : undefined"
+      @click="games.launch(instanceId)"
+    >
       <svg viewBox="0 0 24 24" class="size-4" fill="currentColor"><path d="M7.5 4.6v14.8a1 1 0 0 0 1.5.86l12.2-7.4a1 1 0 0 0 0-1.72L9 3.74a1 1 0 0 0-1.5.86Z" /></svg>
       {{ t('common.actions.play') }}
+      <!-- Öffnet den offiziellen Minecraft Launcher: kleines „nach draußen“-Zeichen. -->
+      <svg v-if="viaOfficial" viewBox="0 0 24 24" class="size-3.5 opacity-80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="icons.external" /></svg>
     </button>
 
     <div

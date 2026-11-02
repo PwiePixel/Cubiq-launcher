@@ -231,6 +231,12 @@ export const useGamesStore = defineStore('games', () => {
       duplicateGate.delete(id)
     }
     if (s.phase !== 'idle' || useTasksStore().installingInstance(id)) return false
+    // Ohne angemeldetes Konto (oder auf Wunsch immer): über den offiziellen Minecraft Launcher.
+    const official = useOfficialLauncherStore()
+    if (official.route === 'official') {
+      const serverName = joinServer ? (useServersStore().items.find((x) => x.id === joinServer)?.name ?? joinServer) : null
+      return official.play(id, { serverName, address: joinAddress, world: joinWorld })
+    }
     s.phase = 'preparing'
     s.mainAccountId = useAccountsStore().active?.id ?? null
     s.error = null

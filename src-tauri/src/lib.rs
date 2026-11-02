@@ -474,6 +474,12 @@ pub fn run() {
             commands::games::share_log,
             // Live-Leistungsanzeige (FPS, RAM, CPU des laufenden Spiels)
             commands::games::game_perf,
+            // Mit dem offiziellen Minecraft Launcher spielen
+            commands::official_launcher::official_launcher_status,
+            commands::official_launcher::official_launcher_set_prefs,
+            commands::official_launcher::play_with_official_launcher,
+            commands::official_launcher::open_official_launcher,
+            commands::official_launcher::remove_official_profiles,
             commands::accounts::list_accounts,
             commands::accounts::login_browser,
             commands::accounts::login_device_code,

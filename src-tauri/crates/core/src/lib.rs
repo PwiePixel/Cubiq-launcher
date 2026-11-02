@@ -58,6 +58,8 @@ pub mod pack_share;
 pub mod modrinth;
 pub mod news;
 pub mod nbt;
+/// „Mit dem Minecraft Launcher spielen“: Übergabe an den offiziellen Launcher.
+pub mod official_launcher;
 pub mod paths;
 pub mod platform;
 /// Spielzeit-Statistik (Sitzungen, Seite „Statistik“).
@@ -748,7 +750,11 @@ impl Launcher {
         if self.games.is_running(id) || self.is_preparing(id) {
             return Err(Error::launch(crate::msg!("launcher.instanceRunningNoDelete", "Die Instanz läuft gerade und kann nicht gelöscht werden.")));
         }
-        self.instances.delete(id).await
+        let game_dir = self.paths.instance_game_dir(id);
+        self.instances.delete(id).await?;
+        // Ihre Installation „Cubiq · …“ im offiziellen Minecraft Launcher gleich mit entfernen.
+        self.forget_official_profile(id, &game_dir).await;
+        Ok(())
     }
 
     /// Wechselt Minecraft-Version und/oder Modloader einer Instanz. Welten und
@@ -940,88 +946,11 @@ impl Launcher {
             started_at: 0,
         };
 
-        // Neuer Cubiq Client im Update-Kanal? (kurzer Timeout, offline egal)
-        self.check_client_mod_updates().await;
-        // Vanilla mit Cubiq-Optimierung läuft unter der Haube als Fabric.
-        let (client_mod_dir, catalog) = self.client_mod_catalog().await;
-        let effective = boost::effective_instance(&self.http, &self.paths, catalog.builds(), instance).await;
-        // Mods laden/prüfen als eigene Stufe – sonst sähe der erste Start wie hängengeblieben aus.
-        let mods_progress = |p: presets::ApplyProgress| on_progress(mods_stage(&p));
-        // Performance-Mods gibt es nur für Fabric; Forge-Boost (1.8.9) bekommt nur den Cubiq Client.
-        if effective.loader.kind == LoaderKind::Fabric && instance.loader.kind != LoaderKind::Fabric {
-            if boost::needs_performance(&self.paths, &effective).await {
-                on_progress(StageProgress::begin(Stage::Mods));
-            }
-            boost::ensure_performance(&self.http, &self.paths, catalog.builds(), &effective, &mods_progress).await?;
-        }
+        // Mods, Cubiq Client und Abhängigkeiten – wie bei der Übergabe an den offiziellen Launcher.
+        let purpose = StartPurpose { extra, skip_mod_check, world: world.is_some(), official: false };
+        let ModsReady { effective, catalog, cubiq_enabled } =
+            self.prepare_mods(instance, &settings, purpose, on_progress).await?;
         let instance = &effective;
-        // Gehostete Welt: Ohne Cubiq Client kann das Spiel weder verbinden noch die Anweisung lesen.
-        if world.is_some()
-            && (instance.loader.kind == LoaderKind::Vanilla
-                || instance.overrides.cubiq_client == Some(false)
-                || client_mod::build_for(catalog.builds(), instance.loader.kind, &instance.game_version).is_none())
-        {
-            return Err(Error::launch(crate::msg!(
-                "hosting.needsClient",
-                "Diese Instanz startet ohne Cubiq Client – gehosteten Welten kann nur ein Spiel mit Cubiq Client beitreten."
-            )));
-        }
-
-        let updates = Some(&self.client_mod_updates);
-        // Der Mod liest daraus, ob er die Cubiq API benutzen darf (nur feste Werte, kein Token).
-        let cubiq_enabled = self.cubiq.enabled().await;
-        let (events, look) = (self.cubiq.active_events(), self.cubiq.look_events());
-        if let Err(e) = client_mod::sync(
-            &self.http,
-            &self.paths,
-            client_mod_dir.as_deref(),
-            updates,
-            instance,
-            &settings.ui,
-            self.system_reduced_motion(),
-            cubiq_enabled,
-            &events,
-            &look,
-        )
-        .await
-        {
-            tracing::warn!("Cubiq Client konnte nicht eingerichtet werden: {e}");
-        }
-        // Passen die Mod-Versionen nicht zusammen (Iris will Sodium 0.9.x, da liegt 0.8.9),
-        // werden passende getauscht – sonst bricht Fabric mit „Incompatible mods“ ab.
-        // Zweite Kopie (`extra`): Die erste läuft schon mit genau diesen Mods – nichts prüfen, nichts tauschen
-        // (Jars einer laufenden Instanz sind gesperrt, ein Tausch hinterließ sonst doppelte Dateien).
-        if let Some(note) =
-            depcheck::versions_for_launch(&self.http, &self.paths, catalog.builds(), instance, skip_mod_check || extra, &mods_progress)
-                .await?
-        {
-            let sink = self.games.sink();
-            sink(GameEvent::notice(instance.id.clone(), &note));
-        }
-        // Fehlt einer Mod eine Pflicht-Abhängigkeit (z. B. Cloth Config für More Culling),
-        // wird sie ergänzt – sonst bricht Fabric den Start mit „Incompatible mods“ ab.
-        let dependencies = if extra {
-            Ok(Default::default())
-        } else {
-            depcheck::ensure_before_launch(&self.http, &self.paths, catalog.builds(), instance, &mods_progress).await
-        };
-        match dependencies {
-            Ok(fix) if !fix.is_empty() => {
-                let sink = self.games.sink();
-                sink(GameEvent::notice(
-                    instance.id.clone(),
-                    &crate::msg!(
-                        "launcher.dependenciesAdded",
-                        "Fehlende Abhängigkeiten ergänzt: {list} (gebraucht von {mods}).",
-                        list = fix.added.join(", "),
-                        mods = fix.needed_by.join(", ")
-                    ),
-                ));
-            }
-            Ok(_) => {}
-            Err(Error::Cancelled) => return Err(Error::Cancelled),
-            Err(e) => tracing::warn!("Abhängigkeiten konnten nicht geprüft werden: {e}"),
-        }
 
         let prepared =
             prepare::prepare(&self.http, &self.paths, &settings, instance, &session.features(), false, on_progress)
@@ -1044,44 +973,10 @@ impl Launcher {
                 }
             }
         }
-        let game_dir = self.paths.instance_game_dir(&instance.id);
-        fsutil::ensure_dir(&game_dir).await?;
-
-        let exit_plan = ExitPlan::new(&self.paths, instance, &settings, Some(prepared.java.clone()));
-        if let Some(pre) = &exit_plan.hooks.pre_launch {
-            hooks::run(HookKind::PreLaunch, pre, &exit_plan.context, &exit_plan.env, hooks::HOOK_TIMEOUT).await?;
-        }
-        // Gemeinsame Ordner: fehlende/kaputte Links neu setzen, neue Dateien zusammenführen.
-        let broken = self.ensure_shared_folders(instance).await;
-        if !broken.is_empty() {
-            let sink = self.games.sink();
-            let list = broken.iter().map(|k| k.key()).collect::<Vec<_>>().join(", ");
-            sink(GameEvent::notice(
-                instance.id.clone(),
-                &crate::msg!(
-                    "sharedFolders.repairFailed",
-                    "Gemeinsame Ordner konnten nicht eingerichtet werden ({list}) – das Spiel nutzt dafür eigene Ordner.",
-                    list = list
-                ),
-            ));
-        }
-        // Gemeinsame options.txt & Co. holen. Scheitert das, startet das Spiel
-        // mit den eigenen Dateien – dann wird auch nichts zurückkopiert.
-        // (Nicht bei einem weiteren Prozess: Die Dateien gehören dem laufenden Spiel.)
-        if !extra && let Err(e) = sync::pull(&exit_plan.sync_dirs, &exit_plan.sync_items).await {
-            tracing::warn!("Synchronisierung vor dem Start fehlgeschlagen: {e}");
-        }
-        // Noch keine options.txt (erster Start, auch nach Import/Modpack ohne Optionen):
-        // Standard mit unbegrenzter Bildrate und ohne VSync – nach dem Sync, damit
-        // eine gemeinsame options.txt des Spielers Vorrang hat.
-        let data_version = instance::client_data_version(&self.paths.version_jar(&instance.game_version)).await;
-        if let Err(e) = instance::seed_game_options(&game_dir, data_version).await {
-            tracing::warn!("Standard-Optionen konnten nicht geschrieben werden: {e}");
-        }
-        // Die Launcher-Server sollen in jeder Instanz in der Serverliste stehen.
-        if let Err(e) = self.servers.sync_to_instance(&game_dir).await {
-            tracing::warn!("servers.dat konnte nicht aktualisiert werden: {e}");
-        }
+        // Spielordner: Pre-Launch-Hook, gemeinsame Ordner, Synchronisierung, Optionen, Serverliste.
+        let client_jar = self.paths.version_jar(&instance.game_version);
+        let GameDirReady { game_dir, exit_plan } =
+            self.prepare_game_dir(instance, &settings, Some(prepared.java.clone()), extra, &client_jar).await?;
         let assets_dir = self.paths.assets_dir();
         let libraries_dir = self.paths.libraries_dir();
         let dirs = launch::LaunchDirs { game: &game_dir, assets: &assets_dir, libraries: &libraries_dir };
@@ -1252,6 +1147,193 @@ impl Launcher {
             Err(e) => tracing::warn!("Cubiq-Link startet nicht: {e}"),
         }
         Ok(())
+    }
+}
+
+/// Wofür eine Instanz vorbereitet wird (siehe [`Launcher::prepare_mods`]).
+#[derive(Debug, Clone, Copy, Default)]
+struct StartPurpose {
+    /// Weiterer Prozess einer laufenden Instanz: Mods weder prüfen noch tauschen noch ergänzen.
+    extra: bool,
+    /// „Trotzdem starten“ (Konflikt-Helfer): Mod-Versionen diesmal nicht prüfen.
+    skip_mod_check: bool,
+    /// Beitritt zu einer gehosteten Welt – geht nur mit Cubiq Client.
+    world: bool,
+    /// Übergabe an den offiziellen Minecraft Launcher: Er kann (noch) kein Forge/NeoForge,
+    /// Vanilla läuft dort deshalb nie mit Forge-Optimierung, sondern als echtes Vanilla.
+    official: bool,
+}
+
+/// Ergebnis von [`Launcher::prepare_mods`].
+struct ModsReady {
+    /// Wie die Instanz wirklich startet (Vanilla mit Cubiq-Optimierung z. B. als Fabric).
+    effective: Instance,
+    catalog: client_mod::Catalog,
+    /// Darf der Cubiq Client die Cubiq API benutzen (Einwilligung im Launcher)?
+    cubiq_enabled: bool,
+}
+
+/// Ergebnis von [`Launcher::prepare_game_dir`].
+struct GameDirReady {
+    game_dir: PathBuf,
+    exit_plan: ExitPlan,
+}
+
+impl Launcher {
+    /// Erster gemeinsamer Teil jedes Starts – auch der Übergabe an den offiziellen Minecraft Launcher:
+    /// Cubiq-Optimierung (Performance-Mods), Cubiq Client samt `cubiq-api.json`, passende
+    /// Mod-Versionen und fehlende Abhängigkeiten.
+    async fn prepare_mods(
+        &self,
+        instance: &Instance,
+        settings: &Settings,
+        purpose: StartPurpose,
+        on_progress: &ProgressFn,
+    ) -> Result<ModsReady> {
+        let StartPurpose { extra, skip_mod_check, world, official } = purpose;
+        // Neuer Cubiq Client im Update-Kanal? (kurzer Timeout, offline egal)
+        self.check_client_mod_updates().await;
+        // Vanilla mit Cubiq-Optimierung läuft unter der Haube als Fabric.
+        let (client_mod_dir, catalog) = self.client_mod_catalog().await;
+        let mut effective = boost::effective_instance(&self.http, &self.paths, catalog.builds(), instance).await;
+        // Forge-Optimierung (z. B. 1.8.9) kann der offizielle Launcher noch nicht übernehmen: dort echtes Vanilla.
+        if official
+            && instance.loader.kind == LoaderKind::Vanilla
+            && matches!(effective.loader.kind, LoaderKind::Forge | LoaderKind::NeoForge)
+        {
+            effective = instance.clone();
+        }
+        // Mods laden/prüfen als eigene Stufe – sonst sähe der erste Start wie hängengeblieben aus.
+        let mods_progress = |p: presets::ApplyProgress| on_progress(mods_stage(&p));
+        // Performance-Mods gibt es nur für Fabric; Forge-Boost (1.8.9) bekommt nur den Cubiq Client.
+        if effective.loader.kind == LoaderKind::Fabric && instance.loader.kind != LoaderKind::Fabric {
+            if boost::needs_performance(&self.paths, &effective).await {
+                on_progress(StageProgress::begin(Stage::Mods));
+            }
+            boost::ensure_performance(&self.http, &self.paths, catalog.builds(), &effective, &mods_progress).await?;
+        }
+        let instance = &effective;
+        // Gehostete Welt: Ohne Cubiq Client kann das Spiel weder verbinden noch die Anweisung lesen.
+        if world
+            && (instance.loader.kind == LoaderKind::Vanilla
+                || instance.overrides.cubiq_client == Some(false)
+                || client_mod::build_for(catalog.builds(), instance.loader.kind, &instance.game_version).is_none())
+        {
+            return Err(Error::launch(crate::msg!(
+                "hosting.needsClient",
+                "Diese Instanz startet ohne Cubiq Client – gehosteten Welten kann nur ein Spiel mit Cubiq Client beitreten."
+            )));
+        }
+
+        let updates = Some(&self.client_mod_updates);
+        // Der Mod liest daraus, ob er die Cubiq API benutzen darf (nur feste Werte, kein Token).
+        let cubiq_enabled = self.cubiq.enabled().await;
+        let (events, look) = (self.cubiq.active_events(), self.cubiq.look_events());
+        if let Err(e) = client_mod::sync(
+            &self.http,
+            &self.paths,
+            client_mod_dir.as_deref(),
+            updates,
+            instance,
+            &settings.ui,
+            self.system_reduced_motion(),
+            cubiq_enabled,
+            &events,
+            &look,
+        )
+        .await
+        {
+            tracing::warn!("Cubiq Client konnte nicht eingerichtet werden: {e}");
+        }
+        // Passen die Mod-Versionen nicht zusammen (Iris will Sodium 0.9.x, da liegt 0.8.9),
+        // werden passende getauscht – sonst bricht Fabric mit „Incompatible mods“ ab.
+        // Zweite Kopie (`extra`): Die erste läuft schon mit genau diesen Mods – nichts prüfen, nichts tauschen
+        // (Jars einer laufenden Instanz sind gesperrt, ein Tausch hinterließ sonst doppelte Dateien).
+        if let Some(note) =
+            depcheck::versions_for_launch(&self.http, &self.paths, catalog.builds(), instance, skip_mod_check || extra, &mods_progress)
+                .await?
+        {
+            let sink = self.games.sink();
+            sink(GameEvent::notice(instance.id.clone(), &note));
+        }
+        // Fehlt einer Mod eine Pflicht-Abhängigkeit (z. B. Cloth Config für More Culling),
+        // wird sie ergänzt – sonst bricht Fabric den Start mit „Incompatible mods“ ab.
+        let dependencies = if extra {
+            Ok(Default::default())
+        } else {
+            depcheck::ensure_before_launch(&self.http, &self.paths, catalog.builds(), instance, &mods_progress).await
+        };
+        match dependencies {
+            Ok(fix) if !fix.is_empty() => {
+                let sink = self.games.sink();
+                sink(GameEvent::notice(
+                    instance.id.clone(),
+                    &crate::msg!(
+                        "launcher.dependenciesAdded",
+                        "Fehlende Abhängigkeiten ergänzt: {list} (gebraucht von {mods}).",
+                        list = fix.added.join(", "),
+                        mods = fix.needed_by.join(", ")
+                    ),
+                ));
+            }
+            Ok(_) => {}
+            Err(Error::Cancelled) => return Err(Error::Cancelled),
+            Err(e) => tracing::warn!("Abhängigkeiten konnten nicht geprüft werden: {e}"),
+        }
+        Ok(ModsReady { effective, catalog, cubiq_enabled })
+    }
+
+    /// Zweiter gemeinsamer Teil: Spielordner anlegen, Pre-Launch-Hook ausführen, gemeinsame Ordner
+    /// reparieren, Synchronisierung holen, Standard-Optionen säen und die Serverliste eintragen.
+    /// `java` (nur beim eigenen Start bekannt) geht an die Hooks; `client_jar` liefert die Datenversion
+    /// für die Standard-`options.txt`.
+    async fn prepare_game_dir(
+        &self,
+        instance: &Instance,
+        settings: &Settings,
+        java: Option<PathBuf>,
+        extra: bool,
+        client_jar: &std::path::Path,
+    ) -> Result<GameDirReady> {
+        let game_dir = self.paths.instance_game_dir(&instance.id);
+        fsutil::ensure_dir(&game_dir).await?;
+
+        let exit_plan = ExitPlan::new(&self.paths, instance, settings, java);
+        if let Some(pre) = &exit_plan.hooks.pre_launch {
+            hooks::run(HookKind::PreLaunch, pre, &exit_plan.context, &exit_plan.env, hooks::HOOK_TIMEOUT).await?;
+        }
+        // Gemeinsame Ordner: fehlende/kaputte Links neu setzen, neue Dateien zusammenführen.
+        let broken = self.ensure_shared_folders(instance).await;
+        if !broken.is_empty() {
+            let sink = self.games.sink();
+            let list = broken.iter().map(|k| k.key()).collect::<Vec<_>>().join(", ");
+            sink(GameEvent::notice(
+                instance.id.clone(),
+                &crate::msg!(
+                    "sharedFolders.repairFailed",
+                    "Gemeinsame Ordner konnten nicht eingerichtet werden ({list}) – das Spiel nutzt dafür eigene Ordner.",
+                    list = list
+                ),
+            ));
+        }
+        // Gemeinsame options.txt & Co. holen. Scheitert das, startet das Spiel
+        // mit den eigenen Dateien – dann wird auch nichts zurückkopiert.
+        // (Nicht bei einem weiteren Prozess: Die Dateien gehören dem laufenden Spiel.)
+        if !extra && let Err(e) = sync::pull(&exit_plan.sync_dirs, &exit_plan.sync_items).await {
+            tracing::warn!("Synchronisierung vor dem Start fehlgeschlagen: {e}");
+        }
+        // Noch keine options.txt (erster Start, auch nach Import/Modpack ohne Optionen):
+        // Standard mit unbegrenzter Bildrate und ohne VSync – nach dem Sync, damit
+        // eine gemeinsame options.txt des Spielers Vorrang hat.
+        let data_version = instance::client_data_version(client_jar).await;
+        if let Err(e) = instance::seed_game_options(&game_dir, data_version).await {
+            tracing::warn!("Standard-Optionen konnten nicht geschrieben werden: {e}");
+        }
+        // Die Launcher-Server sollen in jeder Instanz in der Serverliste stehen.
+        if let Err(e) = self.servers.sync_to_instance(&game_dir).await {
+            tracing::warn!("servers.dat konnte nicht aktualisiert werden: {e}");
+        }
+        Ok(GameDirReady { game_dir, exit_plan })
     }
 }
 
