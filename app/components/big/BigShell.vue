@@ -12,7 +12,7 @@ const scene = computed(() => animated.value || events.lookHalloween)
 <template>
   <div class="big-root relative h-full min-h-0 flex-1 overflow-hidden bg-base-950">
     <div v-if="scene" class="big-scene" aria-hidden="true">
-      <DesignScene fill :still="!animated" />
+      <DesignScene fill sky :still="!animated" />
     </div>
     <div class="big-shade" aria-hidden="true" />
     <slot />
@@ -25,6 +25,10 @@ const scene = computed(() => animated.value || events.lookHalloween)
   inset: 0;
   opacity: 0.35;
   pointer-events: none;
+}
+/* Polarlicht: hier liegt nur der ruhige Himmel (die große Karte hat ihre eigene Szene) – er darf etwas mehr leuchten. */
+:root[data-design="winter"]:not([data-event="halloween"]) .big-scene {
+  opacity: 0.55;
 }
 /* Abdunkeln, damit große Schrift auf der Würfel-Szene lesbar bleibt. */
 .big-shade {

@@ -17,6 +17,8 @@ import dev.pwiepixel.cubiqclient.core.ui.halloween.MoonBar;
 import dev.pwiepixel.cubiqclient.core.ui.halloween.NightScene;
 import dev.pwiepixel.cubiqclient.core.ui.title.CubeScene;
 import dev.pwiepixel.cubiqclient.core.ui.winter.Frost;
+import dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath;
+import dev.pwiepixel.cubiqclient.core.ui.winter.WinterPalette;
 import dev.pwiepixel.cubiqclient.core.ui.winter.WinterScene;
 
 import java.util.List;
@@ -501,8 +503,8 @@ public final class MenuSkin {
 			c.fill(x + 2, y + 1, x + w - 2, y + 2, ColorMath.withAlpha(t.halloween ? HalloweenPalette.SILVER : bevelLight(t), t.halloween ? 0x18 : 0x70));
 		}
 		if (t.halloween && w >= 24 && h >= 16) HalloweenLook.cobweb(c, x + w - 2, y + 1, Math.min(9, h / 2), 1, 0x30CFD5E3);
-		// Polarlicht: der Schneesaum oben auf jeder Karte, wie auf den Karten im Launcher.
-		if (t.winter) Frost.lipOn(c, x, y, w, h, selected || hover ? 1f : 0.85f);
+		// Polarlicht: der Schneesaum nur auf der gewählten Karte und unter der Maus – wie im Launcher nicht auf jeder Karte.
+		if (t.winter && (selected || hover)) Frost.lipOn(c, x, y, w, h, 1f);
 		if (t.fox && w >= 12 && h >= 10) {
 			int sun = ColorMath.withAlpha(0xFFFFB878, selected ? 0x60 : 0x2C);
 			c.fill(x + 1, y + 2, x + 4, y + 3, sun);
@@ -791,13 +793,42 @@ public final class MenuSkin {
 	}
 
 	/**
-	 * Polarlicht beim Laden der Ressourcen (nur Rechtecke): oben ein weicher Schimmer in Cubiq-Grün und Türkis wie ein
-	 * Polarlicht-Band, darüber leise fallende quadratische Pixel-Flocken (ohne Bewegung stehen sie).
+	 * Polarlicht beim Laden der Ressourcen (nur Rechtecke), in den Farben des Vorhangs der Szene: ein weicher Schein in
+	 * Smaragd und Türkis, davor Lichtstrahlen, die über einer hellen Kante in hellem Cubiq-Grün nach oben über Smaragd und
+	 * Türkis in Eisblau verglimmen und langsam wandern, darüber leise fallende quadratische Pixel-Flocken (ohne Bewegung
+	 * steht alles).
 	 */
 	private static void winterSky(Canvas c, int width, int height) {
-		Paint.radialGlow(c, width * 2 / 5, height / 6, width * 2 / 5, Math.max(8, height / 9), 0xFF71A330, 40, width, height);
-		Paint.radialGlow(c, width * 3 / 5, height / 8, width * 2 / 5, Math.max(8, height / 10), 0xFF2AA894, 30, width, height);
+		int[] a = WinterPalette.AURORA;
+		Paint.radialGlow(c, width * 2 / 5, height / 6, width * 2 / 5, Math.max(8, height / 9), a[2], 30, width, height);
+		Paint.radialGlow(c, width * 3 / 5, height / 8, width * 2 / 5, Math.max(8, height / 10), a[3], 24, width, height);
 		float t = sceneSeconds();
+		// Strahlen: alle 2 Pixel einer, Länge und Helligkeit aus langsam wanderndem Rauschen; nach oben verglimmt jeder in
+		// feinen Stufen (etwa alle 3 Pixel) über Smaragd und Türkis in Eisblau. Die Kante liegt auf einer sanften Welle, die
+		// Enden laufen weich aus.
+		int edgeY = height / 4;
+		int reach = Math.max(12, height / 5);
+		for (int x = width / 10; x < width - width / 10; x += 2) {
+			double u = x / (double) Math.max(1, width);
+			double taper = WinterMath.ease(0.1, 0.25, u) * WinterMath.ease(0.9, 0.75, u);
+			double ray = 0.25 + 0.75 * (0.55 * WinterMath.glide(x / 3.0 - t * 0.5, 0x5a) + 0.45 * WinterMath.glide(x / 13.0 + t * 0.12, 0x7b));
+			int alpha = (int) Math.round(180 * ray * taper);
+			if (alpha < 6) continue;
+			int edge = edgeY + (int) Math.round(WinterMath.wave(u * 1.4 + t * 0.015) * Math.max(2, height / 36));
+			int len = (int) Math.round(reach * (0.4 + 0.6 * WinterMath.glide(x / 13.0 + t * 0.12, 0x7b)));
+			int steps = Math.max(6, len / 3);
+			for (int s = 0; s < steps; s++) {
+				int top = edge - 2 - len * (s + 1) / steps;
+				int bottom = edge - 2 - len * s / steps;
+				float f = s / (float) steps;
+				int fade = Math.round(alpha * 0.85f * (1 - f) * (1 - f));
+				if (bottom <= top || fade <= 0) continue;
+				int color = f < 0.45f ? a[2] : (f < 0.8f ? a[3] : a[4]);
+				c.fill(x, top, x + 2, bottom, ColorMath.withAlpha(color, fade));
+			}
+			c.fill(x, edge - 2, x + 2, edge - 1, ColorMath.withAlpha(a[1], alpha));
+			c.fill(x, edge - 1, x + 2, edge, ColorMath.withAlpha(a[0], alpha));
+		}
 		for (int i = 0; i < 48; i++) {
 			int depth = i % 3;
 			int fx = Math.floorMod(i * 151 + (int) (t * (2 + depth * 2)), Math.max(1, width));

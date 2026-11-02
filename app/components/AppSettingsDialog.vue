@@ -177,7 +177,7 @@ const schemeLooks: Record<Design, Record<Exclude<Theme, 'system'>, SchemeLook>> 
   winter: {
     dark: { frame: '#050913', canvas: '#070c18', card: '#0a1222', line: '#182840', ink: '#1e2e4a' },
     oled: { frame: '#000000', canvas: '#000000', card: '#04070e', line: '#101a2c', ink: '#18233a' },
-    light: { frame: '#dde8f2', canvas: '#eaf2f9', card: '#ffffff', line: '#d9e4ef', ink: '#cfdbe8' },
+    light: { frame: '#dde8f2', canvas: '#eaf2f9', card: '#ffffff', line: '#cfdceb', ink: '#cfdbe8' },
   },
 }
 const themes = computed<{ key: Theme; look: SchemeLook; split?: SchemeLook }[]>(() => {

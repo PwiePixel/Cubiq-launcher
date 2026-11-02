@@ -62,6 +62,16 @@ const running = computed(() =>
 const totalSeconds = computed(() => instances.items.reduce((sum, i) => sum + i.totalPlaySeconds, 0))
 const showPlayTime = computed(() => settings.current?.ui.showPlayTime !== false)
 
+// Polarlicht: auf der Bühne nur die eine lebende Szene – ein erzeugtes Titelbild läge als zweite Szene darüber.
+// Ein eigenes Banner der Instanz bleibt (wie in jedem anderen Design und an Halloween).
+const design = useDesign()
+const stageArt = computed(
+  () => !!featured.value && (design.value !== 'winter' || events.lookHalloween || instanceBannerSrc(featured.value) !== null),
+)
+// Titel der Bühne: die große Insel der Polarlicht-Szene schwebt rechts daneben (bzw. bleibt weg, wenn kein Platz ist).
+const stageInfo = ref<HTMLElement | null>(null)
+const stageTitle = computed(() => stageInfo.value?.querySelector<HTMLElement>('.stage-title') ?? null)
+
 const sceneMode = computed(() =>
   game.value?.phase === 'running' ? 'running' : game.value?.phase === 'preparing' ? 'starting' : 'idle',
 )
@@ -130,8 +140,8 @@ function play(instance: Instance) {
         <HalloweenEventCard v-if="events.halloween" class="hw-card" />
 
         <div class="stage-top relative">
-          <DesignScene :mode="sceneMode" :progress="sceneProgress" :anchor="lamp">
-            <div v-if="featured" class="stage-art">
+          <DesignScene :mode="sceneMode" :progress="sceneProgress" :anchor="lamp" :clear="stageTitle">
+            <div v-if="featured && stageArt" class="stage-art">
               <InstanceBanner :instance="featured" shade="none" class="size-full" />
             </div>
             <div class="stage-scrim" />
@@ -148,7 +158,7 @@ function play(instance: Instance) {
                 <NuxtLink :to="`/instances/${featured.id}`" class="icon-frame squircle shrink-0 outline-none" tabindex="-1" aria-hidden="true">
                   <InstanceIcon :instance="featured" :size="mobile ? 64 : 104" />
                 </NuxtLink>
-                <div class="min-w-0 flex-1 pb-1 mobile:pb-0">
+                <div ref="stageInfo" class="min-w-0 flex-1 pb-1 mobile:pb-0">
                   <p class="eyebrow flex items-center gap-2 text-primary-300">
                     <span class="diamond" />
                     <span class="truncate">{{ t('instance.lastPlayed') }} · {{ formatRelative(featured.lastPlayed) }}</span>
@@ -381,6 +391,20 @@ function play(instance: Instance) {
     corner-shape: squircle;
     border-radius: 2.25rem;
   }
+}
+/* Polarlicht: ein unregelmäßiger Saum aus Pixel-Schnee oben auf der Bühne, zwischen den runden Ecken. */
+:root[data-design="winter"]:not([data-event="halloween"]) .stage::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 2.25rem;
+  right: 2.25rem;
+  height: var(--winter-lip-height);
+  background: var(--winter-lip) 0 0 / var(--winter-lip-size) repeat-x;
+  opacity: 0.8;
+  filter: drop-shadow(0 1px 1px rgb(var(--shadow-rgb) / 0.35));
+  pointer-events: none;
 }
 .stage-top {
   min-height: 15.5rem;

@@ -231,7 +231,7 @@ onBeforeUnmount(() => void backListener?.unregister())
         <div class="canvas relative flex min-h-0 min-w-0 flex-1 flex-col">
           <!-- Hintergrund-Szene hinter allen Seiten (die Startseite hat ihre eigene auf der Bühne). -->
           <div v-if="appBackground" class="app-bg" aria-hidden="true">
-            <DesignScene fill bolts :still="!animatedBackground" />
+            <DesignScene fill sky bolts :still="!animatedBackground" />
           </div>
           <!-- Seitenwechsel: ein dünner Ladebalken läuft oben entlang. -->
           <div :key="route.path" class="route-signal" aria-hidden="true" />

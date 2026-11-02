@@ -24,7 +24,14 @@ const props = withDefaults(
 const { reduced } = useMotion()
 const src = computed(() => (!reduced.value && props.motif && props.anim) || props.motif || '/logo.png')
 
-const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : '#71a330' }))
+// Polarlicht: Schein, Kicker und Strich in der Akzentfarbe des Launchers (ab Werk Eisblau) statt im Grün des Updates;
+// die Fläche färbt winter.css nachtblau.
+const design = useDesign()
+const events = useEventsStore()
+const winterLook = computed(() => design.value === 'winter' && !events.lookHalloween)
+const style = computed(() => ({
+  '--accent': winterLook.value ? 'var(--color-primary-500)' : props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : '#71a330',
+}))
 </script>
 
 <template>

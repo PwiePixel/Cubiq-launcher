@@ -8,7 +8,13 @@ const index = defineModel<number>({ default: 0 })
 const zoomed = ref(false)
 const closeButton = ref<HTMLButtonElement | null>(null)
 const current = computed(() => props.shots[Math.min(index.value, props.shots.length - 1)] ?? null)
-const style = computed(() => ({ '--shot-accent': props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : 'var(--color-primary-500)' }))
+// Polarlicht: Auswahl und Schein in der Akzentfarbe des Launchers statt im Grün des Updates.
+const design = useDesign()
+const events = useEventsStore()
+const winterLook = computed(() => design.value === 'winter' && !events.lookHalloween)
+const style = computed(() => ({
+  '--shot-accent': !winterLook.value && props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : 'var(--color-primary-500)',
+}))
 let lastFocus: HTMLElement | null = null
 
 watch(

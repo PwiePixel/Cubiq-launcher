@@ -1,10 +1,14 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { accentAfterSwitch, designAccent, DESIGN_HINT, designs, normalizeDesign, writeDesign } from '../app/utils/design'
 import { uiSettingsSchema } from '../app/utils/schemas'
-import { auroraLevel, buildWinterLayout, pineTiers, pineTops, voxelX, voxelY, WINTER_SEED } from '../app/utils/winter/layout'
+import { winterBannerCurtain, winterBannerLevel } from '../app/utils/winter/banner'
+import { WINTER_MAX_COLS, WINTER_MAX_ROWS, winterTexel } from '../app/utils/winter/canvas'
+import { auroraLevel, buildWinterLayout, islandHalf, pineTiers, pineTops, voxelX, voxelY, WINTER_SEED } from '../app/utils/winter/layout'
 import { between, checksum, glide, hash, light, over, sequence, wave } from '../app/utils/winter/math'
-import { WinterPainter } from '../app/utils/winter/painter'
-import { AURORA_COLORS, buildWinterPalette, type WinterVariant } from '../app/utils/winter/palette'
+import { paintSky, WinterPainter } from '../app/utils/winter/painter'
+import { AURORA_COLORS, buildWinterPalette, CURTAINS, type WinterVariant } from '../app/utils/winter/palette'
 import { WinterSnow } from '../app/utils/winter/snow'
 
 // Design „Polarlicht“ (winter): die Einstellung, die Szene und – vor allem – dass der Cubiq Client im Spiel
@@ -126,6 +130,68 @@ describe('Szene „Polarlicht“', () => {
     expect(hero.oy + hero.y1).toBe(125)
   })
 
+  it('Seiten-Hintergrund: nur der Himmel – dieselben Sterne und Bänder, keine Inseln, kein Wolkenmeer', () => {
+    const full = buildWinterLayout({ cols: 343, rows: 247, seed: WINTER_SEED })
+    const sky = buildWinterLayout({ cols: 343, rows: 247, seed: WINTER_SEED, sky: true })
+    expect([sky.w, sky.h]).toEqual([full.w, full.h])
+    expect(sky.stars).toEqual(full.stars)
+    expect(sky.ribbons).toEqual(full.ribbons)
+    expect(full.islands.length).toBeGreaterThan(0)
+    expect(sky.islands).toEqual([])
+    for (const bank of [sky.cloudFar, sky.cloudNear]) expect([...bank.top].every((top) => top === sky.h)).toBe(true)
+    // Gemalt: der Grund ist der reine Himmel (keine Wolkenbank), darüber nur Sterne und – mit Stärke – das Polarlicht.
+    const palette = buildWinterPalette('dark')
+    const painter = new WinterPainter(sky, palette)
+    expect(checksum(painter.backdrop)).toBe(checksum(paintSky(sky, palette)))
+    const calm = new Uint32Array(sky.w * sky.h)
+    const lit = new Uint32Array(sky.w * sky.h)
+    painter.compose(calm, { tick: 0, seconds: 20, level: 0, moving: true, snow: null })
+    painter.compose(lit, { tick: 0, seconds: 20, level: 1, moving: true, snow: null })
+    const stars = new Set(sky.stars.map((s) => s.y * sky.w + s.x))
+    let changed = 0
+    let foreign = 0
+    for (let i = 0; i < calm.length; i++) {
+      if (!stars.has(i) && calm[i] !== painter.backdrop[i]) foreign++
+      if (lit[i] !== calm[i]) changed++
+    }
+    expect(foreign).toBe(0)
+    expect(changed).toBeGreaterThan(1500)
+    // Die volle Szene bleibt unverändert (Prüfsummen unten, gleich wie im Spiel).
+    expect(buildWinterLayout({ cols: 343, rows: 247, seed: WINTER_SEED, sky: false })).toEqual(full)
+  })
+
+  it('Texel: ganze Gerätepixel und nie mehr als 640 × 400 – große Fenster werden gröber statt teurer', () => {
+    expect([WINTER_MAX_COLS, WINTER_MAX_ROWS]).toEqual([640, 400])
+    expect(winterTexel(1280, 800, 1)).toBe(3)
+    expect(winterTexel(2560, 1440, 1)).toBe(4)
+    expect(winterTexel(1280, 800, 2)).toBe(3)
+    for (const [w, h] of [[300, 90], [1030, 740], [1280, 800], [1920, 1080], [2560, 1440], [3840, 2160], [7680, 4320]] as const) {
+      for (const dpr of [1, 1.25, 1.5, 2, 3]) {
+        const texel = winterTexel(w, h, dpr)
+        expect(Math.ceil(w / texel - 1e-9), `${w}x${h} @${dpr}`).toBeLessThanOrEqual(WINTER_MAX_COLS)
+        expect(Math.ceil(h / texel - 1e-9), `${w}x${h} @${dpr}`).toBeLessThanOrEqual(WINTER_MAX_ROWS)
+        const device = texel * dpr
+        expect(Math.abs(device - Math.round(device)), `${w}x${h} @${dpr}`).toBeLessThan(1e-9)
+        expect(device).toBeGreaterThanOrEqual(2)
+      }
+    }
+  })
+
+  it('Bühne ohne Platz neben dem Titel: die große Insel bleibt weg, Himmel, Polarlicht und Wolken bleiben gleich', () => {
+    const full = buildWinterLayout({ cols: 210, rows: 85, seed: WINTER_SEED, heroX: 0.8 })
+    const bare = buildWinterLayout({ cols: 210, rows: 85, seed: WINTER_SEED, heroX: 0.8, hero: false })
+    expect(full.islands.filter((i) => i.depth === 2)).toHaveLength(1)
+    expect(bare.islands.filter((i) => i.depth === 2)).toHaveLength(0)
+    expect(bare.stars).toEqual(full.stars)
+    expect(bare.ribbons).toEqual(full.ribbons)
+    expect(bare.cloudFar).toEqual(full.cloudFar)
+    expect(bare.cloudNear).toEqual(full.cloudNear)
+    // Größe der Hauptinsel wie im Aufbau: höchstens 7 Würfel = 14 halbe Würfel breit.
+    const hero = full.islands.find((i) => i.depth === 2)!
+    expect(hero.a).toBe(2 * islandHalf(210, 85))
+    expect(hero.x1 - hero.x0).toBeLessThanOrEqual(14 * islandHalf(210, 85))
+  })
+
   it('kommt mit kleinen Flächen zurecht (Leer-Zustände, Titelbilder)', () => {
     const tiny = buildWinterLayout({ cols: 3, rows: 2, seed: 1 })
     expect([tiny.w, tiny.h]).toEqual([16, 16])
@@ -166,8 +232,70 @@ describe('Szene „Polarlicht“', () => {
       for (const shift of [16, 8, 0]) expect((lit[i]! >>> shift) & 255).toBeGreaterThanOrEqual((calm[i]! >>> shift) & 255)
     }
     expect(changed).toBeGreaterThan(1500)
-    // Das Polarlicht trägt das Cubiq-Grün aus dem Logo.
-    expect(AURORA_COLORS[1]).toBe('#71a330')
+    // Die untere Kante des Vorhangs trägt das helle Cubiq-Grün aus dem Logo.
+    expect(AURORA_COLORS[1]).toBe('#a9d46b')
+  })
+
+  it('Polarlicht als Vorhang mit Strahlen – quer zu den Spalten wechselt das Licht fast so stark wie von unten nach oben', () => {
+    // Licht des Polarlichts je Rasterkachel (4 × 4 Texel, das Raster hebt sich darin auf); gemessen wird, wie stark eine
+    // Kachel von ihren Nachbarn links und rechts bzw. oben und unten abweicht. Die waagrechten Bänder bis 0.3.3 kamen quer
+    // nur auf gut die Hälfte, der Vorhang mit seinen senkrechten Strahlen liegt etwa gleichauf.
+    let sideways = 0
+    let upDown = 0
+    for (const [cols, rows] of [[343, 247], [427, 240]] as const) {
+      const L = buildWinterLayout({ cols, rows, seed: WINTER_SEED, sky: true })
+      const painter = new WinterPainter(L, buildWinterPalette('dark'))
+      const calm = new Uint32Array(L.w * L.h)
+      const lit = new Uint32Array(L.w * L.h)
+      const bw = Math.floor(L.w / 4)
+      const bh = Math.floor(L.h / 4)
+      for (const seconds of [5, 21.5, 77]) {
+        painter.compose(calm, { tick: 0, seconds, level: 0, moving: false, snow: null })
+        painter.compose(lit, { tick: 0, seconds, level: 1, moving: false, snow: null })
+        const cell = new Float64Array(bw * bh)
+        for (let y = 0; y < bh * 4; y++) {
+          for (let x = 0; x < bw * 4; x++) {
+            const i = y * L.w + x
+            for (const shift of [16, 8, 0]) cell[(y >> 2) * bw + (x >> 2)]! += ((lit[i]! >>> shift) & 255) - ((calm[i]! >>> shift) & 255)
+          }
+        }
+        for (let by = 1; by + 1 < bh; by++) {
+          for (let bx = 1; bx + 1 < bw; bx++) {
+            const a = cell[by * bw + bx]!
+            if (a === 0) continue
+            sideways += Math.abs(2 * a - cell[by * bw + bx - 1]! - cell[by * bw + bx + 1]!)
+            upDown += Math.abs(2 * a - cell[(by - 1) * bw + bx]! - cell[(by + 1) * bw + bx]!)
+          }
+        }
+      }
+    }
+    expect(sideways / upDown).toBeGreaterThan(0.85)
+  })
+
+  it('Titelbilder der Instanzen: einer von drei Vorhängen und eigene Stärke je Instanz – die Szene selbst bleibt beim ersten', () => {
+    expect(CURTAINS).toHaveLength(3)
+    expect(CURTAINS[0]).toBe(AURORA_COLORS)
+    for (const set of CURTAINS) expect(set).toHaveLength(6)
+    expect(buildWinterPalette('dark').aurora).toEqual(buildWinterPalette('dark', 0).aurora)
+    const used = new Set<number>()
+    for (let n = 0; n < 200; n++) {
+      const seed = Math.imul(n + 1, 0x9e3779b1) >>> 0
+      used.add(winterBannerCurtain(seed))
+      expect(winterBannerLevel(seed)).toBeGreaterThanOrEqual(0.65)
+      expect(winterBannerLevel(seed)).toBeLessThanOrEqual(1)
+    }
+    expect([...used].sort()).toEqual([0, 1, 2])
+    // Ein anderer Vorhang färbt das Polarlicht anders, sonst bleibt alles gleich.
+    const L = buildWinterLayout({ cols: 256, rows: 96, seed: 12345 })
+    const frames = [0, 1, 2].map((curtain) => {
+      const px = new Uint32Array(L.w * L.h)
+      new WinterPainter(L, buildWinterPalette('dark', curtain)).compose(px, { tick: 7, seconds: 30, level: 0.9, moving: false, snow: null })
+      return px
+    })
+    expect(new Set(frames.map(checksum)).size).toBe(3)
+    const calm = new Uint32Array(L.w * L.h)
+    new WinterPainter(L, buildWinterPalette('dark', 2)).compose(calm, { tick: 7, seconds: 30, level: 0, moving: false, snow: null })
+    for (let i = 0; i < calm.length; i++) if (frames[1]![i] !== frames[2]![i]) expect(calm[i]).not.toBe(frames[2]![i])
   })
 
   it('Standbild: Inseln und Wolken stehen still, egal welche Sekunde', () => {
@@ -235,6 +363,23 @@ describe('Gleich wie im Spiel (WinterTest.java prüft dieselben Zahlen)', () => 
       }
     }
   })
+
+  it('WinterTest.java im Mod prüft genau dieselben Zahlen (eine Änderung nur auf einer Seite fällt hier auf)', () => {
+    const file = path.resolve(__dirname, '../client-mod/common/src/test/java/dev/pwiepixel/cubiqclient/core/ui/winter/WinterTest.java')
+    const text = fs.readFileSync(file, 'utf8')
+    const start = text.indexOf('GOLDEN = {')
+    expect(start).toBeGreaterThan(0)
+    const block = text.slice(start, text.indexOf('}};', start) + 3)
+    const numbers = (list: string) => list.split(',').map((v) => Number(v.trim().replace(/L$/, '')))
+    const java = Object.fromEntries(
+      [...block.matchAll(/\{(\d+), (\d+), (\d+), (\d+), (\d+), (\d+), new int\[\]\{([\d, ]+)\},\s*new long\[\]\{([\dL, ]+)\}\}/g)].map((m) => {
+        const f = numbers(m[8]!)
+        const entry = { stars: Number(m[3]), voxels: Number(m[4]), cloudNear: Number(m[5]), cloudFar: Number(m[6]), flakes: numbers(m[7]!), frames: { dark: [f[0], f[1]], oled: [f[2], f[3]], light: [f[4], f[5]] } }
+        return [`${m[1]}x${m[2]}`, entry]
+      }),
+    )
+    expect(java).toEqual(GOLDEN)
+  })
 })
 
 /** Prüfsummen (FNV-1a über die ARGB-Pixel) – dieselben Werte stehen in WinterTest.java. */
@@ -245,7 +390,7 @@ const GOLDEN: Record<string, { stars: number; voxels: number; cloudNear: number;
     cloudNear: 27497,
     cloudFar: 25259,
     flakes: [77, 100, 116, 1],
-    frames: { dark: [2172306274, 947558308], oled: [2523732370, 3691853699], light: [716548140, 4218033526] },
+    frames: { dark: [805101431, 956374262], oled: [156003340, 3825408737], light: [3877606103, 2023336360] },
   },
   '427x240': {
     stars: 394,
@@ -253,6 +398,6 @@ const GOLDEN: Record<string, { stars: number; voxels: number; cloudNear: number;
     cloudNear: 87152,
     cloudFar: 80666,
     flakes: [244, 176, 185, 1],
-    frames: { dark: [594324932, 1511407891], oled: [1687684407, 3493181329], light: [3951712061, 1430334280] },
+    frames: { dark: [3375006343, 482898869], oled: [1795113884, 221358817], light: [2697468366, 2480922070] },
   },
 }

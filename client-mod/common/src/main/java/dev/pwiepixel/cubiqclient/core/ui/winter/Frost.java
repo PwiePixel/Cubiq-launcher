@@ -9,8 +9,8 @@ import dev.pwiepixel.cubiqclient.core.ui.Theme;
 
 /**
  * Die Details des Designs „Polarlicht“ im Spiel – dieselben wie im Launcher ({@code app/assets/css/winter.css}): der Saum
- * aus Pixel-Schnee oben auf Knöpfen, Karten und Fenstern, der Hauch Schnee auf allen oberen Kanten des Cubiq-Zeichens und
- * der eisige Fortschrittsbalken mit wanderndem Schimmer. Alles aus Rechtecken im GUI-Raster; die Flächen selbst sind wie
+ * aus Pixel-Schnee oben auf Hauptknöpfen und Fenstern (auf Karten nur gewählt oder unter der Maus), der Hauch Schnee auf
+ * allen oberen Kanten des Cubiq-Zeichens und der eisige Fortschrittsbalken mit wanderndem Schimmer. Alles aus Rechtecken im GUI-Raster; die Flächen selbst sind wie
  * im Cubiq-Design aufgebaut, nur in den Farben von {@link Theme} (Zweig „winter“).
  */
 public final class Frost {
@@ -18,16 +18,25 @@ public final class Frost {
 	}
 
 	/**
-	 * Profil des Schneesaums: Tiefe je Spalte (wiederholt sich alle 24 Spalten) – genau wie {@code --winter-lip} in
-	 * winter.css. Oberste Zeile hell, darunter Schnee, darunter ein Schatten.
+	 * Profil des Schneesaums: Tiefe je Spalte, eine lange unregelmäßige Schneewehe (wiederholt sich alle 96 Spalten) – genau
+	 * wie {@code --winter-lip} in winter.css. Oberste Zeile hell, darunter Schnee, darunter ein Schatten.
 	 */
-	public static final int[] LIP = {2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 3, 4, 5, 3, 2, 2, 2, 2, 2, 3, 2, 2, 2};
+	public static final int[] LIP = {2, 2, 2, 2, 2, 3, 3, 4, 3, 3, 3, 3, 4, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3,
+			3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 2, 2, 2,
+			2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
+	/** Spalte im Profil, an der ein kleiner Eiszapfen unter dem Saum hängt (wie im Launcher). */
+	private static final int ICICLE = 75;
 	/** Farben des Saums wie im Launcher: Kante, Schnee, Schatten – dunkel bzw. am hellen Morgen. */
 	private static final int TOP = 0xFFFFFFFF;
 	private static final int SNOW = 0xFFEEF6FF;
 	private static final int SHADE = 0xFF9DB9D9;
 	private static final int SNOW_LIGHT = 0xFFE6F1FB;
 	private static final int SHADE_LIGHT = 0xFFB3C9E1;
+	/** Eiszapfen und seine Spitze – dunkel bzw. am hellen Morgen. */
+	private static final int ICE_DROP = 0xFFBFE9FF;
+	private static final int ICE_TIP = 0xFF7FC6EE;
+	private static final int ICE_DROP_LIGHT = 0xFFD6ECFA;
+	private static final int ICE_TIP_LIGHT = 0xFFA3CBE9;
 	/** Eis für Schimmer und Schein ({@code --winter-ice}). */
 	public static final int ICE = 0xFF9FE7FF;
 
@@ -51,6 +60,12 @@ public final class Frost {
 			if (depth > 1) c.fill(x + col, y + 1, x + end, y + depth, snow);
 			c.fill(x + col, y + depth, x + end, y + depth + 1, shade);
 			col = end;
+		}
+		// Eiszapfen: zwei Pixel Eis und eine dunklere Spitze unter dem Schatten.
+		for (int k = ICICLE; k < w; k += LIP.length) {
+			int depth = LIP[ICICLE];
+			c.fill(x + k, y + depth + 1, x + k + 1, y + depth + 3, ColorMath.fade(day ? ICE_DROP_LIGHT : ICE_DROP, a));
+			c.fill(x + k, y + depth + 3, x + k + 1, y + depth + 4, ColorMath.fade(day ? ICE_TIP_LIGHT : ICE_TIP, a));
 		}
 		c.fill(x, y, x + w, y + 1, ColorMath.fade(TOP, a));
 	}

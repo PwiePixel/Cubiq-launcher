@@ -13,6 +13,17 @@ const featured = computed(() => instances.items[0] ?? null)
 const game = computed(() => (featured.value ? games.state(featured.value.id) : null))
 const recent = computed(() => instances.items.slice(1, 5))
 const showPlayTime = computed(() => settings.current?.ui.showPlayTime !== false)
+// Polarlicht: wie auf der Bühne der Startseite statt eines erzeugten Titelbilds die eine lebende Szene (Schein am
+// Spielen-Knopf, die große Insel rechts); ein eigenes Banner der Instanz bleibt. Ein Schleier hält die große Schrift lesbar.
+const design = useDesign()
+const events = useEventsStore()
+const heroArt = computed(
+  () => !!featured.value && (design.value !== 'winter' || events.lookHalloween || instanceBannerSrc(featured.value) !== null),
+)
+const lamp = ref<HTMLElement | null>(null)
+const heroTitle = ref<HTMLElement | null>(null)
+const sceneMode = computed(() => (game.value?.phase === 'running' ? 'running' : game.value?.phase === 'preparing' ? 'starting' : 'idle'))
+const sceneProgress = computed(() => (game.value?.progress ? overallPercent(game.value.progress.stage, game.value.progress.percent) : 0))
 
 const router = useRouter()
 const curseforge = useCurseForgeStore()
@@ -34,12 +45,17 @@ function openPack(p: FeaturedPack) {
 <template>
   <div class="space-y-12">
     <section v-if="featured" class="hero" :data-instance="featured.id" :aria-label="t('home.lastPlayed', { name: featured.name })">
-      <InstanceBanner :instance="featured" shade="full" class="hero-banner" />
+      <InstanceBanner v-if="heroArt" :instance="featured" shade="full" class="hero-banner" />
+      <div v-else class="hero-banner" aria-hidden="true">
+        <DesignScene :mode="sceneMode" :progress="sceneProgress" :anchor="lamp" :clear="heroTitle">
+          <div class="hero-veil" />
+        </DesignScene>
+      </div>
       <div class="relative flex flex-wrap items-end gap-x-10 gap-y-8 p-10">
         <InstanceIcon :instance="featured" :size="144" class="shrink-0 ring-4 ring-base-900" />
         <div class="min-w-0 flex-1">
           <p class="text-xl text-base-200">{{ t('bigPicture.home.continue') }}</p>
-          <h2 class="display mt-1 truncate text-7xl leading-[1.05] text-base-50">{{ featured.name }}</h2>
+          <h2 ref="heroTitle" class="display mt-1 truncate text-7xl leading-[1.05] text-base-50">{{ featured.name }}</h2>
           <p class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1 text-xl text-base-200">
             <span class="flex items-center gap-2">
               <span class="size-3" :style="{ background: loaderColors[featured.loader.kind] }" />
@@ -50,7 +66,7 @@ function openPack(p: FeaturedPack) {
           </p>
         </div>
         <div class="flex w-full items-center gap-4 lg:w-[30rem]">
-          <div class="hero-play min-w-0 flex-1" data-bp-autofocus>
+          <div ref="lamp" class="hero-play min-w-0 flex-1" data-bp-autofocus>
             <PlayButton :instance-id="featured.id" large />
           </div>
           <button
@@ -123,6 +139,29 @@ function openPack(p: FeaturedPack) {
   z-index: -1;
   width: 100%;
   height: 100%;
+}
+/* Schleier über der Szene: links dicht für die große Schrift, nach rechts offen, unten weich. */
+.hero-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-base-950) 78%, transparent) 0%, color-mix(in srgb, var(--color-base-950) 45%, transparent) 60%, color-mix(in srgb, var(--color-base-950) 20%, transparent) 100%),
+    linear-gradient(0deg, color-mix(in srgb, var(--color-base-950) 70%, transparent) 0%, transparent 60%);
+}
+/* Polarlicht: Saum aus Pixel-Schnee oben auf der großen Karte, zwischen den runden Ecken. */
+:root[data-design="winter"]:not([data-event="halloween"]) .hero::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: var(--winter-lip-height);
+  background: var(--winter-lip) 0 0 / var(--winter-lip-size) repeat-x;
+  opacity: 0.8;
+  filter: drop-shadow(0 1px 1px rgb(var(--shadow-rgb) / 0.35));
+  pointer-events: none;
 }
 /* Der Spielen-Knopf der Startseite (grüne Pille), für den Fernseher vergrößert. */
 .hero-play :deep(.play) {

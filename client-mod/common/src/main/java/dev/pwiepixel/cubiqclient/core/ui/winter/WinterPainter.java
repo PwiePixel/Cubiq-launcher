@@ -4,8 +4,8 @@ import java.util.List;
 
 import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.between;
 import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.ease;
+import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.glide;
 import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.hash;
-import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.light;
 import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.over;
 import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.round;
 import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.threshold;
@@ -15,11 +15,14 @@ import static dev.pwiepixel.cubiqclient.core.ui.winter.WinterMath.wave;
  * Malt die Szene „Polarlicht“ als ARGB in Texeln – Zeile für Zeile wie {@code app/utils/winter/painter.ts}, Pixel für Pixel
  * dasselbe Bild. Was sich nicht bewegt (Himmel mit Sternen und der fernen Wolkenbank, die Inseln), entsteht einmal je
  * Aufbau und Farbschema; je Bild kommen das Polarlicht, funkelnde Sterne, die treibende nahe Wolkenbank, schwebende
- * Inseln und der Schnee dazu. Übergänge sind mit einem festen Raster gestuft, damit alles Pixel-Art bleibt.
+ * Inseln und der Schnee dazu. Übergänge sind mit einem festen Raster gestuft, damit alles Pixel-Art bleibt. Was je Texel
+ * oft gebraucht wird (Farbe und Leuchtkraft je Höhe des Vorhangs, Licht je Stufe), ist beim Aufbau vorgerechnet.
  */
 public final class WinterPainter {
-	/** Stufen der Polarlicht-Deckkraft. */
-	private static final int STEPS = 6;
+	/** Helligkeitsstufen des Polarlichts. */
+	private static final int STEPS = 10;
+	/** Höhenstufen des Vorhangs von der unteren Kante (0) bis ganz oben – je Stufe eine Farbe und Leuchtkraft. */
+	private static final int BANDS = 20;
 
 	/** Zustand eines Bildes. */
 	public static final class Frame {
@@ -77,6 +80,12 @@ public final class WinterPainter {
 	private final Sprite[] sprites;
 	private final Bank near;
 	private final int[] alphaOf = new int[STEPS + 1];
+	/** Farbe des Vorhangs je Höhenstufe. */
+	private final int[] tone = new int[BANDS];
+	/** Leuchtkraft je Höhenstufe, schon mal STEPS. */
+	private final double[] glow = new double[BANDS];
+	/** Licht je Höhen- und Helligkeitsstufe, schon mit der Deckkraft verrechnet: [Höhe][Stufe][Kanal]. */
+	private final int[] lit = new int[BANDS * (STEPS + 1) * 3];
 
 	public WinterPainter(WinterLayout L, WinterPalette P) {
 		this.L = L;
@@ -89,6 +98,32 @@ public final class WinterPainter {
 		for (int i = 0; i < sprites.length; i++) sprites[i] = paintIsland(L.islands.get(i), P);
 		near = paintBank(L, L.cloudNear, P.cloudNearRim, P.cloudNear, 210, 5, 255);
 		for (int q = 0; q <= STEPS; q++) alphaOf[q] = round((q / (double) STEPS) * P.auroraAlpha);
+		int[] a = P.aurora;
+		for (int b = 0; b < BANDS; b++) {
+			// Mitte der Stufe: 0 an der unteren Kante, 1 ganz oben.
+			double f = (b + 0.5) / BANDS;
+			int c;
+			double shine;
+			if (b == 0) {
+				// Die untere Kante ist der hellste Teil des Vorhangs – auch dort, wo ein Strahl schwach ist.
+				c = a[0];
+				shine = 1.4;
+			} else if (b == 1) {
+				c = a[1];
+				shine = 1.25;
+			} else {
+				// Nach oben verglimmt der Vorhang (g·√g) und wird kühler: Smaragd → Türkis → Eisblau → Violett.
+				double g = 1 - f;
+				shine = 0.9 * g * Math.sqrt(g);
+				c = f < 0.3 ? a[2] : (f < 0.55 ? between(a[2], a[3], (f - 0.3) / 0.25) : (f < 0.8 ? between(a[3], a[4], (f - 0.55) / 0.25)
+						: between(a[4], a[5], (f - 0.8) / 0.2)));
+			}
+			tone[b] = c;
+			glow[b] = shine * STEPS;
+			for (int q = 0; q <= STEPS; q++) {
+				for (int ch = 0; ch < 3; ch++) lit[(b * (STEPS + 1) + q) * 3 + ch] = (((c >>> (16 - 8 * ch)) & 255) * alphaOf[q] + 127) / 255;
+			}
+		}
 	}
 
 	/** Setzt ein ganzes Bild in {@code out} (Länge w·h, ARGB) zusammen. */
@@ -123,18 +158,21 @@ public final class WinterPainter {
 	}
 
 	/**
-	 * Polarlicht: lange Bänder, die sich in Wellen legen und dabei verdrehen. Liegt ein Band flach, ist es breit: unten ein
-	 * heller Saum, darüber Cubiq-Grün, oben Türkis, darüber ein Schein, der in Eis-Cyan ausläuft. Wo es sich dreht, wird es
-	 * schmal und leuchtet heller. Im Grün glitzern Pixel-Rauten wie im Cubiq-Zeichen.
+	 * Polarlicht als Vorhang: lange Bänder, die sich in Wellen legen und dabei verdrehen. Aus jedem Band hängt nach oben ein
+	 * Vorhang aus Lichtstrahlen – unten eine helle Kante, darüber verglimmt er über Smaragd, Türkis und Eisblau bis in ein
+	 * zartes Violett. Jede Spalte ist ein eigener Strahl: zwei langsam wandernde Rauschen machen ihn heller oder dunkler und
+	 * unterschiedlich lang; wo sich das Band dreht, wird der Vorhang kürzer und etwas heller.
 	 */
 	private void aurora(int[] out, double t, double level) {
 		int w = L.w;
 		int h = L.h;
-		int sparkle = (int) Math.floor(t * 2);
+		boolean glows = P.auroraGlows;
 		// Hintere (höhere) Bänder zuerst.
 		for (int k = L.ribbons.size() - 1; k >= 0; k--) {
 			WinterLayout.Ribbon r = L.ribbons.get(k);
 			double fade = (r.to - r.from) * 0.18;
+			// Feine Strahlen wandern je Band in die andere Richtung.
+			double drift = k % 2 == 0 ? 0.7 : -0.7;
 			int end = (int) Math.min(w, Math.ceil(r.to));
 			for (int x = (int) Math.max(0, Math.ceil(r.from)); x < end; x++) {
 				double taper = ease(r.from, r.from + fade, x) * ease(r.to, r.to - fade, x);
@@ -143,36 +181,46 @@ public final class WinterPainter {
 				double center = h * (r.base + r.amp * wave(u / r.len + t * r.speed + r.phase)
 						+ 0.35 * r.amp * wave(u / (0.41 * r.len) - 1.6 * t * r.speed + 2 * r.phase));
 				double turn = wave(u / r.twist + 1.8 * t * r.speed + 3 * r.phase);
-				double face = 0.25 + 0.75 * turn * turn;
-				double half = Math.max(1.2, h * r.thick * face);
-				double strength = level * taper * r.power * (1.3 - 0.3 * face);
-				double reach = h * r.thick * r.reach * (0.55 + 0.45 * face);
-				int bottom = (int) Math.min(horizon - 1, Math.floor(center + half));
-				for (int y = (int) Math.max(0, Math.floor(center - half - reach)); y <= bottom; y++) {
-					double d = y + 0.5 - center;
-					int tone;
-					double glow;
-					if (d > half) continue;
-					if (d > half - 1.2) {
-						tone = 0;
-						glow = 1;
-					} else if (d > -0.25 * half) {
-						tone = 1;
-						glow = 0.82;
-					} else if (d > -half) {
-						tone = 2;
-						glow = 0.68;
-					} else {
-						double g = (-half - d) / reach;
-						glow = 0.55 * (1 - g) * (1 - g);
-						tone = g < 0.35 ? 2 : 3;
-					}
-					int q = (int) Math.floor(glow * strength * STEPS + threshold(x, y));
+				double face = 0.35 + 0.65 * turn * turn;
+				double coarse = glide(x / 6.5 - t * 0.25, 0x7b + k);
+				double rays = 0.22 + 0.78 * (0.55 * glide(x / 1.6 + t * drift, 0x5a + k) + 0.45 * coarse);
+				double bottom = center + h * r.thick * 0.9;
+				double tall = h * r.thick * (3.4 + 4.2 * coarse) * (0.6 + 0.4 * face);
+				double strength = 1.3 * level * taper * r.power * rays * (1.15 - 0.15 * face);
+				// Höhenstufe je Texel aus dem Abstand d zur unteren Kante: der Saum ist der erste Texel, die Kante der zweite,
+				// darüber verteilt sich der Vorhang auf die übrigen Stufen. Alle Werte sind hier positiv – (int) rundet wie floor
+				// ab (im Launcher „| 0“), die Rasterschwellen der Spalte liegen schon bereit: das hält die Schleife schnell.
+				double per = BANDS / tall;
+				int yb = (int) Math.min(horizon - 1, Math.floor(bottom));
+				double t0 = threshold(x, 0);
+				double t1 = threshold(x, 1);
+				double t2 = threshold(x, 2);
+				double t3 = threshold(x, 3);
+				for (int y = (int) Math.max(0, Math.floor(bottom - tall)); y <= yb; y++) {
+					double d = bottom - (y + 0.5);
+					if (d < 0) continue;
+					int b = d < 1 ? 0 : (d < 2 ? 1 : (int) (d * per));
+					if (b < 2 && d >= 2) b = 2;
+					if (b >= BANDS) continue;
+					int m = y & 3;
+					int q = (int) (glow[b] * strength + (m == 0 ? t0 : (m == 1 ? t1 : (m == 2 ? t2 : t3))));
 					if (q <= 0) continue;
-					if (tone == 1 && (x + y + sparkle) % 6 == 0 && Math.floorMod(x - y, 6) == 0) q++;
 					if (q > STEPS) q = STEPS;
 					int i = y * w + x;
-					out[i] = P.auroraGlows ? light(out[i], P.aurora[tone], alphaOf[q]) : over(out[i], P.aurora[tone], alphaOf[q]);
+					if (glows) {
+						// Wie light(), nur mit vorgerechneten Stufen (gleiche Zahlen, schneller).
+						int v = out[i];
+						int o = (b * (STEPS + 1) + q) * 3;
+						int cr = (v >> 16) & 255;
+						int cg = (v >> 8) & 255;
+						int cb = v & 255;
+						int sr = lit[o];
+						int sg = lit[o + 1];
+						int sb = lit[o + 2];
+						out[i] = 0xFF000000 | ((cr + sr - (cr * sr + 127) / 255) << 16) | ((cg + sg - (cg * sg + 127) / 255) << 8) | (cb + sb - (cb * sb + 127) / 255);
+					} else {
+						out[i] = over(out[i], tone[b], alphaOf[q]);
+					}
 				}
 			}
 		}

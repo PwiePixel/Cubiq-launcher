@@ -114,14 +114,21 @@ public final class LookPicker {
 			return;
 		}
 		if (Theme.WINTER.equals(Theme.normalizeDesign(design))) {
-			// Polarlicht: Nachthimmel, ein Band Polarlicht (heller Saum, Cubiq-Grün, Türkis), eine verschneite Würfel-Insel
-			// über dem Wolkenmeer und ein paar Flocken – die Szene des Launchers im Kleinen, in denselben Farben.
+			// Polarlicht: Nachthimmel, ein Vorhang aus Licht (heller Saum, Kante in hellem Cubiq-Grün, darüber Strahlen in
+			// Smaragd und Türkis), eine verschneite Würfel-Insel über dem Wolkenmeer und ein paar Flocken – die Szene des
+			// Launchers im Kleinen, in denselben Farben.
 			WinterPalette p = new WinterPalette(WinterPalette.DARK);
 			int sea = y + h - Math.max(2, h / 5);
 			for (int i = 0; i < 3; i++) c.fill(x, y + (sea - y) * i / 3, x + w, y + (sea - y) * (i + 1) / 3, p.sky[i * 2 + 1]);
+			int reach = Math.max(2, h / 4);
 			for (int i = 0; i < w; i++) {
 				int band = y + h / 3 + (int) Math.round(WinterMath.wave(i / (double) Math.max(8, w)) * Math.max(1, h / 9));
-				c.fill(x + i, band - 2, x + i + 1, band - 1, ColorMath.withAlpha(WinterPalette.AURORA[2], 0x90));
+				// Je Spalte ein Strahl eigener Länge, nach oben schwächer.
+				int ray = 1 + (int) Math.floor(WinterMath.hash(i, 3, 0x5a) * reach);
+				for (int k = 0; k < ray && band - 2 - k > y; k++) {
+					int color = k * 2 < ray ? WinterPalette.AURORA[2] : WinterPalette.AURORA[3];
+					c.fill(x + i, band - 2 - k, x + i + 1, band - 1 - k, ColorMath.withAlpha(color, 0xB0 - 0x90 * k / ray));
+				}
 				c.fill(x + i, band - 1, x + i + 1, band, WinterPalette.AURORA[1]);
 				c.fill(x + i, band, x + i + 1, band + 1, WinterPalette.AURORA[0]);
 			}
