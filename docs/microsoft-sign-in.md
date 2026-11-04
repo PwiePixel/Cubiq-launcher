@@ -1,8 +1,15 @@
 # Microsoft sign-in (Azure app + Minecraft approval)
 
 Players sign in with their own Microsoft account. For that the launcher needs **its own Azure app** ("AppID") that
-Microsoft has approved for the Minecraft services. One app is enough for everything: the launcher, the in-game
-sign-in of the Cubiq Client and the website login.
+Microsoft has approved for the Minecraft services.
+
+**Status (November 2026):** the first registration (`5cc8876f-8fe1-4c27-bc28-9355a79db635`) was not approved. A
+second registration was approved; it serves the desktop launcher (public client, `http://localhost/login`) and the
+website login (Web platform with a client secret). Its client ID is not written into the code: release builds for
+Windows and Linux get it from the repository variable `CUBIQ_MSA_CLIENT_ID`, the website from `MS_CLIENT_ID` and
+`MS_CLIENT_SECRET` in its `api/.env`. Android and iOS builds don't receive it – they get Microsoft sign-in once a
+mobile app of their own is approved. The in-game sign-in of the Cubiq Client still carries the first registration and
+therefore doesn't work; everything else in the mod uses the session the game was started with.
 
 How sign-in works (for the review and for you):
 
@@ -83,15 +90,16 @@ the launcher shows "not approved" at sign-in (`login_with_xbox` answers 403); af
 
 ## 4. The app in the code
 
-The Azure app "Cubiq Launcher" is registered (application/client ID `5cc8876f-8fe1-4c27-bc28-9355a79db635`, tenant
-`f549d532-b025-4e54-8fea-8dbc13d91ed7`, personal accounts only, public client redirect `http://localhost/login`). Its
-client ID is built in – nothing else to set for the launcher and the Cubiq Client:
+- Launcher: release builds take the client ID from the repository variable `CUBIQ_MSA_CLIENT_ID` (Settings →
+  Secrets and variables → Actions → Variables) – only the Windows and Linux jobs pass it on. Without the variable a
+  build falls back to `CUBIQ_APP_ID` in `src-tauri/crates/core/src/auth/microsoft.rs`, which is still the first,
+  unapproved registration; for local builds set the environment variable `CUBIQ_MSA_CLIENT_ID` to the approved ID.
+- Cubiq Client: `MsAuth.CLIENT_ID` (`client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java`)
+  is the first registration. Before the mod is shipped, either remove its own sign-in or switch it to an approved ID
+  that covers it.
+- Website: `MS_CLIENT_ID` and `MS_CLIENT_SECRET` in `api/.env` on the server; the Web redirect of the app must be
+  `<SITE_URL>/auth/microsoft/callback`. The secret never goes into Git – renew it in the Azure portal before it
+  expires.
 
-- Launcher: `CUBIQ_APP_ID` in `src-tauri/crates/core/src/auth/microsoft.rs`. A build can use a different app with the
-  repository variable (or environment variable) `CUBIQ_MSA_CLIENT_ID`.
-- Cubiq Client: `MsAuth.CLIENT_ID` (`client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java`).
-- Website: `MS_CLIENT_ID` is prefilled in `.env.example`; add the **Web** redirect and a client secret
-  (`MS_CLIENT_SECRET`) once the website runs (step 2.5).
-
-Until Microsoft approves the app, signing in shows that the login is still waiting for the approval; afterwards it
-works without a new release.
+An approval belongs to one client ID. Builds that already carry an approved ID keep working without a new release; a
+different ID needs a new build.
