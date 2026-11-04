@@ -481,10 +481,11 @@ jobs:
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
       # Telefone (arm64) und Chromebooks/Emulatoren (x86_64) in einer APK – die Spiel-Engine gibt es nur für 64 Bit.
+      # Ohne CUBIQ_MSA_CLIENT_ID: Die freigegebene Azure-App ist für den Desktop-Launcher beschrieben. Handy-Builds
+      # bekommen die Microsoft-Anmeldung erst mit einer eigenen, von Mojang freigegebenen App.
       - name: Build release APK
         env:
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-          CUBIQ_MSA_CLIENT_ID: ${{ vars.CUBIQ_MSA_CLIENT_ID }}
           CUBIQ_API_BASE: ${{ vars.CUBIQ_API_BASE }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -565,10 +566,11 @@ jobs:
         run: bash scripts/ios-project.sh
 
       # Unsigniert: AltStore/SideStore signieren beim Installieren mit der Apple-ID des Nutzers.
+      # Ohne CUBIQ_MSA_CLIENT_ID: Die freigegebene Azure-App ist für den Desktop-Launcher beschrieben. Handy-Builds
+      # bekommen die Microsoft-Anmeldung erst mit einer eigenen, von Mojang freigegebenen App.
       - name: Unsigned IPA
         env:
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-          CUBIQ_MSA_CLIENT_ID: ${{ vars.CUBIQ_MSA_CLIENT_ID }}
           CUBIQ_API_BASE: ${{ vars.CUBIQ_API_BASE }}
         run: bash scripts/ios-unsigned-ipa.sh release "out/Cubiq-Launcher_${TAG#v}.ipa"
 
