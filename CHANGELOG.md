@@ -28,6 +28,43 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
+## 0.3.4 – 2026-11-04 – Back in the game | Zurück im Spiel
+<!-- banner: accent=#71a330 motif=/news/0.3.4/banner.png anim=/news/0.3.4/banner-anim.png -->
+
+### English
+- **Microsoft sign-in works again.** You can sign in with your Microsoft account in the Cubiq Launcher again. Open
+  Accounts, choose to sign in with Microsoft and log in on Microsoft's own page – your password is only ever entered
+  there. After that you start your instances straight from Cubiq as usual: with your own skin, on online servers and
+  with all your mods. Your instances, worlds, mods and settings were never affected and are all still there. If an
+  account still shows an error from an earlier attempt, remove it under Accounts and sign in once more.
+- **Cubiq services in the launcher are back.** With the sign-in, everything that needs your account works again in
+  the launcher too: friends and chat, your capes and cosmetics, achievements and sharing worlds and modpacks. They
+  stay optional – they only run if you agreed to the Cubiq services, and you can switch them off at any time under
+  Settings → Privacy.
+- **The update pictures look right again.** In the animated picture of the 0.3.3 update, Cubi's eyes are the same
+  size again and he blinks when he looks from his friend to the map. In the 0.3.2 picture he looks at the fish he
+  holds out and at the fox kit he pets, the penguin has no white specks on its head any more and the fox kit's eyes
+  stay clear of Cubi's arm. The firefly keeps both eyes, and the pictures of 0.3.0 and 0.3.2 show the penguin and the
+  fox kit as they look today. You can see them on the News page in the launcher.
+
+### Deutsch
+- **Die Microsoft-Anmeldung funktioniert wieder.** Du kannst dich im Cubiq Launcher wieder mit deinem
+  Microsoft-Konto anmelden. Öffne „Accounts“, wähle die Anmeldung mit Microsoft und melde dich auf Microsofts eigener
+  Seite an – dein Passwort gibst du nur dort ein. Danach startest du deine Instanzen wie gewohnt direkt aus Cubiq:
+  mit deinem eigenen Skin, auf Online-Servern und mit allen Mods. Deine Instanzen, Welten, Mods und Einstellungen
+  waren nie betroffen und sind alle noch da. Zeigt ein Konto noch einen Fehler von einem früheren Versuch, entferne
+  es unter „Accounts“ und melde dich einmal neu an.
+- **Die Cubiq-Dienste im Launcher sind zurück.** Mit der Anmeldung funktioniert auch im Launcher wieder alles, was
+  dein Konto braucht: Freunde und Chat, deine Umhänge und Kosmetik, Erfolge und das Teilen von Welten und
+  Modpacks. Die Dienste bleiben freiwillig – sie laufen nur, wenn du ihnen zugestimmt hast, und lassen sich jederzeit
+  unter Einstellungen → Datenschutz abschalten.
+- **Die Update-Bilder sehen wieder richtig aus.** Im animierten Bild des Updates 0.3.3 sind Cubis Augen wieder gleich
+  groß, und er blinzelt, wenn er vom Freund zur Karte schaut. Im Bild von 0.3.2 schaut er auf den Fisch, den er
+  hinhält, und auf das Füchschen, das er krault; der Pinguin hat keine weißen Flecken mehr auf dem Kopf, und die
+  Augen des Füchschens bleiben frei von Cubis Arm. Das Glühwürmchen behält beide Augen, und die Bilder von 0.3.0 und
+  0.3.2 zeigen den Pinguin und das Füchschen so, wie sie heute aussehen. Du siehst sie auf der Seite „News“ im
+  Launcher.
+
 ## 0.3.3 – 2026-10-28 – Classic maps | Klassische Karten
 <!-- banner: accent=#71a330 motif=/news/0.3.3/banner.png anim=/news/0.3.3/banner-anim.png -->
 <!-- shots:
