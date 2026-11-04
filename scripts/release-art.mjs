@@ -306,6 +306,35 @@ const CUBI = cubiSprites('cubi')
 const FRIEND = cubiSprites('friend')
 
 /**
+ * Cubis Augen, wenn er gezielt wohin schaut – je 2 × 3 Punkte wie im Sprite, gezeichnet auf seine Augenfelder (x + 3
+ * und x + 10, ab der fünften Zeile): offen mit der Pupille links oben, rechts oben oder rechts unten (wie im Sprite),
+ * halb offen (`…Half`, das Lid deckt noch die obere Reihe) und zu (`shut`, Strich unten wie beim Blinzeln).
+ */
+const CUBI_EYES = Object.fromEntries(
+  Object.entries({
+    upLeft: ['KW', 'KW', 'WW'],
+    upLeftHalf: ['GG', 'KW', 'WW'],
+    upRight: ['WK', 'WK', 'WW'],
+    upRightHalf: ['GG', 'WK', 'WW'],
+    downRight: ['WW', 'WK', 'WK'],
+    downRightHalf: ['GG', 'WK', 'WK'],
+    shut: ['GG', 'GG', 'KK'],
+  }).map(([k, rows]) => [k, sprite(rows, { W: C.eye, K: C.pupil, G: C.cubi })]),
+)
+
+/**
+ * Cubis Blick im Bild f (von n) als Schlüssel in CUBI_EYES: von Bild `from` bis vor Bild `to` in Richtung `during`,
+ * sonst `otherwise`. Jeder Blickwechsel geschieht mit einem Lidschlag – zu, halb auf in die neue Richtung, ganz auf –,
+ * so springen die Pupillen nie (zwei Lidschläge je Schleife, auch über die Naht hinweg). `opening`: Die Augen waren eben
+ * aus einem anderen Grund zu (etwa vor Freude) und gehen erst halb auf.
+ */
+function gaze(f, n, [from, to], during, otherwise, opening = false) {
+  const turned = f >= from && f < to
+  const since = (f - (turned ? from : to) + n) % n
+  return since === 0 ? 'shut' : `${turned ? during : otherwise}${since === 1 || opening ? 'Half' : ''}`
+}
+
+/**
  * Cubi an (x, Füße auf GROUND): wippt einmal je Schleife (der Körper hebt sich, die Füße bleiben – kleine Beine
  * werden sichtbar), blinzelt kurz und das Pflänzchen auf dem Kopf schwingt. `mirror` = schaut nach links.
  */
@@ -956,14 +985,16 @@ function fireflyFlight(f, n, x0, y0) {
     bug.set(bx + (right ? 1 : 5), by + 1, C.wing)
   }
   c.draw(bug.outline(C.outline))
-  // Laterne pulsiert: Licht wächst zu einem kleinen Stern und vergeht
+  // Laterne pulsiert: Licht wächst zu einem kleinen Stern und vergeht. Es scheint über den Körper, aber nie über die
+  // Augen (nach links reicht der längste Strahl sonst bis aufs zweite Auge, und das Glühwürmchen schaut einäugig).
   const pulse = [0, 1, 2, 3, 3, 2, 1, 0][f % 8]
   const lx = bx + (right ? 1 : 6)
   const ly = by + 3
+  const eye = (x, y) => String(bug.get(x, y)) === String(C.white)
   c.rect(lx, ly, 2, 2, pulse >= 2 ? C.lampHi : C.lamp)
   for (let k = 1; k <= pulse; k++) {
     const col = k === pulse ? C.lampDark : C.lamp
-    for (const [gx, gy] of [[lx - k, ly], [lx + 1 + k, ly + 1], [lx, ly - k], [lx + 1, ly + 1 + k]]) c.set(gx, gy, col)
+    for (const [gx, gy] of [[lx - k, ly], [lx + 1 + k, ly + 1], [lx, ly - k], [lx + 1, ly + 1 + k]]) if (!eye(gx, gy)) c.set(gx, gy, col)
   }
   return c
 }
@@ -995,11 +1026,13 @@ const CARE = {
     sprite(['.pp.pp.', 'phhpppp', 'phppppd', '.ppppd.', '..ppd..', '...d...'], { h: C.heartHi, p: C.heart, d: C.heartDark }),
   ],
   // Pinguin von der Seite (schaut nach rechts zu Cubi): Kopf je Haltung – glücklich (Auge zu), kauend (Unterschnabel
-  // klappt auf), hoch (Schnabel zum Fisch), aufgesperrt; darunter Schal, Flosse und Bauch.
+  // klappt auf), hoch (Schnabel zum Fisch), aufgesperrt; darunter Schal, Flosse und Bauch. Das geschlossene Auge ist
+  // ein kurzer Strich in der weißen Maske (wie beim Füchschen), die Maske bleibt ein Stück: Ein weißer Punkt, ringsum
+  // von Dunklem umschlossen, sähe aus wie ein Fleck auf dem Kopf oder ein zweites Augenpaar.
   penguinHead: Object.fromEntries(
     Object.entries({
-      happy: ['..hKKk...', '.hKKKKk..', '.KKWEWk..', '.KKEWEk..', '.KPWWWBB.', '.KKWWWb..'],
-      chew: ['..hKKk...', '.hKKKKk..', '.KKWEWk..', '.KKEWEk..', '.KPWWWBB.', '.KKWWWMb.'],
+      happy: ['..hKKk...', '.hKKKKk..', '.KKWWWk..', '.KKEEWk..', '.KPWWWBB.', '.KKWWWb..'],
+      chew: ['..hKKk...', '.hKKKKk..', '.KKWWWk..', '.KKEEWk..', '.KPWWWBB.', '.KKWWWMb.'],
       up: ['....BB...', '..hKKB...', '.hKKEWk..', '.KKWWWk..', '.KPWWWk..', '.KKWWWk..'],
       open: ['.....B...', '...KKBMb.', '.hKKEWbb.', '.KKWWWk..', '.KPWWWk..', '.KKWWWk..'],
     }).map(([k, rows]) => [k, sprite(rows, PENGUIN_SIDE)]),
@@ -1016,6 +1049,8 @@ const CARE = {
 const FEED = 'oBccCCuoBccCCuoBccCCccCChhHHhhHu'
 /** Bilder, in denen der Pinguin zuschnappt. */
 const BITES = [...FEED].flatMap((s, f) => (s === 'B' ? [f] : []))
+/** Nach dem dritten Bissen schaut Cubi zum Füchschen – von Bild 18 bis vor Bild 30 –, sonst zum Fisch. */
+const LOOK_FOX = [18, 30]
 
 /**
  * Ärmchen von der Schulter (sx, sy) zur Hand (hx, hy): zwei Punkte dick, die Hand ein runder Klecks (3 × `hand`) –
@@ -1036,20 +1071,19 @@ function cubiArm(c, sx, sy, hx, hy, hand = 3) {
 }
 
 /**
- * Cubi beim Kümmern: steht mitten auf der Insel, schaut zum Pinguin (`look` < 0) oder zum Füchschen, blinzelt; `lift`
- * hebt den Körper (die Füße bleiben am Boden).
+ * Cubi beim Kümmern: steht mitten auf der Insel, die Augen wie `eyes` (CUBI_EYES, siehe gaze); `lift` hebt den Körper
+ * (die Füße bleiben am Boden).
  */
-function caringCubi(f, n, x, { look, feed, pet, lift = 0 }) {
+function caringCubi(f, x, { eyes, feed, pet, lift = 0 }) {
   const c = layer()
   const top = GROUND - 13 - lift
-  // Ärmchen zuerst: sie kommen hinter dem Körper hervor
+  // Ärmchen zuerst: sie kommen hinter dem Körper hervor. Das rechte setzt so hoch an, dass es fast waagerecht über den
+  // Kopf des Füchschens reicht: Sein Umriss stößt nirgends an dessen Augen – nicht seitlich (dann wirkte das linke Auge
+  // länger) und nicht von oben (dann verschmölze es mit dem Umriss zu einem dicken Fleck).
   cubiArm(c, x + 1, top + 2, feed[0], feed[1])
-  cubiArm(c, x + 13, top + 6, pet[0], pet[1], 2)
-  const blink = f === n / 2 + 5
-  c.draw(blink ? CUBI.blink : CUBI.body, x, top)
-  if (look < 0 && !blink) {
-    for (const ex of [x + 3, x + 11]) c.rect(ex, top + 5, 1, 2, C.pupil).rect(ex + 1, top + 5, 1, 2, C.eye)
-  }
+  cubiArm(c, x + 13, top + 3, pet[0], pet[1], 2)
+  c.draw(CUBI.body, x, top)
+  for (const ex of [x + 3, x + 10]) c.draw(CUBI_EYES[eyes], ex, top + 4)
   c.draw(CUBI.feet, x, GROUND - 1)
   c.draw(CUBI.sprout[Math.floor(f / 8) % 2], x + 6, top - 3)
   return c.outline(C.outline)
@@ -1323,26 +1357,24 @@ function landingBurst(c, age, cx, cy) {
 /** Mauszeiger (zeigt nach links oben): klickt den Wegpunkt in der Blase an. */
 const POINTER = sprite(['W...', 'WW..', 'WWW.', 'WWWW', 'WW..', '..W.'], { W: C.white })
 
-/** Cubi schaut hoch: zur Sprechblase (`look` < 0) oder zur Karte, freut sich mit geschlossenen Augen (`happy`). */
-function watchingCubi(f, n, x, { look, happy, lift }) {
+/**
+ * Cubi schaut hoch: die Augen wie `eyes` (CUBI_EYES, siehe gaze) – oder `'happy'`, dann freut er sich mit
+ * geschlossenen Augen; `lift` hebt den Körper (die Füße bleiben am Boden).
+ */
+function watchingCubi(f, x, { eyes, lift }) {
   const c = layer()
   const top = GROUND - 13 - lift
-  const blink = happy || f === 11
-  c.draw(blink ? CUBI.blink : CUBI.body, x, top)
-  if (!blink) {
-    for (const ex of [x + 3, x + 11]) {
-      c.rect(ex, top + 4, 2, 3, C.eye)
-      c.rect(look < 0 ? ex : ex + 1, top + 4, 1, 2, C.pupil)
+  c.draw(CUBI.body, x, top)
+  for (const ex of [x + 3, x + 10]) {
+    if (eyes !== 'happy') {
+      c.draw(CUBI_EYES[eyes], ex, top + 4)
+      continue
     }
-  }
-  if (happy) {
-    // Glückliche Augen: kleine Bögen statt Strichen
-    for (const ex of [x + 3, x + 11]) {
-      c.rect(ex, top + 4, 2, 3, C.cubi)
-      c.rect(ex, top + 5, 2, 1, C.pupil)
-      c.set(ex - 1, top + 6, C.pupil)
-      c.set(ex + 2, top + 6, C.pupil)
-    }
+    // Glückliche Augen: kleine Bögen statt Strichen, über jedem Augenfeld gleich (eine Spalte breiter auf jeder Seite)
+    c.rect(ex, top + 4, 2, 3, C.cubi)
+    c.rect(ex, top + 5, 2, 1, C.pupil)
+    c.set(ex - 1, top + 6, C.pupil)
+    c.set(ex + 2, top + 6, C.pupil)
   }
   c.draw(CUBI.feet, x, GROUND - 1)
   c.draw(CUBI.sprout[Math.floor(f / 8) % 2], x + 6, top - 3)
@@ -1876,37 +1908,47 @@ const PROPS = {
     // Fisch über dem Pinguin, Cubi hält ihn an der Schwanzflosse; beim Zuschnappen ruckt er nach unten.
     const fishX = px + 4
     const fishY = GROUND - 18 + (s === 'B' ? 1 : 0)
-    // Kraulen: die Hand fährt zweimal je Schleife über den Kopf des Füchschens (sanft hin und her), Cubi geht mit.
+    // Kraulen: die Hand fährt zweimal je Schleife über den Kopf des Füchschens (sanft hin und her), Cubi geht mit. Sie
+    // liegt oben auf dem Kopf (der beginnt bei `GROUND - 10`, siehe pettedFox): Ihr Umriss deckt die angelegten Ohren,
+    // darunter bleibt eine Reihe Fell – die Augen bleiben zwei freie kurze Striche.
     const stroke = Math.round(1.5 - 1.5 * Math.cos((f / n) * 4 * Math.PI))
+    const petY = GROUND - 11
     const c = layer()
     c.draw(fedPenguin(f, px))
     // Das Füchschen geht der Hand ein Stück nach.
     c.draw(pettedFox(f, fx + (stroke >= 2 ? 1 : 0)))
     c.draw(layer().draw(CARE.fish, fishX, fishY).outline(C.outline))
-    // Cubi schaut dem Pinguin beim Fressen zu, nach dem dritten Bissen zum Füchschen (nur zwei Blickwechsel je Schleife).
-    const caring = caringCubi(f, n, hero, {
-      look: f >= 18 && f < 30 ? 1 : -1,
+    // Cubi schaut dem Pinguin beim Fressen zu (hoch zum Fisch), nach dem dritten Bissen zum Füchschen – nur zwei
+    // Blickwechsel je Schleife, jeder mit einem Lidschlag.
+    const caring = caringCubi(f, hero, {
+      eyes: gaze(f, n, LOOK_FOX, 'downRight', 'upLeft'),
       feed: [fishX + 9, fishY + 2],
-      pet: [fx + 1 + stroke, GROUND - 10],
+      pet: [fx + 1 + stroke, petY],
       lift: stroke === 3 ? 1 : 0,
     })
-    // Herzchen: alle 8 Bilder eins, steigt hoch über die Insel und treibt mal zur Mitte, mal nach außen (im ruhigen
-    // Bild ist gerade ein großes ganz zu sehen).
+    // Herzchen: alle 8 Bilder eins, ploppt knapp über der Hand auf (nicht auf ihr), steigt hoch über die Insel und
+    // treibt mal zur Mitte, mal nach außen (im ruhigen Bild ist gerade ein großes ganz zu sehen).
     const hearts = layer()
     for (let k = 0; k < 4; k++) {
       const drift = [-1, 7, -2, 5][k]
-      risingHeart(hearts, (f - k * 8 - 4 + 2 * n) % n, fx + 3, GROUND - 13, { life: 24, rise: 24, drift, big: k % 2 ? 2 : 3 })
+      risingHeart(hearts, (f - k * 8 - 4 + 2 * n) % n, fx + 3, petY - 3, { life: 24, rise: 24, drift, big: k % 2 ? 2 : 3 })
     }
     const front = hearts.outline(C.outline)
-    for (const b of BITES) crumbs(front, (f - b + n) % n, fishX + 1, fishY + 3)
+    // Krümel: Der Blitz beim Zuschnappen leuchtet vorn, die fliegenden Krümel ziehen hinter den Figuren vorbei – keiner
+    // landet als heller Fleck auf dem dunklen Pinguin oder auf Cubi.
+    const behind = layer()
+    for (const b of BITES) {
+      const age = (f - b + n) % n
+      crumbs(age ? behind : front, age, fishX + 1, fishY + 3)
+    }
     // Am Himmel: das Axolotl auf seiner Insel (schwebt versetzt zur großen) bekommt auch ein Herz ab, wenn Cubi zum
     // Füchschen schaut; links fliegt das Glühwürmchen seine Acht.
     const iy = 19 + Math.round(swing(f, n, 0.3))
     const sky = layer().draw(islet(hero, iy, 15)).draw(axolotlPet(f, n, hero + 2), 0, iy - GROUND)
     const love = layer()
-    risingHeart(love, (f - 18 + n) % n, hero + 7, iy - 9, { life: 14, rise: 4 })
+    risingHeart(love, (f - LOOK_FOX[0] + n) % n, hero + 7, iy - 9, { life: 14, rise: 4 })
     sky.draw(love.outline(C.outline)).draw(fireflyFlight(f, n, left + 5, 6))
-    return { layer: c, hero: caring, front, sky }
+    return { layer: c, hero: caring, front, sky, ground: behind }
   },
 
   /**
@@ -1988,11 +2030,14 @@ const PROPS = {
     // Ecken, links unter dem Inselchen und rechts unter der großen Insel – dort ist bei jeder Inselbreite frei).
     for (const [x, y, phase] of [[6, 4, 12], [58, 5, 3], [4, 34, 5], [59, 54, 9]]) sparkle(sky, f, { x, y, phase })
 
-    // Cubi schaut zum Freund, sobald die Blase aufgeht, dann dem Wegpunkt nach zur Karte; bei der Landung hüpft er. Auf
-    // schmaleren Inseln rückt er nicht näher an die Karte.
+    // Cubi schaut hoch zur Karte (rechts oben); sobald die Blase aufgeht, zum Freund (links oben), und wenn der Wegpunkt
+    // herausspringt, ihm nach wieder zur Karte – jeder Blickwechsel mit einem Lidschlag. Bei der Landung hüpft er und
+    // freut sich mit geschlossenen Augen, danach gehen sie in zwei Schritten wieder auf. Auf schmaleren Inseln rückt er
+    // nicht näher an die Karte.
     const happy = since < 3
     const lift = since < 2 ? 2 : since === 2 ? 1 : 0
-    const watching = watchingCubi(f, n, Math.min(hero, MINIMAP.x - 21), { look: writing ? -1 : 1, happy, lift })
+    const eyes = happy ? 'happy' : gaze(f, n, [SHARE.open, SHARE.pop], 'upLeft', 'upRight', since === 3)
+    const watching = watchingCubi(f, Math.min(hero, MINIMAP.x - 21), { eyes, lift })
     // Schatten der Karte auf der Wiese (nur, wo Insel ist)
     const ground = layer()
     for (const [y, inset, col] of [[GROUND, 3, mix(C.grassHi, C.grassDark, 0.7)], [GROUND + 1, 6, mix(C.grass, C.grassDark, 0.6)]]) {
