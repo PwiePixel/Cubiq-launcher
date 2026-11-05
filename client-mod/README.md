@@ -649,10 +649,23 @@ in `builds.json` are kept (only Fabric entries for the built versions are replac
 
 The launcher updates the Cubiq Client on its own, without a launcher release: it polls the GitHub release
 `client-mod` (at start and at most every 30 minutes before a game starts), verifies the signed
-`client-mod.json` and downloads only the jar an instance needs. To ship a new version:
+`client-mod.json` and downloads only the jar an instance needs.
+
+**Automatic (normal way):** the workflow „Cubiq Client“ (`.github/workflows/client-mod.yml`) builds every project and
+Minecraft version in parallel jobs (`scripts/client-mod-plan.mjs` reads the version lists from the `settings.gradle`
+files, `scripts/client-mod-part.mjs` keeps each job's own versions), then signs the manifest with the updater key
+from the repository secrets and uploads everything to the `client-mod` release. Pull requests that touch the mod build
+everything and check the manifest without publishing; a push to `main` publishes when `mod_version` is newer than the
+channel (by hand: „Run workflow“, optionally with *force*). To ship a new version, raise `mod_version` in the pull
+request:
 
 ```sh
 node scripts/publish-client-mod.mjs --bump patch   # raises mod_version in every gradle.properties
+```
+
+**By hand (fallback):**
+
+```sh
 # rebuild: collectLauncherJars in each project, one after another (they share dist/)
 node scripts/publish-client-mod.mjs --dry-run      # writes + signs + verifies dist/channel/client-mod.json
 node scripts/publish-client-mod.mjs                # the same, then uploads to the client-mod release

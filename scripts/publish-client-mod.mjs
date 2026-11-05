@@ -17,10 +17,14 @@
 //   --out <ordner>    Ausgabe für client-mod.json(.sig) (Standard: client-mod/dist/channel)
 //   --no-bundle       src-tauri/resources/client-mod nicht anfassen
 //   --force           auch veröffentlichen, wenn die Version nicht neuer ist als im Kanal
+//   --skip-if-not-newer  ist die Version nicht neuer als im Kanal: nichts tun und erfolgreich enden (CI)
+//   --unsigned        nur mit --dry-run: Manifest prüfen, ohne zu signieren (Pull Requests ohne Schlüssel)
 //   --repo <o/r>      Standard: PwiePixel/Cubiq-launcher
 //
-// Schlüssel: %USERPROFILE%\.tauri\cubiq-launcher.key (+ .password). Beides wird nur hier
-// gelesen und nur per Umgebungsvariable an den Signierer gegeben – nie ausgegeben.
+// Schlüssel: in GitHub Actions aus TAURI_SIGNING_PRIVATE_KEY (+ _PASSWORD), wie sie
+// scripts/check-signing.mjs --export bereinigt ablegt; lokal %USERPROFILE%\.tauri\cubiq-launcher.key
+// (+ .password). Beides wird nur hier gelesen und nur per Umgebungsvariable an den Signierer
+// gegeben – nie ausgegeben.
 
 import { spawnSync } from 'node:child_process'
 import { createHash, createPublicKey, verify as verifySignature } from 'node:crypto'
@@ -51,6 +55,8 @@ function parseArgs(argv) {
     dryRun: false,
     bundle: true,
     force: false,
+    skipIfNotNewer: false,
+    unsigned: false,
     bump: null,
     dist: join(ROOT, 'client-mod', 'dist'),
     out: null,
@@ -62,6 +68,8 @@ function parseArgs(argv) {
     if (a === '--dry-run') args.dryRun = true
     else if (a === '--no-bundle') args.bundle = false
     else if (a === '--force') args.force = true
+    else if (a === '--skip-if-not-newer') args.skipIfNotNewer = true
+    else if (a === '--unsigned') args.unsigned = true
     else if (a === '--bump') args.bump = value()
     else if (a === '--dist') args.dist = resolve(value())
     else if (a === '--out') args.out = resolve(value())
@@ -72,6 +80,7 @@ function parseArgs(argv) {
     } else fail(`Unbekannte Option ${a}`)
   }
   args.out ??= join(args.dist, 'channel')
+  if (args.unsigned && !args.dryRun) fail('--unsigned geht nur mit --dry-run')
   return args
 }
 
@@ -175,6 +184,16 @@ function readBuilds(dist) {
 // --- Signatur --------------------------------------------------------------------
 
 function sign(file) {
+  const cliPath = join(ROOT, 'node_modules', '@tauri-apps', 'cli', 'tauri.js')
+  // GitHub Actions: Schlüssel aus dem Secret (von scripts/check-signing.mjs --export bereinigt).
+  if (process.env.TAURI_SIGNING_PRIVATE_KEY) {
+    if (!existsSync(cliPath)) fail('Tauri-CLI fehlt – erst `pnpm install`')
+    const env = { ...process.env, TAURI_SIGNING_PRIVATE_KEY_PASSWORD: process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD ?? '' }
+    delete env.TAURI_SIGNING_PRIVATE_KEY_PATH
+    const r = spawnSync(process.execPath, [cliPath, 'signer', 'sign', file], { env, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' })
+    if (r.status === 0 && existsSync(`${file}.sig`)) return
+    fail(`Signieren mit dem Schlüssel aus der Umgebung fehlgeschlagen (${r.status}):\n${r.stderr ?? ''}`)
+  }
   const keyPath = join(homedir(), '.tauri', 'cubiq-launcher.key')
   const passwordPath = `${keyPath}.password`
   if (!existsSync(keyPath)) fail(`Signier-Schlüssel fehlt: ${keyPath}`)
@@ -301,16 +320,23 @@ else console.log(`Kanal: ${current ?? 'noch leer'}`)
 if (current && !isNewer(version, current) && !args.force) {
   const msg = `Version ${version} ist nicht neuer als ${current} im Kanal – Launcher würden sie ignorieren. Erst \`--bump patch\` und neu bauen (oder --force).`
   if (args.dryRun) console.warn(`Warnung: ${msg}`)
-  else fail(msg)
+  else if (args.skipIfNotNewer) {
+    console.log(`Nichts zu veröffentlichen: ${msg}`)
+    process.exit(0)
+  } else fail(msg)
 }
 
 mkdirSync(args.out, { recursive: true })
 const manifestFile = join(args.out, MANIFEST)
 writeFileSync(manifestFile, manifestText)
 rmSync(`${manifestFile}.sig`, { force: true })
-sign(manifestFile)
-verifyLikeTheLauncher(readFileSync(manifestFile), readFileSync(`${manifestFile}.sig`, 'utf8'))
-console.log(`Signiert und geprüft: ${manifestFile}(.sig)`)
+if (args.unsigned) {
+  console.log(`Ohne Signatur geprüft: ${manifestFile}`)
+} else {
+  sign(manifestFile)
+  verifyLikeTheLauncher(readFileSync(manifestFile), readFileSync(`${manifestFile}.sig`, 'utf8'))
+  console.log(`Signiert und geprüft: ${manifestFile}(.sig)`)
+}
 
 if (args.bundle) bundle(args.dist, manifestText, builds)
 

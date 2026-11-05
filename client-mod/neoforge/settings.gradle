@@ -25,13 +25,22 @@ rootProject.name = 'cubiqclient-neoforge'
 
 // Jede Minecraft-Version, für die es NeoForge gibt (1.20.2 ist die erste NeoForge-Version nach 1.20.1).
 // Neue Version: hier eintragen + versions/<version>/gradle.properties (neo_version) anlegen.
+def neoforgeVersions = ['1.20.2', '1.20.3', '1.20.4', '1.20.5', '1.20.6', '1.21', '1.21.1', '1.21.2', '1.21.3',
+		'1.21.4', '1.21.5', '1.21.6', '1.21.7', '1.21.8', '1.21.9', '1.21.10', '1.21.11', '26.1',
+		'26.1.1', '26.1.2', '26.2', '26.3']
+// Version, in deren Zustand src/ eingecheckt ist.
+def neoforgeVcsVersion = '1.21.1'
+// Nur einzelne Versionen einrichten (CI: -PcubiqVersions=1.21.11,26.3); die eingecheckte Version bleibt immer dabei.
+def onlyVersions = providers.gradleProperty('cubiqVersions').orNull
+if (onlyVersions) {
+	def wanted = onlyVersions.split(',')*.trim().findAll { it }
+	def unknown = wanted - neoforgeVersions
+	if (unknown) throw new GradleException("cubiqVersions: unknown version(s) ${unknown}, known: ${neoforgeVersions}")
+	neoforgeVersions = neoforgeVersions.findAll { it == neoforgeVcsVersion || it in wanted }
+}
 stonecutter {
 	create(rootProject) {
-		versions '1.20.2', '1.20.3', '1.20.4', '1.20.5', '1.20.6',
-				'1.21', '1.21.1', '1.21.2', '1.21.3', '1.21.4', '1.21.5', '1.21.6', '1.21.7', '1.21.8',
-				'1.21.9', '1.21.10', '1.21.11',
-				'26.1', '26.1.1', '26.1.2', '26.2', '26.3'
-		// Version, in deren Zustand src/ eingecheckt ist.
-		vcsVersion = '1.21.1'
+		versions(*neoforgeVersions)
+		vcsVersion = neoforgeVcsVersion
 	}
 }
