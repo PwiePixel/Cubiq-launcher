@@ -24,8 +24,9 @@ tasks.register('collectLauncherJars') {
 	description = 'Builds every Forge version and writes the jars and builds-forge-mojmap-legacy.json to client-mod/dist/'
 
 	dependsOn(versions.collect { ":${it}:remapJar" })
-	// Unit-Tests der gemeinsamen Logik (laufen im 1.19.4-Projekt) müssen grün sein.
-	dependsOn(':1.19.4:test')
+	// Unit-Tests der gemeinsamen Logik (laufen im 1.19.4-Projekt) müssen grün sein – im Teil-Build (-PcubiqVersions)
+	// ohne 1.19.4 laufen sie in dessen Job.
+	if (versions.contains('1.19.4')) dependsOn(':1.19.4:test')
 	outputs.upToDateWhen { false }
 
 	doLast {
