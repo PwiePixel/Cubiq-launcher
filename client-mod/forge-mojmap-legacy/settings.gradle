@@ -28,11 +28,22 @@ plugins {
 
 rootProject.name = 'cubiqclient-forge-mojmap-legacy'
 
+// Forge 1.14.4–1.19.4 (Mojang-Namen beim Bauen, SRG zur Laufzeit). Neue Version: hier eintragen + versions/<version>/gradle.properties.
+def mojmapVersions = ['1.14.4', '1.15.2', '1.16.2', '1.16.4', '1.16.5', '1.17.1', '1.18', '1.18.1', '1.18.2',
+		'1.19', '1.19.1', '1.19.2', '1.19.3', '1.19.4']
+// Version, in deren Zustand src/ eingecheckt ist.
+def mojmapVcsVersion = '1.16.5'
+// Nur einzelne Versionen einrichten (CI: -PcubiqVersions=1.21.11,26.3); die eingecheckte Version bleibt immer dabei.
+def onlyVersions = providers.gradleProperty('cubiqVersions').orNull
+if (onlyVersions) {
+	def wanted = onlyVersions.split(',')*.trim().findAll { it }
+	def unknown = wanted - mojmapVersions
+	if (unknown) throw new GradleException("cubiqVersions: unknown version(s) ${unknown}, known: ${mojmapVersions}")
+	mojmapVersions = mojmapVersions.findAll { it == mojmapVcsVersion || it in wanted }
+}
 stonecutter {
 	create(rootProject) {
-		versions '1.14.4', '1.15.2', '1.16.2', '1.16.4', '1.16.5', '1.17.1',
-				'1.18', '1.18.1', '1.18.2', '1.19', '1.19.1', '1.19.2', '1.19.3', '1.19.4'
-		// Version, in deren Zustand src/ eingecheckt ist.
-		vcsVersion = '1.16.5'
+		versions(*mojmapVersions)
+		vcsVersion = mojmapVcsVersion
 	}
 }

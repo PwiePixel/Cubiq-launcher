@@ -90,6 +90,8 @@ dependencies {
 		testImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
 		testImplementation 'org.junit.jupiter:junit-jupiter'
 		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+		// Die Tests aus common nutzen Netty (Welt-Hosting); im Testpfad liegt Minecraft nicht – Netty von 1.19.4.
+		testImplementation 'io.netty:netty-all:4.1.82.Final'
 	}
 }
 

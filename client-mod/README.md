@@ -17,7 +17,7 @@ signed update channel and into `src-tauri/resources/client-mod/builds.json` (see
 
 | Directory | Loader / versions | Tooling | Rebuild |
 | --- | --- | --- | --- |
-| `fabric/` (this build) | Fabric 1.14.4–26.3 (39) | Loom + Stonecutter | `./gradlew collectLauncherJars` |
+| `fabric/` (this build) | Fabric 1.14.4–26.3 (40) | Loom + Stonecutter | `./gradlew collectLauncherJars` |
 | `neoforge/` | NeoForge 1.20.2–26.3 (22, incl. beta-only versions) | ModDevGradle + Stonecutter | `./gradlew collectLauncherJars` |
 | `forge/` | Forge 1.20–26.3 (22) | ForgeGradle 7 + Stonecutter | `./gradlew :collectLauncherJars` |
 | `forge-mojmap-legacy/` | Forge 1.14.4, 1.15.2, 1.16.2, 1.16.4, 1.16.5, 1.17.1, 1.18–1.18.2, 1.19–1.19.4 | Essential Loom + Stonecutter | `./gradlew collectLauncherJars` |
@@ -300,17 +300,17 @@ every input to `UiScreen.input*`. Contract for engine and overlay: [`docs/touch-
 - HUD editor: finger drag, safe-area snapping (`cubiq.safeInsets`), "Touch layout" profile (`TouchLayout`).
 - Tests: `TouchTest` (scaling, momentum, safe area, gestures, keyboard, layout).
 
-## Cubiq Link & Kontowechsel
+## Cubiq Link & Sitzung
 
 **Cubiq Link** (`common/core/link`): one daemon thread „Cubiq-Link“ to the launcher on **127.0.0.1**.
 
 - Protocol 2: the launcher starts the game with the environment variable `CUBIQ_CLIENT_LINK=2:<port>:<sid>:<key>`
   (never on disk, never on the command line). Handshake: `hello {v:2,sid,nonce}` → `challenge {nonce,proof,features}`
   – the mod checks the launcher's HMAC-SHA256 proof **before** it proves anything itself – → `auth {proof}` → state
-  lines. Requests `req {id,op}` / `res {id,ok,…}` (`accounts.list`, `accounts.session`, `accounts.add`,
-  `clips.enable`), push
-  `accountsChanged`. Access tokens arrive sealed (HMAC-SHA256 key stream + tag with a per-connection key). Test vectors
-  are shared with the launcher (`CubiqLinkTest` ↔ `src-tauri/crates/core/src/link/proto.rs`).
+  lines. Requests `req {id,op}` / `res {id,ok,…}` for clips and world hosting (`clips.enable`, `clips.preview`,
+  `clips.open`, `clips.hud`, `hosting.join`, `hosting.mods`, `hosting.open`). **No accounts and no Minecraft tokens
+  ever go over the link** (the `accounts.*` requests of older mods get `unknown_op`). Test vectors of the proofs are
+  shared with the launcher (`CubiqLinkTest` ↔ `src-tauri/crates/core/src/link/proto.rs`).
 - Live performance (`PerfReport`): when the launcher names `perf.report` in its `challenge`, the network thread
   sends about once per second `{"type":"perf","fps":…,"limited":…,"heapUsed":…,"heapMax":…}` (heap in MB; `fps` =
   the FPS meter of the last 1.5 s, fed in `Performance.tick`, left out when unknown; `limited` = Dynamic FPS is
@@ -318,24 +318,12 @@ every input to `UiScreen.input*`. Contract for engine and overlay: [`docs/touch-
   thread. Tests: `PerfReportTest`.
 - Protocol 1 (older launchers): hello with the token from `clips.json`, clips only.
 
-**Accounts** (`common/core/account`, UI `common/core/ui/account/AccountsUi`):
-
-- `AccountManager` (thread „Cubiq-Accounts“): started by the Cubiq Launcher → the launcher's accounts over the link;
-  otherwise the startup account plus accounts added in game (`MsAuth`: browser + PKCE on a loopback port or device
-  code, own Azure app only; `AccountVault` = `config/cubiqclient/accounts.json`, refresh tokens encrypted by `SecretBox`:
-  DPAPI via JNA reflection on Windows, else AES-GCM with a key file in the user folder). Access tokens stay in memory.
-  Switching only without a world; `prepare` (network, account thread) + `apply` (game thread).
-- Mojmap trees: `online/SessionSwap` (identical file) swaps `User` and everything built from the token – profile
-  properties (≤ 1.20.1) / `profileFuture` (1.20.2+), `UserApiService`/`SocialInteractionsService`, `userPropertiesFuture`
-  (1.20.3+), `PlayerSocialManager` (+ friend list 26.2+), `ProfileKeyPairManager` (chat signing, 1.19+),
-  `ReportingContext` (1.19.1+), `ClientTelemetryManager` (1.19.3+), Realms client/`RealmsDataFetcher` (1.19.1+) and the
-  `RealmsAvailability` cache (1.20.2+). Final fields are assigned by reflection over their **type** (names are
-  obfuscated); authlib is called by name. Legacy trees (1.7.10–1.13.2): `core/account/LegacySessionSwap` swaps the
-  `Session` and the profile properties, run from the client tick.
-- Entry points: `screen/AccountsScreen.create(parent)` (all trees), `MenuHost/TitleHost.openAccounts()`, rail entry
-  „Konten“ in the Cubiq menu.
-- Autotest `-PcubiqAutotestOnly=accounts` (fabric, legacy) with the launcher attrappe (`CUBIQ_CLIENT_LINK` from a mock):
-  screenshots `accounts`, `accounts-switched`, `menu-accounts`.
+**Session** (`common/core/account/CurrentSession`): the Cubiq Client has **no Microsoft sign-in of its own and no
+account switching**. It only reads the session Minecraft was started with (by the Cubiq Launcher: sign in once there).
+Each loader tree registers a read-only reader (`online/GameUser` in the Mojmap trees, the `Session` supplier in the
+legacy trees). Cubiq services sign in with that session (challenge → Mojang `join` → verify), the wardrobe and bug
+reports use it read-only. On start, the account file of older builds (`config/cubiqclient/accounts.json`) and its key
+file are deleted without being read. To use another account: switch it in the launcher and start the game again.
 
 **Wardrobe + skin editor** (`common/core/wardrobe` logic, `common/core/ui/wardrobe` UI):
 
@@ -345,7 +333,7 @@ every input to `UiScreen.input*`. Contract for engine and overlay: [`docs/touch-
   the server state), Cubiq sync of "My skins" (`WardrobeApi`, API.md §17; PATCH is not possible with `HttpURLConnection`,
   renames are a PUT), read-only view of the Cubiq Launcher library (`LauncherLibrary`: `<launcher>/skins/library.json`
   when the game dir is `<launcher>/instances/<id>/minecraft`), Mojang skin upload / cape select (`MojangServices`,
-  session token from `AccountManager.currentSession()`), imports by file (`FileChooser`: LWJGL TinyFD 1.15.2–26.2 →
+  session token from `CurrentSession`), imports by file (`FileChooser`: LWJGL TinyFD 1.15.2–26.2 →
   AWT → OS dialog via PowerShell/zenity/kdialog/osascript), by URL (`SafeFetch`: https only, one DNS lookup with every
   address checked, pinned IP, redirects re-checked, ≤ 128 KB) and by player name.
 - Editor: `SkinEditor` (tools, mirror via `SkinLayout.mirror`, fill per cube face, undo/redo per stroke, templates),
@@ -567,7 +555,7 @@ a key the player bound themselves is never touched.
 
 ## Supported versions
 
-1.14.4, 1.15.2, 1.16.2–1.16.5, 1.17, 1.17.1, 1.18–1.18.2, 1.19–1.19.4, 1.20.1–1.20.6, 1.21–1.21.11,
+1.14.4, 1.15.2, 1.16.2–1.16.5, 1.17, 1.17.1, 1.18–1.18.2, 1.19–1.19.4, 1.20–1.20.6, 1.21–1.21.11,
 26.1, 26.1.1, 26.1.2, 26.2, 26.3 (checked against Mojang's version manifest and meta.fabricmc.net).
 
 Not built: 1.14–1.14.3 (no official Mojang mappings), 1.15, 1.15.1 and 1.16 (their newest Fabric API on Modrinth,
@@ -661,10 +649,23 @@ in `builds.json` are kept (only Fabric entries for the built versions are replac
 
 The launcher updates the Cubiq Client on its own, without a launcher release: it polls the GitHub release
 `client-mod` (at start and at most every 30 minutes before a game starts), verifies the signed
-`client-mod.json` and downloads only the jar an instance needs. To ship a new version:
+`client-mod.json` and downloads only the jar an instance needs.
+
+**Automatic (normal way):** the workflow „Cubiq Client“ (`.github/workflows/client-mod.yml`) builds every project and
+Minecraft version in parallel jobs (`scripts/client-mod-plan.mjs` reads the version lists from the `settings.gradle`
+files, `scripts/client-mod-part.mjs` keeps each job's own versions), then signs the manifest with the updater key
+from the repository secrets and uploads everything to the `client-mod` release. Pull requests that touch the mod build
+everything and check the manifest without publishing; a push to `main` publishes when `mod_version` is newer than the
+channel (by hand: „Run workflow“, optionally with *force*). To ship a new version, raise `mod_version` in the pull
+request:
 
 ```sh
 node scripts/publish-client-mod.mjs --bump patch   # raises mod_version in every gradle.properties
+```
+
+**By hand (fallback):**
+
+```sh
 # rebuild: collectLauncherJars in each project, one after another (they share dist/)
 node scripts/publish-client-mod.mjs --dry-run      # writes + signs + verifies dist/channel/client-mod.json
 node scripts/publish-client-mod.mjs                # the same, then uploads to the client-mod release

@@ -17,7 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Attrappe des Cubiq Launchers (Protokoll 2) für Tests: prüft die Anmeldung wie der echte Launcher und beantwortet
- * Konto-Anfragen. Zwei Konten: Alex (Standard) und Steve.
+ * Anfragen zu Clips; Konten gibt es über den Link nicht.
  */
 public final class FakeLauncher implements AutoCloseable {
 	public static final String SID = "0123456789abcdef";
@@ -27,16 +27,13 @@ public final class FakeLauncher implements AutoCloseable {
 		for (int i = 0; i < 32; i++) KEY[i] = (byte) i;
 	}
 
-	public static final String ALEX = "11111111111111111111111111111111";
-	public static final String STEVE = "22222222222222222222222222222222";
-
 	final ServerSocket server;
 	public final BlockingQueue<String> received = new LinkedBlockingQueue<String>();
 	/** Beweis des Launchers absichtlich falsch (fremdes Programm auf dem Port). */
 	public volatile boolean forgeProof;
 	public volatile boolean authOk;
 	/** Merkmale im {@code challenge} (JSON-Liste). */
-	public volatile String features = "[\"clips\",\"accounts\"]";
+	public volatile String features = "[\"clips\"]";
 	/** Erste Statuszeile nach der Anmeldung. */
 	public volatile String initialState = "{\"type\":\"state\",\"available\":false,\"reason\":\"disabled\",\"buffer\":false,"
 			+ "\"recording\":false,\"recordingMs\":0,\"clipSeconds\":30,\"audio\":true,\"mic\":false}";
@@ -109,7 +106,6 @@ public final class FakeLauncher implements AutoCloseable {
 					continue;
 				}
 				authOk = true;
-				byte[] seal = LinkCrypto.sealKey(KEY, nc, nl);
 				out = o;
 				write(o, initialState);
 				String line;
@@ -120,23 +116,7 @@ public final class FakeLauncher implements AutoCloseable {
 					if (!"req".equals(req.get("type").getAsString())) continue;
 					long id = req.get("id").getAsLong();
 					String op = req.get("op").getAsString();
-					if ("accounts.list".equals(op)) {
-						write(o, "{\"type\":\"res\",\"id\":" + id + ",\"ok\":true,\"accounts\":["
-								+ "{\"id\":\"" + ALEX + "\",\"name\":\"Alex\",\"skinUrl\":null,\"active\":true},"
-								+ "{\"id\":\"" + STEVE + "\",\"name\":\"Steve\",\"skinUrl\":\"https://evil.example/x.png\",\"active\":false},"
-								+ "{\"id\":\"kaputt\",\"name\":\"<script>\",\"active\":false}]}");
-					} else if ("accounts.session".equals(op)) {
-						String account = req.get("account").getAsString();
-						if (!STEVE.equals(account) && !ALEX.equals(account)) {
-							write(o, "{\"type\":\"res\",\"id\":" + id + ",\"ok\":false,\"error\":\"unknown_account\"}");
-							continue;
-						}
-						String name = STEVE.equals(account) ? "Steve" : "Alex";
-						byte[] n = LinkCrypto.unhex(LinkCrypto.randomHex(16));
-						String token = LinkCrypto.seal(seal, ("mc-token-" + name).getBytes(StandardCharsets.UTF_8), n);
-						write(o, "{\"type\":\"res\",\"id\":" + id + ",\"ok\":true,\"session\":{\"id\":\"" + account
-								+ "\",\"name\":\"" + name + "\",\"xuid\":\"2535400000000000\",\"token\":\"" + token + "\"}}");
-					} else if ("clips.enable".equals(op)) {
+					if ("clips.enable".equals(op)) {
 						enables.incrementAndGet();
 						String error = enableError;
 						if (error != null) {
@@ -175,8 +155,6 @@ public final class FakeLauncher implements AutoCloseable {
 						hudRequests.add(req);
 						huds.add(req.has("buffer") ? req.get("buffer").getAsString() : "");
 						write(o, "{\"type\":\"res\",\"id\":" + id + ",\"ok\":true}");
-					} else if ("accounts.add".equals(op)) {
-						write(o, "{\"type\":\"res\",\"id\":" + id + ",\"ok\":false,\"error\":\"busy\"}");
 					} else {
 						write(o, "{\"type\":\"res\",\"id\":" + id + ",\"ok\":false,\"error\":\"<b>unknown</b>\"}");
 					}

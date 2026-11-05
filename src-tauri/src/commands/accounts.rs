@@ -21,8 +21,6 @@ pub async fn login_browser(app: AppHandle, launcher: State<'_, LauncherState>) -
     let account = launcher.accounts().login_browser(&open).await?;
     // Neuer (aktiver) Account: gleich mit seinem Cubiq-Konto abgleichen (nur mit Einwilligung).
     launcher.cubiq_sync_kick();
-    // Laufende Spiele mit Cubiq Client laden ihre Kontenliste neu.
-    launcher.link_accounts_changed();
     Ok(account)
 }
 
@@ -46,7 +44,6 @@ pub async fn login_device_code(
     };
     let account = launcher.accounts().login_device_code(&show).await?;
     launcher.cubiq_sync_kick();
-    launcher.link_accounts_changed();
     Ok(account)
 }
 
@@ -62,7 +59,6 @@ pub async fn set_active_account(launcher: State<'_, LauncherState>, id: String) 
     // Präsenz sofort auf den neuen Account umstellen, Sammlung mit dessen Cubiq-Konto abgleichen.
     launcher.cubiq().presence_kick();
     launcher.cubiq_sync_kick();
-    launcher.link_accounts_changed();
     Ok(())
 }
 
@@ -71,6 +67,5 @@ pub async fn remove_account(launcher: State<'_, LauncherState>, id: String) -> C
     // Vorher bei der Cubiq API abmelden (Präsenz zurück, Token widerrufen).
     launcher.cubiq_forget_account(&id).await;
     launcher.accounts().remove(&id).await?;
-    launcher.link_accounts_changed();
     Ok(())
 }

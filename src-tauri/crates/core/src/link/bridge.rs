@@ -1,15 +1,11 @@
-//! Konten des Launchers für den Cubiq-Link (Kontowechsel im Spiel).
+//! Anbindung des Cubiq-Link an den Launcher: Clips, Welt-Hosting. Konten gehen nie über den Link.
 
 use std::sync::Weak;
 
 use futures::future::BoxFuture;
 
-use super::{AccountsHandler, ClipsHandler, HandlerResult, HostingHandler, LinkAccount, LinkModSource, LinkPreview, LinkSession};
+use super::{ClipsHandler, HandlerResult, HostingHandler, LinkModSource, LinkPreview};
 use crate::{Error, Launcher};
-
-pub(crate) struct AccountsBridge {
-    pub(crate) launcher: Weak<Launcher>,
-}
 
 /// Fester Fehlercode für die Mod – nie die interne Meldung.
 fn code(e: &Error) -> &'static str {
@@ -70,59 +66,6 @@ impl HostingHandler for HostingBridge {
     fn open_world(&self, instance_id: String, room_id: String) -> BoxFuture<'static, HandlerResult<()>> {
         let launcher = self.launcher.clone();
         Box::pin(async move { launcher.upgrade().ok_or("error")?.open_world_from_game(&instance_id, &room_id) })
-    }
-}
-
-impl AccountsHandler for AccountsBridge {
-    fn list(&self) -> BoxFuture<'static, HandlerResult<Vec<LinkAccount>>> {
-        let launcher = self.launcher.clone();
-        Box::pin(async move {
-            let launcher = launcher.upgrade().ok_or("error")?;
-            let accounts = launcher.accounts.list().await.map_err(|e| code(&e))?;
-            Ok(accounts
-                .into_iter()
-                .map(|a| LinkAccount { id: a.id, name: a.name, skin_url: a.skin_url, active: a.active })
-                .collect())
-        })
-    }
-
-    fn session(&self, instance_id: String, account: String, refresh: bool) -> BoxFuture<'static, HandlerResult<LinkSession>> {
-        let launcher = self.launcher.clone();
-        Box::pin(async move {
-            let launcher = launcher.upgrade().ok_or("error")?;
-            let session = match launcher.accounts.session_for(&account, refresh).await {
-                Ok(Some(session)) => session,
-                Ok(None) => return Err("unknown_account"),
-                Err(e) => {
-                    tracing::warn!("Sitzung für den Kontowechsel im Spiel fehlgeschlagen: {e}");
-                    return Err(code(&e));
-                }
-            };
-            if refresh {
-                tracing::info!("Neue Sitzung im Spiel ('{instance_id}') für {}", session.player_name);
-            } else {
-                tracing::info!("Kontowechsel im Spiel ('{instance_id}') → {}", session.player_name);
-            }
-            // In diesem Spiel spielt jetzt dieses Konto (Präsenz des Launchers).
-            launcher.cubiq.presence.game_account_changed(&instance_id, &session.uuid);
-            Ok(LinkSession { id: session.uuid, name: session.player_name, xuid: session.xuid, token: session.access_token })
-        })
-    }
-
-    fn add(&self, instance_id: String) -> BoxFuture<'static, HandlerResult<LinkAccount>> {
-        let launcher = self.launcher.clone();
-        Box::pin(async move {
-            let launcher = launcher.upgrade().ok_or("error")?;
-            let opener = launcher.url_opener().ok_or("error")?;
-            let open = move |url: &str| opener(url);
-            tracing::info!("Konto hinzufügen aus dem Spiel ('{instance_id}')");
-            let account = launcher.accounts.login_browser_as(&open, false).await.map_err(|e| {
-                tracing::warn!("Konto hinzufügen aus dem Spiel fehlgeschlagen: {e}");
-                code(&e)
-            })?;
-            launcher.emit_accounts_changed();
-            Ok(LinkAccount { id: account.id, name: account.name, skin_url: account.skin_url, active: account.active })
-        })
     }
 }
 

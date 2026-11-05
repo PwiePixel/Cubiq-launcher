@@ -41,7 +41,8 @@ export function builtInClientId(source) {
 /**
  * Antwort des Device-Code-Endpunkts → `{ level: 'ok' | 'warn' | 'error', reason }`. Gemessene Antworten:
  * 200 mit `user_code` (App da, Anmeldung im Browser und mit Code), AADSTS70002 (App da, Code-Anmeldung aus),
- * AADSTS700016 (keine App mit dieser ID für private Konten), AADSTS7000112 (App abgeschaltet).
+ * AADSTS700016 (keine App mit dieser ID für private Konten), AADSTS7000112 (App abgeschaltet). Dazu laut Microsoft
+ * AADSTS9002332: App nur für Arbeits- und Schulkonten eingerichtet – damit klappt keine Xbox-Anmeldung.
  */
 export function explainDeviceCode(status, body) {
   const codes = Array.isArray(body?.error_codes) ? body.error_codes.map(Number) : []
@@ -50,6 +51,12 @@ export function explainDeviceCode(status, body) {
   }
   if (codes.includes(7000112)) {
     return { level: 'error', reason: 'Die App ist bei Microsoft abgeschaltet – damit kann sich niemand anmelden.' }
+  }
+  if (codes.includes(9002332)) {
+    return {
+      level: 'error',
+      reason: 'Die App nimmt nur Arbeits- und Schulkonten an. Für die Xbox-Anmeldung braucht sie private Microsoft-Konten (Azure-Portal → App → Authentication → „Supported account types“ mit „personal Microsoft accounts“).',
+    }
   }
   if (codes.includes(700016)) {
     return {

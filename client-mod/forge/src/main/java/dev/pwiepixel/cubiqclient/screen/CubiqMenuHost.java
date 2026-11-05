@@ -76,16 +76,6 @@ public final class CubiqMenuHost implements MenuHost {
 	}
 
 	@Override
-	public void openAccounts() {
-		Mc.setScreen(AccountsScreen.create(new CubiqMenuScreen(parent)));
-	}
-
-	@Override
-	public boolean hasAccounts() {
-		return AccountsScreen.available();
-	}
-
-	@Override
 	public boolean hasIntro() {
 		return true;
 	}

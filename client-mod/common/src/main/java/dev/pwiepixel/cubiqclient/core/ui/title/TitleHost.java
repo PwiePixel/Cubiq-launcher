@@ -60,11 +60,6 @@ public interface TitleHost {
 		return false;
 	}
 
-	/** Kontoverwaltung öffnen (Konto wechseln/hinzufügen); false = noch nicht verfügbar. */
-	default boolean openAccounts() {
-		return false;
-	}
-
 	/** Freundesliste öffnen; false = noch nicht verfügbar. */
 	default boolean openFriends() {
 		return false;
