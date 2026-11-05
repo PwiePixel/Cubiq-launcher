@@ -1,4 +1,7 @@
 <!-- title: Cubiq in every game | Cubiq in jedem Spiel -->
+<!-- shots:
+cubiq-client-title.png | The Cubiq Client in Minecraft 1.20 | Der Cubiq Client in Minecraft 1.20
+-->
 
 ### English
 
