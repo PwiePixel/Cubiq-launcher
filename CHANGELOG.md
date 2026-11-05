@@ -28,6 +28,24 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
+## 0.3.6 – 2026-11-05 – Ready to play | Bereit zum Spielen
+<!-- banner: accent=#71a330 motif=/news/0.3.6/banner.png anim=/news/0.3.6/banner-anim.png -->
+
+### English
+- **Microsoft sign-in works now.** The updates 0.3.4 and 0.3.5 were built with a wrong setting for the Microsoft
+  sign-in, so signing in stopped with an error. This update has the right one. Open Accounts and sign in with
+  Microsoft – after that you start your instances straight from Cubiq as usual, with your own skin and on online
+  servers. If an account still shows an error from an earlier attempt, remove it under Accounts and sign in once more.
+  Your instances, worlds, mods and settings are not affected.
+
+### Deutsch
+- **Die Microsoft-Anmeldung funktioniert jetzt.** Die Updates 0.3.4 und 0.3.5 wurden mit einer falschen Einstellung
+  für die Microsoft-Anmeldung gebaut, deshalb brach die Anmeldung mit einem Fehler ab. Dieses Update hat die
+  richtige. Öffne „Accounts“ und melde dich mit Microsoft an – danach startest du deine Instanzen wie gewohnt direkt
+  aus Cubiq, mit deinem eigenen Skin und auf Online-Servern. Zeigt ein Konto noch einen Fehler von einem früheren
+  Versuch, entferne es unter „Accounts“ und melde dich einmal neu an. Deine Instanzen, Welten, Mods und Einstellungen
+  sind nicht betroffen.
+
 ## 0.3.5 – 2026-11-05 – Sign-in fixed | Anmeldung repariert
 <!-- banner: accent=#71a330 motif=/news/0.3.5/banner.png anim=/news/0.3.5/banner-anim.png -->
 
