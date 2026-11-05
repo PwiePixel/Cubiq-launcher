@@ -28,7 +28,23 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
-## 0.3.4 – 2026-11-04 – Back in the game | Zurück im Spiel
+## 0.3.5 – 2026-11-05 – Sign-in fixed | Anmeldung repariert
+<!-- banner: accent=#71a330 motif=/news/0.3.5/banner.png anim=/news/0.3.5/banner-anim.png -->
+
+### English
+- **Microsoft sign-in fixed.** Update 0.3.4 was built with a wrong setting for the Microsoft sign-in, so signing in
+  could stop with an error. This update has the right one. If signing in didn't work for you, open Accounts and sign
+  in with Microsoft once more – after that you start your instances straight from Cubiq as usual, with your own skin
+  and on online servers. Your instances, worlds, mods and settings are not affected.
+
+### Deutsch
+- **Microsoft-Anmeldung repariert.** Das Update 0.3.4 wurde mit einer falschen Einstellung für die
+  Microsoft-Anmeldung gebaut, deshalb konnte die Anmeldung mit einem Fehler abbrechen. Dieses Update hat die richtige.
+  Hat die Anmeldung bei dir nicht geklappt, öffne „Accounts“ und melde dich noch einmal mit Microsoft an – danach
+  startest du deine Instanzen wie gewohnt direkt aus Cubiq, mit deinem eigenen Skin und auf Online-Servern. Deine
+  Instanzen, Welten, Mods und Einstellungen sind nicht betroffen.
+
+## 0.3.4 – 2026-11-05 – Back in the game | Zurück im Spiel
 <!-- banner: accent=#71a330 motif=/news/0.3.4/banner.png anim=/news/0.3.4/banner-anim.png -->
 
 ### English
