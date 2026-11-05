@@ -97,12 +97,35 @@ jobs:
             if [ "$SIGNING" = "ok" ]; then echo "| Update-Signatur (TAURI_SIGNING_PRIVATE_KEY + _PASSWORD) | ✅ $SIGNING_REASON |"
             else echo "| Update-Signatur (TAURI_SIGNING_PRIVATE_KEY + _PASSWORD) | ⚠️ $SIGNING_REASON Gebaut wird ohne Update-Signatur. |"; fi
             set_or_not "Secret CURSEFORGE_API_KEY" "$CURSEFORGE_API_KEY" "nur Modrinth"
-            if [ -n "$CUBIQ_MSA_CLIENT_ID" ]; then echo "| Variable CUBIQ_MSA_CLIENT_ID | ✅ gesetzt – eigene Azure-App |"
-            else echo "| Microsoft-Anmeldung | ✅ Azure-App des Cubiq Launchers (eingebaut) |"; fi
+            if [ -n "$CUBIQ_MSA_CLIENT_ID" ]; then echo "| Variable CUBIQ_MSA_CLIENT_ID | ✅ gesetzt – bei Microsoft geprüft unter „Microsoft-Anmeldung“ |"
+            else echo "| Variable CUBIQ_MSA_CLIENT_ID | ⚪ nicht gesetzt – eingebaute App, geprüft unter „Microsoft-Anmeldung“ |"; fi
             set_or_not "Variable CUBIQ_API_BASE" "$CUBIQ_API_BASE" "Cubiq-Dienste aus"
             set_or_not "Variable CUBIQ_DISCORD_APP_ID" "$CUBIQ_DISCORD_APP_ID" "kein Discord-Status"
             set_or_not "Secret ANDROID_KEYSTORE_BASE64" "$ANDROID_KEYSTORE_BASE64" "Android-APK wird nicht veröffentlicht"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # CUBIQ_MSA_CLIENT_ID muss die „Application (client) ID“ der Azure-App sein (GUID). Steht dort etwas anderes –
+      # etwa versehentlich das Client-Secret –, bricht das Release hier ab, bevor etwas gebaut oder veröffentlicht wird.
+      # Der Wert selbst wird nicht ausgegeben.
+      - name: Check Microsoft app ID
+        env:
+          CUBIQ_MSA_CLIENT_ID: ${{ vars.CUBIQ_MSA_CLIENT_ID }}
+        run: |
+          id="$(printf '%s' "$CUBIQ_MSA_CLIENT_ID" | tr -d '[:space:]')"
+          if [ -n "$CUBIQ_MSA_CLIENT_ID" ] && ! printf '%s' "$id" | grep -Eq '^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$'; then
+            echo "::error title=CUBIQ_MSA_CLIENT_ID::Die Variable ist keine Application (client) ID (Format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx, Azure-Portal → App → Overview). Nie das Client-Secret eintragen – es landete sonst im veröffentlichten Launcher."
+            exit 1
+          fi
+
+      # Das Format allein reicht nicht: Object ID, Directory (tenant) ID und Secret ID sehen genauso aus. Deshalb bei
+      # Microsoft nachfragen, ob es die App gibt und sie private Konten annimmt, und mit der App der Website-Anmeldung
+      # vergleichen (scripts/check-msa-app.mjs). Auch ohne Variable: Die eingebaute App ist abgeschaltet – ohne
+      # Variable könnte sich unter Windows und Linux niemand anmelden. Nicht erreichbar = nur Warnung.
+      - name: Ask Microsoft about the app
+        env:
+          CUBIQ_MSA_CLIENT_ID: ${{ vars.CUBIQ_MSA_CLIENT_ID }}
+          CUBIQ_API_BASE: ${{ vars.CUBIQ_API_BASE }}
+        run: node scripts/check-msa-app.mjs
 
       - name: Draft release „building“
         env:

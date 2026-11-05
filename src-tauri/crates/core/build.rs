@@ -12,7 +12,8 @@
 //!
 //! Außerdem die Adresse der Cubiq-Dienste (`CUBIQ_API_BASE`, Repo-Variable im
 //! Release-Build): geprüft (Regel in `site_rule.rs`) und ohne Schrägstrich am Ende
-//! als `CUBIQ_SITE`.
+//! als `CUBIQ_SITE` – und die Microsoft-App (`CUBIQ_MSA_CLIENT_ID`): nur eine
+//! Application (client) ID wird angenommen, alles andere bricht den Build ab.
 
 use std::path::PathBuf;
 
@@ -23,6 +24,7 @@ fn main() {
     println!("cargo:rerun-if-changed=site_rule.rs");
     println!("cargo:rerun-if-env-changed=CURSEFORGE_API_KEY");
     cubiq_site();
+    msa_client_id();
 
     let key_file = std::env::var_os("USERPROFILE")
         .or_else(|| std::env::var_os("HOME"))
@@ -69,4 +71,28 @@ fn cubiq_site() {
     }
     assert!(is_site(base), "CUBIQ_API_BASE „{base}“ ist keine Adresse wie https://deine-domain.de (ohne Pfad) – Build abgebrochen.");
     println!("cargo:rustc-env=CUBIQ_SITE={base}");
+}
+
+/// `CUBIQ_MSA_CLIENT_ID` (Repo-Variable im Release-Build, gelesen von `auth::microsoft::CLIENT_ID`) muss die
+/// „Application (client) ID“ der Azure-App sein: eine GUID wie `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`. Steht dort
+/// etwas anderes – etwa versehentlich das Client-Secret der Website –, bricht der Build ab, damit es nie in einem
+/// veröffentlichten Launcher landet. Der Wert selbst erscheint dabei nicht in der Ausgabe.
+fn msa_client_id() {
+    println!("cargo:rerun-if-env-changed=CUBIQ_MSA_CLIENT_ID");
+    let Ok(raw) = std::env::var("CUBIQ_MSA_CLIENT_ID") else { return };
+    // Wie `CLIENT_ID`: Leer heißt „eingebaute App“.
+    if raw.is_empty() {
+        return;
+    }
+    assert!(
+        is_guid(raw.trim()),
+        "CUBIQ_MSA_CLIENT_ID ist keine Application (client) ID im Format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx \
+         (Azure-Portal → App → Overview) – Build abgebrochen. Nie das Client-Secret eintragen."
+    );
+}
+
+/// GUID in der üblichen Schreibweise 8-4-4-4-12 aus Hex-Ziffern.
+fn is_guid(s: &str) -> bool {
+    let parts: Vec<&str> = s.split('-').collect();
+    parts.len() == 5 && parts.iter().zip([8, 4, 4, 4, 12]).all(|(p, n)| p.len() == n && p.bytes().all(|b| b.is_ascii_hexdigit()))
 }
