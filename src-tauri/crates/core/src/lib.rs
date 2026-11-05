@@ -153,9 +153,6 @@ pub struct Launcher {
     /// Kanal zur Mod (Clips, Kontowechsel im Spiel) – nur 127.0.0.1.
     link: Arc<link::CubiqLink>,
     /// Öffnet Links im Browser (setzt die App; Konto aus dem Spiel hinzufügen).
-    url_opener: std::sync::RwLock<Option<UrlOpener>>,
-    /// Meldet der Oberfläche geänderte Accounts (Tauri: `accounts-changed`).
-    accounts_sink: std::sync::RwLock<Option<AccountsSink>>,
     /// „Im Launcher öffnen“ aus dem Spiel: Fenster nach vorn + Player (Tauri: `clip-open`).
     clip_open_sink: std::sync::RwLock<Option<clips::api::ClipOpenSink>>,
     /// Welt mit Mods aus dem Spiel im Launcher öffnen (Tauri: `hosting-open`).
@@ -171,10 +168,6 @@ pub struct Launcher {
 /// „Im Launcher öffnen“ einer gehosteten Welt mit Mods (Raum-ID) – die App holt das Fenster nach vorn.
 pub type HostingOpenSink = Arc<dyn Fn(String) + Send + Sync>;
 
-/// Öffnet eine URL im Standardbrowser.
-pub type UrlOpener = Arc<dyn Fn(&str) + Send + Sync>;
-/// Accounts wurden außerhalb der Oberfläche geändert (z. B. aus dem Spiel).
-pub type AccountsSink = Arc<dyn Fn() + Send + Sync>;
 
 impl Launcher {
     /// Legt die Verzeichnisstruktur unter `root` an und lädt die Einstellungen.
@@ -239,8 +232,6 @@ impl Launcher {
             clips: clips.clone(),
             discord: discord.clone(),
             link: link.clone(),
-            url_opener: std::sync::RwLock::default(),
-            accounts_sink: std::sync::RwLock::default(),
             clip_open_sink: std::sync::RwLock::default(),
             hosting_open_sink: std::sync::RwLock::default(),
             shared_folders_lock: tokio::sync::Mutex::default(),
@@ -553,7 +544,7 @@ impl Launcher {
             }
             return;
         }
-        self.link_attach_accounts();
+        self.link_attach_handlers();
         let pairs: Vec<(String, u32)> = running.iter().map(|g| (g.instance_id.clone(), g.pid)).collect();
         if let Err(e) = self.link.restore(&pairs).await {
             tracing::warn!("Cubiq-Link-Sitzungen konnten nicht übernommen werden: {e}");
@@ -572,28 +563,6 @@ impl Launcher {
         }
         if settings.enabled {
             self.clips.settings_changed(&settings, running).await;
-        }
-    }
-
-    /// Browser-Öffner der App (für „Konto hinzufügen“ aus dem Spiel).
-    pub fn set_url_opener(&self, opener: UrlOpener) {
-        *self.url_opener.write().unwrap_or_else(std::sync::PoisonError::into_inner) = Some(opener);
-    }
-
-    pub(crate) fn url_opener(&self) -> Option<UrlOpener> {
-        self.url_opener.read().unwrap_or_else(std::sync::PoisonError::into_inner).clone()
-    }
-
-    /// Oberfläche über Account-Änderungen informieren (Tauri: `accounts-changed`).
-    pub fn set_accounts_sink(&self, sink: AccountsSink) {
-        *self.accounts_sink.write().unwrap_or_else(std::sync::PoisonError::into_inner) = Some(sink);
-    }
-
-    /// Account aus dem Spiel hinzugefügt: Oberfläche neu laden lassen.
-    pub(crate) fn emit_accounts_changed(&self) {
-        let sink = self.accounts_sink.read().unwrap_or_else(std::sync::PoisonError::into_inner).clone();
-        if let Some(sink) = sink {
-            sink();
         }
     }
 
@@ -624,16 +593,10 @@ impl Launcher {
         }
     }
 
-    /// Accounts im Launcher geändert (hinzugefügt, entfernt, aktiver gewechselt):
-    /// laufende Spiele mit Cubiq Client laden ihre Kontenliste neu.
-    pub fn link_accounts_changed(&self) {
-        self.link.notify_accounts_changed();
-    }
-
-    /// Kontowechsel im Spiel an die Accounts dieses Launchers anbinden – und
-    /// „Clips einschalten“ aus dem Spiel an die Einstellungen.
-    fn link_attach_accounts(self: &Arc<Self>) {
-        self.link.set_handler(Arc::new(link::bridge::AccountsBridge { launcher: Arc::downgrade(self) }));
+    /// Anfragen des Cubiq Client über den Link an diesen Launcher anbinden: „Clips
+    /// einschalten“, Clip-Vorschau und Welt-Hosting. Konten gibt es dort nicht – das
+    /// Spiel nutzt nur die Sitzung, mit der der Launcher es gestartet hat.
+    fn link_attach_handlers(self: &Arc<Self>) {
         self.link.set_clips_enabler(link::bridge::clips_enabler(Arc::downgrade(self)));
         self.link.set_clips_handler(Arc::new(link::bridge::ClipsBridge { launcher: Arc::downgrade(self) }));
         self.link.set_hosting_handler(Arc::new(link::bridge::HostingBridge { launcher: Arc::downgrade(self) }));
@@ -1164,7 +1127,7 @@ impl Launcher {
         }
         let log_dir = self.paths.instance_dir(&instance.id).join("launcher-logs");
         // Cubiq-Link: Schlüssel nur über die Umgebung des Spielprozesses (nie auf die Platte).
-        self.link_attach_accounts();
+        self.link_attach_handlers();
         let legacy_mod = client_mod::installed_is_legacy(&self.paths, &instance.id).await;
         if world.is_some() && legacy_mod {
             return Err(Error::launch(client_too_old()));

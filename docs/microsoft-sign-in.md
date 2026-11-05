@@ -8,13 +8,13 @@ second registration was approved; it serves the desktop launcher (public client,
 website login (Web platform with a client secret). Its client ID is not written into the code: release builds for
 Windows and Linux get it from the repository variable `CUBIQ_MSA_CLIENT_ID`, the website from `MS_CLIENT_ID` and
 `MS_CLIENT_SECRET` in its `api/.env`. Android and iOS builds don't receive it – they get Microsoft sign-in once a
-mobile app of their own is approved. The in-game sign-in of the Cubiq Client still carries the first registration and
-therefore doesn't work; everything else in the mod uses the session the game was started with.
+mobile app of their own is approved. Since 0.3.7 the Cubiq Client has no Microsoft sign-in of its own: players sign in
+once in the launcher, and the mod only uses the session the launcher started the game with.
 
 How sign-in works (for the review and for you):
 
 - Microsoft identity platform, `consumers` endpoint (personal accounts), scope `XboxLive.signin offline_access`.
-- Launcher and Cubiq Client: public client, Authorization Code + PKCE with a loopback redirect
+- Launcher: public client, Authorization Code + PKCE with a loopback redirect
   (`http://localhost/login`, Microsoft ignores the port for `localhost`), device code as fallback. No secret, the
   player types the password only on Microsoft's page.
 - Website: confidential client (Authorization Code + PKCE + client secret), redirect
@@ -24,8 +24,8 @@ How sign-in works (for the review and for you):
   Minecraft: Java Edition – there are no offline accounts. Refresh tokens are stored encrypted on the device; the
   Cubiq services verify players through Mojang's session server, so tokens never reach Cubiq servers.
 
-Code: `src-tauri/crates/core/src/auth/microsoft.rs`, `client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java`,
-website `api/server/lib/microsoft.ts`.
+Code: `src-tauri/crates/core/src/auth/microsoft.rs`, website `api/server/lib/microsoft.ts`. The Cubiq Client reads the
+running game's session only (`client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/CurrentSession.java`).
 
 ## 1. Directory (tenant)
 
@@ -97,10 +97,11 @@ the launcher shows "not approved" at sign-in (`login_with_xbox` answers 403); af
   approved ID. The variable must hold the **Application (client) ID** – not the Object ID, Directory (tenant) ID or
   Secret ID (same format) and never the client secret. CI (job „Microsoft app“) and the release check it before
   anything is built (`scripts/check-msa-app.mjs`): Microsoft must know the app for personal accounts, and it must be
-  the same app the website signs in with. The ID itself is never printed.
-- Cubiq Client: `MsAuth.CLIENT_ID` (`client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java`)
-  is the first registration. Before the mod is shipped, either remove its own sign-in or switch it to an approved ID
-  that covers it.
+  the same app the website signs in with. The check never prints the ID itself; like every repository variable it
+  shows up in the step's `env` block of the Actions log – an app ID is not a secret (it is part of every sign-in link).
+  The client secret must never go there.
+- Cubiq Client: no client ID at all. Its own in-game sign-in and account switching were removed in 0.3.7; it uses
+  the session the launcher started the game with (to change the account: switch it in the launcher, start again).
 - Website: `MS_CLIENT_ID` and `MS_CLIENT_SECRET` in `api/.env` on the server; the Web redirect of the app must be
   `<SITE_URL>/auth/microsoft/callback`. The secret never goes into Git – renew it in the Azure portal before it
   expires.

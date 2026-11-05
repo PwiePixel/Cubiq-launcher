@@ -36,7 +36,6 @@ fn parse_env(handoff: &Handoff) -> (u16, String, Vec<u8>) {
 struct Client {
     r: R,
     w: W,
-    seal_key: [u8; 32],
     first: serde_json::Value,
 }
 
@@ -65,7 +64,6 @@ async fn v2_login_with(
         challenge["features"],
         json!([
             "clips",
-            "accounts",
             "clips.enable",
             "clips.preview",
             "clips.open",
@@ -89,7 +87,7 @@ async fn v2_login_with(
     if first["type"] != "state" {
         return Err(first);
     }
-    Ok(Client { r, w, seal_key: proto::seal_key(&key, &nc, &nl), first })
+    Ok(Client { r, w, first })
 }
 
 /// Liest bis zur Antwort mit dieser ID (Statuszeilen dazwischen überspringen).
@@ -102,126 +100,36 @@ async fn response(r: &mut R, id: u64) -> serde_json::Value {
     }
 }
 
-#[derive(Default)]
-struct FakeAccounts {
-    adds: AtomicUsize,
-    sessions: AtomicUsize,
-    refreshes: AtomicUsize,
+fn new_link() -> CubiqLink {
+    CubiqLink::new(None)
 }
 
-impl AccountsHandler for FakeAccounts {
-    fn list(&self) -> BoxFuture<'static, HandlerResult<Vec<LinkAccount>>> {
-        Box::pin(async {
-            Ok(vec![
-                LinkAccount { id: "a".repeat(32), name: "Alex".into(), skin_url: None, active: true },
-                LinkAccount {
-                    id: "b".repeat(32),
-                    name: "Steve".into(),
-                    skin_url: Some("https://textures.minecraft.net/texture/abc".into()),
-                    active: false,
-                },
-            ])
-        })
-    }
-
-    fn session(&self, _instance_id: String, account: String, refresh: bool) -> BoxFuture<'static, HandlerResult<LinkSession>> {
-        self.sessions.fetch_add(1, Ordering::SeqCst);
-        if refresh {
-            self.refreshes.fetch_add(1, Ordering::SeqCst);
-        }
-        Box::pin(async move {
-            if account == "b".repeat(32) {
-                let token = if refresh { "mc-token-steve-neu" } else { "mc-token-steve" };
-                Ok(LinkSession { id: account, name: "Steve".into(), xuid: "123".into(), token: token.into() })
-            } else {
-                Err("unknown_account")
-            }
-        })
-    }
-
-    fn add(&self, _instance_id: String) -> BoxFuture<'static, HandlerResult<LinkAccount>> {
-        self.adds.fetch_add(1, Ordering::SeqCst);
-        Box::pin(async {
-            tokio::time::sleep(Duration::from_millis(300)).await;
-            Ok(LinkAccount { id: "c".repeat(32), name: "Neu".into(), skin_url: None, active: false })
-        })
-    }
-}
-
-fn link_with_accounts() -> (CubiqLink, Arc<FakeAccounts>) {
-    let link = CubiqLink::new(None);
-    let fake = Arc::new(FakeAccounts::default());
-    link.set_handler(fake.clone());
-    (link, fake)
-}
+/// Konten-Anfragen älterer Mods (`accounts.list`, `accounts.session`, `accounts.add`):
+/// Der Launcher kennt sie nicht mehr – kein Konto, kein Token geht über den Link.
+const OLD_ACCOUNT_OPS: [&str; 3] = ["accounts.list", "accounts.session", "accounts.add"];
 
 #[tokio::test]
-async fn v2_handschlag_und_konten() {
-    let (link, fake) = link_with_accounts();
+async fn v2_handschlag_ohne_konten() {
+    let link = new_link();
     let handoff = link.open_session("survival", false).await.unwrap();
-    // Gegenstelle = dieser Testprozess → als „Spiel“ eintragen.
-    link.set_pid("survival", std::process::id());
+    // Gegenstelle noch nicht geprüft: Konten-Anfragen sind trotzdem unbekannt.
     let mut c = v2_login(&handoff, false).await.expect("Anmeldung");
     assert_eq!(c.first["reason"], "disabled");
-
-    send(&mut c.w, json!({ "type": "req", "id": 1, "op": "accounts.list" })).await;
-    let res = response(&mut c.r, 1).await;
-    assert_eq!(res["ok"], true);
-    assert_eq!(res["accounts"][1]["name"], "Steve");
-    assert_eq!(res["accounts"][1]["skinUrl"], "https://textures.minecraft.net/texture/abc");
-    assert_eq!(res["accounts"][0]["active"], true);
-    assert!(res["accounts"][0].get("token").is_none());
-
-    // Sofort noch einmal: gebremst.
-    send(&mut c.w, json!({ "type": "req", "id": 2, "op": "accounts.list" })).await;
-    assert_eq!(response(&mut c.r, 2).await["error"], "rate_limited");
-
-    send(&mut c.w, json!({ "type": "req", "id": 3, "op": "accounts.session", "account": "b".repeat(32) })).await;
-    let res = response(&mut c.r, 3).await;
-    assert_eq!(res["ok"], true, "{res}");
-    assert_eq!(res["session"]["name"], "Steve");
-    let sealed = res["session"]["token"].as_str().unwrap();
-    assert!(!sealed.contains("mc-token"));
-    assert_eq!(proto::unseal(&c.seal_key, sealed).unwrap(), b"mc-token-steve");
-
-    // Zweite Sitzung innerhalb von 2 s: gebremst, der Launcher wird gar nicht gefragt.
-    send(&mut c.w, json!({ "type": "req", "id": 4, "op": "accounts.session", "account": "b".repeat(32) })).await;
-    assert_eq!(response(&mut c.r, 4).await["error"], "rate_limited");
-    assert_eq!(fake.sessions.load(Ordering::SeqCst), 1);
-
-    send(&mut c.w, json!({ "type": "req", "id": 5, "op": "accounts.session", "account": "kaputt" })).await;
-    assert_eq!(response(&mut c.r, 5).await["error"], "unknown_account");
-
-    send(&mut c.w, json!({ "type": "req", "id": 6, "op": "accounts.add" })).await;
-    send(&mut c.w, json!({ "type": "req", "id": 7, "op": "accounts.add" })).await;
-    assert_eq!(response(&mut c.r, 7).await["error"], "busy", "nur eine Anmeldung zugleich");
-    // Nach dem Hinzufügen: Antwort + Hinweis an alle Verbindungen.
-    let mut saw_changed = false;
-    let res = loop {
-        let v = line(&mut c.r).await;
-        if v["type"] == "accountsChanged" {
-            saw_changed = true;
-        }
-        if v["type"] == "res" && v["id"] == 6 {
-            break v;
-        }
-    };
-    assert_eq!(res["account"]["name"], "Neu");
-    if !saw_changed {
-        loop {
-            if line(&mut c.r).await["type"] == "accountsChanged" {
-                break;
-            }
-        }
+    for (i, op) in OLD_ACCOUNT_OPS.iter().enumerate() {
+        let id = i as u64 + 1;
+        send(&mut c.w, json!({ "type": "req", "id": id, "op": op, "account": "b".repeat(32), "refresh": "1" })).await;
+        let res = response(&mut c.r, id).await;
+        assert_eq!(res["error"], "unknown_op", "{op}: {res}");
+        assert!(res.get("session").is_none() && res.get("accounts").is_none() && res.get("account").is_none());
     }
-    assert_eq!(fake.adds.load(Ordering::SeqCst), 1);
 
-    // „Ungültige Sitzung“ im Spiel: Token beim Launcher erneuern lassen (nach der 2-s-Bremse).
-    tokio::time::sleep(Duration::from_millis(2100)).await;
-    send(&mut c.w, json!({ "type": "req", "id": 10, "op": "accounts.session", "account": "b".repeat(32), "refresh": "1" })).await;
-    let res = response(&mut c.r, 10).await;
-    assert_eq!(proto::unseal(&c.seal_key, res["session"]["token"].as_str().unwrap()).unwrap(), b"mc-token-steve-neu");
-    assert_eq!(fake.refreshes.load(Ordering::SeqCst), 1);
+    // Gegenstelle = dieser Testprozess → als „Spiel“ eintragen: weiterhin keine Konten.
+    link.set_pid("survival", std::process::id());
+    for (i, op) in OLD_ACCOUNT_OPS.iter().enumerate() {
+        let id = i as u64 + 11;
+        send(&mut c.w, json!({ "type": "req", "id": id, "op": op, "account": "b".repeat(32) })).await;
+        assert_eq!(response(&mut c.r, id).await["error"], "unknown_op", "{op}");
+    }
 
     send(&mut c.w, json!({ "type": "req", "id": 8, "op": "gibt.es.nicht" })).await;
     assert_eq!(response(&mut c.r, 8).await["error"], "unknown_op");
@@ -234,12 +142,13 @@ async fn v2_handschlag_und_konten() {
     link.close_session("survival");
     let mut rest = Vec::new();
     let _ = tokio::time::timeout(Duration::from_secs(8), c.r.read_to_end(&mut rest)).await;
+    assert!(!String::from_utf8_lossy(&rest).contains("accountsChanged"));
     assert!(v2_login(&handoff, false).await.is_err(), "nach Spielende gilt der Schlüssel nicht mehr");
 }
 
 #[tokio::test]
 async fn falscher_beweis_und_unbekannte_sitzung_werden_abgewiesen() {
-    let (link, _) = link_with_accounts();
+    let link = new_link();
     let handoff = link.open_session("survival", false).await.unwrap();
     let denied = v2_login(&handoff, true).await.err().expect("falscher Beweis");
     assert_eq!(denied["type"], "denied");
@@ -255,25 +164,10 @@ async fn falscher_beweis_und_unbekannte_sitzung_werden_abgewiesen() {
     assert!(v2_login(&fresh, false).await.is_ok());
 }
 
-#[tokio::test]
-async fn ohne_gepruefte_gegenstelle_keine_tokens() {
-    let (link, fake) = link_with_accounts();
-    let handoff = link.open_session("survival", false).await.unwrap();
-    // PID unbekannt → Liste ja, Sitzung/Hinzufügen nein.
-    let mut c = v2_login(&handoff, false).await.unwrap();
-    send(&mut c.w, json!({ "type": "req", "id": 1, "op": "accounts.list" })).await;
-    assert_eq!(response(&mut c.r, 1).await["ok"], true);
-    send(&mut c.w, json!({ "type": "req", "id": 2, "op": "accounts.session", "account": "b".repeat(32) })).await;
-    assert_eq!(response(&mut c.r, 2).await["error"], "not_allowed");
-    send(&mut c.w, json!({ "type": "req", "id": 3, "op": "accounts.add" })).await;
-    assert_eq!(response(&mut c.r, 3).await["error"], "not_allowed");
-    assert_eq!(fake.sessions.load(Ordering::SeqCst) + fake.adds.load(Ordering::SeqCst), 0);
-}
-
 #[cfg(windows)]
 #[tokio::test]
 async fn fremder_prozess_wird_abgewiesen() {
-    let (link, _) = link_with_accounts();
+    let link = new_link();
     let handoff = link.open_session("survival", false).await.unwrap();
     // Eine PID, die sicher nicht zu diesem Testprozess gehört (System-Leerlaufprozess).
     link.set_pid("survival", 0);
@@ -300,7 +194,7 @@ async fn erste_anmeldung_nur_innerhalb_der_frist() {
 
 #[tokio::test]
 async fn altes_protokoll_nur_fuer_clips() {
-    let (link, fake) = link_with_accounts();
+    let link = new_link();
     let clicks = Arc::new(Mutex::new(Vec::new()));
     let sink = clicks.clone();
     link.set_command_sink(Arc::new(move |id: &str, cmd| sink.lock().unwrap().push((id.to_owned(), cmd))));
@@ -326,12 +220,9 @@ async fn altes_protokoll_nur_fuer_clips() {
     send(&mut w, json!({ "type": "req", "id": 1, "op": "accounts.list" })).await;
     assert_eq!(response(&mut r, 1).await["error"], "not_allowed");
     assert_eq!(clicks.lock().unwrap().as_slice(), &[("survival".to_owned(), LinkCommand::SaveClip)]);
-    assert_eq!(fake.sessions.load(Ordering::SeqCst), 0);
 
     link.send("survival", LinkEvent::Saved { kind: "clip", seconds: 30 });
     assert_eq!(line(&mut r).await, json!({ "type": "saved", "kind": "clip", "seconds": 30 }));
-    // Konten-Hinweise bekommen alte Mods nicht.
-    link.notify_accounts_changed();
     link.send("survival", LinkEvent::Failed { kind: "clip", code: "busy" });
     assert_eq!(line(&mut r).await["type"], "failed");
 }
@@ -394,7 +285,7 @@ fn clips_enabler(calls: Arc<AtomicUsize>, result: HandlerResult<u32>) -> ClipsEn
 
 #[tokio::test]
 async fn clips_einschalten_aus_dem_spiel() {
-    // Ohne Kontenzugriff (kein AccountsHandler) – Clips gehen trotzdem.
+    // Clips einschalten braucht nur den Schalter – keine Konten.
     let link = CubiqLink::new(None);
     let calls = Arc::new(AtomicUsize::new(0));
     link.set_clips_enabler(clips_enabler(calls.clone(), Ok(30)));
