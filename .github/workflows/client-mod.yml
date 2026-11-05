@@ -113,6 +113,63 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  # Im echten Spiel: das fertige Mod-Jar mit Fabric Loader und Fabric API starten – wie eine vom Launcher angelegte
+  # Instanz – und den eingebauten Autotest laufen lassen (Menü, Testwelt, Screenshots, beendet sich selbst). Fängt ab,
+  # was beim Kompilieren nicht auffällt (Mixin-Ziele, die es in einer Version nicht gibt, fehlende Fabric-API-Teile).
+  # Geprüft werden die älteste, die neueste und Versionen mit eigenen Besonderheiten. Bilder und Log als Artefakt.
+  ingame:
+    name: In game – Fabric ${{ matrix.version }}
+    needs: plan
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['1.14.4', '1.20', '1.20.1', '1.21.11', '26.3']
+    env:
+      GRADLE_TOOLCHAINS: -Porg.gradle.java.installations.fromEnv=JAVA_HOME_8_X64,JAVA_HOME_17_X64,JAVA_HOME_21_X64,JAVA_HOME_25_X64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            8
+            17
+            21
+            25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Fenster ohne Bildschirm (Xvfb) und OpenGL in Software (Mesa llvmpipe).
+      - name: Virtual display
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q xvfb libgl1-mesa-dri libglx-mesa0 > /dev/null
+
+      - name: Start the game with the release jar
+        working-directory: client-mod
+        env:
+          V: ${{ matrix.version }}
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run -a -s "-screen 0 1600x900x24" ./gradlew --no-daemon $GRADLE_TOOLCHAINS -PcubiqVersions=$V ":fabric:$V:runProdClient" -PcubiqAutotest
+
+      - name: Screenshots and log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingame-fabric-${{ matrix.version }}
+          path: |
+            client-mod/run/prod-${{ matrix.version }}/screenshots/
+            client-mod/run/prod-${{ matrix.version }}/logs/latest.log
+            client-mod/run/prod-${{ matrix.version }}/crash-reports/
+          if-no-files-found: ignore
+          retention-days: 7
+
   publish:
     name: ${{ github.event_name == 'pull_request' && 'Check manifest' || 'Publish' }}
     needs: build

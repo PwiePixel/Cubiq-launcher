@@ -13,16 +13,17 @@ const MOD = join(ROOT, 'client-mod')
 
 /**
  * Projekte der Mod: Ordner (relativ zu client-mod/), Gradle-Task, Name der Versionsliste in settings.gradle (oder feste
- * Version für Projekte mit nur einer) und Anzeigename.
+ * Version für Projekte mit nur einer) und Anzeigename. Die Tasks sind voll qualifiziert (`:collectLauncherJars` = nur
+ * das Wurzelprojekt), damit Gradle sie nicht zusätzlich in Unterprojekten gleichen Namens sucht.
  */
 export const PROJECTS = [
   { key: 'fabric', dir: '.', task: ':fabric:collectLauncherJars', list: 'fabricVersions', label: 'Fabric' },
-  { key: 'forge', dir: 'forge', task: 'collectLauncherJars', list: 'forgeVersions', label: 'Forge' },
-  { key: 'neoforge', dir: 'neoforge', task: 'collectLauncherJars', list: 'neoforgeVersions', label: 'NeoForge' },
-  { key: 'forge-mojmap-legacy', dir: 'forge-mojmap-legacy', task: 'collectLauncherJars', list: 'mojmapVersions', label: 'Forge' },
-  { key: 'legacy', dir: 'legacy', task: 'collectLauncherJars', list: 'legacyVersions', label: 'Forge' },
-  { key: 'legacy-1.7.10', dir: 'legacy-1.7.10', task: 'collectLauncherJars', fixed: '1.7.10', label: 'Forge' },
-  { key: 'forge-1.13.2', dir: 'forge-1.13.2', task: 'collectLauncherJars', fixed: '1.13.2', label: 'Forge' },
+  { key: 'forge', dir: 'forge', task: ':collectLauncherJars', list: 'forgeVersions', label: 'Forge' },
+  { key: 'neoforge', dir: 'neoforge', task: ':collectLauncherJars', list: 'neoforgeVersions', label: 'NeoForge' },
+  { key: 'forge-mojmap-legacy', dir: 'forge-mojmap-legacy', task: ':collectLauncherJars', list: 'mojmapVersions', label: 'Forge' },
+  { key: 'legacy', dir: 'legacy', task: ':collectLauncherJars', list: 'legacyVersions', label: 'Forge' },
+  { key: 'legacy-1.7.10', dir: 'legacy-1.7.10', task: ':collectLauncherJars', fixed: '1.7.10', label: 'Forge' },
+  { key: 'forge-1.13.2', dir: 'forge-1.13.2', task: ':collectLauncherJars', fixed: '1.13.2', label: 'Forge' },
 ]
 
 /** Versionsliste `def <name> = ['1.20', …]` aus einer settings.gradle. */
