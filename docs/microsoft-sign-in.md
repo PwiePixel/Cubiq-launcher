@@ -93,7 +93,11 @@ the launcher shows "not approved" at sign-in (`login_with_xbox` answers 403); af
 - Launcher: release builds take the client ID from the repository variable `CUBIQ_MSA_CLIENT_ID` (Settings →
   Secrets and variables → Actions → Variables) – only the Windows and Linux jobs pass it on. Without the variable a
   build falls back to `CUBIQ_APP_ID` in `src-tauri/crates/core/src/auth/microsoft.rs`, which is still the first,
-  unapproved registration; for local builds set the environment variable `CUBIQ_MSA_CLIENT_ID` to the approved ID.
+  unapproved registration (now disabled); for local builds set the environment variable `CUBIQ_MSA_CLIENT_ID` to the
+  approved ID. The variable must hold the **Application (client) ID** – not the Object ID, Directory (tenant) ID or
+  Secret ID (same format) and never the client secret. CI (job „Microsoft app“) and the release check it before
+  anything is built (`scripts/check-msa-app.mjs`): Microsoft must know the app for personal accounts, and it must be
+  the same app the website signs in with. The ID itself is never printed.
 - Cubiq Client: `MsAuth.CLIENT_ID` (`client-mod/common/src/main/java/dev/pwiepixel/cubiqclient/core/account/MsAuth.java`)
   is the first registration. Before the mod is shipped, either remove its own sign-in or switch it to an approved ID
   that covers it.
