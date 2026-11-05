@@ -8,6 +8,8 @@ name: CI
 #   erfolgreich war oder übersprungen wurde – so blockieren übersprungene Jobs keinen PR.
 # - Ist ein Lauf auf main grün, macht .github/workflows/auto-release.yml daraus ein Release (mit Changelog).
 # - „player-notes“ (nur PRs): Änderungen für Spieler brauchen einen Spieler-Text in changes/ (scripts/notes-check.mjs).
+# - „microsoft-app“: Stimmt die Microsoft-App für das nächste Release (Repo-Variable CUBIQ_MSA_CLIENT_ID)? Jeder grüne
+#   Lauf auf main wird ein Release – mit einer falschen ID könnte sich darin niemand anmelden (scripts/check-msa-app.mjs).
 # - workflow_dispatch: startet .github/workflows/pr-sync.yml, nachdem es main in einen PR-Branch gemergt hat (Pushes
 #   mit GITHUB_TOKEN lösen sonst keine Prüfungen aus); läuft dann wie ein Push – alle Jobs.
 #
@@ -389,9 +391,32 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: node --experimental-strip-types scripts/notes-check.mjs "$BASE_SHA" "$HEAD_SHA"
 
+  # Fragt Microsoft nach der App aus CUBIQ_MSA_CLIENT_ID und vergleicht sie mit der Website-Anmeldung – wie der
+  # Release-Build vor dem Bauen. Nicht erreichbar = nur Warnung. PRs aus Forks: übersprungen (dort gibt es die
+  # Repo-Variablen nicht).
+  microsoft-app:
+    name: Microsoft app
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ask Microsoft about the app
+        env:
+          CUBIQ_MSA_CLIENT_ID: ${{ vars.CUBIQ_MSA_CLIENT_ID }}
+          CUBIQ_API_BASE: ${{ vars.CUBIQ_API_BASE }}
+        run: node scripts/check-msa-app.mjs
+
   ci-ok:
     name: ci-ok
-    needs: [changes, launcher-windows, launcher-linux, launcher-android, launcher-ios, ios-engine, client-mod, player-notes]
+    needs: [changes, launcher-windows, launcher-linux, launcher-android, launcher-ios, ios-engine, client-mod, player-notes, microsoft-app]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
