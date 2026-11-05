@@ -151,6 +151,20 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q xvfb libgl1-mesa-dri libglx-mesa0 > /dev/null
 
+      # Spieldateien (Assets, Bibliotheken) vorher holen, mit bis zu drei Versuchen: Ein Aussetzer beim Download von
+      # Mojangs Servern soll nicht als Fehler im Spiel zählen. Der Test selbst läuft danach genau einmal.
+      - name: Download the game files
+        working-directory: client-mod
+        env:
+          V: ${{ matrix.version }}
+        run: |
+          for i in 1 2 3; do
+            ./gradlew --no-daemon $GRADLE_TOOLCHAINS -PcubiqVersions=$V ":fabric:$V:downloadAssets" && exit 0
+            echo "::warning::Download der Spieldateien fehlgeschlagen (Versuch $i)"
+            sleep $((i * 30))
+          done
+          exit 1
+
       - name: Start the game with the release jar
         working-directory: client-mod
         env:
