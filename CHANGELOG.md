@@ -28,7 +28,7 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
-## 0.3.4 – 2026-11-04 – Back in the game | Zurück im Spiel
+## 0.3.4 – 2026-11-05 – Back in the game | Zurück im Spiel
 <!-- banner: accent=#71a330 motif=/news/0.3.4/banner.png anim=/news/0.3.4/banner-anim.png -->
 
 ### English
