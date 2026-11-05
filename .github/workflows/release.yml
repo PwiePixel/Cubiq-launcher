@@ -104,6 +104,19 @@ jobs:
             set_or_not "Secret ANDROID_KEYSTORE_BASE64" "$ANDROID_KEYSTORE_BASE64" "Android-APK wird nicht veröffentlicht"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # CUBIQ_MSA_CLIENT_ID muss die „Application (client) ID“ der Azure-App sein (GUID). Steht dort etwas anderes –
+      # etwa versehentlich das Client-Secret –, bricht das Release hier ab, bevor etwas gebaut oder veröffentlicht wird.
+      # Der Wert selbst wird nicht ausgegeben.
+      - name: Check Microsoft app ID
+        env:
+          CUBIQ_MSA_CLIENT_ID: ${{ vars.CUBIQ_MSA_CLIENT_ID }}
+        run: |
+          id="$(printf '%s' "$CUBIQ_MSA_CLIENT_ID" | tr -d '[:space:]')"
+          if [ -n "$CUBIQ_MSA_CLIENT_ID" ] && ! printf '%s' "$id" | grep -Eq '^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$'; then
+            echo "::error title=CUBIQ_MSA_CLIENT_ID::Die Variable ist keine Application (client) ID (Format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx, Azure-Portal → App → Overview). Nie das Client-Secret eintragen – es landete sonst im veröffentlichten Launcher."
+            exit 1
+          fi
+
       - name: Draft release „building“
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
