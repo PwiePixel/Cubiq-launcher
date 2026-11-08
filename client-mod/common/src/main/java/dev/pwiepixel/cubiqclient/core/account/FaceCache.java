@@ -16,8 +16,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Gesichter (8×8 + Hut-Ebene) der Konten für die Liste – aus dem Skin geschnitten, im Hintergrund geladen,
- * nur im Speicher. Ohne Skin-Adresse wird sie über den öffentlichen Profil-Dienst von Mojang nachgeschlagen.
+ * Gesichter (8×8 + Hut-Ebene) von Spielern für Listen (Freunde, Sozial, Welten …) – aus dem Skin geschnitten, im
+ * Hintergrund geladen, nur im Speicher. Ohne Skin-Adresse wird sie über den öffentlichen Profil-Dienst von Mojang nachgeschlagen.
  * Gezeichnet wird Pixel für Pixel über den Canvas (keine Texturen nötig).
  */
 public final class FaceCache {
@@ -77,7 +77,7 @@ public final class FaceCache {
 
 	int[] load(String uuid, String skinUrl) {
 		try {
-			String url = MsAuth.safeSkinUrl(skinUrl);
+			String url = safeSkinUrl(skinUrl);
 			if (url == null) url = lookup(uuid);
 			if (url == null) return null;
 			Http.Request r = new Http.Request("GET", url);
@@ -107,15 +107,39 @@ public final class FaceCache {
 			JsonObject o = new JsonParser().parse(res.text()).getAsJsonObject();
 			for (JsonElement p : o.getAsJsonArray("properties")) {
 				JsonObject prop = p.getAsJsonObject();
-				if (!"textures".equals(MsAuth.str(prop, "name"))) continue;
-				String json = new String(Base64.getDecoder().decode(MsAuth.str(prop, "value")), StandardCharsets.UTF_8);
+				if (!"textures".equals(str(prop, "name"))) continue;
+				String json = new String(Base64.getDecoder().decode(str(prop, "value")), StandardCharsets.UTF_8);
 				JsonObject tex = new JsonParser().parse(json).getAsJsonObject().getAsJsonObject("textures");
-				return MsAuth.safeSkinUrl(MsAuth.str(tex.getAsJsonObject("SKIN"), "url"));
+				return safeSkinUrl(str(tex.getAsJsonObject("SKIN"), "url"));
 			}
 		} catch (RuntimeException e) {
 			return null;
 		}
 		return null;
+	}
+
+	/** Nur Skins von {@code textures.minecraft.net} (immer als HTTPS, Pfad nur Buchstaben/Ziffern/„/“) – sonst null. */
+	static String safeSkinUrl(String url) {
+		if (url == null) return null;
+		String rest;
+		if (url.startsWith("http://")) rest = url.substring(7);
+		else if (url.startsWith("https://")) rest = url.substring(8);
+		else return null;
+		int slash = rest.indexOf('/');
+		if (slash < 0) return null;
+		String host = rest.substring(0, slash);
+		String path = rest.substring(slash + 1);
+		if (!"textures.minecraft.net".equals(host) || path.isEmpty() || path.length() > 200) return null;
+		for (int i = 0; i < path.length(); i++) {
+			char c = path.charAt(i);
+			if (!(Character.isLetterOrDigit(c) && c < 128) && c != '/') return null;
+		}
+		return "https://" + host + "/" + path;
+	}
+
+	private static String str(JsonObject o, String key) {
+		JsonElement e = o == null ? null : o.get(key);
+		return e != null && e.isJsonPrimitive() ? e.getAsString() : null;
 	}
 
 	/** Gesicht (8,8)–(16,16) und Hut (40,8)–(48,16) aus einem 64×64- oder 64×32-Skin. */

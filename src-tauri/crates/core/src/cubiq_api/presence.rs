@@ -104,17 +104,6 @@ impl PresenceState {
         self.notify.notify_one();
     }
 
-    /// Im laufenden Spiel wurde das Konto gewechselt (Cubiq Link): Die Spielangabe
-    /// bleibt, das alte Konto gilt für den Launcher als „Spiel beendet“.
-    pub fn game_account_changed(&self, instance_id: &str, account: &str) {
-        {
-            let mut inner = self.inner();
-            let game = inner.games.get(instance_id).and_then(|g| g.game.clone());
-            inner.games.insert(instance_id.to_owned(), Running { account: Some(account.to_owned()), game });
-        }
-        self.notify.notify_one();
-    }
-
     /// Ein Spiel ist beendet – der Launcher meldet sofort wieder.
     pub fn game_exited(&self, instance_id: &str) {
         self.inner().games.remove(instance_id);
@@ -239,17 +228,6 @@ mod tests {
         assert_eq!(state.plan(Some("b")), Plan { online: Some("b".into()), ended: vec!["a".into()], ..Plan::default() });
         state.set_online_for(Some("a"));
         assert!(state.in_game_for().is_empty(), "online ersetzt in-game");
-    }
-
-    #[test]
-    fn switching_the_account_in_game_keeps_the_game_and_ends_the_old_account() {
-        let state = PresenceState::default();
-        state.game_started("inst", Some("a"), game("1.21.11"));
-        state.set_in_game("a", true);
-        state.game_account_changed("inst", "b");
-        let plan = state.plan(None);
-        assert_eq!(plan.in_game, vec![("b".into(), game("1.21.11"))]);
-        assert_eq!(plan.ended, vec!["a".to_owned()]);
     }
 
     #[test]

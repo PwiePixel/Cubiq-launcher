@@ -192,6 +192,9 @@ sourceSets {
 	main.java.srcDir(rootProject.file('../common/src/main/java'))
 	main.resources.srcDir(rootProject.file('../common/src/main/resources'))
 	test.java.srcDir(rootProject.file('../common/src/test/java'))
+	// Testdaten wie in common: eigene Testressourcen + die Quelldaten der Schaltungen in <repo>/data.
+	test.resources.srcDir(rootProject.file('../common/src/test/resources'))
+	test.resources.srcDir(rootProject.file('../../data'))
 }
 
 repositories {
@@ -232,8 +235,8 @@ dependencies {
 	testImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	// DPAPI-Test (Kontenspeicher) wie in common: JNA liegt sonst nicht im Testpfad.
-	testRuntimeOnly 'net.java.dev.jna:jna:3.4.0'
+	// Die Tests aus common nutzen Netty (Welt-Hosting); im Testpfad liegt Minecraft nicht – Netty von 1.21.1.
+	testImplementation 'io.netty:netty-all:4.1.97.Final'
 }
 
 test {

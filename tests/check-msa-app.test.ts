@@ -19,13 +19,15 @@ const SITE = 'https://cubiq.example'
 /** Antworten wie gemessen: Microsoft (Device-Code) und die Weiterleitung der Website-Anmeldung. */
 function fakeFetch({ microsoft, websiteId }: { microsoft: { status: number, body: unknown } | 'offline', websiteId?: string | null }) {
   const calls: { url: string, body: string }[] = []
-  const impl = async (url: string, init: { body?: string } = {}) => {
+  const impl = async (url: string, init: { body?: string, redirect?: string } = {}) => {
     calls.push({ url, body: String(init.body ?? '') })
     if (url === DEVICE_CODE_URL) {
       if (microsoft === 'offline') throw new TypeError('fetch failed')
       return new Response(JSON.stringify(microsoft.body), { status: microsoft.status })
     }
     if (url === `${SITE}/auth/microsoft/login`) {
+      // Ohne „manual“ folgte fetch der Weiterleitung – dann gäbe es keinen Location-Header zum Vergleichen.
+      if (init.redirect !== 'manual') throw new Error('Website-Anmeldung ohne redirect: manual abgefragt')
       if (websiteId === undefined) throw new TypeError('fetch failed')
       const location = websiteId ? `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${websiteId}&response_type=code` : `${SITE}/login?error=ms_off`
       return new Response(null, { status: 302, headers: { location } })
@@ -39,6 +41,7 @@ const OK = { status: 200, body: { user_code: 'ABCD1234', device_code: 'x', verif
 const NOT_FOUND = { status: 400, body: { error: 'unauthorized_client', error_codes: [700016] } }
 const DISABLED = { status: 400, body: { error: 'unauthorized_client', error_codes: [7000112] } }
 const NO_CODE_FLOW = { status: 401, body: { error: 'invalid_client', error_codes: [70002] } }
+const WORK_ONLY = { status: 400, body: { error: 'unauthorized_client', error_codes: [9002332] } }
 
 describe('check-msa-app', () => {
   it('trims the variable like the launcher does', () => {
@@ -56,6 +59,7 @@ describe('check-msa-app', () => {
     expect(explainDeviceCode(NOT_FOUND.status, NOT_FOUND.body)).toMatchObject({ level: 'error', reason: expect.stringContaining('Application (client) ID') })
     expect(explainDeviceCode(DISABLED.status, DISABLED.body)).toMatchObject({ level: 'error', reason: expect.stringContaining('abgeschaltet') })
     expect(explainDeviceCode(NO_CODE_FLOW.status, NO_CODE_FLOW.body)).toMatchObject({ level: 'warn', reason: expect.stringContaining('Allow public client flows') })
+    expect(explainDeviceCode(WORK_ONLY.status, WORK_ONLY.body)).toMatchObject({ level: 'error', reason: expect.stringContaining('private Microsoft-Konten') })
     // Unbekannt oder Störung: warnen, nicht abbrechen.
     expect(explainDeviceCode(503, null).level).toBe('warn')
     expect(explainDeviceCode(400, { error: 'invalid_request', error_codes: [90014] })).toMatchObject({ level: 'warn', reason: expect.stringContaining('AADSTS90014') })
@@ -115,6 +119,15 @@ describe('check-msa-app', () => {
     expect(JSON.stringify(out)).not.toContain(secretLike)
     expect(isGuid(APP)).toBe(true)
     expect(isGuid(`${APP}0`)).toBe(false)
+  })
+
+  it("stops on Microsoft's verdict alone when the website cannot be checked", async () => {
+    for (const microsoft of [NOT_FOUND, DISABLED, WORK_ONLY]) {
+      const { impl } = fakeFetch({ microsoft })
+      const out = await check({ CUBIQ_MSA_CLIENT_ID: APP, CUBIQ_API_BASE: SITE }, impl, SOURCE)
+      expect(out.failed).toBe(true)
+      expect(out.results.map((r) => r.level)).toEqual(['error', 'warn'])
+    }
   })
 
   it('only warns when Microsoft or the website cannot be reached', async () => {

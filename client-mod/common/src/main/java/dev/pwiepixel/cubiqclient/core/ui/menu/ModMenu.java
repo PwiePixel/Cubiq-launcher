@@ -553,12 +553,12 @@ public final class ModMenu extends UiScreen {
 	private void rail(Canvas c, int x, int y, int w, int h, int mx, int my, float dt) {
 		Theme t = Theme.get();
 		// Zeilenhöhe und Abstand so wählen, dass alle Einträge (und möglichst die Fußzeile) passen.
-		// "Alle" + Kategorien + HUD-Editor + Profile + Modul-Pakete (+ Packs) (+ Konten)
+		// "Alle" + Kategorien + HUD-Editor + Profile + Modul-Pakete (+ Packs)
 		int shownCategories = 0;
 		for (Category cat : Category.values()) {
 			if (hasModules(cat)) shownCategories++;
 		}
-		int items = 4 + shownCategories + (host.hasPacks() ? 1 : 0) + (host.hasAccounts() ? 1 : 0)
+		int items = 4 + shownCategories + (host.hasPacks() ? 1 : 0)
 				+ (host.hasWardrobe() ? 1 : 0) + (host.hasFriends() ? 1 : 0) + (host.hasClips() ? 1 : 0)
 				+ (dev.pwiepixel.cubiqclient.core.bugreport.BugReports.get() != null ? 1 : 0) + (notesAvailable() ? 1 : 0)
 				+ (HalloweenPage.available() ? 1 : 0)
@@ -677,16 +677,6 @@ public final class ModMenu extends UiScreen {
 				public void run() {
 					host.save();
 					host.openPacks();
-				}
-			});
-			cy += rowH + gap;
-		}
-		if (host.hasAccounts()) {
-			railItem(c, x, cy, w, rowH, "accounts", I18n.tr("menu.accounts"), false, mx, my, NewSince.MENU_ACCOUNTS, new Runnable() {
-				@Override
-				public void run() {
-					host.save();
-					host.openAccounts();
 				}
 			});
 			cy += rowH + gap;

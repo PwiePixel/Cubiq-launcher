@@ -12,13 +12,9 @@ import javax.crypto.spec.SecretKeySpec;
  * Kryptografie der Cubiq-Link-Anmeldung (Protokoll 2) – muss Byte für Byte zum Launcher passen
  * ({@code src-tauri/crates/core/src/link}).
  *
- * <ul>
- * <li>Beide Seiten beweisen, dass sie den Schlüssel K kennen (HMAC-SHA256 über beide Zufallswerte),
- * ohne ihn je über die Verbindung zu schicken – ein fremdes Programm auf dem Port bekommt nichts.</li>
- * <li>Das Minecraft-Zugangs-Token kommt versiegelt: Schlüsselstrom und Prüfsumme aus
- * HMAC-SHA256 mit einem Sitzungsschlüssel (Verschlüsseln-dann-Prüfen).</li>
- * </ul>
- * Alles mit Java-8-Bordmitteln ({@code javax.crypto.Mac}), Vergleiche in konstanter Laufzeit.
+ * <p>Beide Seiten beweisen, dass sie den Schlüssel K kennen (HMAC-SHA256 über beide Zufallswerte), ohne ihn je über
+ * die Verbindung zu schicken – ein fremdes Programm auf dem Port bekommt nichts. Alles mit Java-8-Bordmitteln
+ * ({@code javax.crypto.Mac}), Vergleiche in konstanter Laufzeit.
  */
 public final class LinkCrypto {
 	private static final SecureRandom RANDOM = new SecureRandom();
@@ -45,42 +41,6 @@ public final class LinkCrypto {
 	/** Beweis des Spiels (Schritt 3). */
 	public static String gameProof(byte[] key, String sid, String gameNonce, String launcherNonce) {
 		return hex(hmac(key, "cubiq-link/2/game\n" + sid + "\n" + gameNonce + "\n" + launcherNonce));
-	}
-
-	/** Schlüssel zum Entsiegeln (je Verbindung). */
-	public static byte[] sealKey(byte[] key, String gameNonce, String launcherNonce) {
-		return hmac(key, "cubiq-link/2/seal\n" + gameNonce + "\n" + launcherNonce);
-	}
-
-	/** Nur für Tests und die Attrappe: versiegelt wie der Launcher. */
-	public static String seal(byte[] sealKey, byte[] plain, byte[] nonce) {
-		String nh = hex(nonce);
-		byte[] cipher = xor(sealKey, nh, plain);
-		byte[] tag = hmac(sealKey, "cubiq-link/2/tag\n" + nh + "\n" + hex(cipher));
-		return nh + "." + hex(cipher) + "." + hex(tag);
-	}
-
-	/** Entsiegelt {@code nonce.cipher.tag}; null, wenn Form oder Prüfsumme nicht stimmen. */
-	public static byte[] unseal(byte[] sealKey, String sealed) {
-		if (sealed == null || sealed.length() > 64 * 1024) return null;
-		String[] parts = sealed.split("\\.", -1);
-		if (parts.length != 3 || parts[0].length() != 32 || parts[2].length() != 64) return null;
-		byte[] cipher = unhex(parts[1]);
-		byte[] tag = unhex(parts[2]);
-		if (cipher == null || tag == null || unhex(parts[0]) == null) return null;
-		byte[] expected = hmac(sealKey, "cubiq-link/2/tag\n" + parts[0] + "\n" + parts[1]);
-		if (!MessageDigest.isEqual(expected, tag)) return null;
-		return xor(sealKey, parts[0], cipher);
-	}
-
-	private static byte[] xor(byte[] sealKey, String nonceHex, byte[] data) {
-		byte[] out = new byte[data.length];
-		byte[] block = null;
-		for (int i = 0; i < data.length; i++) {
-			if (i % 32 == 0) block = hmac(sealKey, "cubiq-link/2/stream\n" + nonceHex + "\n" + (i / 32));
-			out[i] = (byte) (data[i] ^ block[i % 32]);
-		}
-		return out;
 	}
 
 	/** Vergleich in konstanter Laufzeit (Länge ist kein Geheimnis). */

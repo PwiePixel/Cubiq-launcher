@@ -265,9 +265,9 @@ public final class CubiqClient {
 		// Cubiq API (Abzeichen, Cubiq-Umhänge, Presence) + Umhang-Physik; nichts davon blockiert den Start.
 		dev.pwiepixel.cubiqclient.online.OnlineHooks.init(FMLPaths.CONFIGDIR.get(), modules, Mc.modVersion(MOD_ID),
 				Mc.modVersion("minecraft"), "forge", message -> LOGGER.info(message));
-		// Konten: Wechsel ohne Neustart (mit Cubiq Launcher dessen Konten, sonst eigene Anmeldung je Instanz).
-		dev.pwiepixel.cubiqclient.core.account.AccountManager.init(new dev.pwiepixel.cubiqclient.online.SessionSwap(
-				FMLPaths.CONFIGDIR.get(), "Cubiq-Client/" + Mc.modVersion(MOD_ID) + " (Minecraft " + Mc.modVersion("minecraft") + "; forge)", message -> LOGGER.info(message)));
+		// Sitzung, mit der das Spiel gestartet wurde (nur lesen – keine Anmeldung, kein Kontowechsel im Spiel).
+		dev.pwiepixel.cubiqclient.core.account.CurrentSession.init(FMLPaths.CONFIGDIR.get(), "Cubiq-Client/" + Mc.modVersion(MOD_ID) + " (Minecraft " + Mc.modVersion("minecraft") + "; forge)",
+				dev.pwiepixel.cubiqclient.online.GameUser::current, message -> LOGGER.info(message));
 		// Bug melden (Cubiq-Menü): Mod-Liste, Log und Screenshots aus dem Spielordner, Senden über die Cubiq API.
 		dev.pwiepixel.cubiqclient.core.bugreport.BugReports.init(FMLPaths.CONFIGDIR.get(), Mc.modVersion(MOD_ID), Mc.modVersion("minecraft"), "forge");
 		// Leistung (Dynamische FPS, Culling, Partikel, Welt-Details, FPS-Boost); Leistungs-Mods übernehmen ihre Teile.

@@ -1,6 +1,6 @@
 package dev.pwiepixel.cubiqclient.core.wardrobe;
 
-import dev.pwiepixel.cubiqclient.core.account.AccountManager;
+import dev.pwiepixel.cubiqclient.core.account.CurrentSession;
 import dev.pwiepixel.cubiqclient.core.account.SessionData;
 import dev.pwiepixel.cubiqclient.core.online.OnlineConfig;
 import dev.pwiepixel.cubiqclient.core.online.OnlineFeatures;
@@ -10,8 +10,8 @@ import dev.pwiepixel.cubiqclient.core.skin.LocalSkin;
 import java.nio.file.Path;
 
 /**
- * {@link WardrobeService.Platform} aus dem, was jede Minecraft-Version schon hat: Sitzung über den
- * {@link AccountManager} (alle Bäume), Cubiq-Token und eigener Skin über {@link OnlineFeatures} (wo vorhanden – in
+ * {@link WardrobeService.Platform} aus dem, was jede Minecraft-Version schon hat: Sitzung des laufenden Spiels über
+ * {@link CurrentSession} (alle Bäume), Cubiq-Token und eigener Skin über {@link OnlineFeatures} (wo vorhanden – in
  * 1.7.10/1.13.2 fehlt es, dann bleibt die Garderobe lokal).
  */
 public final class WardrobeContext implements WardrobeService.Platform {
@@ -32,8 +32,7 @@ public final class WardrobeContext implements WardrobeService.Platform {
 
 	@Override
 	public SessionData session() {
-		AccountManager m = AccountManager.get();
-		return m == null ? null : m.currentSession();
+		return CurrentSession.get();
 	}
 
 	private CubiqOnline online() {

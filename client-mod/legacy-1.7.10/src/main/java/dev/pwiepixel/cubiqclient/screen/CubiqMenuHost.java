@@ -68,17 +68,6 @@ public final class CubiqMenuHost implements MenuHost {
 	}
 
 	@Override
-	public void openAccounts() {
-		// closeScreen() eines Hosts zeigt dessen „parent“ – hier also den Kontobildschirm (zurück führt ins Menü).
-		new CubiqMenuHost(AccountsScreen.create(new CubiqMenuScreen(parent))).closeScreen();
-	}
-
-	@Override
-	public boolean hasAccounts() {
-		return AccountsScreen.available();
-	}
-
-	@Override
 	public void openWardrobe() {
 		// closeScreen() eines Hosts zeigt dessen „parent“ – hier also die Garderobe (zurück führt ins Menü).
 		new CubiqMenuHost(WardrobeScreen.create(new CubiqMenuScreen(parent))).closeScreen();

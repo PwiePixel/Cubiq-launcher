@@ -15,8 +15,8 @@ import net.minecraft.network.chat.Component;
 
 /**
  * Selbsttest Fehlerbildschirm ({@code -PcubiqAutotestOnly=disconnect}): stellt „Anmeldung fehlgeschlagen: Ungültige
- * Sitzung“ nach und drückt die Zusatzknöpfe (Neu anmelden ohne Launcher, Fehler kopieren, Server-Status gegen einen
- * nicht erreichbaren Server). Bilder cubiqclient-&lt;mc&gt;-disconnect-*.png, Knopftexte im Log.
+ * Sitzung“ nach und drückt die Zusatzknöpfe (Fehler kopieren, Server-Status gegen einen nicht erreichbaren Server).
+ * Bilder cubiqclient-&lt;mc&gt;-disconnect-*.png, Knopftexte im Log.
  */
 public final class DisconnectTest {
 	private int phase;
@@ -41,7 +41,6 @@ public final class DisconnectTest {
 			case 2:
 				log(mc, "Anfang");
 				actions.shot("cubiqclient-disconnect-session");
-				press(mc, "disconnect.reauth");
 				press(mc, "disconnect.copy");
 				press(mc, "disconnect.status");
 				wait = 80;

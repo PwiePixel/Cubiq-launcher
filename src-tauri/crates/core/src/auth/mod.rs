@@ -17,6 +17,15 @@ use microsoft::{MinecraftSession, MsTokens};
 
 /// Minecraft-Tokens gelten 24 h; mit diesem Puffer wird vorher erneuert.
 const REFRESH_MARGIN_SECS: i64 = 10 * 60;
+/// Beim Spielstart muss das Token noch so lange gelten: Das Spiel behält es bis zum Beenden – der Cubiq Client meldet
+/// sich nicht mehr selbst neu an. Mit einem fast abgelaufenen Token scheiterte sonst mitten im Spielen jeder
+/// Server-Beitritt mit „Invalid session“, bis man das Spiel neu startet.
+const LAUNCH_MARGIN_SECS: i64 = 12 * 60 * 60;
+
+/// Muss ein Token erneuert werden, das zu `expires_at` abläuft? `margin_secs` = so lange muss es noch gelten.
+fn needs_refresh(expires_at: DateTime<Utc>, now: DateTime<Utc>, margin_secs: i64) -> bool {
+    expires_at - now <= chrono::Duration::seconds(margin_secs)
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -237,6 +246,20 @@ impl AccountStore {
         self.session_for(&id, false).await
     }
 
+    /// Wie [`Self::active_session`], aber für einen Spielstart (siehe [`Self::launch_session`]).
+    pub async fn active_launch_session(&self) -> Result<Option<Session>> {
+        let file = self.read().await?;
+        let Some(id) = file.active.clone() else { return Ok(None) };
+        self.launch_session(&id).await
+    }
+
+    /// Spielsitzung für einen Spielstart: Das Token gilt danach noch mindestens [`LAUNCH_MARGIN_SECS`], denn das
+    /// Spiel behält es, bis es beendet wird. Klappt das Erneuern nicht, aber das alte Token gilt noch, wird mit
+    /// dem alten gestartet (wie bisher) – ein Fehler bei Microsoft soll keinen Start blockieren.
+    pub async fn launch_session(&self, id: &str) -> Result<Option<Session>> {
+        self.session_with_margin(id, false, LAUNCH_MARGIN_SECS).await
+    }
+
     /// ID des aktiven Accounts (ohne Tokens anzufassen).
     pub async fn active_id(&self) -> Result<Option<String>> {
         let file = self.read().await?;
@@ -247,12 +270,17 @@ impl AccountStore {
     /// `force_refresh` erneuert auch ein noch gültiges Token (z. B. wenn Mojang
     /// es abgelehnt hat). `Ok(None)`, wenn es den Account nicht (mehr) gibt.
     pub async fn session_for(&self, id: &str, force_refresh: bool) -> Result<Option<Session>> {
+        self.session_with_margin(id, force_refresh, REFRESH_MARGIN_SECS).await
+    }
+
+    async fn session_with_margin(&self, id: &str, force_refresh: bool, margin_secs: i64) -> Result<Option<Session>> {
         let file = self.read().await?;
         let Some(account) = file.accounts.iter().find(|a| a.id == id) else {
             return Ok(None);
         };
 
-        let fresh = account.access_expires_at - Utc::now() > chrono::Duration::seconds(REFRESH_MARGIN_SECS);
+        let now = Utc::now();
+        let fresh = !needs_refresh(account.access_expires_at, now, margin_secs);
         if fresh && !force_refresh {
             return Ok(Some(Session {
                 player_name: account.name.clone(),
@@ -278,6 +306,17 @@ impl AccountStore {
             // klappt, Server lehnen es dann selbst ab) statt den Start zu blockieren.
             Err(Error::Http(e)) if e.is_connect() || e.is_timeout() => {
                 tracing::warn!("Sitzung konnte offline nicht erneuert werden – nutze vorhandenes Token");
+                return Ok(Some(Session {
+                    player_name: account.name.clone(),
+                    uuid: account.id.clone(),
+                    access_token: crypto::unprotect(&account.access_token)?,
+                    xuid: account.xuid.clone(),
+                    demo: false,
+                }));
+            }
+            // Spielstart mit größerem Puffer: Das alte Token gilt noch – damit starten statt abzubrechen.
+            Err(e) if !force_refresh && !needs_refresh(account.access_expires_at, now, REFRESH_MARGIN_SECS) => {
+                tracing::warn!("Sitzung für {} nicht erneuert ({e}) – nutze das noch gültige Token", account.name);
                 return Ok(Some(Session {
                     player_name: account.name.clone(),
                     uuid: account.id.clone(),
@@ -327,6 +366,20 @@ mod tests {
 
     fn tokens(name: &str) -> MsTokens {
         MsTokens { access_token: "ms".into(), refresh_token: format!("refresh-{name}") }
+    }
+
+    #[test]
+    fn launches_get_a_token_that_lasts() {
+        let now = Utc::now();
+        let hours = |h: i64| now + chrono::Duration::hours(h);
+        // Normaler Gebrauch (Skins, Cubiq-Anmeldung): erst 10 Minuten vor Ablauf erneuern.
+        assert!(!needs_refresh(hours(1), now, REFRESH_MARGIN_SECS));
+        assert!(needs_refresh(now + chrono::Duration::minutes(5), now, REFRESH_MARGIN_SECS));
+        // Spielstart: Ein Token mit nur noch einer Stunde wird erneuert, eins mit 20 Stunden nicht.
+        assert!(needs_refresh(hours(1), now, LAUNCH_MARGIN_SECS));
+        assert!(needs_refresh(hours(12), now, LAUNCH_MARGIN_SECS));
+        assert!(!needs_refresh(hours(20), now, LAUNCH_MARGIN_SECS));
+        assert!(needs_refresh(hours(-1), now, LAUNCH_MARGIN_SECS));
     }
 
     #[tokio::test]

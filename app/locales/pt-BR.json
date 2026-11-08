@@ -3387,7 +3387,7 @@
       "noAccounts": "Sem contas – modo demo",
       "sameAccount": "Esta conta já está jogando. Servidores geralmente não aceitam a mesma conta duas vezes.",
       "worldHint": "Os dois jogos usam a mesma pasta de saves. Não abra o mesmo mundo de um jogador nos dois – isso pode corromper o mundo.",
-      "noLink": "O segundo jogo roda sem os recursos do Cubiq Link (troca de conta, clipes, status online) – eles ficam com o primeiro.",
+      "noLink": "O segundo jogo roda sem os recursos do Cubiq Link (clipes, status online) – eles ficam com o primeiro.",
       "start": "Iniciar",
       "unknownAccount": "Conta desconhecida"
     },

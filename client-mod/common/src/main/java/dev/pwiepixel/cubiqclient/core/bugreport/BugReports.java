@@ -1,7 +1,6 @@
 package dev.pwiepixel.cubiqclient.core.bugreport;
 
-import dev.pwiepixel.cubiqclient.core.account.AccountManager;
-import dev.pwiepixel.cubiqclient.core.account.GameAccount;
+import dev.pwiepixel.cubiqclient.core.account.CurrentSession;
 import dev.pwiepixel.cubiqclient.core.account.SessionData;
 import dev.pwiepixel.cubiqclient.core.online.ApiException;
 import dev.pwiepixel.cubiqclient.core.online.GameSession;
@@ -24,10 +23,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executor;
@@ -186,7 +183,7 @@ public final class BugReports {
 		this.auth = new DefaultAuth();
 	}
 
-	/** Beim Start je Loader (nach {@code AccountManager.init}); {@code configDir} = {@code config}-Ordner der Instanz. */
+	/** Beim Start je Loader (nach {@code CurrentSession.init}); {@code configDir} = {@code config}-Ordner der Instanz. */
 	public static synchronized BugReports init(Path configDir, String modVersion, String mcVersion, String loader) {
 		if (instance == null) {
 			ThreadPoolExecutor ex = new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(16), r -> {
@@ -281,8 +278,7 @@ public final class BugReports {
 
 	/** Name des Kontos, mit dem gesendet wird (null = unbekannt). */
 	public String accountName() {
-		AccountManager am = AccountManager.get();
-		SessionData s = am == null ? null : am.currentSession();
+		SessionData s = CurrentSession.get();
 		return s == null ? null : s.name;
 	}
 
@@ -415,22 +411,12 @@ public final class BugReports {
 		}
 	}
 
-	/** Spieler- und Kontonamen dieses Spiels (für die Säuberung). */
+	/** Spielername dieses Spiels (für die Säuberung). */
 	static List<String> names() {
-		Set<String> out = new LinkedHashSet<String>();
-		AccountManager am = AccountManager.get();
-		if (am != null) {
-			SessionData s = am.currentSession();
-			if (s != null && s.name != null) out.add(s.name);
-			try {
-				for (GameAccount a : am.state().accounts) {
-					if (a != null && a.name != null) out.add(a.name);
-				}
-			} catch (RuntimeException ignored) {
-				// ohne Kontoliste
-			}
-		}
-		return new ArrayList<String>(out);
+		List<String> out = new ArrayList<String>();
+		SessionData s = CurrentSession.get();
+		if (s != null && s.name != null) out.add(s.name);
+		return out;
 	}
 
 	/** Alles einsammeln und säubern (Hintergrund; auch für Tests). */
@@ -779,8 +765,7 @@ public final class BugReports {
 
 		/** Spielsitzung zum Anmelden oder null (Offline-/Demo-Konto). */
 		private GameSession session(OnlineConfig config) {
-			AccountManager am = AccountManager.get();
-			SessionData d = am == null ? null : am.currentSession();
+			SessionData d = CurrentSession.get();
 			if (d == null || d.name == null) return null;
 			boolean devMock = config.apiBase().startsWith("http://");
 			String uuid = d.uuid;
