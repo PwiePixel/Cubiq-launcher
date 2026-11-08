@@ -1,11 +1,9 @@
 package dev.pwiepixel.cubiqclient.menus;
 
 import dev.pwiepixel.cubiqclient.compat.Mc;
-import dev.pwiepixel.cubiqclient.core.account.AccountManager;
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.net.StatusPing;
 import dev.pwiepixel.cubiqclient.qol.QolHooks;
-import dev.pwiepixel.cubiqclient.screen.AccountsScreen;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -15,9 +13,8 @@ import net.minecraft.client.multiplayer.ServerData;
 
 /**
  * Fehlerbildschirm (Verbindung getrennt, gekickt, Anmeldung fehlgeschlagen): zwei Knopfreihen unter „Zurück“ –
- * „Neu anmelden“ (frische Sitzung vom Cubiq Launcher, dann sofort neu verbinden – ohne Neustart der Instanz),
- * „Erneut verbinden“, „Konto wechseln“, „Fehler kopieren“, „Server-Status“. Der Bildschirm selbst bleibt der von
- * Minecraft (Stil übernimmt {@link VanillaMenus} als Menü-Art „Fehler“).
+ * „Erneut verbinden“, darunter „Fehler kopieren“ und „Server-Status“. Der Bildschirm selbst bleibt der von Minecraft
+ * (Stil übernimmt {@link VanillaMenus} als Menü-Art „Fehler“).
  */
 public final class DisconnectUi {
 	private DisconnectUi() {
@@ -25,11 +22,9 @@ public final class DisconnectUi {
 
 	private static volatile ServerData target;
 	private static Screen screen;
-	private static AbstractWidget reauth;
 	private static AbstractWidget reconnect;
 	private static AbstractWidget copy;
 	private static AbstractWidget status;
-	private static boolean busy;
 
 	/** Adresse der letzten Verbindung dieser Sitzung oder null (Schnell verbinden: vorab auflösen). */
 	public static String lastAddress() {
@@ -45,7 +40,6 @@ public final class DisconnectUi {
 	public static void afterInit(Screen s, WidgetHost host) {
 		if (!(s instanceof DisconnectedScreen)) return;
 		screen = s;
-		busy = false;
 		try {
 			AbstractWidget back = null;
 			for (GuiEventListener child : s.children()) {
@@ -61,48 +55,31 @@ public final class DisconnectUi {
 			// Unten steht ggf. der Auto-Reconnect-Knopf (height - 28) – nicht überdecken.
 			if (top + 44 > s.height - 32) top = Math.max(4, s.height - 32 - 44);
 			int half = (full - gap) / 2;
-			reauth = add(host, left, top, half, I18n.tr("disconnect.reauth"), I18n.tr("disconnect.reauthTip"), new Runnable() {
-				@Override
-				public void run() {
-					reauth();
-				}
-			});
-			reconnect = add(host, left + half + gap, top, full - half - gap, I18n.tr("disconnect.reconnect"), null, new Runnable() {
+			reconnect = add(host, left, top, full, I18n.tr("disconnect.reconnect"), new Runnable() {
 				@Override
 				public void run() {
 					reconnect();
 				}
 			});
-			int third = (full - 2 * gap) / 3;
-			add(host, left, top + 24, third, I18n.tr("disconnect.accounts"), null, new Runnable() {
-				@Override
-				public void run() {
-					Mc.setScreen(AccountsScreen.create(screen));
-				}
-			});
-			copy = add(host, left + third + gap, top + 24, third, I18n.tr("disconnect.copy"), null, new Runnable() {
+			copy = add(host, left, top + 24, half, I18n.tr("disconnect.copy"), new Runnable() {
 				@Override
 				public void run() {
 					copyError();
 				}
 			});
-			status = add(host, left + 2 * (third + gap), top + 24, full - 2 * (third + gap), I18n.tr("disconnect.status"), null,
-					new Runnable() {
-						@Override
-						public void run() {
-							checkStatus();
-						}
-					});
+			status = add(host, left + half + gap, top + 24, full - half - gap, I18n.tr("disconnect.status"), new Runnable() {
+				@Override
+				public void run() {
+					checkStatus();
+				}
+			});
 		} catch (RuntimeException | LinkageError e) {
 			// Ohne Zusatzknöpfe weiter.
 		}
 	}
 
-	private static AbstractWidget add(WidgetHost host, int x, int y, int w, String label, String tip, Runnable action) {
+	private static AbstractWidget add(WidgetHost host, int x, int y, int w, String label, Runnable action) {
 		AbstractWidget b = (AbstractWidget) VanillaMenus.button(x, y, w, 20, label, action);
-		//? if >=1.19.3 {
-		if (tip != null) b.setTooltip(net.minecraft.client.gui.components.Tooltip.create(VanillaMenus.text(tip)));
-		//?}
 		host.cubiqclient$addWidget(b);
 		return b;
 	}
@@ -118,34 +95,6 @@ public final class DisconnectUi {
 
 	private static boolean current(Screen s) {
 		return s != null && Mc.screen() == s;
-	}
-
-	// --- Neu anmelden ---
-
-	private static void reauth() {
-		if (busy || reauth == null) return;
-		final Screen s = screen;
-		AccountManager am = AccountManager.get();
-		if (am == null) {
-			say(reauth, I18n.tr("disconnect.reauthNoLauncher"), I18n.tr("disconnect.reauthNoLauncherTip"));
-			return;
-		}
-		busy = true;
-		reauth.active = false;
-		VanillaMenus.setMessage(reauth, I18n.tr("disconnect.reauthBusy"));
-		am.reauth(code -> Mc.mc().execute(() -> {
-			busy = false;
-			if (!current(s) || reauth == null) return;
-			reauth.active = true;
-			if (code == null) {
-				VanillaMenus.setMessage(reauth, I18n.tr("disconnect.reauth"));
-				reconnect();
-			} else if ("noLauncher".equals(code)) {
-				say(reauth, I18n.tr("disconnect.reauthNoLauncher"), I18n.tr("disconnect.reauthNoLauncherTip"));
-			} else {
-				VanillaMenus.setMessage(reauth, I18n.tr("disconnect.reauthFailed", code));
-			}
-		}));
 	}
 
 	// --- Erneut verbinden ---

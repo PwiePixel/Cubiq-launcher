@@ -138,7 +138,7 @@ class TitleUiTest {
 		ui.render(new CountingCanvas(), 427, 240, -1, -1);
 		assertEquals(TitleUi.SIDE_ICONS, ui.sideMode());
 		assertTrue(ui.figureShown());
-		// Sehr schmal (GUI 4): Symbolzeile oben, keine Figur, kein Konto-Knopf
+		// Sehr schmal (GUI 4): Symbolzeile oben, keine Figur, kein Garderobe-Knopf
 		ui.render(new CountingCanvas(), 213, 120, -1, -1);
 		assertEquals(TitleUi.SIDE_ROW, ui.sideMode());
 		assertFalse(ui.figureShown());
@@ -146,7 +146,7 @@ class TitleUiTest {
 		// Die Leiste liegt nie auf den Knöpfen der Mitte
 		ui.render(new CountingCanvas(), 427, 240, -1, -1);
 		int[] quit = ui.buttonRect("quit");
-		for (String id : new String[]{"accounts", "friends", "clips", "cubiqSettings"}) {
+		for (String id : new String[]{"friends", "clips", "cubiqSettings"}) {
 			int[] r = ui.buttonRect(id);
 			assertTrue(r != null, id);
 			assertTrue(r[0] >= quit[0] + quit[2] + 10, id + " überlappt die Mitte");
@@ -172,12 +172,12 @@ class TitleUiTest {
 		ui.mouseClicked(r[0] + 2, r[1] + 2, 0);
 		renderUntil(ui, canvas, () -> host.cubiqMenu > 0);
 		assertEquals(1, host.cubiqMenu);
-		// Konten in der Seitenleiste (noch nicht da) → Hinweis
+		// Sozial in der Seitenleiste (hier noch nicht da) → Hinweis
 		host.narrated.clear();
-		r = ui.buttonRect("accounts");
+		r = ui.buttonRect("friends");
 		ui.mouseClicked(r[0] + 2, r[1] + 2, 0);
 		renderUntil(ui, canvas, () -> !host.narrated.isEmpty());
-		assertEquals("Coming soon: Accounts", host.narrated.get(0));
+		assertEquals("Coming soon: Social", host.narrated.get(0));
 	}
 
 	private static void renderUntil(TitleUi ui, CountingCanvas canvas, java.util.function.BooleanSupplier done) {

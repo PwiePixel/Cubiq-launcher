@@ -46,20 +46,20 @@ gelesen oder kopiert. Beim Import werden Welten, Mods, Pakete, Einstellungen und
 kopiert; die Projekt- und Datei-IDs, die der andere Launcher gespeichert hat, bleiben erhalten, damit Updates möglich
 sind. Nur wenn Dateien einer CurseForge-Instanz fehlen, lädt der Launcher sie von CurseForge (siehe Tabelle oben).
 
-## Kontowechsel im Spiel (Cubiq Client)
+## Konto im Spiel (Cubiq Client)
 
-- **Spiel über den Cubiq Launcher gestartet:** Der Cubiq Client kann deine Launcher-Konten anzeigen und ohne Neustart
-  wechseln. Wählst du ein Konto, gibt der Launcher dem Spiel ein frisches Minecraft-Zugriffstoken – nur über eine lokale
-  Verbindung auf deinem Computer (`127.0.0.1`), verschlüsselt und nur an den Spielprozess, den er selbst gestartet hat.
-  Der Schlüssel dafür geht beim Start im Speicher an das Spiel und landet nie auf der Festplatte. Dabei verlässt nichts
-  deinen PC. „Konto hinzufügen“ im Spiel öffnet die normale Microsoft-Anmeldung des Launchers im Browser.
-- **Spiel ohne Cubiq Launcher gestartet:** Im Spiel hinzugefügte Konten melden sich direkt bei Microsoft, Xbox Live und den
-  Minecraft-Diensten an (mit der eigenen Anmelde-App des Cubiq Launchers). Gespeichert wird nur das Refresh-Token,
-  verschlüsselt (Windows DPAPI, sonst AES mit einer Schlüsseldatei in deinem Benutzerordner), in
-  `config/cubiqclient/accounts.json` dieses Spielordners. Zugriffstokens bleiben im Arbeitsspeicher. Entfernst du ein
-  Konto im Spiel, wird es gelöscht.
-- Für die kleinen Gesichter in der Liste lädt das Spiel den Skin von `textures.minecraft.net` und bei Bedarf das
-  öffentliche Profil von `sessionserver.mojang.com`.
+- Der Cubiq Client hat **keine eigene Anmeldung und wechselt keine Konten**. Er nutzt nur die Sitzung, mit der das
+  Spiel gestartet wurde – vom Cubiq Launcher, mit dem Konto, das du dort gewählt hast. Willst du mit einem anderen Konto
+  spielen, wählst du es im Launcher und startest das Spiel neu.
+- Der Launcher gibt dem Spiel nie Microsoft- oder Minecraft-Tokens deiner anderen Konten. Über die lokale Verbindung
+  zwischen Launcher und Spiel (`127.0.0.1`, nur zum Spielprozess, den der Launcher selbst gestartet hat; ihr Schlüssel
+  geht beim Start im Speicher an das Spiel und landet nie auf der Festplatte) laufen nur Clips, Welt-Hosting und
+  Leistungswerte.
+- Ältere Versionen des Cubiq Clients konnten im Spiel Konten hinzufügen und speicherten deren Refresh-Token
+  verschlüsselt in `config/cubiqclient/accounts.json` des Spielordners. Der aktuelle Cubiq Client löscht diese Datei und
+  ihre Schlüsseldatei in deinem Benutzerordner beim ersten Start, ohne sie zu lesen.
+- Für kleine Spielergesichter in den Menüs des Spiels lädt das Spiel den Skin von `textures.minecraft.net` und bei
+  Bedarf das öffentliche Profil von `sessionserver.mojang.com`.
 
 ## Garderobe im Spiel (Cubiq Client)
 

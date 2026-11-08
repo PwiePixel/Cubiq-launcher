@@ -1,7 +1,7 @@
 package dev.pwiepixel.cubiqclient.screen;
 
 import dev.pwiepixel.cubiqclient.compat.Mc;
-import dev.pwiepixel.cubiqclient.core.account.AccountManager;
+import dev.pwiepixel.cubiqclient.core.account.CurrentSession;
 import dev.pwiepixel.cubiqclient.core.i18n.I18n;
 import dev.pwiepixel.cubiqclient.core.online.OnlineFeatures;
 import dev.pwiepixel.cubiqclient.core.ui.wardrobe.WardrobeHost;
@@ -47,8 +47,7 @@ public final class WardrobeScreen {
 
 			@Override
 			public String userAgent() {
-				AccountManager m = AccountManager.get();
-				return m == null ? "Cubiq-Client" : m.userAgent();
+				return CurrentSession.userAgent();
 			}
 
 			@Override

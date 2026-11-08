@@ -206,11 +206,6 @@ class MenuRailTest {
 		}
 
 		@Override
-		public boolean hasAccounts() {
-			return true;
-		}
-
-		@Override
 		public boolean hasWardrobe() {
 			return true;
 		}

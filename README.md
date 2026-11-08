@@ -98,12 +98,12 @@ launcher works.
 
 | What | Where | Without it |
 |---|---|---|
-| **Microsoft sign-in**: already built in – the Azure app "Cubiq Launcher" (client ID `5cc8876f-8fe1-4c27-bc28-9355a79db635`), works as soon as Microsoft has [approved it](https://aka.ms/mce-reviewappid) for the Minecraft API; setup and form answers: [docs/microsoft-sign-in.md](docs/microsoft-sign-in.md) | Optional repository variable `CUBIQ_MSA_CLIENT_ID` for a different Azure app | – (until the approval, sign-in says it is waiting for it) |
+| **Microsoft sign-in**: your own Azure app approved by Microsoft for the Minecraft API ([review](https://aka.ms/mce-reviewappid)); setup and form answers: [docs/microsoft-sign-in.md](docs/microsoft-sign-in.md). Release and CI check the ID with Microsoft and against the website login | Repository variable `CUBIQ_MSA_CLIENT_ID` = the **Application (client) ID** (never the client secret) | The release stops – without an approved app nobody could sign in |
 | **Update signing key**: already created (key ID `A427CF588D4DF86A`); the public key is in `src-tauri/tauri.conf.json` and `src-tauri/crates/core/src/client_mod_update.rs` | Secrets `TAURI_SIGNING_PRIVATE_KEY` (content of the key file) and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Installers without update signature – installed launchers don't update themselves |
 | **Cubiq services** (friends, chat, capes, creator codes, …): base URL of your own server implementing the API | Repository variable `CUBIQ_API_BASE` (e.g. `https://your-domain.com`, no path); the launcher hands the same address to the in-game Cubiq Client when it starts the game with the services switched on. A malformed address stops the build | Services hidden, nothing is sent |
 | **Discord status**: application ID of your Discord app | Repository variable `CUBIQ_DISCORD_APP_ID` | No Discord status |
 | **CurseForge**: API key from the CurseForge console | Secret `CURSEFORGE_API_KEY` | Only Modrinth |
-| **Cubiq Client jars**: `./gradlew collectLauncherJars` in `client-mod/`, then `node scripts/publish-client-mod.mjs --dry-run` | `src-tauri/resources/client-mod/` (`builds.json` is empty for now) | No bundled in-game mod |
+| **Cubiq Client** (in-game mod): built for every supported Minecraft version and loader and published to the signed update channel `client-mod` by the workflow „Cubiq Client“ (`.github/workflows/client-mod.yml`) whenever `mod_version` rises on `main`; the launcher downloads the jar an instance needs | The same signing secrets as the updater | Nothing is published – instances run without the Cubiq Client |
 | **Docs**: the pages in [`docs/wiki`](docs/wiki) go into the GitHub wiki | GitHub → Wiki | Help links lead to an empty wiki |
 | **Android** (optional): release keystore | Secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | Unsigned APK |
 

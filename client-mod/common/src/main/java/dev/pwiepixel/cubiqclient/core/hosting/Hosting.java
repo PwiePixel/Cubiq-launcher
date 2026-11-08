@@ -600,7 +600,7 @@ public final class Hosting {
 		linkHooked = true;
 		link.addListener(new dev.pwiepixel.cubiqclient.core.link.CubiqLink.Listener() {
 			@Override
-			public void onConnected(dev.pwiepixel.cubiqclient.core.link.CubiqLink l, boolean accounts) {
+			public void onConnected(dev.pwiepixel.cubiqclient.core.link.CubiqLink l) {
 				if (!l.status().has(dev.pwiepixel.cubiqclient.core.link.CubiqLink.FEATURE_HOSTING_JOIN)) return;
 				// Abholen, falls der Push schon vor unserer Anmeldung kam (docs/hosting-link.md §3).
 				l.request("hosting.join", null, 5000L, new dev.pwiepixel.cubiqclient.core.link.CubiqLink.Callback() {

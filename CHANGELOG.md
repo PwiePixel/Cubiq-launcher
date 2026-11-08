@@ -28,6 +28,64 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
+## 0.3.7 – 2026-11-05 – Cubiq in every game | Cubiq in jedem Spiel
+<!-- banner: accent=#71a330 motif=/news/0.3.7/banner.png anim=/news/0.3.7/banner-anim.png -->
+<!-- shots:
+/news/0.3.7/cubiq-client-title.png | The Cubiq Client in Minecraft 1.20 | Der Cubiq Client in Minecraft 1.20
+-->
+
+### English
+- **The Cubiq Client is now part of every game.** Cosmetics, pets, the Cubiq menu, the minimap, clips and the other
+  in-game features come from the Cubiq Client – and from this update on the launcher really puts it into your
+  instances. Create an instance as usual, start it, and the Cubiq Client is there: the launcher picks the build that
+  fits the Minecraft version and the mod loader, downloads it once and checks it before it goes into the game. You
+  don't download or install anything by hand.
+- **Vanilla, Fabric, Quilt, Forge and NeoForge.** Vanilla instances get it through the Cubiq optimization, which is
+  on by default (instance settings → Installation → Cubiq optimization; switched off, the instance stays real
+  vanilla). Instances with Fabric or Quilt get it for 1.14.4, 1.15.2 and every version from 1.16.2 up to 26.3 – new
+  in this update: 1.20 –, Forge from 1.7.10 up to 26.3 for the versions Forge is commonly used with, NeoForge for
+  every version from 1.20.2 up to 26.3. For the very old versions there is no mod loader at all – those keep running
+  as plain vanilla.
+- **Always up to date.** The Cubiq Client updates itself, separately from launcher updates: when there is a new
+  version, the launcher fetches it before the next start. The launcher settings show the version that is installed
+  at the bottom.
+- **Sign in once – in the launcher only.** The Cubiq Client no longer has a Microsoft sign-in of its own. You sign
+  in once in the Cubiq Launcher, and every game you start from there is already signed in: cosmetics, friends, the
+  wardrobe and all other Cubiq features in game use exactly that account. There is no second sign-in window in the
+  game anymore, and no error page from Microsoft when you open it. When you start a game, the launcher renews the
+  sign-in first if it would run out soon, so it lasts for at least twelve hours of playing.
+- **Switching accounts happens in the launcher.** The account list in the game is gone. To play with another
+  account, pick it in the launcher's account menu and start the game again – the game then runs with that account.
+- **Fewer secrets in the game.** The launcher never passes your Microsoft tokens or your other accounts to the
+  running game; the game only knows the account it was started with. Accounts that older versions of the Cubiq Client
+  had saved in the game folder are deleted on the first start without being read.
+
+### Deutsch
+- **Der Cubiq Client ist jetzt in jedem Spiel dabei.** Kosmetik, Begleiter, das Cubiq-Menü, die Minimap, Clips und
+  die anderen Funktionen im Spiel kommen vom Cubiq Client – und ab diesem Update legt der Launcher ihn wirklich in
+  deine Instanzen. Erstelle eine Instanz wie gewohnt, starte sie, und der Cubiq Client ist da: Der Launcher wählt den
+  Build, der zur Minecraft-Version und zum Mod-Loader passt, lädt ihn einmal herunter und prüft ihn, bevor er ins
+  Spiel kommt. Du musst nichts von Hand herunterladen oder installieren.
+- **Vanilla, Fabric, Quilt, Forge und NeoForge.** Vanilla-Instanzen bekommen ihn über die Cubiq-Optimierung, die von
+  Anfang an an ist (Instanz-Einstellungen → Installation → Cubiq-Optimierung; ausgeschaltet bleibt die Instanz echtes
+  Vanilla). Instanzen mit Fabric oder Quilt bekommen ihn für 1.14.4, 1.15.2 und jede Version von 1.16.2 bis 26.3 –
+  neu in diesem Update: 1.20 –, mit Forge von 1.7.10 bis 26.3 für die Versionen, mit denen Forge meist gespielt wird,
+  mit NeoForge für jede Version von 1.20.2 bis 26.3. Für die ganz alten Versionen gibt es gar keinen Mod-Loader – die
+  laufen weiter als reines Vanilla.
+- **Immer aktuell.** Der Cubiq Client aktualisiert sich selbst, unabhängig von Launcher-Updates: Gibt es eine neue
+  Version, holt der Launcher sie vor dem nächsten Start. Welche Version installiert ist, steht unten in den
+  Launcher-Einstellungen.
+- **Einmal anmelden – nur noch im Launcher.** Der Cubiq Client hat keine eigene Microsoft-Anmeldung mehr. Du meldest
+  dich einmal im Cubiq Launcher an, und jedes Spiel, das du von dort startest, ist schon angemeldet: Kosmetik,
+  Freunde, die Garderobe und alle anderen Cubiq-Funktionen im Spiel nutzen genau dieses Konto. Im Spiel gibt es kein
+  zweites Anmeldefenster mehr und auch keine Fehlerseite von Microsoft, wenn du es öffnest. Beim Spielstart erneuert
+  der Launcher die Anmeldung vorher, falls sie bald abläuft – sie hält dann mindestens zwölf Stunden Spielzeit.
+- **Konto wechseln geht im Launcher.** Die Kontenliste im Spiel ist weg. Willst du mit einem anderen Konto spielen,
+  wähle es im Kontomenü des Launchers und starte das Spiel neu – dann läuft es mit diesem Konto.
+- **Weniger Geheimnisse im Spiel.** Der Launcher gibt deine Microsoft-Tokens und deine anderen Konten nie an das
+  laufende Spiel weiter; das Spiel kennt nur das Konto, mit dem es gestartet wurde. Konten, die ältere Versionen des
+  Cubiq Clients im Spielordner gespeichert hatten, werden beim ersten Start gelöscht, ohne gelesen zu werden.
+
 ## 0.3.6 – 2026-11-05 – Ready to play | Bereit zum Spielen
 <!-- banner: accent=#71a330 motif=/news/0.3.6/banner.png anim=/news/0.3.6/banner-anim.png -->
 

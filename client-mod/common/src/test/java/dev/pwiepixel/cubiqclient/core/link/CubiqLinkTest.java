@@ -8,7 +8,6 @@ import com.google.gson.JsonParser;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -27,19 +26,6 @@ class CubiqLinkTest {
 		String nl = "ffeeddccbbaa99887766554433221100";
 		assertEquals("991f1e4237c9d0bf36d007ea95bb61fc10b58df4b54d7ee99bf359e737d86d42", LinkCrypto.launcherProof(k, sid, nc, nl));
 		assertEquals("74d8da2a2a4be6655c3839cc07ec0962a2195053b84c47f4e0b67912347e62f9", LinkCrypto.gameProof(k, sid, nc, nl));
-		byte[] seal = LinkCrypto.sealKey(k, nc, nl);
-		assertEquals("f6cc2d52a5afa6082ede8265df4e8b57fb50b197173b07b3ea2c9282148a3be5", LinkCrypto.hex(seal));
-		StringBuilder p = new StringBuilder("token-");
-		for (int i = 0; i < 60; i++) p.append('x');
-		String expected = "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf.1005d887d9fe3b7465beb7a87447311928f9a8e6e985dfb7c23af80b80d240b687c8336cea"
-				+ "59940c674dd2b2bc232c5700f5d0b25a444bb74a154c487a53a13aad0e.4118a14dc743789c9a7b4760eddd0043bcd99b03545ba69af92730526b3ca1f9";
-		byte[] nonce = LinkCrypto.unhex("a0a1a2a3a4a5a6a7a8a9aaabacadaeaf");
-		assertEquals(expected, LinkCrypto.seal(seal, p.toString().getBytes(StandardCharsets.UTF_8), nonce));
-		assertEquals(p.toString(), new String(LinkCrypto.unseal(seal, expected), StandardCharsets.UTF_8));
-		// Manipuliert → nichts.
-		assertNull(LinkCrypto.unseal(seal, expected.substring(0, 40) + "0" + expected.substring(41)));
-		assertNull(LinkCrypto.unseal(seal, "kaputt"));
-		assertNull(LinkCrypto.unseal(LinkCrypto.hmac(k, "anderer"), expected));
 	}
 
 	@Test
@@ -77,14 +63,16 @@ class CubiqLinkTest {
 	}
 
 	@Test
-	void anmeldungKontenUndVersiegeltesToken(@TempDir Path dir) throws Exception {
+	void anmeldungOhneKonten(@TempDir Path dir) throws Exception {
 		try (FakeLauncher launcher = new FakeLauncher()) {
+			// Ein älterer Launcher nennt noch „accounts“ – die Mod fragt trotzdem nie nach Konten oder Tokens.
+			launcher.features = "[\"clips\",\"accounts\"]";
 			CubiqLink link = new CubiqLink(dir, launcher.env());
 			final CountDownLatch connected = new CountDownLatch(1);
 			link.addListener(new CubiqLink.Listener() {
 				@Override
-				public void onConnected(CubiqLink l, boolean accounts) {
-					if (accounts) connected.countDown();
+				public void onConnected(CubiqLink l) {
+					connected.countDown();
 				}
 
 				@Override
@@ -103,6 +91,9 @@ class CubiqLinkTest {
 				assertEquals(2, hello.get("v").getAsInt());
 				assertEquals(FakeLauncher.SID, hello.get("sid").getAsString());
 				assertFalse(hello.toString().contains(LinkCrypto.hex(FakeLauncher.KEY)), "Schlüssel geht nie über die Leitung");
+				JsonObject auth = new JsonParser().parse(launcher.received.poll(5, TimeUnit.SECONDS)).getAsJsonObject();
+				assertEquals("auth", auth.get("type").getAsString());
+				assertFalse(auth.toString().contains("accounts"), "die Mod nennt keine Konten");
 				assertEquals(2, link.status().protocol);
 
 				final BlockingQueue<Object> results = new LinkedBlockingQueue<Object>();
@@ -117,18 +108,13 @@ class CubiqLinkTest {
 						results.add(code);
 					}
 				};
-				link.request("accounts.session", Collections.singletonMap("account", FakeLauncher.STEVE), 10000, cb);
-				Object r = results.poll(20, TimeUnit.SECONDS);
-				assertTrue(r instanceof CubiqLink.Line, "Antwort: " + r);
-				CubiqLink.Line res = (CubiqLink.Line) r;
-				assertEquals("Steve", res.session.name);
-				assertFalse(res.session.token.contains("mc-token"), "Token kommt versiegelt");
-				assertEquals("mc-token-Steve", new String(link.unseal(res.session.token), StandardCharsets.UTF_8));
-
-				link.request("accounts.add", null, 10000, cb);
-				assertEquals("busy", results.poll(20, TimeUnit.SECONDS));
-				link.request("accounts.frob", null, 10000, cb);
+				link.request("clips.frob", null, 10000, cb);
 				assertEquals("error", results.poll(20, TimeUnit.SECONDS), "unbekannte Fehlertexte werden nicht durchgereicht");
+				// Von sich aus hat die Mod nichts weiter angefragt (keine Konten, keine Sitzung).
+				String line;
+				while ((line = launcher.received.poll(1, TimeUnit.SECONDS)) != null) {
+					assertFalse(line.contains("accounts."), line);
+				}
 			} finally {
 				link.stop();
 			}
@@ -157,7 +143,7 @@ class CubiqLinkTest {
 	void anfrageOhneVerbindungScheitertSofort(@TempDir Path dir) {
 		CubiqLink link = new CubiqLink(dir, null);
 		final String[] code = new String[1];
-		link.request("accounts.list", null, 1000, new CubiqLink.Callback() {
+		link.request("clips.enable", null, 1000, new CubiqLink.Callback() {
 			@Override
 			public void done(CubiqLink.Line response) {
 			}

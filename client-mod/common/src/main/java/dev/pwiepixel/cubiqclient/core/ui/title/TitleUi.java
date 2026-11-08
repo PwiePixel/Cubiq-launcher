@@ -40,7 +40,7 @@ import java.util.List;
  * die Auswahl zeigt einen Fokusrahmen.
  *
  * <p>Links steht die eigene Spielerfigur auf einem sich langsam drehenden Würfel-Sockel (ziehen dreht ihn), darunter
- * Name und „Garderobe“; rechts eine Leiste mit Symbolen (Konten, Freunde, Clips/Bilder, Cubiq-Einstellungen). Bereiche,
+ * Name und „Garderobe“; rechts eine Leiste mit Symbolen (Freunde, Clips/Bilder, Cubiq-Einstellungen). Bereiche,
  * die es noch nicht gibt, melden „Kommt bald“. In schmalen Fenstern wird die Leiste zu Symbolen (bzw. einer Zeile oben
  * rechts) und die Figur entfällt. Polarlicht zeigt dasselbe in Nachtblau vor der Polarlicht-Szene (Schnee auf dem Zeichen,
  * der Figur-Sockel als verschneiter Würfel); Fuchsbau und Halloween behalten ihre Szenen und Laternen.
@@ -160,12 +160,6 @@ public final class TitleUi extends UiScreen {
 		this.rotateHint = I18n.tr("title.rotateHint");
 		scene.setSimple(host.simpleAnimation());
 		final TitleHost h = host;
-		sideButton("accounts", "profile", NewSince.MENU_ACCOUNTS, new Area() {
-			@Override
-			public boolean open() {
-				return h.openAccounts();
-			}
-		});
 		sideButton("friends", "friends", NewSince.MENU_SOCIAL, new Area() {
 			@Override
 			public boolean open() {

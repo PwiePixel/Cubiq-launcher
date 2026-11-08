@@ -3432,7 +3432,7 @@
       "noAccounts": "No accounts – demo mode",
       "sameAccount": "This account is already playing. Servers usually don’t accept the same account twice.",
       "worldHint": "Both games use the same saves folder. Don’t open the same singleplayer world in both – it can corrupt the world.",
-      "noLink": "The second game runs without Cubiq Link features (account switching, clips, online status) – those stay with the first.",
+      "noLink": "The second game runs without Cubiq Link features (clips, online status) – those stay with the first.",
       "start": "Start",
       "unknownAccount": "Unknown account"
     },

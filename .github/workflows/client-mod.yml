@@ -1,0 +1,242 @@
+name: Cubiq Client
+
+# Baut den Cubiq Client (In-Game-Mod) für jede Minecraft-Version und jeden Loader und veröffentlicht ihn im eigenen
+# Update-Kanal: GitHub-Release `client-mod` mit client-mod.json (signiert mit dem Schlüssel des Launcher-Updaters)
+# und allen Jars. Der Launcher lädt daraus für jede Instanz den passenden Jar und legt ihn beim Spielstart hinein
+# (src-tauri/crates/core/src/client_mod_update.rs) – ganz ohne Launcher-Release.
+#
+# - „plan“ liest die Versionslisten aus den settings.gradle und verteilt sie auf parallele Jobs
+#   (scripts/client-mod-plan.mjs) – neue Versionen brauchen keine Änderung hier.
+# - Pull Requests mit Änderungen an der Mod: alles bauen und das Manifest prüfen, nichts veröffentlichen.
+# - Push auf main mit Änderungen an der Mod, oder von Hand: bauen und veröffentlichen, wenn mod_version neuer ist als
+#   im Kanal (von Hand mit „force“ auch dieselbe Version noch einmal).
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'client-mod/**'
+      - 'scripts/publish-client-mod.mjs'
+      - 'scripts/client-mod-plan.mjs'
+      - 'scripts/client-mod-part.mjs'
+      - '.github/workflows/client-mod.yml'
+  pull_request:
+    paths:
+      - 'client-mod/**'
+      - 'scripts/publish-client-mod.mjs'
+      - 'scripts/client-mod-plan.mjs'
+      - 'scripts/client-mod-part.mjs'
+      - '.github/workflows/client-mod.yml'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Auch veröffentlichen, wenn dieselbe Version schon im Kanal liegt"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: client-mod-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build jobs
+        id: plan
+        run: node scripts/client-mod-plan.mjs 12
+
+  build:
+    name: ${{ matrix.name }}
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      # Toolchains aus setup-java statt Download (foojay bleibt Rückfall).
+      GRADLE_TOOLCHAINS: -Porg.gradle.java.installations.fromEnv=JAVA_HOME_8_X64,JAVA_HOME_17_X64,JAVA_HOME_21_X64,JAVA_HOME_25_X64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # 8: Legacy-Forge, 17/21: bis 1.21.11, 25: 26.x und Gradle selbst. Die zuletzt genannte Version wird JAVA_HOME.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            8
+            17
+            21
+            25
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Gradle-, Loom- und Forge-Cache; PRs lesen nur, main schreibt.
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build ${{ matrix.name }}
+        working-directory: client-mod/${{ matrix.dir }}
+        env:
+          VERSIONS: ${{ matrix.versions }}
+          TASK: ${{ matrix.task }}
+        run: ./gradlew --no-daemon $GRADLE_TOOLCHAINS ${VERSIONS:+-PcubiqVersions=$VERSIONS} "$TASK"
+
+      # Nur die Versionen dieses Jobs behalten (die eingecheckte Version baut Stonecutter immer mit).
+      - name: Keep the versions of this job
+        env:
+          PART: ${{ matrix.part }}
+          VERSIONS: ${{ matrix.versions }}
+        run: node scripts/client-mod-part.mjs client-mod/dist "$PART" "$VERSIONS"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: client-mod-${{ matrix.part }}
+          path: |
+            client-mod/dist/*.jar
+            client-mod/dist/builds-*.json
+          if-no-files-found: error
+          retention-days: 7
+
+  # Im echten Spiel: das fertige Mod-Jar mit Fabric Loader und Fabric API starten – wie eine vom Launcher angelegte
+  # Instanz – und den eingebauten Autotest laufen lassen (Menü, Testwelt, Screenshots, beendet sich selbst). Fängt ab,
+  # was beim Kompilieren nicht auffällt (Mixin-Ziele, die es in einer Version nicht gibt, fehlende Fabric-API-Teile).
+  # Geprüft werden die älteste, die neueste mit OpenGL-Fenster und Versionen mit eigenen Besonderheiten. 26.x fehlt:
+  # Die neue Grafikschicht findet unter Xvfb/Mesa kein passendes GLX-Format (und kein Vulkan) und bleibt hängen –
+  # 26.x wird oben gebaut, aber hier nicht gestartet. Bilder und Log als Artefakt; ein Lauf dauert etwa 5 Minuten.
+  ingame:
+    name: In game – Fabric ${{ matrix.version }}
+    needs: plan
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['1.14.4', '1.20', '1.20.1', '1.21.11']
+    env:
+      GRADLE_TOOLCHAINS: -Porg.gradle.java.installations.fromEnv=JAVA_HOME_8_X64,JAVA_HOME_17_X64,JAVA_HOME_21_X64,JAVA_HOME_25_X64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            8
+            17
+            21
+            25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Fenster ohne Bildschirm (Xvfb) und OpenGL in Software (Mesa llvmpipe).
+      - name: Virtual display
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q xvfb libgl1-mesa-dri libglx-mesa0 > /dev/null
+
+      # Spieldateien (Assets, Bibliotheken) vorher holen, mit bis zu drei Versuchen: Ein Aussetzer beim Download von
+      # Mojangs Servern soll nicht als Fehler im Spiel zählen. Der Test selbst läuft danach genau einmal.
+      - name: Download the game files
+        working-directory: client-mod
+        env:
+          V: ${{ matrix.version }}
+        run: |
+          for i in 1 2 3; do
+            ./gradlew --no-daemon $GRADLE_TOOLCHAINS -PcubiqVersions=$V ":fabric:$V:downloadAssets" && exit 0
+            echo "::warning::Download der Spieldateien fehlgeschlagen (Versuch $i)"
+            sleep $((i * 30))
+          done
+          exit 1
+
+      - name: Start the game with the release jar
+        working-directory: client-mod
+        env:
+          V: ${{ matrix.version }}
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run -a -s "-screen 0 1600x900x24" ./gradlew --no-daemon $GRADLE_TOOLCHAINS -PcubiqVersions=$V ":fabric:$V:runProdClient" -PcubiqAutotest
+
+      - name: Screenshots and log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingame-fabric-${{ matrix.version }}
+          path: |
+            client-mod/run/prod-${{ matrix.version }}/screenshots/
+            client-mod/run/prod-${{ matrix.version }}/logs/latest.log
+            client-mod/run/prod-${{ matrix.version }}/crash-reports/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Pull Requests: Manifest prüfen; main und von Hand: signieren und veröffentlichen.
+  publish:
+    name: Manifest and channel
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Tauri-CLI zum Signieren.
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: client-mod-*
+          path: client-mod/dist
+          merge-multiple: true
+
+      - name: Check manifest (pull request)
+        if: github.event_name == 'pull_request'
+        run: node scripts/publish-client-mod.mjs --dry-run --unsigned --no-bundle
+
+      - name: Update signature
+        id: signing
+        if: github.event_name != 'pull_request'
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: node scripts/check-signing.mjs --export
+
+      - name: Publish to the update channel
+        if: github.event_name != 'pull_request'
+        env:
+          SIGNING: ${{ steps.signing.outputs.status }}
+          SIGNING_REASON: ${{ steps.signing.outputs.reason }}
+          FORCE: ${{ inputs.force && '--force' || '' }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$SIGNING" != "ok" ]; then
+            echo "::error title=Cubiq Client::Ohne gültige Update-Signatur wird nichts veröffentlicht: $SIGNING_REASON"
+            exit 1
+          fi
+          node scripts/publish-client-mod.mjs --no-bundle --skip-if-not-newer $FORCE

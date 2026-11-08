@@ -1,5 +1,6 @@
-//! Cubiq Link: lokaler Kanal zwischen Cubiq Client (Mod) und Launcher – Clips
-//! und Kontowechsel im Spiel.
+//! Cubiq Link: lokaler Kanal zwischen Cubiq Client (Mod) und Launcher – Clips,
+//! Welt-Hosting und Leistungsanzeige. Konten oder Minecraft-Tokens gehen nie
+//! über den Link: Das Spiel nutzt nur die Sitzung, mit der es gestartet wurde.
 //!
 //! Der Launcher lauscht nur auf `127.0.0.1:<zufälliger Port>`. Zeilenbasiertes
 //! JSON, eingehend höchstens 1 KB je Zeile.
@@ -13,7 +14,7 @@
 //! Port hilft der Mod, den Launcher nach einem Neustart wiederzufinden).
 //! Mods ≤ 0.5.0 kennen nur das alte Format mit Token – für sie schreibt der
 //! Launcher weiter `{"version":1,…,"token":…}`; diese v1-Verbindungen dürfen
-//! nur Clips, nie Konten.
+//! nur Clips.
 //!
 //! ## Handschlag (gegenseitig, `K` geht nie über die Leitung)
 //! 1. Mod → `{"type":"hello","v":2,"sid":…,"nonce":nc}`
@@ -23,8 +24,7 @@
 //!
 //! Zusätzlich muss die Gegenstelle zum Prozessbaum des gestarteten Spiels
 //! gehören ([`peer`]); die erste Anmeldung muss binnen 15 Minuten nach dem
-//! Start erfolgen. Das Minecraft-Token für `accounts.session` wird mit einem
-//! aus `K` und beiden Nonces abgeleiteten Schlüssel versiegelt ([`proto`]).
+//! Start erfolgen.
 //!
 //! ## Warum das Minecraft-Token trotzdem in der Befehlszeile steht
 //! Ein Start mit Platzhalter-Token, das die Mod dann über den Link holt, wäre
@@ -376,56 +376,20 @@ pub trait HostingHandler: Send + Sync {
     fn open_world(&self, instance_id: String, room_id: String) -> BoxFuture<'static, HandlerResult<()>>;
 }
 
-// --- Konten -----------------------------------------------------------------
-
-/// Ein Launcher-Konto, wie die Mod es sieht – ohne Tokens.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LinkAccount {
-    pub id: String,
-    pub name: String,
-    pub skin_url: Option<String>,
-    /// Aktives Konto des Launchers.
-    pub active: bool,
-}
-
-/// Frische Spielsitzung eines Kontos (das Token wird vor dem Senden versiegelt).
-#[derive(Clone)]
-pub struct LinkSession {
-    pub id: String,
-    pub name: String,
-    pub xuid: String,
-    pub token: String,
-}
-
 /// Fehlercodes an die Mod – nie interne Meldungen.
 pub type HandlerResult<T> = std::result::Result<T, &'static str>;
-
-/// Kontenzugriff des Launchers (umgesetzt in `lib.rs` über das `AccountStore`).
-pub trait AccountsHandler: Send + Sync {
-    fn list(&self) -> BoxFuture<'static, HandlerResult<Vec<LinkAccount>>>;
-    /// `refresh`: Token beim Launcher sofort erneuern (Mod meldet „Ungültige Sitzung“), sonst das gültige wiederverwenden.
-    fn session(&self, instance_id: String, account: String, refresh: bool) -> BoxFuture<'static, HandlerResult<LinkSession>>;
-    fn add(&self, instance_id: String) -> BoxFuture<'static, HandlerResult<LinkAccount>>;
-}
 
 // --- Server -----------------------------------------------------------------
 
 #[derive(Debug, Clone)]
 enum Push {
     Clip(LinkEvent),
-    AccountsChanged,
     /// Ein Welt-Beitritt wurde vorgemerkt (Inhalt liegt in der Sitzung – genau einmal abholen).
     HostingJoin,
 }
 
 #[derive(Default)]
 struct Limits {
-    last_list: Option<Instant>,
-    last_session: Option<Instant>,
-    sessions: VecDeque<Instant>,
-    add_running: bool,
-    adds: VecDeque<Instant>,
     last_enable: Option<Instant>,
     enables: VecDeque<Instant>,
     last_preview: Option<Instant>,
@@ -449,24 +413,6 @@ fn prune(times: &mut VecDeque<Instant>, now: Instant) {
 }
 
 impl Limits {
-    fn allow_list(&mut self, now: Instant) -> bool {
-        if self.last_list.is_some_and(|t| now.duration_since(t) < Duration::from_secs(1)) {
-            return false;
-        }
-        self.last_list = Some(now);
-        true
-    }
-
-    fn allow_session(&mut self, now: Instant) -> bool {
-        prune(&mut self.sessions, now);
-        if self.last_session.is_some_and(|t| now.duration_since(t) < Duration::from_secs(2)) || self.sessions.len() >= 10 {
-            return false;
-        }
-        self.last_session = Some(now);
-        self.sessions.push_back(now);
-        true
-    }
-
     /// `clips.enable`: höchstens alle 3 s und 5-mal je 10 Minuten.
     fn allow_enable(&mut self, now: Instant) -> bool {
         prune(&mut self.enables, now);
@@ -535,19 +481,6 @@ impl Limits {
         self.mods_running = true;
         self.last_mods = Some(now);
         self.mods.push_back(now);
-        Ok(())
-    }
-
-    fn begin_add(&mut self, now: Instant) -> HandlerResult<()> {
-        prune(&mut self.adds, now);
-        if self.add_running {
-            return Err("busy");
-        }
-        if self.adds.len() >= 3 {
-            return Err("rate_limited");
-        }
-        self.add_running = true;
-        self.adds.push_back(now);
         Ok(())
     }
 }
@@ -624,7 +557,6 @@ impl Session {
 
 struct Shared {
     hub: Mutex<HashMap<String, Session>>,
-    handler: RwLock<Option<Arc<dyn AccountsHandler>>>,
     on_command: RwLock<Option<CommandSink>>,
     enable_clips: RwLock<Option<ClipsEnabler>>,
     clips: RwLock<Option<Arc<dyn ClipsHandler>>>,
@@ -640,10 +572,6 @@ struct Shared {
 impl Shared {
     fn hub(&self) -> std::sync::MutexGuard<'_, HashMap<String, Session>> {
         self.hub.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
-    }
-
-    fn handler(&self) -> Option<Arc<dyn AccountsHandler>> {
-        self.handler.read().unwrap_or_else(std::sync::PoisonError::into_inner).clone()
     }
 
     fn clips_handler(&self) -> Option<Arc<dyn ClipsHandler>> {
@@ -706,12 +634,6 @@ impl Shared {
     fn record_perf(&self, instance_id: &str, sid: &str, perf: LinkPerf) {
         if let Some(session) = self.hub().get_mut(instance_id).filter(|s| proto::ct_eq(s.sid.as_bytes(), sid.as_bytes())) {
             session.perf = Some((perf, Instant::now()));
-        }
-    }
-
-    fn broadcast_accounts_changed(&self) {
-        for session in self.hub().values() {
-            let _ = session.push.send(Push::AccountsChanged);
         }
     }
 
@@ -807,7 +729,6 @@ impl CubiqLink {
         Self {
             shared: Arc::new(Shared {
                 hub: Mutex::default(),
-                handler: RwLock::default(),
                 on_command: RwLock::default(),
                 enable_clips: RwLock::default(),
                 clips: RwLock::default(),
@@ -820,10 +741,6 @@ impl CubiqLink {
             }),
             port: tokio::sync::OnceCell::new(),
         }
-    }
-
-    pub fn set_handler(&self, handler: Arc<dyn AccountsHandler>) {
-        *self.shared.handler.write().unwrap_or_else(std::sync::PoisonError::into_inner) = Some(handler);
     }
 
     pub fn set_command_sink(&self, sink: CommandSink) {
@@ -1003,11 +920,6 @@ impl CubiqLink {
         self.shared.linked.subscribe()
     }
 
-    /// Konten im Launcher geändert: alle angemeldeten Mods laden die Liste neu.
-    pub fn notify_accounts_changed(&self) {
-        self.shared.broadcast_accounts_changed();
-    }
-
     /// Nach einem Launcher-Neustart: gesicherte Sitzungen der noch laufenden
     /// Spiele (gleiche PID) übernehmen. Liefert die übernommenen Instanzen.
     pub async fn restore(&self, running: &[(String, u32)]) -> Result<Vec<String>> {
@@ -1122,11 +1034,6 @@ struct Incoming {
     id: Option<serde_json::Value>,
     #[serde(default)]
     op: Option<String>,
-    #[serde(default)]
-    account: Option<String>,
-    /// `accounts.session`: Token erneuern (true, "1" oder "true"); fehlt bei älteren Mods.
-    #[serde(default)]
-    refresh: Option<serde_json::Value>,
     /// Dateiname eines Clips (`clips.preview`, `clips.open`).
     #[serde(default)]
     clip: Option<String>,
@@ -1167,7 +1074,6 @@ struct Conn {
     v2: bool,
     /// Gegenstelle gehört nachweislich zum Spiel?
     peer: Option<bool>,
-    seal_key: Option<[u8; 32]>,
     limits: Arc<Mutex<Limits>>,
     /// Die Mod kann gehostete Welten betreten (`hosting.join` im `auth`).
     hosting: bool,
@@ -1223,7 +1129,7 @@ async fn handshake(
         tracing::debug!("Cubiq-Link: v1-Anmeldung {}", if found.is_some() { "ok" } else { "abgewiesen" });
         let Some((instance_id, state_rx, push_rx, limits)) = found else { return deny(write).await };
         let conn =
-            Conn { instance_id, marker: token, v2: false, peer: None, seal_key: None, limits, hosting: false, overlay: false };
+            Conn { instance_id, marker: token, v2: false, peer: None, limits, hosting: false, overlay: false };
         return Some((conn, state_rx, push_rx));
     }
 
@@ -1253,7 +1159,7 @@ async fn handshake(
         "type": "challenge",
         "nonce": nl,
         "proof": proto::hex(&proto::launcher_proof(&key, &sid, &nc, &nl)),
-        "features": ["clips", "accounts", FEATURE_CLIPS_ENABLE, FEATURE_CLIPS_PREVIEW, FEATURE_CLIPS_OPEN, FEATURE_HOSTING_JOIN,
+        "features": ["clips", FEATURE_CLIPS_ENABLE, FEATURE_CLIPS_PREVIEW, FEATURE_CLIPS_OPEN, FEATURE_HOSTING_JOIN,
             FEATURE_HOSTING_MODS, FEATURE_HOSTING_OPEN, FEATURE_CLIPS_OVERLAY, FEATURE_PERF],
     });
     write_json(write, &challenge).await?;
@@ -1284,7 +1190,6 @@ async fn handshake(
         marker: sid,
         v2: true,
         peer: peer_ok,
-        seal_key: Some(proto::seal_key(&key, &nc, &nl)),
         limits,
         hosting,
         overlay,
@@ -1300,7 +1205,8 @@ fn error_response(id: u64, code: &'static str) -> serde_json::Value {
     json!({ "type": "res", "id": id, "ok": false, "error": code })
 }
 
-/// Eine Konten-Anfrage bearbeiten; die Antwort geht über `out`.
+/// Eine Anfrage der Mod bearbeiten (Clips, Hosting); die Antwort geht über `out`.
+/// Konten-Anfragen alter Mods (`accounts.*`) gibt es nicht mehr – sie bekommen `unknown_op`.
 fn handle_request(conn: &Conn, shared: &Arc<Shared>, msg: Incoming, id: u64, out: &mpsc::UnboundedSender<serde_json::Value>) {
     let reply = |value: serde_json::Value| {
         let _ = out.send(value);
@@ -1331,69 +1237,7 @@ fn handle_request(conn: &Conn, shared: &Arc<Shared>, msg: Incoming, id: u64, out
     if op == FEATURE_HOSTING_MODS || op == FEATURE_HOSTING_OPEN {
         return hosting_request(conn, shared, &op, msg.room_id, id, now, out);
     }
-    let Some(handler) = shared.handler() else { return reply(error_response(id, "error")) };
-    let out = out.clone();
-    match op.as_str() {
-        "accounts.list" => {
-            if !limits().allow_list(now) {
-                return reply(error_response(id, "rate_limited"));
-            }
-            tokio::spawn(async move {
-                let value = match handler.list().await {
-                    Ok(accounts) => json!({ "type": "res", "id": id, "ok": true, "accounts": accounts }),
-                    Err(code) => error_response(id, code),
-                };
-                let _ = out.send(value);
-            });
-        }
-        "accounts.session" => {
-            if conn.peer != Some(true) {
-                return reply(error_response(id, "not_allowed"));
-            }
-            let Some(account) = msg.account.filter(|a| proto::is_hex(a, 32)) else {
-                return reply(error_response(id, "unknown_account"));
-            };
-            if !limits().allow_session(now) {
-                return reply(error_response(id, "rate_limited"));
-            }
-            let Some(seal_key) = conn.seal_key else { return reply(error_response(id, "not_allowed")) };
-            let instance_id = conn.instance_id.clone();
-            let refresh = matches!(&msg.refresh, Some(serde_json::Value::Bool(true)))
-                || matches!(&msg.refresh, Some(serde_json::Value::String(s)) if s == "1" || s == "true");
-            tokio::spawn(async move {
-                let value = match handler.session(instance_id, account, refresh).await {
-                    Ok(s) => json!({
-                        "type": "res", "id": id, "ok": true,
-                        "session": { "id": s.id, "name": s.name, "xuid": s.xuid, "token": proto::seal(&seal_key, s.token.as_bytes()) },
-                    }),
-                    Err(code) => error_response(id, code),
-                };
-                let _ = out.send(value);
-            });
-        }
-        "accounts.add" => {
-            if conn.peer != Some(true) {
-                return reply(error_response(id, "not_allowed"));
-            }
-            if let Err(code) = limits().begin_add(now) {
-                return reply(error_response(id, code));
-            }
-            let (instance_id, limits, shared) = (conn.instance_id.clone(), conn.limits.clone(), shared.clone());
-            tokio::spawn(async move {
-                let result = handler.add(instance_id).await;
-                limits.lock().unwrap_or_else(std::sync::PoisonError::into_inner).add_running = false;
-                let value = match result {
-                    Ok(account) => {
-                        shared.broadcast_accounts_changed();
-                        json!({ "type": "res", "id": id, "ok": true, "account": account })
-                    }
-                    Err(code) => error_response(id, code),
-                };
-                let _ = out.send(value);
-            });
-        }
-        _ => reply(error_response(id, "unknown_op")),
-    }
+    reply(error_response(id, "unknown_op"));
 }
 
 /// `clips.enable`: Clips für dieses Spiel einschalten (wie der Schalter in den
@@ -1644,11 +1488,8 @@ async fn serve(stream: TcpStream, peer: SocketAddr, port: u16, shared: Arc<Share
                 pushed = push_rx.recv() => {
                     match pushed {
                         Ok(Push::Clip(event)) => write_json(&mut write, &event).await?,
-                        Ok(Push::AccountsChanged) if conn.v2 => {
-                            write_json(&mut write, &json!({ "type": "accountsChanged" })).await?;
-                        }
                         Ok(Push::HostingJoin) if conn.v2 && conn.hosting => deliver_hosting(&mut write, &conn, &shared).await?,
-                        Ok(Push::AccountsChanged | Push::HostingJoin) | Err(broadcast::error::RecvError::Lagged(_)) => {}
+                        Ok(Push::HostingJoin) | Err(broadcast::error::RecvError::Lagged(_)) => {}
                         Err(broadcast::error::RecvError::Closed) => return None,
                     }
                 }

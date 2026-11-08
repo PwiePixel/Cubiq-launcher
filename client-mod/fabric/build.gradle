@@ -100,6 +100,18 @@ loom {
 
 repositories {
 	mavenCentral()
+	// runProdClient nimmt die Fabric API genau wie der Launcher: die komplette Datei von Modrinth. Das Maven-Artefakt
+	// von Fabric ist bei alten Versionen (z. B. 0.28.5+1.14) nur eine Hülle, deren Module als eigene Dateien daneben
+	// liegen – damit startete das Spiel ohne Fabric-API-Module.
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = 'Modrinth'
+				url = 'https://api.modrinth.com/maven'
+			}
+		}
+		filter { includeGroup 'maven.modrinth' }
+	}
 }
 
 // Nur die benötigten Fabric-API-Module (spart je Version das Remappen der kompletten API).
@@ -418,10 +430,10 @@ if (project.hasProperty('cubiqBenchOptions')) {
 
 // Release-Weg im Spiel prüfen: ./gradlew :fabric:<v>:runProdClient [-PcubiqAutotest -PcubiqAutotestOnly=…] startet das
 // echte (nicht entwickler-gemappte) Spiel mit Fabric Loader, genau der fertigen Mod-JAR (inkl. Jar-in-Jar der
-// eingebauten Mods, unverändert) und der kompletten Fabric API – wie eine vom Launcher angelegte Instanz.
+// eingebauten Mods, unverändert) und der kompletten Fabric API von Modrinth – wie eine vom Launcher angelegte Instanz.
 // Spielordner: client-mod/run/prod-<v> (eigene Welt, eigene options.txt).
 def prodFabricApi = configurations.detachedConfiguration(
-		dependencies.create("net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"))
+		dependencies.create("maven.modrinth:fabric-api:${project.fabric_api_version}"))
 prodFabricApi.transitive = false
 tasks.register('runProdClient', CubiqProdClientTask) {
 	group = 'fabric'
