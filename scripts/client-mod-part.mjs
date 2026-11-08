@@ -11,13 +11,15 @@ import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'no
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-/** Nur Builds dieser Minecraft-Versionen behalten. `wanted` leer = alle. Liefert die behaltenen Einträge. */
+/**
+ * Nur Builds dieser Minecraft-Versionen behalten. `wanted` leer = alle. Liefert die behaltenen Einträge – mit ihrer
+ * vollständigen Versionsliste: Ein Jar kann mehrere Versionen bedienen (Legacy-Forge: der 1.12.2-Build auch 1.12 und
+ * 1.12.1), auch wenn der Job nur nach der Version gefragt wurde, für die er gebaut wird.
+ */
 export function keepVersions(entries, wanted) {
   const set = new Set((wanted ?? []).map((v) => String(v).trim()).filter(Boolean))
   if (set.size === 0) return entries
-  return entries
-    .map((e) => ({ ...e, minecraft: (e.minecraft ?? []).filter((v) => set.has(v)) }))
-    .filter((e) => e.minecraft.length > 0)
+  return entries.filter((e) => (e.minecraft ?? []).some((v) => set.has(v)))
 }
 
 /** Teil-Name für Dateinamen: nur Buchstaben, Ziffern, Punkt und Minus. */
