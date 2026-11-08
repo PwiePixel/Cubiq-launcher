@@ -52,7 +52,8 @@ How this file is written:
 - **Sign in once – in the launcher only.** The Cubiq Client no longer has a Microsoft sign-in of its own. You sign
   in once in the Cubiq Launcher, and every game you start from there is already signed in: cosmetics, friends, the
   wardrobe and all other Cubiq features in game use exactly that account. There is no second sign-in window in the
-  game anymore, and no error page from Microsoft when you open it.
+  game anymore, and no error page from Microsoft when you open it. When you start a game, the launcher renews the
+  sign-in first if it would run out soon, so it lasts for at least twelve hours of playing.
 - **Switching accounts happens in the launcher.** The account list in the game is gone. To play with another
   account, pick it in the launcher's account menu and start the game again – the game then runs with that account.
 - **Fewer secrets in the game.** The launcher never passes your Microsoft tokens or your other accounts to the
@@ -77,7 +78,8 @@ How this file is written:
 - **Einmal anmelden – nur noch im Launcher.** Der Cubiq Client hat keine eigene Microsoft-Anmeldung mehr. Du meldest
   dich einmal im Cubiq Launcher an, und jedes Spiel, das du von dort startest, ist schon angemeldet: Kosmetik,
   Freunde, die Garderobe und alle anderen Cubiq-Funktionen im Spiel nutzen genau dieses Konto. Im Spiel gibt es kein
-  zweites Anmeldefenster mehr und auch keine Fehlerseite von Microsoft, wenn du es öffnest.
+  zweites Anmeldefenster mehr und auch keine Fehlerseite von Microsoft, wenn du es öffnest. Beim Spielstart erneuert
+  der Launcher die Anmeldung vorher, falls sie bald abläuft – sie hält dann mindestens zwölf Stunden Spielzeit.
 - **Konto wechseln geht im Launcher.** Die Kontenliste im Spiel ist weg. Willst du mit einem anderen Konto spielen,
   wähle es im Kontomenü des Launchers und starte das Spiel neu – dann läuft es mit diesem Konto.
 - **Weniger Geheimnisse im Spiel.** Der Launcher gibt deine Microsoft-Tokens und deine anderen Konten nie an das

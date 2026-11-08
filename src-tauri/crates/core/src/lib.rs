@@ -883,10 +883,10 @@ impl Launcher {
         let session = match account_id {
             Some(id) => self
                 .accounts
-                .session_for(id, false)
+                .launch_session(id)
                 .await?
                 .ok_or_else(|| Error::launch(crate::msg!("launcher.accountMissing", "Das gewählte Konto gibt es nicht mehr.")))?,
-            None => match self.accounts.active_session().await? {
+            None => match self.accounts.active_launch_session().await? {
                 Some(session) => session,
                 None => demo_session()?,
             },
