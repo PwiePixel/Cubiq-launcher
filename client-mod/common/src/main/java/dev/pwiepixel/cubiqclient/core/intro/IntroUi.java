@@ -146,9 +146,13 @@ public final class IntroUi extends UiScreen {
 		splashLeave = SPLASH_TIME;
 	}
 
-	/** Läuft die Start-Animation noch (auch während sie ausblendet)? */
+	/**
+	 * Läuft die Start-Animation noch (auch während sie ausblendet)? Von selbst endet sie nach {@link #SPLASH_TIME} +
+	 * {@link #SPLASH_LEAVE}; per Klick oder Taste übersprungen, sobald sie ausgeblendet ist ({@link #SPLASH_LEAVE} später).
+	 */
 	public boolean splashing() {
-		return splashTime < SPLASH_TIME + SPLASH_LEAVE;
+		float end = (splashLeave < 0f ? SPLASH_TIME : Math.min(splashLeave, SPLASH_TIME)) + SPLASH_LEAVE;
+		return splashTime < end;
 	}
 
 	/** Klick oder Taste während der Start-Animation: sanft ausblenden (wie im Launcher). */
