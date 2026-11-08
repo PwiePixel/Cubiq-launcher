@@ -3387,7 +3387,7 @@
       "noAccounts": "Hesap yok – demo modu",
       "sameAccount": "Bu hesapla zaten oynanıyor. Sunucular genellikle aynı hesabı iki kez kabul etmez.",
       "worldHint": "İki oyun da aynı kayıt klasörünü kullanır. Aynı tek kişilik dünyayı ikisinde birden açma – dünya bozulabilir.",
-      "noLink": "İkinci oyun Cubiq Link özellikleri olmadan çalışır (hesap değiştirme, klipler, çevrimiçi durum) – bunlar ilkinde kalır.",
+      "noLink": "İkinci oyun Cubiq Link özellikleri olmadan çalışır (klipler, çevrimiçi durum) – bunlar ilkinde kalır.",
       "start": "Başlat",
       "unknownAccount": "Bilinmeyen hesap"
     },

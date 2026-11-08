@@ -3387,7 +3387,7 @@
       "noAccounts": "Geen accounts – demomodus",
       "sameAccount": "Met dit account wordt al gespeeld. Servers accepteren hetzelfde account meestal niet twee keer.",
       "worldHint": "Beide spellen gebruiken dezelfde opslagmap. Open dezelfde singleplayerwereld niet in allebei – dat kan de wereld beschadigen.",
-      "noLink": "Het tweede spel draait zonder Cubiq Link-functies (accountwissel, clips, online-status) – die blijven bij het eerste.",
+      "noLink": "Het tweede spel draait zonder Cubiq Link-functies (clips, online-status) – die blijven bij het eerste.",
       "start": "Starten",
       "unknownAccount": "Onbekend account"
     },

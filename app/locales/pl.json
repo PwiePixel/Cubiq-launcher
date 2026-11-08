@@ -3387,7 +3387,7 @@
       "noAccounts": "Brak kont – tryb demo",
       "sameAccount": "To konto już gra. Serwery zwykle nie przyjmują tego samego konta dwa razy.",
       "worldHint": "Obie gry używają tego samego folderu zapisów. Nie otwieraj tego samego świata jednoosobowego w obu – może to go uszkodzić.",
-      "noLink": "Druga gra działa bez funkcji Cubiq Link (zmiana konta, klipy, status online) – zostają przy pierwszej.",
+      "noLink": "Druga gra działa bez funkcji Cubiq Link (klipy, status online) – zostają przy pierwszej.",
       "start": "Uruchom",
       "unknownAccount": "Nieznane konto"
     },

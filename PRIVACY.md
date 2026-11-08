@@ -44,19 +44,19 @@ instance, its worlds, mods, packs, settings and server list are copied into the 
 IDs the other launcher saved are kept so the content can be updated. Only if files of a CurseForge instance are
 missing does the launcher download them from CurseForge (see the table above).
 
-## Switching accounts in the game (Cubiq Client)
+## Account in the game (Cubiq Client)
 
-- **Game started with the Cubiq Launcher:** the Cubiq Client can show your launcher accounts and switch between them
-  without restarting. When you pick an account, the launcher hands a fresh Minecraft access token to the game over a
-  local connection on your computer only (`127.0.0.1`), encrypted and only to the game process it started itself. The
-  key for that connection is handed to the game in memory when it starts and is never written to disk. Nothing leaves
-  your PC for this. "Add account" in the game opens the normal Microsoft sign-in of the launcher in your browser.
-- **Game started without the Cubiq Launcher:** accounts you add in the game sign in directly with Microsoft, Xbox Live and
-  the Minecraft services (with the Cubiq Launcher's own sign-in app). Only the refresh token is kept, encrypted (Windows
-  DPAPI; elsewhere AES with a key file in your user folder), in `config/cubiqclient/accounts.json` of that game folder.
-  Access tokens stay in memory. Remove an account in the game to delete it.
-- For the small faces in the list, the game loads the skin from `textures.minecraft.net` and, if needed, the public
-  profile from `sessionserver.mojang.com`.
+- The Cubiq Client has **no sign-in of its own and switches no accounts**. It only uses the session the game was
+  started with – by the Cubiq Launcher, with the account you picked there. To play with another account, pick it in the
+  launcher and start the game again.
+- The launcher never passes Microsoft or Minecraft tokens of your other accounts to the game. The local connection
+  between launcher and game (`127.0.0.1`, only to the game process the launcher started itself; its key is handed to the
+  game in memory and never written to disk) carries clips, world hosting and performance figures only.
+- Older versions of the Cubiq Client could add accounts in the game and kept their refresh token encrypted in
+  `config/cubiqclient/accounts.json` of the game folder. The current Cubiq Client deletes that file and its key file in
+  your user folder on its first start, without reading them.
+- For small player faces in the game's menus, the game loads the skin from `textures.minecraft.net` and, if needed, the
+  public profile from `sessionserver.mojang.com`.
 
 ## Wardrobe in the game (Cubiq Client)
 

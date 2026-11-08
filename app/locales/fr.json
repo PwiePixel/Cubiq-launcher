@@ -3387,7 +3387,7 @@
       "noAccounts": "Aucun compte – mode démo",
       "sameAccount": "Ce compte joue déjà. Les serveurs n’acceptent en général pas deux fois le même compte.",
       "worldHint": "Les deux jeux utilisent le même dossier de sauvegardes. N’ouvre pas le même monde solo dans les deux : cela peut l’abîmer.",
-      "noLink": "Le deuxième jeu tourne sans les fonctions Cubiq Link (changement de compte, clips, statut en ligne) : elles restent au premier.",
+      "noLink": "Le deuxième jeu tourne sans les fonctions Cubiq Link (clips, statut en ligne) : elles restent au premier.",
       "start": "Lancer",
       "unknownAccount": "Compte inconnu"
     },

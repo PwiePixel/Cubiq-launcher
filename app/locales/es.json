@@ -3432,7 +3432,7 @@
       "noAccounts": "Sin cuentas – modo demo",
       "sameAccount": "Esta cuenta ya está jugando. Los servidores suelen no aceptar la misma cuenta dos veces.",
       "worldHint": "Ambos juegos usan la misma carpeta de partidas. No abras el mismo mundo de un jugador en los dos: puede dañar el mundo.",
-      "noLink": "El segundo juego funciona sin las funciones de Cubiq Link (cambio de cuenta, clips, estado en línea): se quedan con el primero.",
+      "noLink": "El segundo juego funciona sin las funciones de Cubiq Link (clips, estado en línea): se quedan con el primero.",
       "start": "Iniciar",
       "unknownAccount": "Cuenta desconocida"
     },

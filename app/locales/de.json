@@ -3432,7 +3432,7 @@
       "noAccounts": "Kein Konto – Demo-Modus",
       "sameAccount": "Mit diesem Konto läuft schon ein Spiel. Server nehmen dasselbe Konto meist nicht zweimal an.",
       "worldHint": "Beide Spiele nutzen denselben Speicherordner. Öffne dieselbe Einzelspieler-Welt nicht in beiden – das kann die Welt beschädigen.",
-      "noLink": "Das zweite Spiel läuft ohne Cubiq-Link-Funktionen (Kontowechsel, Clips, Online-Status) – die bleiben beim ersten.",
+      "noLink": "Das zweite Spiel läuft ohne Cubiq-Link-Funktionen (Clips, Online-Status) – die bleiben beim ersten.",
       "start": "Starten",
       "unknownAccount": "Unbekanntes Konto"
     },
