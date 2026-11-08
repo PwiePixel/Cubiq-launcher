@@ -28,7 +28,7 @@ How this file is written:
   (scripts/changelog.mjs check <version>).
 -->
 
-## 0.3.7 – 2026-11-05 – Cubiq in every game | Cubiq in jedem Spiel
+## 0.3.7 – 2026-11-08 – Cubiq in every game | Cubiq in jedem Spiel
 <!-- banner: accent=#71a330 motif=/news/0.3.7/banner.png anim=/news/0.3.7/banner-anim.png -->
 <!-- shots:
 /news/0.3.7/cubiq-client-title.png | The Cubiq Client in Minecraft 1.20 | Der Cubiq Client in Minecraft 1.20
