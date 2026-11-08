@@ -42,6 +42,9 @@ sourceSets {
 	main.java.srcDir(rootProject.file('../common/src/main/java'))
 	main.resources.srcDir(rootProject.file('../common/src/main/resources'))
 	test.java.srcDir(rootProject.file('../common/src/test/java'))
+	// Testdaten wie in common: eigene Testressourcen + die Quelldaten der Schaltungen in <repo>/data.
+	test.resources.srcDir(rootProject.file('../common/src/test/resources'))
+	test.resources.srcDir(rootProject.file('../../data'))
 }
 
 minecraft {

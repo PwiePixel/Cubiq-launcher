@@ -37,6 +37,9 @@ sourceSets.main.resources.srcDir(rootProject.file('../common/src/main/resources'
 def runsCommonTests = mc == '1.19.4'
 if (runsCommonTests) {
 	sourceSets.test.java.srcDir(rootProject.file('../common/src/test/java'))
+	// Testdaten wie in common: eigene Testressourcen + die Quelldaten der Schaltungen in <repo>/data.
+	sourceSets.test.resources.srcDir(rootProject.file('../common/src/test/resources'))
+	sourceSets.test.resources.srcDir(rootProject.file('../../data'))
 }
 
 loom {
