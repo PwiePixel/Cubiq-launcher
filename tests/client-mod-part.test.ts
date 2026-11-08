@@ -29,8 +29,10 @@ describe('client-mod-part', () => {
     expect(keepVersions(BUILDS, ['1.20.1', ' 1.21.11 ']).map((b) => b.file)).toEqual(['cubiqclient-fabric-1.20.1.jar', 'cubiqclient-fabric-1.21.11.jar'])
     expect(keepVersions(BUILDS, [])).toBe(BUILDS)
     expect(keepVersions(BUILDS, [''])).toBe(BUILDS)
-    // Ein Build für mehrere Versionen behält nur die gewünschten.
-    expect(keepVersions([{ loader: 'fabric', minecraft: ['1.20', '1.20.1'], file: 'a.jar' }], ['1.20.1'])[0].minecraft).toEqual(['1.20.1'])
+    // Ein Build für mehrere Versionen (Legacy-Forge 1.12.2 → 1.12, 1.12.1, 1.12.2) behält seine ganze Liste.
+    const legacy = [{ loader: 'forge', minecraft: ['1.12', '1.12.1', '1.12.2'], file: 'cubiqclient-forge-1.12.2.jar' }]
+    expect(keepVersions(legacy, ['1.12.2'])[0].minecraft).toEqual(['1.12', '1.12.1', '1.12.2'])
+    expect(keepVersions(legacy, ['1.8.9'])).toEqual([])
   })
 
   it('drops the always-built checked-in version of other jobs and renames the list', () => {
